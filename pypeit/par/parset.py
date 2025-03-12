@@ -311,7 +311,7 @@ class ParSet:
 
 
     @staticmethod
-    def _data_table_string(data_table, delimeter='print'):
+    def _data_table_string(data_table, delimeter='print', lead=None):
         """
         Provided the array of data, format it with equally spaced
         columns and add a header (first row) and contents delimeter.
@@ -342,7 +342,11 @@ class ParSet:
         row_string[1] = '  '.join([ data_table[0,j].ljust(col_width[j]) for j in range(ncols)])
         row_string[2] = row_string[0]
         row_string[-1] = row_string[0]
-        return '\n'.join(row_string)+'\n'
+
+        if lead is None:
+            return '\n'.join(row_string)+'\n'
+        row_string[0] = f'{lead}{row_string[0]}'
+        return f'\n{lead}'.join(row_string)+'\n'
 
     @staticmethod
     def _data_string(data, use_repr=False, verbatim=False):
@@ -699,7 +703,7 @@ class ParSet:
     def _rst_class_name(p):
         return ':class:`~' +  type(p).__module__ + '.' + type(p).__name__ + '`'
 
-    def to_rst_table(self, parsets_listed=[]):
+    def to_rst_table(self, parsets_listed=[], dropdown=False):
         """
         Construct a reStructuredText table describing the parameter set.
 
@@ -722,7 +726,7 @@ class ParSet:
                     new_parsets += [k]
                 parsets_listed += [ type(self.data[k]).__name__ ]
                 data_table[i+1,1] = ParSet._rst_class_name(self.data[k])
-                data_table[i+1,3] = '`{0} Keywords`_'.format(type(self.data[k]).__name__)
+                data_table[i+1,3] = f':ref:`{type(self.data[k]).__name__.lower()}`'
             else: 
                 data_table[i+1,1] = ', '.join([t.__name__ for t in self.dtype[k]])
                 data_table[i+1,3] = '..' if self.default[k] is None \
@@ -735,19 +739,25 @@ class ParSet:
             data_table[i+1,4] = '..' if self.descr[k] is None \
                                     else ParSet._data_string(self.descr[k])
 
-        output = [ f'.. _{type(self).__name__.lower()}:']
+        if dropdown:
+            lead = ' '*4
+            output = [ f'.. dropdown:: {type(self).__name__} Parameters' ]
+            output += [ f'   :name: {type(self).__name__.lower()}']
+        else:
+            lead = ''
+            output = [ f'.. _{type(self).__name__.lower()}:']
+            output += [ '' ]
+            output += [ f'{type(self).__name__} Parameters']
+            output += [ '-'*len(output[2]) ]
         output += [ '' ]
-        output += [ f'{type(self).__name__} Keywords']
-        output += [ '-'*len(output[2]) ]
-        output += [ '' ]
-        output += ['Class Instantiation: ' + ParSet._rst_class_name(self)]
+        output += [f'{lead}Class Instantiation: {ParSet._rst_class_name(self)}']
         output += ['']
-        output += [ParSet._data_table_string(data_table, delimeter='rst')]
+        output += [ParSet._data_table_string(data_table, delimeter='rst', lead=lead)]
         output += ['']
         for k in new_parsets:
-            output += ['----']
+#            output += ['----']
             output += ['']
-            output += self.data[k].to_rst_table(parsets_listed=parsets_listed)
+            output += self.data[k].to_rst_table(parsets_listed=parsets_listed, dropdown=dropdown)
         return output
 
     def validate_keys(self, required=None, can_be_None=None):

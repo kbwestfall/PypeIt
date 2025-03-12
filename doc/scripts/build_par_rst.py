@@ -26,9 +26,10 @@ def link_string(p):
 def par_hierarchy(p, indent_level=0, key=''):
     indent_step = ' '*indent_level*4
     line_head = '['*indent_level + key + ']'*indent_level
-    if len(line_head) > 0:
-        line_head = '``' + line_head + '``: '
-    lines = [ indent_step + line_head + link_string(p) ]
+#    if len(line_head) > 0:
+#        line_head = '``' + line_head + '``: '
+#    lines = [ indent_step + line_head + link_string(p) ]
+    lines = [ indent_step + line_head ]
 #    lines += [ '' ]
 
     for k in p.keys():
@@ -52,19 +53,23 @@ if __name__ == '__main__':
     lines += ['']
 
     # Start to append the automatically generated documentation
-    lines += ['Current PypeItPar Parameter Hierarchy']
-    lines += ['=====================================']
+    lines += ['Parameter Hierarchy and Definition Tables']
+    lines += ['=========================================']
     lines += ['']
 
     p = pypeitpar.PypeItPar(flexure=pypeitpar.FlexurePar(),
                             fluxcalib=pypeitpar.FluxCalibratePar())
 
-    lines += ['| '+ l for l in par_hierarchy(p)]
+    lines += ['.. dropdown:: Current PypeItPar Parameter Hierarchy']
+    lines += ['   :name: par-hierarchy']
+    lines += ['']
+    lines += ['    .. code-block:: ini']
+    lines += ['    '+ l for l in par_hierarchy(p)]
     lines += ['']
     lines += ['----']
     lines += ['']
 
-    lines += p.to_rst_table()
+    lines += p.to_rst_table(dropdown=True)
     lines += ['']
 
     lines += ['.. _instr_par:']
@@ -83,16 +88,13 @@ if __name__ == '__main__':
 
     for spec in available_spectrographs:
         s = load_spectrograph(spec)
-        lines += [ f'.. _instr_par-{s.name}:']
+        lines += [ f'.. dropdown:: {s.telescope["name"]} {s.camera} (``{s.name}``)' ]
+        lines += [ f'   :name: instr_par-{s.name}']
         lines += ['']
-        lines += [ ' '.join([s.telescope['name'], s.camera, '(``{0}``)'.format(s.name)]) ]
-        lines += [ '-'*len(lines[-1]) ]
-        lines += [ 'Alterations to the default parameters are:' ]
-        lines += ['']
-        lines += ['.. code-block:: ini']
+        lines += ['    .. code-block:: ini']
         lines += ['']
         sl = s.default_pypeit_par().to_config(include_descr=False, exclude_defaults=True)
-        lines += [ '  ' + l for l in sl ]
+        lines += [ '      ' + l for l in sl ]
         lines += ['']
     lines += ['']
 
