@@ -38,6 +38,22 @@ def test_full():
     assert np.array_equal(_pypeitImage.fullmask.mask, pypeitImage.fullmask.mask), \
                 'mask array changed'
 
+def test_region_mask():
+    shape = (100,100)
+    pypeitImage = pypeitimage.PypeItImage(np.ones(shape), ivar=np.ones(shape))
+
+    # Test masking a single region
+    regions = [0,20,0,20]
+    pypeitImage.mask_regions(regions)
+    assert np.sum(pypeitImage.fullmask.flagged('USER')) == 400, 'Incorrect number of pixels masked'
+    pypeitImage.reinit_mask()
+    assert np.sum(pypeitImage.fullmask.flagged('USER')) == 0, 'Mask not re-initialized'
+
+    # Test masking two regions
+    regions = [[0,20,0,20], [80,100,80,100]]
+    pypeitImage.mask_regions(regions)
+    assert np.sum(pypeitImage.fullmask.flagged('USER')) == 800, 'Incorrect number of pixels masked'
+
 
 def test_sub():
     shape = (10,10)

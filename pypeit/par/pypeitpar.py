@@ -210,13 +210,11 @@ class ProcessImagesPar(ParSet):
     def __init__(self, trim=None, apply_gain=None, orient=None,
                  overscan_method=None, overscan_par=None,
                  combine=None, satpix=None,
-                 mask_cr=None, clip=None,
+                 mask_cr=None, mask_region=None, mask_files=None, clip=None,
                  scale_to_mean=None,
-                 #cr_sigrej=None, 
-                 n_lohi=None, #replace=None,
+                 n_lohi=None,
                  lamaxiter=None, grow=None,
                  comb_sigrej=None,
-#                 calib_setup_and_bit=None,
                  rmcompact=None, sigclip=None, sigfrac=None, objlim=None,
                  use_biasimage=None, use_overscan=None, use_darkimage=None,
                  dark_expscale=None, correct_nonlinear=None,
@@ -253,6 +251,31 @@ class ProcessImagesPar(ParSet):
         defaults['orient'] = True
         dtypes['orient'] = bool
         descr['orient'] = 'Orient the raw image into the PypeIt frame'
+
+        # Mask regions in a set of images
+        defaults['mask_region'] = None
+        dtypes['mask_region'] = [str, list]
+        descr['mask_region'] = (
+            'A set of square image regions to mask.  Each region is defined as '
+            '``spec_s:spec_e:spat_s:spat_e``; i.e., the starting (inclusive) and '
+            'ending (exclusive) pixels in the spectral and spatial directions. '
+            'The pixel coordinates are in the trimmed and re-oriented frame of '
+            'the image; i.e., these are the pixels coordinates displayed when you '
+            'run ``pypeit_view_fits --proc`` on the image.  Multiple regions can '
+            'be defined.  These masks are applied to all images of the parent '
+            'frametype.  To downselect to a subset of images, list the images you '
+            'want to mask using the ``mask_files`` parameter.  It is not '
+            'currently possible to use different masks for different images of '
+            'the same frametype. '
+        )
+
+        defaults['mask_files'] = None
+        dtypes['mask_files'] = [str, list]
+        descr['mask_files'] = (
+            'When ``mask_region`` is defined, use this parameter to define a '
+            'subset from that the mask should be applied to.  See description of '
+            'the ``mask_region`` parameter. '
+        )
 
         # Bias, overscan, dark, pattern (i.e. detector "signal")
         defaults['use_biasimage'] = True
@@ -409,22 +432,10 @@ class ProcessImagesPar(ParSet):
         dtypes['mask_cr'] = bool
         descr['mask_cr'] = 'Identify CRs and mask them'
 
-#        # TODO: I don't think this is currently used; ``sigclip`` is used instead.
-#        defaults['cr_sigrej'] = 20.0
-#        dtypes['cr_sigrej'] = [int, float]
-#        descr['cr_sigrej'] = 'Sigma level to reject cosmic rays (<= 0.0 means no CR removal)'
-
         defaults['n_lohi'] = [0, 0]
         dtypes['n_lohi'] = list
         descr['n_lohi'] = 'Number of pixels to reject at the lowest and highest ends of the ' \
                           'distribution; i.e., n_lohi = low, high.  Use None for no limit.'
-
-        # TODO: I don't think this is currently used
-#        defaults['replace'] = 'maxnonsat'
-#        options['replace'] = ProcessImagesPar.valid_rejection_replacements()
-#        dtypes['replace'] = str
-#        descr['replace'] = 'If all pixels are rejected, replace them using this method.  ' \
-#                           'Options are: {0}'.format(', '.join(options['replace']))
 
         defaults['lamaxiter'] = 1
         dtypes['lamaxiter'] = int
@@ -454,11 +465,6 @@ class ProcessImagesPar(ParSet):
         dtypes['objlim'] = [int, float]
         descr['objlim'] = 'Object detection limit in LA cosmics routine'
 
-#        defaults['calib_setup_and_bit'] = None
-#        dtypes['calib_setup_and_bit'] = str
-#        descr['calib_setup_and_bit'] = 'Over-ride the calibration setup and bit, e.g. "A_7".  ' \
-#                                       'Only recommended for use with quicklook.'
-
         # Instantiate the parameter set
         super(ProcessImagesPar, self).__init__(list(pars.keys()),
                                                values=list(pars.values()),
@@ -479,7 +485,7 @@ class ProcessImagesPar(ParSet):
                    'spat_flexure_correct', 'spat_flexure_maxlag', 'spat_flexure_sigdetect',
                    'spat_flexure_vrange', 'use_illumflat', 'use_specillum',
                    'empirical_rn', 'shot_noise', 'noise_floor', 'use_pixelflat', 'combine',
-                   'scale_to_mean', 'correct_nonlinear', 'satpix', #'calib_setup_and_bit',
+                   'scale_to_mean', 'correct_nonlinear', 'satpix',
                    'n_lohi', 'mask_cr', 'lamaxiter', 'grow', 'clip', 'comb_sigrej', 'rmcompact',
                    'sigclip', 'sigfrac', 'objlim']
 

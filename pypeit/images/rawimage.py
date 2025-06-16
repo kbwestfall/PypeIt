@@ -193,7 +193,7 @@ class RawImage:
     @property
     def shape(self):
         return () if self.image is None else self.image.shape
-
+    
     @property
     def bpm(self):
         """
@@ -301,7 +301,7 @@ class RawImage:
         # procimg.base_variance should be called with exptime=None.  If the
         # exposure time is provided, the units of the dark current are expected
         # to be in e-/hr!
-        self.base_var = procimg.base_variance(self.rn2img, darkcurr=_dark, #exptime=self.exptime,
+        self.base_var = procimg.base_variance(self.rn2img, darkcurr=_dark,
                                               proc_var=self.proc_var, count_scale=self.img_scale)
         var = procimg.variance_model(self.base_var, counts=_counts, count_scale=self.img_scale,
                                      noise_floor=self.par['noise_floor'])
@@ -710,17 +710,57 @@ class RawImage:
         pypeitImage.rawheadlist = self.headarr
         pypeitImage.process_steps = [key for key in self.steps.keys() if self.steps[key]]
 
-        # Mask(s)
+        # Build the masks
+        # - Cosmic rays
         if self.par['mask_cr']:
             # TODO: CR rejection of the darks was failing for HIRES for some reason...
             pypeitImage.build_crmask(self.par)
-
+        # - Saturation, non-finite values (NaNs), minimum count, bad ivars, etc
         pypeitImage.build_mask(saturation='default', mincounts='default')
+        # - Bad flat values
         if flat_bpm is not None:
             pypeitImage.update_mask('BADSCALE', indx=flat_bpm)
-
+        # - User mask
+        if self.par['mask_region'] is not None and self._apply_mask_to_frame():
+            # TODO: Other things are called mask regions!
+            pypeitImage.mask_regions(self.parse_mask_regions())
         # Return
         return pypeitImage
+    
+    def _apply_mask_to_frame(self):
+        """
+        Convenience function to check the user mask parameters to determine if
+        it should be applied to this frame.
+        """
+        if self.par['mask_files'] is None:
+            return True
+        _files = self.par['mask_files'] if isinstance(self.par['mask_files'], list) \
+                    else [self.par['mask_files']]
+        return self.filename in _files
+    
+    def parse_mask_regions(self):
+        """
+        Parse the mask regions parameter into one or more rectangular image
+        regions.
+
+        Returns
+        -------
+        `numpy.ndarray`_
+            List of one or more regions to mask.
+        """
+        mask_region = self.par['mask_region'] if isinstance(self.par['mask_region'], list) \
+                        else [self.par['mask_region']]
+        regions = []
+        for region in mask_region:
+            try:
+                _region = [int(r) for r in region.split(':')]
+            except ValueError:
+                msgs.error('Could not parse mask region into a series of integers.')
+            if len(_region) != 4:
+                msgs.error('Mask regions should be defined by 4 integers: spec start, spec end, '
+                           'spat start, spat end')
+            regions += [_region]
+        return np.asarray(regions)
 
     def _squeeze(self):
         """

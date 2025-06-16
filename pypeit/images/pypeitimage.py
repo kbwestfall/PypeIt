@@ -606,6 +606,28 @@ class PypeItImage(datamodel.DataContainer):
         self.update_mask('CR', action='turn_off')
         self.update_mask('CR', indx=crmask_new.astype(bool))
 
+    def mask_regions(self, regions):
+        """
+        Mask a set of rectangular regions in the image.  The mask type is set to
+        USER.
+
+        Parameters
+        ----------
+        regions : array-like
+            One or more regions to mask.  Each region is defined by 4 integers,
+            providing the start (inclusive) and end (exclusive) of the region to
+            mask.  The input can be either a single region with 4 integers, or
+            multiple regions organized along the first axis of the array.
+        """
+        _regions = np.asarray(regions)
+        if _regions.ndim == 1:
+            _regions = np.asarray([_regions])
+        if _regions.shape[1] != 4:
+            msgs.error('Mask regions should be defined by 4 integers, start (inclusive) and '
+                       'end (exclusive) of each of the two dimensions.')
+        for reg in _regions:
+            self.update_mask('USER', indx=(slice(reg[0],reg[1]), slice(reg[2], reg[3])))
+
     def update_mask(self, flag, indx=None, action='turn_on'):
         """
         Update :attr:`fullmask` by operating on the bits for the provided (list
