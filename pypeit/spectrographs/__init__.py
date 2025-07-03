@@ -9,8 +9,10 @@ from pypeit.spectrographs import gemini_flamingos
 from pypeit.spectrographs import gemini_gmos
 from pypeit.spectrographs import gemini_gnirs
 from pypeit.spectrographs import gtc_osiris
-from pypeit.spectrographs import keck_esi
+from pypeit.spectrographs import jwst_nircam
+from pypeit.spectrographs import jwst_nirspec
 from pypeit.spectrographs import keck_deimos
+from pypeit.spectrographs import keck_esi
 from pypeit.spectrographs import keck_hires
 from pypeit.spectrographs import keck_kcwi
 from pypeit.spectrographs import keck_lris
@@ -28,21 +30,18 @@ from pypeit.spectrographs import mmt_binospec
 from pypeit.spectrographs import mmt_bluechannel
 from pypeit.spectrographs import mmt_mmirs
 from pypeit.spectrographs import not_alfosc
+from pypeit.spectrographs import ntt_efosc2
 from pypeit.spectrographs import p200_dbsp
+from pypeit.spectrographs import p200_ngps
 from pypeit.spectrographs import p200_tspec
 from pypeit.spectrographs import shane_kast
 from pypeit.spectrographs import soar_goodman
+from pypeit.spectrographs import subaru_focas
 from pypeit.spectrographs import tng_dolores
 from pypeit.spectrographs import vlt_fors
-from pypeit.spectrographs import vlt_xshooter
 from pypeit.spectrographs import vlt_sinfoni
+from pypeit.spectrographs import vlt_xshooter
 from pypeit.spectrographs import wht_isis
-from pypeit.spectrographs import ntt_efosc2
-from pypeit.spectrographs import jwst_nirspec
-from pypeit.spectrographs import jwst_nircam
-from pypeit.spectrographs import subaru_focas
-from pypeit.spectrographs import p200_ngps 
-
 
 # Build the list of names for the available spectrographs
 
