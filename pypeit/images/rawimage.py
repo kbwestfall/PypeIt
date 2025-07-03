@@ -193,7 +193,7 @@ class RawImage:
     @property
     def shape(self):
         return () if self.image is None else self.image.shape
-    
+
     @property
     def bpm(self):
         """
