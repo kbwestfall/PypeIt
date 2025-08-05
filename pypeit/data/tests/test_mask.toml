@@ -1,0 +1,29 @@
+[ignored_range]
+
+range = [
+    ['None', 'None'],
+    [24000.0, 'None'],
+]
+
+
+[no_width]
+
+center = [
+    22000.0,
+    23000.0,
+    24000.0,
+]
+
+[width_list]
+
+center = [
+    22000.0,
+    23000.0,
+    24000.0,
+]
+
+width = [
+    10.0,
+]
+
+

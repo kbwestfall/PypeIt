@@ -83,7 +83,7 @@ class AtmosphericExtinction:
         extinct_files = table.Table.read(extinct_summ, comment='#', format='ascii')
         # Coords
         ext_coord = coordinates.SkyCoord(extinct_files['Lon'], extinct_files['Lat'], frame='gcrs',
-                                        unit=units.deg)
+                                         unit=units.deg)
         # Match
         idx, d2d, _ = coordinates.match_coordinates_sky(obs_coord, ext_coord, nthneighbor=1)
         if d2d < toler * units.deg:
@@ -133,7 +133,6 @@ class AtmosphericExtinction:
         extinct_file : :obj:`str`
             Name of a local file or a file distributed by PypeIt.
         """
-        # TODO: Put in a try block here?
         _file = dataPaths.extinction.get_file_path(extinct_file)
         data = table.Table.read(_file, comment='#', format='ascii', names=('iwave', 'mag_ext'))
         return cls(data['iwave'], data['mag_ext'])
@@ -160,13 +159,13 @@ class AtmosphericExtinction:
         `numpy.ndarray`_
             The correction factor at each wavelength.  Shape matches ``wave``.
         """
-
+        # Warn if extrapolation is necessary
         if np.amin(wave) < np.amin(self.wave) or np.amax(wave) > np.amax(self.wave):
             msgs.warn(
                 'Spectral regions outside of the bounds of the atmospheric extinction curve are '
                 'set to the nearest value.'
             )
-
+        # Setup the interpolator
         _mag_ext = interpolate.interp1d(
             self.wave, self.mag_ext, bounds_error=False,
             fill_value=(self.mag_ext[0],self.mag_ext[-1])

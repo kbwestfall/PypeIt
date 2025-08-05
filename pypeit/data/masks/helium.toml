@@ -1,0 +1,13 @@
+# Prominent HeII lines not overlapped by hydrogen lines:
+#    Vacuum wavelengths from Hubeney & Milhas (2015)
+#    "Theory of Stellar Atmospheres", p. 191.
+
+[heII]
+
+width = 10.0
+center = [
+    4687.2,     # 3 -> 4
+    4542.9,     # 4 -> 9
+    5413.1,     # 4 -> 7
+    10126.6,    # 4 -> 5
+]

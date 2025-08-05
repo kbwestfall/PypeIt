@@ -1,0 +1,678 @@
+"""
+Container class for an archived standard star spectrum used for flux
+calibration.
+
+.. include common links, assuming primary doc root is up one directory
+.. include:: ../include/links.rst
+"""
+
+from IPython import embed
+
+import numpy as np
+
+from astropy import units
+from astropy import constants
+from astropy import coordinates
+from astropy import table
+from astropy.io import fits
+from astropy.io import ascii
+
+from pypeit import msgs
+from pypeit import dataPaths
+from pypeit.pypmsgs import PypeItError
+from pypeit.core import spectrum
+from pypeit.utils import all_subclasses
+
+
+def mAB_to_cgs(wave, mAB):
+    """
+    Convert AB magnitudes to flambda cgs unit erg cm^-2 s^-1 A^-1
+
+    Parameters
+    ----------
+    wave: float, `numpy.ndarray`_
+        Vacuum Wavelength in Angstrom.
+    mAB : float, `numpy.ndarray`_
+        AB magnitudes.  If an array, shape must match ``wave``.
+
+    Returns
+    -------
+    float, `numpy.ndarray`_
+        f_lambda flux in cgs units.  Returned as scalar or array depending on
+        input.
+    """
+    _mAB = np.asarray(mAB) if isinstance(mAB, list) else mAB
+    _wave = np.asarray(wave) if isinstance(wave, list) else wave
+    return 10**((-48.6-_mAB)/2.5)*3*10**18/_wave**2
+
+
+def airtovac(wave):
+    """
+    Convert air-based wavelengths to vacuum
+
+    Parameters
+    ----------
+    wave : float, array-like
+        Air wavelengths in Angstroms
+
+    Returns
+    -------
+    float, `numpy.ndarray`_
+        Vacuum wavelengths in Angstroms.  Type matches input.
+    """
+    # Standard conversion format
+    _wave = np.asarray(wave) if isinstance(wave, list) else wave
+    sigma_sq = (1.e4/_wave)**2. #wavenumber squared
+    factor = 1 + (5.792105e-2/(238.0185-sigma_sq)) + (1.67918e-3/(57.362-sigma_sq))
+    factor = factor*(_wave>=2000.) + 1.*(_wave<2000.) #only modify above 2000A
+    return _wave * factor
+
+
+def nearest_archive_entry(archive, ra, dec, unit=None):
+    """
+    Find the row of data in the specified archive with coordinates nearest
+    to the provided coordinates.
+
+    Parameters
+    ----------
+    archive : str
+        Name of the archive to search.  It must be one of the valid
+        archives.
+    ra, dec : float, str
+        On-sky coordinates.  If ``units`` are None, the coordinates assumed to
+        be in degree if provided as floats, and they are assumed to be in hours
+        and degrees if provided as (e.g., sexagesimal) strings.
+    unit : str, tuple, optional
+        Units for the on-sky coordinates.  See ``ra`` and ``dec`` for the
+        default behavior.
+
+    Returns
+    -------
+    float
+        Separation between the nearest standard star and the provided coordinates.
+    `astropy.table.Row`_
+        Single table row with the data from the archive.
+    """
+    # Instatiate the coordinates
+    if unit is None:
+        _unit = units.deg if isinstance(ra, (float, np.floating)) \
+                    else (units.hourangle, units.deg)
+    else:
+        _unit = unit
+    obj_coord = coordinates.SkyCoord([ra], [dec], unit=_unit)
+    if obj_coord.size > 1:
+        msgs.error('Matching to archive can only be done one object at a time.')
+
+    # Get the file
+    stds_path = dataPaths.standards / archive  # This creates a new PypeItDataPath object
+    star_file = stds_path.get_file_path(f"{archive}_info.txt")
+    if not star_file.is_file():
+        msgs.error(f"File does not exist!: {star_file}")
+
+    star_tbl = table.Table.read(star_file, comment='#', format='ascii')
+    star_coords = coordinates.SkyCoord(star_tbl['RA_2000'], star_tbl['DEC_2000'],
+                                       unit=(units.hourangle, units.deg))
+    # This returns 
+    idx, d2d = coordinates.match_coordinates_sky(obj_coord, star_coords, nthneighbor=1)[:2]
+    return d2d[0], star_tbl[idx[0]]
+
+
+class ArchivedFluxStandard(spectrum.Spectrum):
+    
+    archive = None
+    path = None
+
+    @classmethod
+    def nearest_standard(cls, ra, dec):
+        """
+        Find the standard star with an archived calibrated spectrum nearest the
+        provided set of coordinates.
+
+        Parameters
+        ----------
+        ra, dec : float, str
+            On-sky coordinates (as either decimal or sexagesimal string format)
+
+        Returns
+        -------
+        float
+            Separation between the nearest standard star and the provided coordinates.
+        str
+            Name of the object in the archive.
+        str
+            Name of the file with the archived spectrum.
+        """
+        sep, row = nearest_archive_entry(cls.archive, ra, dec)
+        return sep, row['Name'], row['File']
+
+    @classmethod
+    def from_coordinates(cls, ra, dec, tol=20.):
+        """
+        Instantiate the class using the spectrum for the object closest to the
+        provided set of coordinates.
+
+        Parameters
+        ----------
+        ra, dec : float, str
+            On-sky coordinates (as either decimal or sexagesimal string format)
+        tol : float, optional
+            Tolerance for coordinate matching in arcmin
+        """
+        sep, row = nearest_archive_entry(cls.archive, ra, dec)
+        if sep > tol * units.arcmin:
+            msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to('arcmin').value} '
+                       f'arcmin, which is beyond the required tolerance ({tol} arcmin).')
+        return cls(row['File'], meta=dict(row))
+
+
+class CalSpecFluxStandard(ArchivedFluxStandard):
+    """
+    Container class for a calspec standard star spectrum.
+    """
+    archive = 'calspec'
+    path = dataPaths.standards / archive
+
+    def __init__(self, file, meta=None):
+        self.file = self.path.get_file_path(file)
+        with fits.open(self.file) as hdu:
+            wave = hdu[1].data['WAVELENGTH']
+            flux = hdu[1].data['FLUX'] * 1e17
+        super().__init__(wave, flux, meta=meta)
+
+
+class ESOFilFluxStandard(ArchivedFluxStandard):
+    """
+    Container class for an esofil standard star spectrum.
+    """
+    archive = 'esofil'
+    path = dataPaths.standards / archive
+
+    def __init__(self, file, meta=None):
+        self.file = self.path.get_file_path(file)
+        if not self.file.name.startswith('f'):
+            msgs.error('The ESO reference standard filename must start with the string '
+                        '`f`;  make sure it is the case. Also make sure that the flux '
+                        'units in the file are in 10**(-16) erg/s/cm2/AA.')
+
+        std_spec = table.Table.read(self.file, format='ascii')
+        wave = std_spec['col1']
+        flux = std_spec['col2'] * 10    # Convert from 1e-16 to 1e-17 erg/s/cm^2/Angstrom
+
+        # At this low resolution, best to throw out entries affected by A and B-band absorption
+        gpm = np.logical_not((wave > 7551.) & (wave < 7749.))
+        super().__init__(wave[gpm], flux[gpm], meta=meta)
+
+
+class INGFluxStandard(ArchivedFluxStandard):
+    """
+    Container class for a calspec standard star spectrum.
+    """
+    archive = 'ing'
+    path = dataPaths.standards / archive
+
+    def __init__(self, file, meta=None):
+        self.file = self.path.get_file_path(file)
+        std_spec = table.Table.read(self.file, format='ascii')
+        wave = std_spec['col1']
+        flux = mAB_to_cgs(std_spec['col1'], std_spec['col2']) * 1e17
+
+        # At this low resolution, best to throw out entries affected by A and B-band absorption
+        gpm = np.logical_not((wave > 7551.) & (wave < 7749.))
+        super().__init__(wave[gpm], flux[gpm], meta=meta)
+
+
+class NOAOFluxStandard(ArchivedFluxStandard):
+    """
+    Container class for a calspec standard star spectrum.
+    """
+    archive = 'noao'
+    path = dataPaths.standards / archive
+
+    def __init__(self, file, meta=None):
+
+        self.file = self.path.get_file_path(file)
+        std_spec = table.Table.read(self.file, format='ascii')
+        wave = std_spec['col1']
+        flux = mAB_to_cgs(std_spec['col1'], std_spec['col2']) * 1e17
+
+        # At this low resolution, best to throw out entries affected by A and B-band absorption
+        gpm = np.logical_not((wave > 7551.) & (wave < 7749.))
+        super().__init__(wave[gpm], flux[gpm], meta=meta)
+
+
+class XShooterFluxStandard(ArchivedFluxStandard):
+    """
+    Container class for a calspec standard star spectrum.
+    """
+    archive = 'xshooter'
+    path = dataPaths.standards / archive
+
+    def __init__(self, file, meta=None):
+        self.file = self.path.get_file_path(file)
+        std_spec = table.Table.read(self.file, format='ascii')
+        # XShooter standard files use air wavelengths, convert them to vacuum
+        wave = airtovac(std_spec['col1'])
+        flux = std_spec['col2'] * 1e17
+        super().__init__(wave, flux, meta=meta)
+
+
+def archived_flux_classes():
+    """
+    Construct a dictionary with the set of classes that subclass from
+    :class:`ArchivedFluxStandard`.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys that identify the archive name and values that are
+        the classes.
+    """
+    # Recursively collect all subclasses
+    c = np.array(list(all_subclasses(ArchivedFluxStandard)))
+    # Select classes with a defined archive name
+    c = c[[cls.archive is not None for cls in c]]
+    # Construct a dictionary with the archive and class
+    srt = np.argsort(np.array([cls.archive for cls in c]))
+    return dict([ (cls.archive,cls) for cls in c[srt]])
+
+
+class BlackbodyStandard(spectrum.Spectrum):
+    """
+    Generate a blackbody spectrum based on the normalisation and effective
+    temperature.  See Suzuki & Fukugita, 2018, AJ, 156, 219:
+    https://ui.adsabs.harvard.edu/abs/2018AJ....156..219S/abstract
+
+    Parameters
+    ----------
+    a : float
+        flux normalisation factor (dimensionless)
+    teff : float
+        Effective temperature of the blackbody in Kelvin
+    wave : array-like, optional
+        Vacuum wavelength in angstroms at which to calculate the blackbody flux.
+        If None, the default wavelength range is set to 912 - 26000 Angstrom at
+        a step of 0.1 Angstrom.
+    """
+
+    archive = 'blackbody'
+
+    def __init__(self, a, teff, wave=None, meta=None):
+        if wave is None:
+            resln = 0.1  # Resolution to generate the blackbody spectrum
+            _wave = np.arange(912.0, 26000.0, resln) * units.AA
+        else:
+            _wave = np.asarray(wave) * units.AA
+        _teff = teff * units.K
+        # Calculate the function
+        flam = (a * 2 * constants.h * constants.c**2 / _wave**5) / (
+            np.exp((constants.h * constants.c / 
+                   (_wave * constants.k_B * _teff)).to(units.m/units.m).value
+            ) - 1.0
+        )
+        flam = flam.to(units.erg / units.s / units.cm ** 2 / units.AA).value / 1e-17
+        super().__init__(_wave.value, flam, meta=meta)
+
+    @classmethod
+    def nearest_blackbody_coeffs(cls, ra, dec):
+        sep, row = nearest_archive_entry(cls.archive, ra, dec)
+        return sep, row['Name'], row['a_x10m23'], row['T_K']
+
+    @classmethod
+    def from_coordinates(cls, ra, dec, tol=20., wave=None):
+        """
+        Instantiate the class using coefficients for the object closest to the
+        provided set of coordinates.
+
+        Parameters
+        ----------
+        ra, dec : float, str
+            On-sky coordinates (as either decimal or sexagesimal string format)
+        tol : float, optional
+            Tolerance for coordinate matching in arcmin
+        wave : array-like, optional
+            Vacuum wavelength in angstroms at which to calculate the blackbody flux.
+            If None, the default wavelength range is set to 912 - 26000 Angstrom at
+            a step of 0.1 Angstrom.
+        """
+        sep, row = nearest_archive_entry(cls.archive, ra, dec)
+        if sep > tol * units.arcmin:
+            msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to('arcmin').value} '
+                       f'arcmin, which is beyond the required tolerance ({tol} arcmin).')
+        return cls(row['a_x10m23'], row['T_K'], wave=wave, meta=dict(row))
+
+
+class KuruczModelStandard(spectrum.Spectrum):
+    """
+    The Kurucz stellar model for a given apparent magnitude and spectral type.
+
+    The spectrum is instantiated as follows:
+
+        - Get the temperature, logg, and bolometric luminosity from the
+          Schmidt-Kaler (1982) table for the provided spectral type.
+        - Find the nearest neighbor in the Kurucz stellar atmosphere ATLAS.
+        - Convert the units for the wavelength and flux.
+
+    .. warning::
+
+        Spectra can currently only be generated for spectral types provided in
+        the Schmidt-Kaler (1982) table.  See
+        :ref:`here<https://github.com/pypeit/PypeIt/blob/release/pypeit/data/standards/kurucz93/schmidt-kaler_table.txt>`
+        for available spectral types.
+
+    Parameters
+    ----------
+    V_mag : float
+        Apparent magnitude of the star in the V band (Vega system).
+    spectral_type : str
+        Stellar spectral type
+    """
+    def __init__(self, V_mag, spectral_type):
+
+        # Load Schmidt-Kaler (1982) table
+        sk82_file = dataPaths.standards.get_file_path('kurucz93/schmidt-kaler_table.txt')
+        sk82_tab = ascii.read(
+            sk82_file,
+            names=('Sp', 'logTeff', 'Teff', '(B-V)_0', 'M_V', 'B.C.', 'M_bol', 'L/L_sol')
+        )
+
+        # Match input type.
+        # TODO: currently this only works on select stellar types. Add ability to
+        # interpolate across types.
+        indx = np.where(spectral_type == sk82_tab['Sp'])[0]
+        if len(indx) != 1:
+            msgs.error(
+                f'Provided spectral type {spectral_type} not available in Schmidt-Kaler (1982) '
+                'table.  See the KuruczModelStandard API.'
+            )
+        indx = indx[0]
+
+        # log(g) of the Sun
+        logg_sol = np.log10(6.67259e-8) + np.log10(1.989e33) - 2.0 * np.log10(6.96e10)
+
+        # Relation between radius, temp, and bolometric luminosity
+        logR = 0.2 * (42.26 - sk82_tab['M_bol'][indx] - 10.0 * sk82_tab['logTeff'][indx])
+
+        # Mass-bolometric luminosity relation from schimdt-kaler p28 valid for M_bol < 7.5
+        logM = 0.46 - 0.10 * sk82_tab['M_bol'][indx]
+        logg = logM - 2.0 * logR + logg_sol
+        M_V = sk82_tab['M_V'][indx]
+        Teff = sk82_tab['Teff'][indx]
+
+        # Distance modulus
+        logd = 0.2 * (V_mag - M_V) + 1.0
+        D = constants.pc.cgs.value * 10. ** logd
+        R = constants.R_sun.cgs.value * 10. ** logR
+
+        # Factor converts the Kurucz surface flux densities to flux observed on Earth
+        flux_factor = (R / D) ** 2
+
+        # Grab closest T in Kurucz SEDs
+        T1 = 3000. + np.arange(28) * 250
+        T2 = 10000. + np.arange(6) * 500
+        T3 = 13000. + np.arange(22) * 1000
+        T4 = 35000. + np.arange(7) * 2500
+        Tk = np.concatenate([T1, T2, T3, T4])
+        indT = np.argmin(np.abs(Tk - Teff))
+
+        # Grab closest g in Kurucz SEDs
+        loggk = np.arange(11) * 0.5
+        indg = np.argmin(np.abs(loggk - logg))
+        gdict = { 0: 'g00', 1: 'g05', 2: 'g10', 3: 'g15',  4: 'g20', 5: 'g25',
+                  6: 'g30', 7: 'g35', 8: 'g40', 9: 'g45', 10: 'g50'}
+
+        # Grab Kurucz filename
+        meta = dict(sk82_tab[indx])
+        meta['V_mag'] = V_mag
+        std_file = dataPaths.standards.get_file_path(f'kurucz93/kp00/kp00_{int(Tk[indT])}.fits.gz')
+        with fits.open(std_file) as hdu:
+            return super().__init__(
+                hdu[1].data['WAVELENGTH'],
+                hdu[1].data[gdict[indg]] * flux_factor * 1e17,
+                meta=meta
+            )
+
+
+class VegaStandard(spectrum.Spectrum):
+    """
+    Provides a Vega spectrum from TSpecTool.
+
+    Parameters
+    ----------
+    V_mag : float
+        The V-band magnitude for the star.
+    """
+    def __init__(self, V_mag):
+        file = dataPaths.standards.get_file_path('vega_tspectool_vacuum.dat')
+        data = table.Table.read(file, comment='#', format='ascii')
+        return super().__init__(
+            data['col1'],
+            data['col2'] * 10**(0.4*(0.03-V_mag)) * 1e17,
+            meta={'V_mag': V_mag}
+        )
+
+
+class PhoenixStandard(spectrum.Spectrum):
+    """
+    Provides the PHOENIX spectrum.
+
+    Parameters
+    ----------
+    V_mag : float
+        The V-band magnitude for the star.
+    """
+    def __init__(self, V_mag):
+        file = dataPaths.standards.get_file_path('PHOENIX_10000K_4p0.fits')
+        data = table.Table.read(file, format='fits')
+        return super().__init__(
+            data['Wavelength'],
+            data['Flux'] * 10**(0.4*(0.03-V_mag)) * 1e6,
+            meta={'V_mag': V_mag}
+        )
+    
+
+class PseudoStandard(spectrum.Spectrum):
+    """
+    Provides a unity continuum spectrum.
+
+    Parameters
+    ----------
+    wave : array-like, optional
+        The wavelength array to use.  If None, wavelengths range from 0.2-5
+        micron in steps of 1 Angstrom.
+    """
+    def __init__(self, wave=None):
+        _wave = np.arange(2000,50000,1.0) if wave is None else np.asarray(wave)
+        return super().__init__(_wave, np.ones(_wave.shape, dtype=float))
+
+
+def get_archive_sets(archives=['xshooter', 'calspec', 'esofil', 'noao', 'ing']):
+    """
+    Helper function to setup the prioritized list of archive sets to search
+    through when matching a set of coordinates to a file containing the flux
+    standard data.
+
+    Parameters
+    ----------
+    archives : array-like, str, optional
+        Name of the archives to search, in a prioritized order.  If None, all
+        archives are searched.
+
+    Returns
+    -------
+    `numpy.ndarray`_
+        The list of standard sets to search
+
+    Raises
+    ------
+    PypeItError
+        Raised if none of the provided sets are recognized.
+    """
+    archive_classes = archived_flux_classes()
+
+    _archives = np.asarray([archives] if isinstance(archives, str) else archives)
+    good = np.ones(len(_archives), dtype=bool)
+    for i, s in enumerate(_archives):
+        if s not in archive_classes.keys():
+            msgs.warn(f'{s} is not a recognized archive of standard spectra.  Ignoring.')
+            good[i] = False
+    if not any(good):
+        msgs.error('None of the provided standard spectra archives are valid.  Try using '
+                   'the default list.')
+    return _archives[good]
+
+
+def get_archive_standard(ra, dec, tol=20., archives='default'):
+    """
+    Attempt to find and return an archive flux calibration spectrum that is
+    closest to the provided coordinates.
+
+    The archives searched *always* start with the empirical archives (see
+    :func:`~pypeit.core.standard.get_archive_standard`).  If no archive match is
+    found, the function attempts (unless explicitly excluded via the
+    ``archives`` argument) to find a suitable set of blackbody parameters; see
+    :class:`~pypeit.core.standard.BlackbodyStandard`.
+    
+    Parameters
+    ----------
+    ra, dec : float, str, optional
+        On-sky coordinates (as either decimal or sexagesimal string format)
+    tol : float, optional
+        The matching tolerance used in arcmin.
+    archives : array-like, str, optional
+        Name of the archives to search, in a prioritized order.  If
+        ``'default'``, all archives are searched.  To only search for suitable
+        blackbody parameters, set ``archives='blackbody'``.
+
+    Returns
+    -------
+    spectrum.Spectrum
+        The standard spectrum.
+    """
+    archive_classes = archived_flux_classes()
+    # NOTE: The if statement below has to use `'default' in archives` to allow
+    # for archives to be provided as numpy array; i.e., the statement `archives
+    # == default` yields a boolean array.  The statement as is works for
+    # strings, lists, and arrays.  If `archives` is provided as a list that
+    # includes "default", it will effectively ignore anything that isn't in the
+    # default list of archives...
+    try:
+        _archives = (
+            get_archive_sets() if 'default' in archives else get_archive_sets(archives=archives)
+        )
+    except PypeItError:
+        # It is possible for this to fail if the only archive set is 'blackbody'
+        _archives = np.asarray([])
+
+    for key in _archives:
+        try:
+            return archive_classes[key].from_coordinates(ra, dec, tol=tol)
+        except PypeItError:
+            # Ignore PypeItErrors, assuming they're because there was no object
+            # within tol
+            continue
+
+    # Try to find a nearby blackbody
+    # NOTE: The use of "in" here follows the same reason as above.  And note
+    # this is using `archives` (i.e., what was provided to the function) not
+    # `_archives` (i.e., how the function parses the input).
+    if 'default' in archives or 'blackbody' in archives:
+        _archives = np.append(_archives, ['blackbody'])
+        try:
+            return BlackbodyStandard.from_coordinates(ra, dec, tol=tol)
+        except PypeItError:
+            # Ignore PypeItErrors, assuming they're because there was no object
+            # within tol
+            pass
+
+    # Unable to find a standard within the provided tolerance.  Find the closest
+    # one, report it, and fault.
+    res = np.asarray(list([nearest_archive_entry(key, ra, dec) for key in _archives]))
+    indx = np.argmin(res[:,0])
+    sep, row = res[indx]
+    msgs.error(f'Unable to find a standard star within {tol:.1f} arcmin of RA={ra}, DEC={dec} in '
+               f'the following archives: {_archives}.  The nearest object is {row['Name']} in '
+               f'{_archives[indx]} at RA={row['RA_2000']}, DEC={row['DEC_2000']}, separated by '
+               f'{sep.to('arcmin').value:.1f} arcmin.')
+
+
+def get_model_standard(spectral_type, V_mag):
+    """
+    Return a model flux standard based on the spectral type and V-band magnitude.
+
+    The models returned are as follows:
+
+    If ``spectral type`` is:
+
+        - "A0": the TSpecTool spectrum of Vega is returned (see
+          :class:`VegaStandard`);
+
+        - "PHOENIX": a PHOENIX model of a Teff = 10k, log(g) = 4. star is
+          returned (see :class:`PhoenixStandard`);
+
+        - "NONE": A constant unity spectrum is returned (see
+          :class:`PseudoStandard`);
+
+        - otherwise, a Kurucz model is returned (see
+          :class:`KuruczModelStandard`).
+
+    Parameters
+    ----------
+    spectral_type : str
+        The spectral type of the star or the signifier of the spectrum to use.
+        See above.
+    V_mag : float
+        The V-band magnitude for the star.
+
+    Returns
+    -------
+    spectrum.Spectrum
+        The standard spectrum.
+    """
+    if spectral_type == 'A0':
+        return VegaStandard(V_mag)
+    if spectral_type == 'PHOENIX':
+        return PhoenixStandard(V_mag)
+    if spectral_type == 'NONE':
+        return PseudoStandard()
+    return KuruczModelStandard(V_mag, spectral_type)
+
+
+def get_standard_spectrum(spectral_type=None, V_mag=None, ra=None, dec=None, tol=20.,
+                          archives='default'):
+    """
+    Return a standard spectrum.
+
+    Must provide either the spectral type and the magnitude (for use with
+    :func:`~pypeit.core.standard.get_model_standard`) or a set of on-sky
+    coordinates (for use with
+    :func:`~pypeit.core.standard.get_archive_standard`).  If all four are
+    provided, the spectral type and magnitude take precedence.
+
+    Parameters
+    ----------
+    spectral_type : str, optional
+        The spectral type of the star or the signifier of the spectrum to use.
+        See :func:`~pypeit.core.standard.get_model_standard`.
+    V_mag : float, optional
+        The V-band magnitude for the star.
+    ra, dec : float, str, optional
+        On-sky coordinates (as either decimal or sexagesimal string format)
+    tol : float, optional
+        The matching tolerance used in arcmin.
+    archives : array-like, str, optional
+        Name of the archives to search, in a prioritized order.  If
+        ``'default'``, all archives are searched.
+
+    Returns
+    -------
+    spectrum.Spectrum
+        Standard star spectrum
+    """
+    if spectral_type is not None and V_mag is not None:
+        return get_model_standard(spectral_type, V_mag)
+    if ra is None or dec is None:
+        msgs.error('Insufficient data provided to determine the appropriate standard spectrum.  '
+                   'Provide either the coordinates of the standard or a stellar type and '
+                   'magnitude.')
+    return get_archive_standard(ra, dec, tol=tol, archives=archives)
+
