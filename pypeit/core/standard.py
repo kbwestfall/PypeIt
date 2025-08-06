@@ -297,6 +297,7 @@ class BlackbodyStandard(spectrum.Spectrum):
     archive = 'blackbody'
 
     def __init__(self, a, teff, wave=None, meta=None):
+        # TODO: Simplify the unit stuff here!
         if wave is None:
             resln = 0.1  # Resolution to generate the blackbody spectrum
             _wave = np.arange(912.0, 26000.0, resln) * units.AA
@@ -309,7 +310,8 @@ class BlackbodyStandard(spectrum.Spectrum):
                    (_wave * constants.k_B * _teff)).to(units.m/units.m).value
             ) - 1.0
         )
-        flam = flam.to(units.erg / units.s / units.cm ** 2 / units.AA).value / 1e-17
+        # Convert to 1e-17 erg/s/cm^2/Angstrom, and apply the "BB_SCALE_FACTOR" (1e-23)
+        flam = flam.to(units.erg / units.s / units.cm ** 2 / units.AA).value * 1e-6
         super().__init__(_wave.value, flam, meta=meta)
 
     @classmethod

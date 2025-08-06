@@ -186,7 +186,7 @@ def test_blackbody():
     bb = standard.BlackbodyStandard(4.0, 1e4)
     assert len(bb.wave) == 250880, 'Default length of spectrum changed'
     assert np.absolute(bb.wave[0] - 912.) < 1e-10, 'Initial wavelength changed'
-    assert np.absolute((bb.flux[0] - 1.06e23)/bb.flux[0]) < 0.01, 'Bad flux calculation'
+    assert np.absolute((bb.flux[0] - 1.063)/bb.flux[0]) < 1e-4, 'Bad flux calculation'
 
     _bb = standard.BlackbodyStandard(4.0, 1e4, wave=bb.wave[:10])
     assert len(_bb.wave) == 10, 'Length wrong'
@@ -203,7 +203,7 @@ def test_blackbody():
 
     # Increase the tolerance
     bb = standard.BlackbodyStandard.from_coordinates(180., 0., tol=800.)
-    assert np.absolute((bb.flux[0] - 3.59e23)/bb.flux[0]) < 0.01
+    assert np.absolute((bb.flux[0] - 3.59)/bb.flux[0]) < 0.01
 
     # Get the nearest set of coordinates and to make sure the search finds
     # something within the tolerance
@@ -211,7 +211,7 @@ def test_blackbody():
     coo = coordinates.SkyCoord(row['RA_2000'], row['DEC_2000'], unit=(units.hourangle, units.deg))
     bb = standard.BlackbodyStandard.from_coordinates(coo.ra.value, coo.dec.value)
     assert len(bb.wave) == 250880, 'Default length of spectrum changed'
-    assert np.absolute((bb.flux[0] - 3.59e23)/bb.flux[0]) < 0.01
+    assert np.absolute((bb.flux[0] - 3.59)/bb.flux[0]) < 0.01
     _bb = standard.BlackbodyStandard.from_coordinates(
         coo.ra.value, coo.dec.value, wave=bb.wave[:10]
     )
