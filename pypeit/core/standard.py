@@ -43,7 +43,7 @@ def mAB_to_cgs(wave, mAB):
     """
     _mAB = np.asarray(mAB) if isinstance(mAB, list) else mAB
     _wave = np.asarray(wave) if isinstance(wave, list) else wave
-    return 10**((-48.6-_mAB)/2.5)*3*10**18/_wave**2
+    return 10**((-48.6-_mAB)/2.5) * 3e18 / _wave**2
 
 
 def airtovac(wave):

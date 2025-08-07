@@ -108,7 +108,6 @@ def build_wavelength_gpm(wave, regions):
     wave : `numpy.ndarray`_
         Wavelength array.  Can have any shape.  Units must match the ``regions``
         array.
-
     regions : array-like
         Wavelength regions to mask.  Units must match the ``wave`` array.  Shape
         must be :math:`(N_{\rm mask},2)`, where :math:`N_{\rm mask}` is the
@@ -165,7 +164,6 @@ def telluric_mask(threshold, wave=None, sres=None, file='mktrans_zm_10_10.dat', 
         the wavelength vector is used to approximate the spectral resolution;
         see ``sres``.  If None, the mask is always returned as a set of
         wavelength regions.
-
     sres : array-like, optional
         The spectral resolution of the *observed* spectrum to be masked.  If
         both ``wave`` and ``sres`` are None, the mask is returned based on the
@@ -261,8 +259,28 @@ def telluric_mask(threshold, wave=None, sres=None, file='mktrans_zm_10_10.dat', 
 
 
 def telluric_mask_plot(threshold, wave, tspec_tran_cnv, mask_regions, ofile=None):
-    """
+    r"""
     Diagnostic plot for masking based on the atmospheric transmission spectrum.
+
+    Parameters
+    ----------
+    threshold : float
+        Transmission threshold.  Regions below this threshold are masked.
+    wave : `numpy.ndarray`_
+        Wavelength vector
+    tspec_tran_cnv : `numpy.ndarray`_
+        The atmospheric transmission spectrum used to define the mask regions.
+    mask_region : `numpy.ndarray`_
+        Wavelength regions to mask.  Units must match the ``wave`` array.  Shape
+        must be :math:`(N_{\rm mask},2)`, where :math:`N_{\rm mask}` is the
+        number of mask regions with a starting and ending wavelength.  Starting
+        and ending regions can be ``None``, meaning that the region only has a
+        upper or lower boundary; e.g., a mask range of ``[None, 3100.0]`` means
+        mask all wavelengths less than 3100.  See
+        :func:`~pypeit.core.wavemask.read_wavelength_masks`.
+    ofile : str, Path, optional
+        Filename for the plot, if an output file is desired.  If None, the plot
+        is shown to the screen.
     """
     w,h = pyplot.figaspect(1)
     fig = pyplot.figure(figsize=(2*w,h))

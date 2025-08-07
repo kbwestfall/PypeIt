@@ -7,6 +7,8 @@ Ideally this would be replaced by specutils.Spectrum
 
 import numpy as np
 
+from copy import deepcopy
+
 from pypeit import msgs
 from pypeit import utils
 
@@ -62,20 +64,30 @@ class Spectrum:
     def shape(self):
         return self.wave.shape
     
+    def copy(self):
+        """
+        Make a deepcopy of the object
+        """
+        _ivar = None if self.ivar is None else self.ivar.copy()
+        _meta = None if self.meta is None else deepcopy(self.meta)
+        return self.__class__(
+            self.wave.copy(), self.flux.copy(), ivar=_ivar, gpm=self.gpm.copy(), meta=_meta
+        )
+    
     def multiply(self, a):
         """
-        Multiply the spectrum by a scalar or vector.
+        Multiply the spectrum by a scalar, vector, or another spectrum.
 
         This modifies the spectrum in place.  If uncertainties are available,
-        they are propagated; when the multiplicative factor is 0, the inverse
-        variance (if available) is also set to 0.
+        they are propagated.  Any divisions by 0 result in an inverse variance
+        of 0 and the good pixel mask is set to False.
 
         Parameters
         ----------
-        a : scalar, array-like
+        a : scalar, array-like, :class:`pypeit.core.spectrum.Spectrum`
             Multiplicative factor.  If an array, its shape must match :attr:`flux`.
         """
-        if isinstance(a (int, np.integer, float, np.floating)):
+        if isinstance(a, (int, np.integer, float, np.floating)):
             if a == 0.:
                 msgs.warn('Multiplicative factor is 0!')
             self.flux *= a
@@ -85,6 +97,29 @@ class Spectrum:
                 else:
                     self.ivar *= 0.
             return
+
+        if isinstance(a, Spectrum):
+            # NOTE: This does *not* check that the wavelength vectors are the same!
+            if a.shape != self.shape:
+                msgs.error(f'Shape mismatch between this spectrum ({self.shape}) and the spectrum '
+                           f'to multiply by ({a.shape}).')
+            sqr_err_ratio = None
+            if self.ivar is not None:
+                # Square of the ratio between the error and flux in this spectrum
+                sqr_err_ratio = utils.inverse(self.flux**2 * self.ivar)
+            if a.ivar is not None:
+                # Square of the ratio between the error and flux in a
+                a_sqr_err_ratio = utils.inverse(a.flux**2 * a.ivar)
+                if sqr_err_ratio is None:
+                    sqr_err_ratio = a_sqr_err_ratio
+                else:
+                    sqr_err_ratio += a_sqr_err_ratio
+            self.flux *= a.flux
+            if sqr_err_ratio is not None:
+                sqr_err = self.flux**2 * sqr_err_ratio
+                self.ivar = utils.inverse(sqr_err)
+                self.gpm[np.logical_not(self.ivar > 0)] = False
+            return
         
         _a = np.asarray(a)
         if _a.shape != self.flux.shape:
@@ -93,6 +128,44 @@ class Spectrum:
         self.flux *= _a
         if self.ivar is not None:
             self.ivar *= utils.inverse(_a**2)
-            self.ivar[np.absolute(_a) == 0.] = 0.
+            self.gpm[np.logical_not(self.ivar > 0)] = False
 
+    def inverse(self):
+        """
+        Replace the spectrum with its multiplicative inverse.
+
+        This modifies the spectrum in place.  If uncertainties are available,
+        they are propagated.  Any divisions by 0 result in an inverse variance
+        of 0 and the good pixel mask is set to False.
+        """
+        if self.ivar is not None:
+            self.ivar *= self.flux**4
+            self.gpm[np.logical_not(self.ivar > 0)] = False
+        self.flux = utils.inverse(self.flux)
+
+    def to_magnitude(self, zeropoint=0.):
+        r"""
+        Convert the spectrum to magnitudes.
+
+        For fluxes, :math:`f`, this returns
+
+        .. math::
+
+            m = -2.5 \log_{\rm 10} (f) + Z,
+
+        where :math:`Z` is the provided zeropoint.
+
+        This modifies the spectrum in place.  If uncertainties are available,
+        they are propagated.  Any pixels with non-positive fluxes are masked.
+
+        Parameters
+        ----------
+        zeropoint : float, optional
+            The magnitude conversion zeropoint (see above)
+        """
+        if self.ivar is not None:
+            self.ivar *= (self.flux * np.log(10) / 2.5)**2
+        self.gpm[np.logical_not(self.flux > 0)] = False
+        self.flux[np.logical_not(self.gpm)] = 0.
+        self.flux[self.gpm] = -2.5 * np.log10(self.flux[self.gpm]) + zeropoint
 
