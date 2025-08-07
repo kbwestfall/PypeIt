@@ -278,8 +278,6 @@ class SensFunc(datamodel.DataContainer):
         self.std_dict = flux_calib.get_standard_spectrum(star_type=self.par['star_type'],
                                                          star_mag=self.par['star_mag'],
                                                          ra=star_ra, dec=star_dec)
-        embed()
-        exit()
 
     def _bundle(self):
         """
@@ -1051,6 +1049,36 @@ class UVISSensFunc(SensFunc):
         """
         Calls routine to compute the sensitivity function.
         """
+        np.savez_compressed(
+            'uvis_testing.npz',
+            wave_cnts=self.wave_cnts,
+            counts=self.counts,
+            counts_ivar=self.counts_ivar,
+            counts_mask=self.counts_mask,
+            exptime=[self.meta_spec['EXPTIME']],
+            airmass=[self.meta_spec['AIRMASS']],
+            std_arx=[str(self.std_dict['std_source'])],
+            std_name=[str(self.std_dict['name'])],
+            std_wave=self.std_dict['wave'].value,
+            std_flux=self.std_dict['flux'].value,
+            longitude=[self.meta_spec['LONGITUDE']],
+            latitude=[self.meta_spec['LATITUDE']],
+            extinct_file=[self.par['UVIS']['extinct_file']],
+            #ech_orders=self.meta_spec['ECH_ORDERS'],
+            polyorder=[self.par['polyorder']],
+            hydrogen_mask_wid=[self.par['hydrogen_mask_wid']],
+            mask_hydrogen_lines=[self.par['mask_hydrogen_lines']],
+            mask_helium_lines=[self.par['mask_helium_lines']],
+            nresln=[self.par['UVIS']['nresln']],
+            resolution=[self.par['UVIS']['resolution']],
+            trans_thresh=[self.par['UVIS']['trans_thresh']],
+            polycorrect=[self.par['UVIS']['polycorrect']],
+            polyfunc=[self.par['UVIS']['polyfunc']],
+        )
+        exit()
+
+
+
         meta_table, out_table = flux_calib.sensfunc(self.wave_cnts, self.counts, self.counts_ivar,
                                                     self.counts_mask, self.meta_spec['EXPTIME'],
                                                     self.meta_spec['AIRMASS'], self.std_dict,
