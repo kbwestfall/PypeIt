@@ -68,6 +68,37 @@ def airtovac(wave):
     return _wave * factor
 
 
+def archive_entry(archive, name):
+    """
+    Find the row of data in the specified archive associated with the named
+    source.
+
+    Parameters
+    ----------
+    archive : str
+        Name of the archive to search.  It must be one of the valid
+        archives.
+    name : str
+        The name of the archive source.  Must be an exact match.
+
+    Returns
+    -------
+    `astropy.table.Row`_
+        Single table row with the data from the archive.
+    """
+    # Get the file
+    stds_path = dataPaths.standards / archive  # This creates a new PypeItDataPath object
+    star_file = stds_path.get_file_path(f'{archive}_info.txt')
+    if not star_file.is_file():
+        msgs.error(f'File does not exist!: {star_file}')
+
+    star_tbl = table.Table.read(star_file, comment='#', format='ascii')
+    idx = np.where(star_tbl['Name'] == name)[0]
+    if len(idx) != 1:
+        msgs.error(f'{name} is not a named source in {star_file}.')
+    return star_tbl[idx[0]]
+
+
 def nearest_archive_entry(archive, ra, dec, unit=None):
     """
     Find the row of data in the specified archive with coordinates nearest
@@ -162,6 +193,19 @@ class ArchivedFluxStandard(spectrum.Spectrum):
         if sep > tol * units.arcmin:
             msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to('arcmin').value} '
                        f'arcmin, which is beyond the required tolerance ({tol} arcmin).')
+        return cls(row['File'], meta=dict(row))
+
+    @classmethod
+    def from_name(cls, name):
+        """
+        Instantiate from the name of an archive source.
+
+        Parameters
+        ----------
+        name : str
+            Name of the source in the archive data table
+        """
+        row = archive_entry(cls.archive, name)
         return cls(row['File'], meta=dict(row))
 
 
@@ -340,6 +384,19 @@ class BlackbodyStandard(spectrum.Spectrum):
         if sep > tol * units.arcmin:
             msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to('arcmin').value} '
                        f'arcmin, which is beyond the required tolerance ({tol} arcmin).')
+        return cls(row['a_x10m23'], row['T_K'], wave=wave, meta=dict(row))
+
+    @classmethod
+    def from_name(cls, name, wave=None):
+        """
+        Instantiate from the name of an archive source.
+
+        Parameters
+        ----------
+        name : str
+            Name of the source in the archive data table
+        """
+        row = archive_entry(cls.archive, name)
         return cls(row['a_x10m23'], row['T_K'], wave=wave, meta=dict(row))
 
 

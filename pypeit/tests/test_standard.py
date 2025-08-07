@@ -57,6 +57,28 @@ def test_airtovac():
     assert np.absolute(vac[0] - air[0]) < 1e-10, 'Should not alter wave < 2000'
 
 
+def test_archive_entry():
+    archives = {
+        'blackbody': 'BB113337-110529',
+        'calspec': 'HD106252',
+        'esofil': 'HR4468',
+        'ing': 'SP0946+139',
+        'noao': 'EG81',
+        'xshooter': 'GD153',
+    }
+    for archive, name in archives.items():
+        row = standard.archive_entry(archive, name)
+        assert row['Name'] == name, 'Name mismatch'
+
+    # Test bogus archive
+    with pytest.raises(PypeItError):
+        row = standard.archive_entry('bogus', 'junk')
+
+    # Test inability to find a match
+    with pytest.raises(PypeItError):
+        row = standard.archive_entry('xshooter', 'junk')
+
+
 def test_nearest_standard():
     # Test known values
     archives = {
@@ -157,6 +179,12 @@ def test_archived_standards():
         assert np.absolute(spec.wave[0] - meta['wave0']) < 0.01, 'Bad wave'
         assert np.absolute(np.median(spec.flux) - meta['med_flux']) < 0.01, 'Bad flux'
 
+        # Test name match
+        spec = archive_classes[archive].from_name(meta['name'])
+        assert spec.meta['Name'] == meta['name'], 'Name mismatch'
+        assert np.absolute(spec.wave[0] - meta['wave0']) < 0.01, 'Bad wave'
+        assert np.absolute(np.median(spec.flux) - meta['med_flux']) < 0.01, 'Bad flux'
+
         # Improve the coordinates
         coo = coordinates.SkyCoord(
             row['RA_2000'], row['DEC_2000'], unit=(units.hourangle, units.deg)
@@ -203,7 +231,11 @@ def test_blackbody():
 
     # Increase the tolerance
     bb = standard.BlackbodyStandard.from_coordinates(180., 0., tol=800.)
-    assert np.absolute((bb.flux[0] - 3.59)/bb.flux[0]) < 0.01
+    assert np.absolute((bb.flux[0] - 3.59)/bb.flux[0]) < 0.01, 'Bad fluxes'
+
+    # Use the name
+    bb = standard.BlackbodyStandard.from_name('BB113337-110529')
+    assert np.absolute((bb.flux[0] - 3.59)/bb.flux[0]) < 0.01, 'Bad fluxes'
 
     # Get the nearest set of coordinates and to make sure the search finds
     # something within the tolerance
@@ -211,10 +243,14 @@ def test_blackbody():
     coo = coordinates.SkyCoord(row['RA_2000'], row['DEC_2000'], unit=(units.hourangle, units.deg))
     bb = standard.BlackbodyStandard.from_coordinates(coo.ra.value, coo.dec.value)
     assert len(bb.wave) == 250880, 'Default length of spectrum changed'
-    assert np.absolute((bb.flux[0] - 3.59)/bb.flux[0]) < 0.01
+    assert np.absolute((bb.flux[0] - 3.59)/bb.flux[0]) < 0.01, 'Bad fluxes'
     _bb = standard.BlackbodyStandard.from_coordinates(
         coo.ra.value, coo.dec.value, wave=bb.wave[:10]
     )
+    assert len(_bb.wave) == 10, 'Length wrong'
+    assert np.array_equal(_bb.wave, bb.wave[:10]), 'Bad wavelength array'
+    assert np.array_equal(_bb.flux, bb.flux[:10]), 'Bad fluxes'
+    _bb = standard.BlackbodyStandard.from_name(bb.meta['Name'], wave=bb.wave[:10])
     assert len(_bb.wave) == 10, 'Length wrong'
     assert np.array_equal(_bb.wave, bb.wave[:10]), 'Bad wavelength array'
     assert np.array_equal(_bb.flux, bb.flux[:10]), 'Bad fluxes'
