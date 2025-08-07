@@ -542,25 +542,35 @@ def optical_modelThAr(resolution, waveminmax=(3000.,10500.), dlam=40.0,
     return np.array(wave), np.array(thar_spec)
 
 
+# TODO: Replace this with a more accurate algorithm
 def conv2res(wavelength, flux, resolution, central_wl='midpt',
-             debug=False):
-    """Convolve an imput spectrum to a specific resolution. This is only
-    approximate. It takes a fix FWHM for the entire spectrum given by:
-    fwhm = wl_cent / resolution
+             debug=False, current_resolution=None):
+    r"""
+    Convolve an input spectrum to a desired resolution.
 
+    The method assumes the resolution element has a fixed FWHM, computed as the
+    central wavelength divided by the resolution (:math:`R =
+    \lambda/\Delta\lambda`).
+     
     Parameters
     ----------
     wavelength : `numpy.ndarray`_
-        wavelength
+        Wavelength vector
     flux : `numpy.ndarray`_
-        flux
+        Flux vector
     resolution : float
-        resolution of the spectrograph
-    central_wl 
-        if 'midpt' the central pixel of wavelength is used, otherwise
-        the central_wl will be used.
-    debug : bool
+        *Desired* spectral resolution.
+    central_wl  : str, float, optional
+        The central wavelength to use for calculating the spectral resolution
+        element.  If ``'midpt'``, the central pixel of wavelength is used.
+        Otherwise, the provided value should be convertible to a float.
+    debug : bool, optional
         If True will show debug plots
+    current_resolution : float, optional
+        The *current* resolution of the spectrum.  If None, the current
+        resolution is ignored (effectively assuming it is infinite).  If
+        provided, the convolution kernel represents the difference between the
+        current and desired resolution.
 
     Returns
     -------
@@ -575,14 +585,24 @@ def conv2res(wavelength, flux, resolution, central_wl='midpt',
     if central_wl == 'midpt':
         wl_cent = np.median(wavelength)
     else:
-        wl_cent = float(central_wl)
+        try:
+            wl_cent = float(central_wl)
+        except ValueError:
+            msgs.error(f'Unable to convert {central_wl} to a float')
+
     wl_sigma =  wl_cent / resolution / 2.355
-    wl_bin = np.abs((wavelength - np.roll(wavelength,1))[np.where( np.abs(wavelength-wl_cent) == np.min(np.abs(wavelength-wl_cent)) )])
-    msgs.info("The binning of the wavelength array at {} is: {}".format(wl_cent, wl_bin[0]))
-    px_bin = wl_bin[0]
+    if current_resolution is not None:
+        if current_resolution < resolution:
+            msgs.error('Current resolution is lower than desired resolution.')
+        wl_sigma = np.sqrt(wl_sigma**2 - (wl_cent / current_resolution / 2.355)**2)
+
+    indx = np.argmin(np.abs(wavelength-wl_cent))
+    px_bin = wavelength[indx] - wavelength[indx-1] \
+                if indx > 0 else wavelength[indx+1] - wavelength[indx]
+    msgs.info(f"The binning of the wavelength array at {wl_cent:.1f} is: {px_bin:.1f}")
     px_sigma = wl_sigma / px_bin
 
-    msgs.info("Covolving with a Gaussian kernel with sigma = {} pixels".format(px_sigma))
+    msgs.info(f"Covolving with a Gaussian kernel with sigma = {px_sigma:.1f} pixels")
     gauss_kernel = Gaussian1DKernel(px_sigma)
 
     flux_convolved = convolve(flux, gauss_kernel)
