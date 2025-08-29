@@ -5,9 +5,8 @@ Ideally this would be replaced by specutils.Spectrum
 
 """
 
+import copy
 import numpy as np
-
-from copy import deepcopy
 
 from pypeit import msgs
 from pypeit import utils
@@ -64,12 +63,16 @@ class Spectrum:
     def shape(self):
         return self.wave.shape
     
+    @property
+    def ndim(self):
+        return self.wave.ndim
+    
     def copy(self):
         """
         Make a deepcopy of the object
         """
         _ivar = None if self.ivar is None else self.ivar.copy()
-        _meta = None if self.meta is None else deepcopy(self.meta)
+        _meta = None if self.meta is None else copy.deepcopy(self.meta)
         return self.__class__(
             self.wave.copy(), self.flux.copy(), ivar=_ivar, gpm=self.gpm.copy(), meta=_meta
         )

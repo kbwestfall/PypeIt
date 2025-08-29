@@ -28,6 +28,7 @@ from pypeit import sampling
 from pypeit.wavemodel import conv2res
 from pypeit.core.wavecal import wvutils
 from pypeit.core import fitting
+from pypeit.core import spectrum
 from pypeit.core import wave
 from pypeit.core import wavemask
 from pypeit import dataPaths
@@ -53,6 +54,11 @@ def zp_unit_const():
 # = 40.092117379602044
 ZP_UNIT_CONST = zp_unit_const()
 
+
+#def sensfunc(wave, counts, counts_ivar, counts_mask, exptime, airmass, std_dict, longitude, latitude, extinctfilepar, ech_orders=None,
+#             mask_hydrogen_lines=True, mask_helium_lines=False,
+#             polyorder=4, hydrogen_mask_wid=10.0, nresln=20., resolution=3000.,
+#             trans_thresh=0.9,polycorrect=True, polyfunc=False, debug=False):
 
 
 def sensfunc(obs_spec, atm_ext, exptime, std_spec, region_gpm=None, polyorder=4, nresln=20.,
@@ -828,7 +834,9 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
     ----------
     obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
         Observed spectrum.  The input wavelength and flux units are expected to
-        be angstroms and counts, respectively.
+        be angstroms and counts, respectively.  The spectrum is expected to be a
+        single vector.  Note that the good-pixel mask is used to ignore pixels
+        during the fit; see also ``region_mask``.
     std_spec : :class:`~pypeit.core.spectrum.Spectrum`
         Standard, flux calibrated spectrum.  Flux must be in :math:`10^{-17}
         {\rm erg/s/cm}^2/\AA`.  Must be sampled at the same wavelengths as the
@@ -887,13 +895,26 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
         included in the bspline fit.  Note this can be different from
         ``fit_rej_gpm``, which excludes measurements that are rejected during
         the iterative fitting procedure.  Shape matches ``zp_spec``.
-    zp_fit : `numpy.ndarray`_
-        The best-fitting bspline model for the zeropoints.  Shape matches
-        ``zp_spec``.
-    fit_rej_gpm : `numpy.ndarray`_
+    fit_gpm_rej : `numpy.ndarray`_
         Same as ``fit_gpm``, except that measurements rejected by the iterative
         fitting procedures have been flagged as bad.  Shape matches ``zp_spec``.
+    zp_model : `numpy.ndarray`_
+        The best-fitting bspline model for the zeropoints; see the first object
+        returned by :func:`~pypeit.bspline.bspline.bspline.value`.  Shape
+        matches ``zp_spec``.
+    zp_model_gpm : `numpy.ndarray`_
+        A good-pixel mask indicating where the best-fitting bspline model for
+        the zeropoints is *defined*; see the second object returned by
+        :func:`~pypeit.bspline.bspline.bspline.value`.  Shape matches
+        ``zp_spec``.
     """
+    # Check the input
+    if not isinstance(obs_spec, spectrum.Spectrum):
+        msgs.error('Must provide observed spectrum as a Spectrum object.')
+    if obs_spec.ndim != 1:
+        msgs.error('Must provide a single observed spectrum.')
+    if not isinstance(std_spec, spectrum.Spectrum):
+        msgs.error('Must provide standard spectrum as a Spectrum object.')
     if not np.allclose(obs_spec.wave, std_spec.wave):
         msgs.error('Standard spectrum is expected to be sampled at the same wavelengths as the '
                    'observed spectrum.')
@@ -931,7 +952,7 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
 
     # Perform the fit
     kwargs_reject = {'maxrej': 5}
-    bset1, bmask = fitting.iterfit(
+    bset1, fit_gpm_rej = fitting.iterfit(
         zp_spec.wave, zp_spec.flux, invvar=zp_spec.ivar, inmask=fit_gpm, upper=upper, lower=lower,
         fullbkpt=init_breakpoints, maxiter=maxiter,
         kwargs_reject=kwargs_reject
@@ -939,10 +960,10 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
 
     if debug:
         # Show the fit
-        standard_zeropoint_qa(zp_spec, fit_gpm, bset1)
+        standard_zeropoint_qa(zp_spec, fit_gpm, fit_gpm_rej, bset1)
 
     # Return the results
-    return (zp_spec, fit_gpm) + bset1.value(zp_spec.wave)
+    return (zp_spec, fit_gpm, fit_gpm_rej) + bset1.value(zp_spec.wave)
 
 
 def standard_zeropoint_breakpoints(wave, gpm=None, fit_gpm=None, bkspace=None, resolution=None,
@@ -1017,7 +1038,7 @@ def standard_zeropoint_breakpoints(wave, gpm=None, fit_gpm=None, bkspace=None, r
     return init_bspline.breakpoints[msk_bkpt(init_bspline.breakpoints) > 0.999]
 
 
-def standard_zeropoint_qa(zp_spec, fit_gpm, bspl, ofile=None):
+def standard_zeropoint_qa(zp_spec, fit_gpm, fit_gpm_rej, bspl, ofile=None):
     """
     Quality assessment plot for the zeropoint modeling.
 
@@ -1028,6 +1049,9 @@ def standard_zeropoint_qa(zp_spec, fit_gpm, bspl, ofile=None):
     fit_gpm : `numpy.ndarray`_
         Boolean array (good-pixel mask) selecting pixels that were initially
         included in the bspline fit.  Shape matches ``zp_spec``.
+    fit_gpm_rej : `numpy.ndarray`_
+        Same as ``fit_gpm``, except that measurements rejected by the iterative
+        fitting procedures have been flagged as bad.  Shape matches ``zp_spec``.
     bspl : :class:`~pypeit.bspline.bspline.bspline`
         Best-fitting bspline model.
     ofile : :obj:`str`, `Path`_, optional
@@ -1035,17 +1059,19 @@ def standard_zeropoint_qa(zp_spec, fit_gpm, bspl, ofile=None):
         in a matplotlib window.
     """
 
-    zp_bspl, zp_fit_gpm = bspl.value(zp_spec.wave)
-    zp_bspl_bkpt = bspl.value(bspl.breakpoints)[0]
+    zp_model, zp_model_gpm = bspl.value(zp_spec.wave)
+    zp_model = np.ma.MaskedArray(zp_model, mask=np.logical_not(zp_model_gpm))
+    zp_model_bkpt = bspl.value(bspl.breakpoints)[0]
     fit_bpm = np.logical_not(fit_gpm)
-    zp_fit_bpm = np.logical_not(zp_fit_gpm)
+    # The data rejected during the fit
+    fit_rejected = fit_gpm & np.logical_not(fit_gpm_rej)
 
     wflux = np.amax(zp_spec.flux) - np.amin(zp_spec.flux)
     cflux = (np.amax(zp_spec.flux) + np.amin(zp_spec.flux))/2
     flux_lim = [cflux - 1.1 * wflux / 2, cflux + 1.1 * wflux / 2]
     wave_lim = [np.amin(zp_spec.wave), np.amax(zp_spec.wave)]
 
-    dflux = zp_spec.flux - zp_bspl
+    dflux = zp_spec.flux - zp_model
     mean_dflux = np.mean(dflux[fit_gpm])
     sdev_dflux = np.std(dflux[fit_gpm])
     dflux_lim = [mean_dflux - 5 * sdev_dflux, mean_dflux + 5 * sdev_dflux]
@@ -1067,13 +1093,13 @@ def standard_zeropoint_qa(zp_spec, fit_gpm, bspl, ofile=None):
 
     ax.plot(zp_spec.wave, zp_spec.flux,
             drawstyle='steps-mid', color='black', label='Zeropoint Data', zorder=2)
-    ax.plot(zp_spec.wave, zp_bspl,
+    ax.plot(zp_spec.wave, zp_model,
             color='cornflowerblue', label='Bspline fit', linewidth=1.0, zorder=3)
     ax.scatter(zp_spec.wave[fit_bpm], zp_spec.flux[fit_bpm],
                 marker='+', color='red', s=5, label='masked on input', zorder=5)
-    ax.scatter(zp_spec.wave[zp_fit_bpm], zp_bspl[zp_fit_bpm],
-                marker='x', color='pink', s=5, label='masked on output', zorder=4)
-    ax.scatter(bspl.breakpoints, zp_bspl_bkpt,
+    ax.scatter(zp_spec.wave[fit_rejected], zp_spec.flux[fit_rejected],
+                marker='x', color='pink', s=5, label='rejected by fit', zorder=4)
+    ax.scatter(bspl.breakpoints, zp_model_bkpt,
                 marker= '.', color='cyan', s=8, label='breakpoints', zorder=10)
     ax.plot(zp_spec.wave, 1.0 / np.sqrt(zp_spec.ivar), color='orange', label='1-sigma error')
 
@@ -1094,7 +1120,7 @@ def standard_zeropoint_qa(zp_spec, fit_gpm, bspl, ofile=None):
     ax.plot(zp_spec.wave, dflux, drawstyle='steps-mid', color='black', zorder=2)
     ax.scatter(zp_spec.wave[fit_bpm], dflux[fit_bpm],
                 marker='+', color='red', s=5, zorder=5)
-    ax.scatter(zp_spec.wave[zp_fit_bpm], dflux[zp_fit_bpm],
+    ax.scatter(zp_spec.wave[fit_rejected], dflux[fit_rejected],
                 marker='x', color='pink', s=5, zorder=4)
     ax.scatter(bspl.breakpoints, np.zeros(bspl.breakpoints.size),
                 marker= '.', color='cyan', s=8, zorder=10)
