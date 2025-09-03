@@ -2006,10 +2006,10 @@ class SensFuncPar(ParSet):
     For a table with the current keywords, defaults, and descriptions,
     see :ref:`parameters`.
     """
-    def __init__(self, use_flat=None, extrap_blu=None, extrap_red=None, samp_fact=None, multi_spec_det=None,
-                 trim_std_pixs=None, algorithm=None, UVIS=None,
-                 IR=None, polyorder=None, star_type=None, star_mag=None, star_ra=None, extr=None,
-                 star_dec=None, mask_hydrogen_lines=None, mask_helium_lines=None, hydrogen_mask_wid=None):
+    def __init__(self, use_flat=None, extrap_blu=None, extrap_red=None, samp_fact=None,
+                 multi_spec_det=None, trim_std_pixs=None, algorithm=None, UVIS=None, IR=None,
+                 polyorder=None, star_type=None, star_mag=None, star_ra=None, extr=None,
+                 star_dec=None, spec_mask_files=None):
         # Grab the parameter names and values from the function arguments
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         pars = OrderedDict([(k, values[k]) for k in args[1:]])
@@ -2104,19 +2104,13 @@ class SensFuncPar(ParSet):
         dtypes['star_dec'] = float
         descr['star_dec'] = 'DEC of the standard star. This will override values in the header (`i.e.`, if they are wrong or absent)'
 
-        defaults['mask_hydrogen_lines'] = True
-        dtypes['mask_hydrogen_lines'] = bool
-        descr['mask_hydrogen_lines'] = 'Mask hydrogen Balmer, Paschen, Brackett, and Pfund recombination lines in the sensitivity function fit. ' \
-                                       'A region equal to ``hydrogen_mask_wid`` on either side of the line center is masked.'
-
-        defaults['hydrogen_mask_wid'] = 10.0
-        dtypes['hydrogen_mask_wid'] = float
-        descr['hydrogen_mask_wid'] = 'Mask width from line center for hydrogen recombination lines in Angstroms (total mask width is 2x this value).'
-
-        defaults['mask_helium_lines'] = False
-        dtypes['mask_helium_lines'] = bool
-        descr['mask_helium_lines'] = 'Mask certain ``HeII`` recombination lines prominent in O-type stars in the sensitivity function fit ' \
-                                     'A region equal to 0.5 * ``hydrogen_mask_wid`` on either side of the line center is masked.'
+        defaults['spec_mask_files'] = ['atm.toml', 'hydrogen.toml']
+        dtypes['spec_mask_files'] = [str, list]
+        descr['spec_mask_files'] = (
+            'One or more TOML files with masks to apply to the spectra when '
+            'calculating the sensitivity function.  These can be local files or '
+            'files provided by the pypeit package.'
+        )
 
         # Instantiate the parameter set
         super(SensFuncPar, self).__init__(list(pars.keys()),
@@ -2132,10 +2126,11 @@ class SensFuncPar(ParSet):
         k = np.array([*cfg.keys()])
 
         # Single element parameters
-        parkeys = ['use_flat', 'extrap_blu', 'extrap_red', 'samp_fact', 'multi_spec_det',
-                   'trim_std_pixs', 'algorithm', 'polyorder', 'star_type', 'star_mag',
-                   'star_ra', 'star_dec', 'extr',   'mask_hydrogen_lines', 'mask_helium_lines',
-                   'hydrogen_mask_wid']
+        parkeys = [
+            'use_flat', 'extrap_blu', 'extrap_red', 'samp_fact', 'multi_spec_det', 'trim_std_pixs',
+            'algorithm', 'polyorder', 'star_type', 'star_mag', 'star_ra', 'star_dec', 'extr',
+            'spec_mask_files'
+        ]
 
         # All parameters, including nested ParSets
         allkeys = parkeys + ['UVIS', 'IR']
@@ -2168,6 +2163,10 @@ class SensFuncPar(ParSet):
         if self.data['trim_std_pixs'] is not None:
             if not isinstance(self.data['trim_std_pixs'], (list, tuple)) or len(self.data['trim_std_pixs']) != 2:
                 msgs.error("`trim_std_pixs` must be a list or tuple of two integers.")
+
+        # NOTE: We could validate the mask files here, but we often instantiate
+        # empty parameter sets, meaning this validation would run many times
+        # without purpose.
 
     @staticmethod
     def valid_algorithms():
