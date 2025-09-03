@@ -193,8 +193,8 @@ class ArchivedFluxStandard(spectrum.Spectrum):
         if sep > tol * units.arcmin:
             msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to('arcmin').value} '
                        f'arcmin, which is beyond the required tolerance ({tol} arcmin).')
-        return cls(row['File'], meta=dict(row))
-
+        return cls(row['File'], meta=cls._init_meta(row=row))
+    
     @classmethod
     def from_name(cls, name):
         """
@@ -206,7 +206,18 @@ class ArchivedFluxStandard(spectrum.Spectrum):
             Name of the source in the archive data table
         """
         row = archive_entry(cls.archive, name)
-        return cls(row['File'], meta=dict(row))
+        return cls(row['File'], meta=cls._init_meta(row=row))
+    
+    @classmethod
+    def _init_meta(cls, row=None):
+        """
+        Instantiate the metadata.
+        """
+        # Add all of the tabulated data to the metadata for this spectrum
+        meta = {} if row is None else dict(row)
+        # Also add the "source"
+        meta['source'] = cls.archive
+        return meta
 
 
 class CalSpecFluxStandard(ArchivedFluxStandard):
@@ -320,7 +331,30 @@ def archived_flux_classes():
     return dict([ (cls.archive,cls) for cls in c[srt]])
 
 
-class BlackbodyStandard(spectrum.Spectrum):
+class ModelFluxStandard(spectrum.Spectrum):
+    """
+    Base class for model-based flux standard spectra.
+    """
+    model_type = None
+    required_metadata = ['Name', 'File', 'RA', 'Dec']
+
+    @classmethod
+    def _init_meta(cls, row=None):
+        """
+        Instantiate the metadata.
+        """
+        # Add all of the tabulated data to the metadata for this spectrum
+        meta = {} if row is None else dict(row)
+        # Also add the "source"
+        meta['source'] = cls.model_type
+        # Add in required meta
+        for key in cls.required_metadata:
+            if key not in meta.keys():
+                meta[key] = None
+        return meta
+
+
+class BlackbodyStandard(ModelFluxStandard):
     """
     Generate a blackbody spectrum based on the normalisation and effective
     temperature.  See Suzuki & Fukugita, 2018, AJ, 156, 219:
@@ -338,7 +372,7 @@ class BlackbodyStandard(spectrum.Spectrum):
         a step of 0.1 Angstrom.
     """
 
-    archive = 'blackbody'
+    model_type = 'blackbody'
 
     def __init__(self, a, teff, wave=None, meta=None):
         # TODO: Simplify the unit stuff here!
@@ -356,11 +390,11 @@ class BlackbodyStandard(spectrum.Spectrum):
         )
         # Convert to 1e-17 erg/s/cm^2/Angstrom, and apply the "BB_SCALE_FACTOR" (1e-23)
         flam = flam.to(units.erg / units.s / units.cm ** 2 / units.AA).value * 1e-6
-        super().__init__(_wave.value, flam, meta=meta)
+        super().__init__(_wave.value, flam, meta=self._init_meta(row=meta))
 
     @classmethod
     def nearest_blackbody_coeffs(cls, ra, dec):
-        sep, row = nearest_archive_entry(cls.archive, ra, dec)
+        sep, row = nearest_archive_entry(cls.model_type, ra, dec)
         return sep, row['Name'], row['a_x10m23'], row['T_K']
 
     @classmethod
@@ -380,11 +414,11 @@ class BlackbodyStandard(spectrum.Spectrum):
             If None, the default wavelength range is set to 912 - 26000 Angstrom at
             a step of 0.1 Angstrom.
         """
-        sep, row = nearest_archive_entry(cls.archive, ra, dec)
+        sep, row = nearest_archive_entry(cls.model_type, ra, dec)
         if sep > tol * units.arcmin:
             msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to('arcmin').value} '
                        f'arcmin, which is beyond the required tolerance ({tol} arcmin).')
-        return cls(row['a_x10m23'], row['T_K'], wave=wave, meta=dict(row))
+        return cls(row['a_x10m23'], row['T_K'], wave=wave, meta=cls._init_meta(row=row))
 
     @classmethod
     def from_name(cls, name, wave=None):
@@ -396,11 +430,11 @@ class BlackbodyStandard(spectrum.Spectrum):
         name : str
             Name of the source in the archive data table
         """
-        row = archive_entry(cls.archive, name)
-        return cls(row['a_x10m23'], row['T_K'], wave=wave, meta=dict(row))
+        row = archive_entry(cls.model_type, name)
+        return cls(row['a_x10m23'], row['T_K'], wave=wave, meta=cls._init_meta(row=row))
 
 
-class KuruczModelStandard(spectrum.Spectrum):
+class KuruczModelStandard(ModelFluxStandard):
     """
     The Kurucz stellar model for a given apparent magnitude and spectral type.
 
@@ -425,6 +459,9 @@ class KuruczModelStandard(spectrum.Spectrum):
     spectral_type : str
         Stellar spectral type
     """
+
+    model_type = 'Kurucz'
+
     def __init__(self, V_mag, spectral_type):
 
         # Load Schmidt-Kaler (1982) table
@@ -487,11 +524,11 @@ class KuruczModelStandard(spectrum.Spectrum):
             return super().__init__(
                 hdu[1].data['WAVELENGTH'],
                 hdu[1].data[gdict[indg]] * flux_factor * 1e17,
-                meta=meta
+                meta=self._init_meta(row=meta)
             )
 
 
-class VegaStandard(spectrum.Spectrum):
+class VegaStandard(ModelFluxStandard):
     """
     Provides a Vega spectrum from TSpecTool.
 
@@ -500,17 +537,20 @@ class VegaStandard(spectrum.Spectrum):
     V_mag : float
         The V-band magnitude for the star.
     """
+
+    model_type = 'Vega'
+
     def __init__(self, V_mag):
         file = dataPaths.standards.get_file_path('vega_tspectool_vacuum.dat')
         data = table.Table.read(file, comment='#', format='ascii')
         return super().__init__(
             data['col1'],
             data['col2'] * 10**(0.4*(0.03-V_mag)) * 1e17,
-            meta={'V_mag': V_mag}
+            meta=self._init_meta(row={'V_mag': V_mag})
         )
 
 
-class PhoenixStandard(spectrum.Spectrum):
+class PhoenixStandard(ModelFluxStandard):
     """
     Provides the PHOENIX spectrum.
 
@@ -519,17 +559,20 @@ class PhoenixStandard(spectrum.Spectrum):
     V_mag : float
         The V-band magnitude for the star.
     """
+
+    model_type = 'PHOENIX'
+
     def __init__(self, V_mag):
         file = dataPaths.standards.get_file_path('PHOENIX_10000K_4p0.fits')
         data = table.Table.read(file, format='fits')
         return super().__init__(
             data['Wavelength'],
             data['Flux'] * 10**(0.4*(0.03-V_mag)) * 1e6,
-            meta={'V_mag': V_mag}
+            meta=self._init_meta(row={'V_mag': V_mag})
         )
     
 
-class PseudoStandard(spectrum.Spectrum):
+class PseudoStandard(ModelFluxStandard):
     """
     Provides a unity continuum spectrum.
 
@@ -539,9 +582,12 @@ class PseudoStandard(spectrum.Spectrum):
         The wavelength array to use.  If None, wavelengths range from 0.2-5
         micron in steps of 1 Angstrom.
     """
+
+    model_type = 'pseudo'
+
     def __init__(self, wave=None):
         _wave = np.arange(2000,50000,1.0) if wave is None else np.asarray(wave)
-        return super().__init__(_wave, np.ones(_wave.shape, dtype=float))
+        return super().__init__(_wave, np.ones(_wave.shape, dtype=float), meta=self._init_meta())
 
 
 def get_archive_sets(archives=['xshooter', 'calspec', 'esofil', 'noao', 'ing']):

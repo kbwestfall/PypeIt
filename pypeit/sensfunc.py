@@ -21,15 +21,12 @@ from pypeit import utils
 from pypeit.core import coadd
 from pypeit.core import flux_calib
 from pypeit.core import telluric
-from pypeit.core import fitting
+from pypeit.core import standard
 from pypeit.core.wavecal import wvutils
 from pypeit.core import meta
-from pypeit.core import flat
-from pypeit.core.moment import moment1d
 
 from pypeit.spectrographs.util import load_spectrograph
 from pypeit import datamodel
-from pypeit import flatfield
 
 
 # TODO Add the data model up here as a standard thing using DataContainer.
@@ -129,7 +126,8 @@ class SensFunc(datamodel.DataContainer):
                  'steps',
                  'splice_multi_det',
                  'meta_spec',
-                 'std_dict',
+#                 'std_dict',
+                 'std_spec',
                  'chk_version'
                 ]
 
@@ -275,9 +273,12 @@ class SensFunc(datamodel.DataContainer):
         star_ra, star_dec = meta.convert_radec(star_ra, star_dec)
 
         # Read in standard star dictionary
-        self.std_dict = flux_calib.get_standard_spectrum(star_type=self.par['star_type'],
-                                                         star_mag=self.par['star_mag'],
-                                                         ra=star_ra, dec=star_dec)
+#        self.std_dict = flux_calib.get_standard_spectrum(star_type=self.par['star_type'],
+#                                                         star_mag=self.par['star_mag'],
+#                                                         ra=star_ra, dec=star_dec)
+        self.std_spec = standard.get_standard_spectrum(spectral_type=self.par['star_type'],
+                                                       V_mag=self.par['star_mag'],
+                                                       ra=star_ra, dec=star_dec)
 
     def _bundle(self):
         """
@@ -423,7 +424,9 @@ class SensFunc(datamodel.DataContainer):
         self.sens['SENS_FLUXED_STD_MASK'] = flam_mask.T
 
         #save the model that was used
-        model_interp_func = scipy.interpolate.interp1d(self.std_dict['wave'].value, self.std_dict['flux'].value,
+#        model_interp_func = scipy.interpolate.interp1d(self.std_dict['wave'].value, self.std_dict['flux'].value,
+#                                                       bounds_error=False, fill_value='extrapolate')
+        model_interp_func = scipy.interpolate.interp1d(self.std_spec.wave, self.std_spec.flux,
                                                        bounds_error=False, fill_value='extrapolate')
         model_flux_sav = np.zeros_like(self.sens['SENS_FLUXED_STD_FLAM'])
         for iorddet in range(self.sens['SENS_FLUXED_STD_WAVE'].shape[0]):
@@ -746,8 +749,10 @@ class SensFunc(datamodel.DataContainer):
         # Plot fluxed standard star for all orders/det
         fig = plt.figure(figsize=(12,8))
         axis = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        axis.plot(self.std_dict['wave'].value, self.std_dict['flux'].value, color='green',linewidth=3.0,
-                  label=self.std_dict['name'], zorder=100, alpha=0.7)
+#        axis.plot(self.std_dict['wave'].value, self.std_dict['flux'].value, color='green',linewidth=3.0,
+#                  label=self.std_dict['name'], zorder=100, alpha=0.7)
+        axis.plot(self.std_spec.wave, self.std_spec.flux, color='green',linewidth=3.0,
+                  label=self.std_spec.meta['Name'], zorder=100, alpha=0.7)
         for iorddet in range(self.sens['SENS_FLUXED_STD_WAVE'].shape[0]):
             # define the color
             rr = (np.max(order_or_det) - order_or_det[iorddet]) \
@@ -767,9 +772,11 @@ class SensFunc(datamodel.DataContainer):
         else:
             wave_min = 0.98*_wave_min
             wave_max = 1.02*_wave_max
-        pix_wave_std = (self.std_dict['wave'].value >= wave_min) & (self.std_dict['wave'].value <= wave_max)
+#        pix_wave_std = (self.std_dict['wave'].value >= wave_min) & (self.std_dict['wave'].value <= wave_max)
+        pix_wave_std = (self.std_spec.wave >= wave_min) & (self.std_spec.wave <= wave_max)
         flux_min = -1.0
-        flux_max = 1.10*self.std_dict['flux'][pix_wave_std].value.max()
+#        flux_max = 1.10*self.std_dict['flux'][pix_wave_std].value.max()
+        flux_max = 1.10*np.max(self.std_spec.flux[pix_wave_std])
         axis.set_xlim((wave_min, wave_max))
         axis.set_ylim((flux_min, flux_max))
         axis.legend()

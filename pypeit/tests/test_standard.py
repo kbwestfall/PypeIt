@@ -178,12 +178,14 @@ def test_archived_standards():
         spec = archive_classes[archive].from_coordinates(180., 0., tol=meta['tol'])
         assert np.absolute(spec.wave[0] - meta['wave0']) < 0.01, 'Bad wave'
         assert np.absolute(np.median(spec.flux) - meta['med_flux']) < 0.01, 'Bad flux'
+        assert spec.meta['source'] == archive, 'Bad source'
 
         # Test name match
         spec = archive_classes[archive].from_name(meta['name'])
         assert spec.meta['Name'] == meta['name'], 'Name mismatch'
         assert np.absolute(spec.wave[0] - meta['wave0']) < 0.01, 'Bad wave'
         assert np.absolute(np.median(spec.flux) - meta['med_flux']) < 0.01, 'Bad flux'
+        assert spec.meta['source'] == archive, 'Bad source'
 
         # Improve the coordinates
         coo = coordinates.SkyCoord(
@@ -192,6 +194,7 @@ def test_archived_standards():
         spec = archive_classes[archive].from_coordinates(coo.ra.value, coo.dec.value)
         assert np.absolute(spec.wave[0] - meta['wave0']) < 0.01, 'Bad wave'
         assert np.absolute(np.median(spec.flux) - meta['med_flux']) < 0.01, 'Bad flux'
+        assert spec.meta['source'] == archive, 'Bad source'
 
         # Should work for just the file name, pulling from the archive
         spec = archive_classes[archive](file)
@@ -208,13 +211,14 @@ def test_archived_standards():
 
 def test_blackbody():
 
-    assert standard.BlackbodyStandard.archive == 'blackbody', 'Name changed'
+    assert standard.BlackbodyStandard.model_type == 'blackbody', 'Name changed'
 
     # Test spectrum
     bb = standard.BlackbodyStandard(4.0, 1e4)
     assert len(bb.wave) == 250880, 'Default length of spectrum changed'
     assert np.absolute(bb.wave[0] - 912.) < 1e-10, 'Initial wavelength changed'
     assert np.absolute((bb.flux[0] - 1.063)/bb.flux[0]) < 1e-4, 'Bad flux calculation'
+    assert bb.meta['source'] == 'blackbody', 'Bad source'
 
     _bb = standard.BlackbodyStandard(4.0, 1e4, wave=bb.wave[:10])
     assert len(_bb.wave) == 10, 'Length wrong'
@@ -232,10 +236,12 @@ def test_blackbody():
     # Increase the tolerance
     bb = standard.BlackbodyStandard.from_coordinates(180., 0., tol=800.)
     assert np.absolute((bb.flux[0] - 3.59)/bb.flux[0]) < 0.01, 'Bad fluxes'
+    assert bb.meta['source'] == 'blackbody', 'Bad source'
 
     # Use the name
     bb = standard.BlackbodyStandard.from_name('BB113337-110529')
     assert np.absolute((bb.flux[0] - 3.59)/bb.flux[0]) < 0.01, 'Bad fluxes'
+    assert bb.meta['source'] == 'blackbody', 'Bad source'
 
     # Get the nearest set of coordinates and to make sure the search finds
     # something within the tolerance
@@ -262,6 +268,7 @@ def test_kurucz_models():
     assert spec.size == 1221, 'Spectrum has the wrong length'
     assert np.absolute(spec.wave[0] - 90.9) < 0.01, 'Bad wave'
     assert np.absolute(np.median(spec.flux) - 90.1) < 0.01, 'Bad flux'
+    assert spec.meta['source'] == 'Kurucz', 'Bad model source'
 
     # Unavailable spectral type
     with pytest.raises(PypeItError):
@@ -273,6 +280,7 @@ def test_vega_model():
     assert spec.size == 21617, 'Spectrum has the wrong length'
     assert np.absolute(spec.wave[0] - 900.092) < 0.01, 'Bad wave'
     assert np.absolute(np.median(spec.flux) - 2.11) < 0.01, 'Bad flux'
+    assert spec.meta['source'] == 'Vega', 'Bad model source'
 
 
 def test_phoenix_model():
@@ -280,6 +288,7 @@ def test_phoenix_model():
     assert spec.size == 1554127, 'Spectrum has the wrong length'
     assert np.absolute(spec.wave[0] - 2000.1) < 0.01, 'Bad wave'
     assert np.absolute(np.median(spec.flux) - 201.3) < 0.01, 'Bad flux'
+    assert spec.meta['source'] == 'PHOENIX', 'Bad model source'
 
 
 def test_pseudo_model():
@@ -287,6 +296,7 @@ def test_pseudo_model():
     assert spec.size == 48000, 'Spectrum has the wrong length'
     assert np.absolute(spec.wave[0] - 2000.0) < 0.01, 'Bad wave'
     assert np.absolute(np.median(spec.flux) - 1.0) < 0.01, 'Bad flux'
+    assert spec.meta['source'] == 'pseudo', 'Bad model source'
 
     _spec = standard.PseudoStandard(wave=spec.wave[:10])
     assert _spec.size == 10, 'Spectrum has the wrong length'
@@ -390,7 +400,6 @@ def test_get_model_standard():
     # Get the flat continuum
     spec = standard.get_model_standard('NONE', 14.)
     assert isinstance(spec, standard.PseudoStandard), 'Wrong type'
-    assert spec.meta is None, 'PseudoStandard has no metadata by default'
 
     # Get a Kurucz model
     spec = standard.get_model_standard('G0', 14.)
