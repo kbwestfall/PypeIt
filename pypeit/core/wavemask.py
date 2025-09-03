@@ -253,7 +253,7 @@ def telluric_mask(threshold, wave=None, sres=None, file='mktrans_zm_10_10.dat', 
     if return_regions or plot:
         reg_slices = utils.contiguous_true(bpm)
         mask_regions = np.array([r.outx[reg][[0,-1]].tolist() for reg in reg_slices])
-    if plot:    # Test works of plot is anything other than False or None
+    if plot:    # Check works if plot is anything other than False or None
         telluric_mask_plot(threshold, r.outx, r.outy, mask_regions, **kwargs)
     return mask_regions if return_regions else np.logical_not(bpm)
 

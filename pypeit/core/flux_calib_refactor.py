@@ -226,57 +226,6 @@ def get_sensfunc_factor(wave, wave_zp, zeropoint, exptime, tellmodel=None, delta
     return senstot/exptime/_delta_wave
 
 
-def counts2Nlam(wave, counts, counts_ivar, counts_mask, exptime
-                , airmass, longitude, latitude, extinctfilepar):
-    """
-    Convert counts to counts/s/Angstrom
-    Used for flux calibration and to apply extinction correction
-
-    Args:
-        wave (`numpy.ndarray`_):
-            Wavelength of the star. Shape (nspec,)
-        counts (`numpy.ndarray`_):
-            Flux (in counts) of the star. Shape (nspec,)
-        counts_ivar (`numpy.ndarray`_):
-            Inverse variance of the star counts. Shape (nspec,)
-        counts_mask (`numpy.ndarray`_):
-            Good pixel mask for the counts.
-        exptime (float):
-            Exposure time in seconds
-        airmass (float):
-            Airmass
-        longitude (float):
-            Telescope longitude, used for extinction correction.
-        latitude (float):
-            Telescope latitude, used for extinction correction
-        extinctfilepar (str):
-            [sensfunc][UVIS][extinct_file] parameter
-            Used for extinction correction
-
-
-    Returns:
-        tuple: Three items:
-          - Nlam_star (`numpy.ndarray`_) counts/second/Angstrom
-          - Nlam_ivar_star (`numpy.ndarray`_) inverse variance of Nlam_star
-          - gpm_star (`numpy.ndarray`_) good pixel mask for Nlam_star
-
-    """
-    # Create copy of the arrays to avoid modification and convert to
-    # Nlam = electrons/s/Angstrom
-    delta_wave = wvutils.get_delta_wave(wave, (wave > 1.0))
-    Nlam_star = counts/exptime/delta_wave
-    Nlam_ivar_star = delta_wave**2*counts_ivar*exptime**2
-
-    # Extinction correction
-    msgs.info("Applying extinction correction")
-    extinct = load_extinction_data(longitude,latitude, extinctfilepar)
-    ext_corr = extinction_correction(wave * units.AA, airmass, extinct)
-    # Correct for extinction
-    Nlam_star = Nlam_star * ext_corr
-    Nlam_ivar_star = Nlam_ivar_star / ext_corr ** 2
-    gpm_star = counts_mask
-    return Nlam_star, Nlam_ivar_star, gpm_star
-
 
 def fit_zeropoint(wave, Nlam_star, Nlam_ivar_star, gpm_star, std_dict,
                   mask_hydrogen_lines=True, mask_helium_lines=False,
