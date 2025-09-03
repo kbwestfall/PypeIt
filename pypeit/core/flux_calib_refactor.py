@@ -826,7 +826,7 @@ def zeropoint_qa_plot(wave, zeropoint_data, zeropoint_data_gpm, zeropoint_fit, z
 
 def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airmass=1.,
                        telluric_model=None, bkspace=None, resolution=2700., nresln=20.,
-                       region_mask=None, maxiter=35, upper=3.0, lower=3.0, debug=False):
+                       region_mask=None, maxiter=35, upper=3.0, lower=3.0):
     r"""
     Generate a sensitivity function based on observed flux and standard spectrum.
 
@@ -883,8 +883,6 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
         Number of sigma used for rejecting positive residuals during bspline fitting.
     lower : :obj:`int`, :obj:`float`, optional
         Number of sigma used for rejecting negative residuals during bspline fitting.
-    debug : :obj:`bool`, optional
-        Show a QA plot with the result of the bspline fitting.
 
     Returns
     -------
@@ -898,15 +896,10 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
     fit_gpm_rej : `numpy.ndarray`_
         Same as ``fit_gpm``, except that measurements rejected by the iterative
         fitting procedures have been flagged as bad.  Shape matches ``zp_spec``.
-    zp_model : `numpy.ndarray`_
-        The best-fitting bspline model for the zeropoints; see the first object
-        returned by :func:`~pypeit.bspline.bspline.bspline.value`.  Shape
-        matches ``zp_spec``.
-    zp_model_gpm : `numpy.ndarray`_
-        A good-pixel mask indicating where the best-fitting bspline model for
-        the zeropoints is *defined*; see the second object returned by
-        :func:`~pypeit.bspline.bspline.bspline.value`.  Shape matches
-        ``zp_spec``.
+    zp_bspl : :class:`~pypeit.bspline.bspline.bspline`
+        Best-fitting bspline model for the zeropoints.  To sample the model at
+        the observed wavelengths, use ``bspl.value(obs_spec.wave)`` (see
+        :func:`~pypeit.bspline.bspline.bspline.value`).
     """
     # Check the input
     if not isinstance(obs_spec, spectrum.Spectrum):
@@ -952,18 +945,14 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
 
     # Perform the fit
     kwargs_reject = {'maxrej': 5}
-    bset1, fit_gpm_rej = fitting.iterfit(
+    zp_bspl, fit_gpm_rej = fitting.iterfit(
         zp_spec.wave, zp_spec.flux, invvar=zp_spec.ivar, inmask=fit_gpm, upper=upper, lower=lower,
         fullbkpt=init_breakpoints, maxiter=maxiter,
         kwargs_reject=kwargs_reject
     )
 
-    if debug:
-        # Show the fit
-        standard_zeropoint_qa(zp_spec, fit_gpm, fit_gpm_rej, bset1)
-
     # Return the results
-    return (zp_spec, fit_gpm, fit_gpm_rej) + bset1.value(zp_spec.wave)
+    return zp_spec, fit_gpm, fit_gpm_rej, zp_bspl
 
 
 def standard_zeropoint_breakpoints(wave, gpm=None, fit_gpm=None, bkspace=None, resolution=None,
@@ -1005,13 +994,15 @@ def standard_zeropoint_breakpoints(wave, gpm=None, fit_gpm=None, bkspace=None, r
         A vector with the breakpoint locations in angstroms; i.e., this is
         ``fullbkpt`` in :func:`~pypeit.bspline.bspline.iterfit`.
     """
+    # Only use the valid wavelengths
+    _wave = wave if gpm is None else wave[gpm]
+
     if bkspace is None:
         if resolution is None or nresln is None:
             msgs.error('If not providing breakpoint spacing, must provide resolution and the '
                        'number of resolution elements between breakpoints (nresln).')
         dw = np.diff(sampling.centers_to_borders(wave))
         std_pix = np.median(dw)
-        _wave = wave if gpm is None else wave[gpm]
         std_res = np.median(_wave/resolution)
         if nresln * std_res < std_pix:
             _nresln = 2 * std_pix / std_res
@@ -1038,7 +1029,7 @@ def standard_zeropoint_breakpoints(wave, gpm=None, fit_gpm=None, bkspace=None, r
     return init_bspline.breakpoints[msk_bkpt(init_bspline.breakpoints) > 0.999]
 
 
-def standard_zeropoint_qa(zp_spec, fit_gpm, fit_gpm_rej, bspl, ofile=None):
+def standard_zeropoint_qa(zp_spec, fit_gpm, fit_gpm_rej, zp_bspl, ofile=None):
     """
     Quality assessment plot for the zeropoint modeling.
 
@@ -1052,16 +1043,16 @@ def standard_zeropoint_qa(zp_spec, fit_gpm, fit_gpm_rej, bspl, ofile=None):
     fit_gpm_rej : `numpy.ndarray`_
         Same as ``fit_gpm``, except that measurements rejected by the iterative
         fitting procedures have been flagged as bad.  Shape matches ``zp_spec``.
-    bspl : :class:`~pypeit.bspline.bspline.bspline`
+    zp_bspl : :class:`~pypeit.bspline.bspline.bspline`
         Best-fitting bspline model.
     ofile : :obj:`str`, `Path`_, optional
         If provided, the plot is written to a file.  If None, the plot is shown
         in a matplotlib window.
     """
 
-    zp_model, zp_model_gpm = bspl.value(zp_spec.wave)
+    zp_model, zp_model_gpm = zp_bspl.value(zp_spec.wave)
     zp_model = np.ma.MaskedArray(zp_model, mask=np.logical_not(zp_model_gpm))
-    zp_model_bkpt = bspl.value(bspl.breakpoints)[0]
+    zp_model_bkpt = zp_bspl.value(zp_bspl.breakpoints)[0]
     fit_bpm = np.logical_not(fit_gpm)
     # The data rejected during the fit
     fit_rejected = fit_gpm & np.logical_not(fit_gpm_rej)
@@ -1099,7 +1090,7 @@ def standard_zeropoint_qa(zp_spec, fit_gpm, fit_gpm_rej, bspl, ofile=None):
                 marker='+', color='red', s=5, label='masked on input', zorder=5)
     ax.scatter(zp_spec.wave[fit_rejected], zp_spec.flux[fit_rejected],
                 marker='x', color='pink', s=5, label='rejected by fit', zorder=4)
-    ax.scatter(bspl.breakpoints, zp_model_bkpt,
+    ax.scatter(zp_bspl.breakpoints, zp_model_bkpt,
                 marker= '.', color='cyan', s=8, label='breakpoints', zorder=10)
     ax.plot(zp_spec.wave, 1.0 / np.sqrt(zp_spec.ivar), color='orange', label='1-sigma error')
 
@@ -1122,7 +1113,7 @@ def standard_zeropoint_qa(zp_spec, fit_gpm, fit_gpm_rej, bspl, ofile=None):
                 marker='+', color='red', s=5, zorder=5)
     ax.scatter(zp_spec.wave[fit_rejected], dflux[fit_rejected],
                 marker='x', color='pink', s=5, zorder=4)
-    ax.scatter(bspl.breakpoints, np.zeros(bspl.breakpoints.size),
+    ax.scatter(zp_bspl.breakpoints, np.zeros(zp_bspl.breakpoints.size),
                 marker= '.', color='cyan', s=8, zorder=10)
     ax.plot(zp_spec.wave, 1.0 / np.sqrt(zp_spec.ivar), color='orange')
 
