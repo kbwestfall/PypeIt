@@ -18,6 +18,7 @@ from astropy import table
 from pypeit import msgs
 from pypeit import specobjs
 from pypeit import utils
+from pypeit.core import atmextinction
 from pypeit.core import coadd
 from pypeit.core import flux_calib
 from pypeit.core import flux_calib_refactor
@@ -25,6 +26,7 @@ from pypeit.core import telluric
 from pypeit.core import standard
 from pypeit.core.wavecal import wvutils
 from pypeit.core import meta
+from pypeit.core import wavemask
 
 from pypeit.spectrographs.util import load_spectrograph
 from pypeit import datamodel
@@ -129,6 +131,8 @@ class SensFunc(datamodel.DataContainer):
                  'meta_spec',
 #                 'std_dict',
                  'std_spec',
+                 'atmext',
+                 'region_mask',
                  'chk_version'
                 ]
 
@@ -217,6 +221,7 @@ class SensFunc(datamodel.DataContainer):
         self.sensfile = sensfile
         self.par = par
         self.chk_version = chk_version
+
         # Spectrograph
         header = fits.getheader(self.spec1df)
         self.PYP_SPEC = header['PYP_SPEC']
@@ -267,20 +272,29 @@ class SensFunc(datamodel.DataContainer):
             self.norderdet = utils.spec_atleast_2d(wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk,
                                                    log10_blaze_function=log10_blaze_function_twk)
 
+        embed()
+        exit()
+
         # If the user provided RA and DEC use those instead of what is in meta
         star_ra = self.meta_spec['RA'] if self.par['star_ra'] is None else self.par['star_ra']
         star_dec = self.meta_spec['DEC'] if self.par['star_dec'] is None else self.par['star_dec']
         # Convert to decimal deg, as needed
         star_ra, star_dec = meta.convert_radec(star_ra, star_dec)
 
-        # Read in standard star dictionary
-#        self.std_dict = flux_calib.get_standard_spectrum(star_type=self.par['star_type'],
-#                                                         star_mag=self.par['star_mag'],
-#                                                         ra=star_ra, dec=star_dec)
-
+        # Get the flux standard spectrum    
         self.std_spec = standard.get_standard_spectrum(spectral_type=self.par['star_type'],
                                                        V_mag=self.par['star_mag'],
                                                        ra=star_ra, dec=star_dec)
+        # Get the wavelength regions to mask
+        self.region_mask = wavemask.read_wavelength_masks(par['spec_mask_files'])
+        # Get the atmospheric extinction
+        if par['UVIS']['extinct_file'] == 'closest':
+            self.atmext = atmextinction.AtmosphericExtinction.from_coordinates(
+                self.spectrograph.telescope['longitude'],
+                self.spectrograph.telescope['latitude']
+            )
+        else:
+            self.atmext = atmextinction.AtmosphericExtinction.from_file(par['UVIS']['extinct_file'])
 
     def _bundle(self):
         """
@@ -1059,7 +1073,7 @@ class UVISSensFunc(SensFunc):
         Calls routine to compute the sensitivity function.
         """
 
-        embed()
+        embed(header='UVIS compute_zeropoint')
         exit()
 
         meta_table, out_table = flux_calib_refactor.sensfunc(self.wave_cnts, self.counts, self.counts_ivar,

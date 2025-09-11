@@ -37,6 +37,8 @@ def read_wavelength_masks(files, tables=None):
         is the number of mask regions with a starting and ending wavelength.
     """
     _files = [files] if isinstance(files, (str, Path)) else files
+    _files = [dataPaths.masks.get_file_path(f) for f in _files]
+
     if tables is None:
         _tables = None
     else:

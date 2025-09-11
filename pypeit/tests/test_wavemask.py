@@ -17,12 +17,7 @@ from pypeit.pypmsgs import PypeItError
 
 
 def test_read():
-    files = [
-        dataPaths.masks.get_file_path('hydrogen.toml'),
-        dataPaths.masks.get_file_path('helium.toml'),
-        dataPaths.masks.get_file_path('telluric.toml'),
-        dataPaths.masks.get_file_path('atm.toml'),
-    ]
+    files = ['hydrogen.toml', 'helium.toml', 'telluric.toml', 'atm.toml']
 
     # Test failure when file doesn't exist
     with pytest.raises(PypeItError):
@@ -61,6 +56,7 @@ def test_read():
     # Test failure when width is a list
     with pytest.raises(PypeItError):
         regions = wavemask.read_wavelength_masks(files, tables='width_list')
+
 
 def test_mask():
 
