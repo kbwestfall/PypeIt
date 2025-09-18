@@ -107,6 +107,7 @@ def test_multiply():
         spec.multiply(np.tile(a, (3,1)).T)
 
     # TODO: Check the error and mask propagation
+    # TODO: Test multiplying two spectra
 
 
 def test_resample():

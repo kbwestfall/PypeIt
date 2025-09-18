@@ -21,7 +21,8 @@ from pypeit import utils
 from pypeit import sensfunc
 from pypeit import specobjs
 from pypeit import msgs
-from pypeit.core import coadd, flux_calib
+from pypeit.core import coadd
+from pypeit.core import flux_calib
 from pypeit.history import History
 
 

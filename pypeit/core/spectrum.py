@@ -5,7 +5,7 @@ Ideally this would be replaced by specutils.Spectrum
 
 """
 
-import copy
+from copy import deepcopy
 
 from IPython import embed
 import numpy as np
@@ -74,7 +74,7 @@ class Spectrum:
             if copy:
                 self.gpm = self.gpm.copy()
 
-        self.meta = meta if meta is None or not copy else copy.deepcopy(meta)
+        self.meta = meta if meta is None or not copy else deepcopy(meta)
 
     @property
     def size(self):
@@ -93,7 +93,7 @@ class Spectrum:
         Make a deepcopy of the object
         """
         _ivar = None if self.ivar is None else self.ivar.copy()
-        _meta = None if self.meta is None else copy.deepcopy(self.meta)
+        _meta = None if self.meta is None else deepcopy(self.meta)
         return self.__class__(
             self.wave.copy(), self.flux.copy(), ivar=_ivar, gpm=self.gpm.copy(), meta=_meta
         )
@@ -131,7 +131,8 @@ class Spectrum:
             # Pull the necessary data out of the spectrum
 
             # Check the wavelength vectors
-            if np.array_equal(a.wave, self.wave):
+            # TODO: Loosen this; i.e., use isclose instead of array_equal?
+            if not np.array_equal(a.wave, self.wave):
                 msgs.error('To multiply two spectra, their wavelength vectors must be identical.')
             a_flux = a.flux
             a_gpm = a.gpm

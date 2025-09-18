@@ -23,6 +23,7 @@ from pypeit.core import coadd
 from pypeit.core import flux_calib
 from pypeit.core import flux_calib_refactor
 from pypeit.core import telluric
+from pypeit.core import spectrum
 from pypeit.core import standard
 from pypeit.core.wavecal import wvutils
 from pypeit.core import meta
@@ -272,9 +273,6 @@ class SensFunc(datamodel.DataContainer):
             self.norderdet = utils.spec_atleast_2d(wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk,
                                                    log10_blaze_function=log10_blaze_function_twk)
 
-        embed()
-        exit()
-
         # If the user provided RA and DEC use those instead of what is in meta
         star_ra = self.meta_spec['RA'] if self.par['star_ra'] is None else self.par['star_ra']
         star_dec = self.meta_spec['DEC'] if self.par['star_dec'] is None else self.par['star_dec']
@@ -285,8 +283,11 @@ class SensFunc(datamodel.DataContainer):
         self.std_spec = standard.get_standard_spectrum(spectral_type=self.par['star_type'],
                                                        V_mag=self.par['star_mag'],
                                                        ra=star_ra, dec=star_dec)
+
         # Get the wavelength regions to mask
+        # TODO: Add ability to mask telluric regions
         self.region_mask = wavemask.read_wavelength_masks(par['spec_mask_files'])
+
         # Get the atmospheric extinction
         if par['UVIS']['extinct_file'] == 'closest':
             self.atmext = atmextinction.AtmosphericExtinction.from_coordinates(
@@ -395,7 +396,8 @@ class SensFunc(datamodel.DataContainer):
         """
         Dummy method overloaded by subclasses
         """
-        pass
+        msgs.error(f'This subclass of SensFunc ({self.__class__.__name__}) had not defined the '
+                   'compute_zeropoint method!')
 
     def run(self):
         """
@@ -496,7 +498,7 @@ class SensFunc(datamodel.DataContainer):
         wave_extrap_max = self.sens['WAVE_MAX'].data * (1.0 + self.par['extrap_red'])
         nspec_extrap = 0
 
-        # Find the maximum size of the wavewlength grids, since we want
+        # Find the maximum size of the wavelength grids, since we want
         # everything to have the same
         for idet in range(self.norderdet):
             wave = self.wave_cnts if self.wave_cnts.ndim == 1 else self.wave_cnts[:, idet]
@@ -1073,53 +1075,56 @@ class UVISSensFunc(SensFunc):
         Calls routine to compute the sensitivity function.
         """
 
-        embed(header='UVIS compute_zeropoint')
-        exit()
+        if self.wave_cnts.ndim == 2 and self.wave_cnts.shape[1] != 1:
+            msgs.error('Not ready for multiple wavelength vectors.')
 
-        meta_table, out_table = flux_calib_refactor.sensfunc(self.wave_cnts, self.counts, self.counts_ivar,
-                                                    self.counts_mask, self.meta_spec['EXPTIME'],
-                                                    self.meta_spec['AIRMASS'], self.std_spec,
-                                                    self.meta_spec['LONGITUDE'],
-                                                    self.meta_spec['LATITUDE'],
-                                                    self.par['UVIS']['extinct_file'],
-                                                    self.meta_spec['ECH_ORDERS'],
-                                                    polyorder=self.par['polyorder'],
-                                                    hydrogen_mask_wid=self.par['hydrogen_mask_wid'],
-                                                    mask_hydrogen_lines=self.par['mask_hydrogen_lines'],
-                                                    mask_helium_lines=self.par['mask_helium_lines'],
-                                                    nresln=self.par['UVIS']['nresln'],
-                                                    resolution=self.par['UVIS']['resolution'],
-                                                    trans_thresh=self.par['UVIS']['trans_thresh'],
-                                                    polycorrect=self.par['UVIS']['polycorrect'],
-                                                    polyfunc=self.par['UVIS']['polyfunc'],
-                                                    debug=self.debug)
+        # Construct the Spectrum object
+        obs_spec = spectrum.Spectrum(
+            self.wave_cnts[:,0], self.counts.squeeze(), ivar=self.counts_ivar.squeeze(),
+            gpm=self.counts_mask.squeeze()
+        )
+
+        # Get the zero-point
+        # TODO: Missing trans_thresh and polycorrect
+        zp_spec, fit_gpm, fit_gpm_rej, zp_bspl = flux_calib_refactor.sensfunc(
+            obs_spec, self.std_spec, exptime=self.meta_spec['EXPTIME'], atm_extinction=self.atmext,
+            airmass=self.meta_spec['AIRMASS'], nresln=self.par['UVIS']['nresln'],
+            resolution=self.par['UVIS']['resolution'], region_mask=self.region_mask
+        )
+
+        if self.debug:
+            flux_calib_refactor.standard_zeropoint_qa(
+                zp_spec, fit_gpm, fit_gpm_rej, zp_bspl
+            )
 
         # Copy the relevant metadata
-        self.std_name = meta_table['STD_NAME'][0]
-        self.std_cal = meta_table['CAL_FILE'][0]
-        self.std_ra = meta_table['STD_RA'][0]
-        self.std_dec = meta_table['STD_DEC'][0]
-        self.airmass = meta_table['AIRMASS'][0]
-        self.exptime = meta_table['EXPTIME'][0]
-
-        norder, nspec = out_table['SENS_ZEROPOINT'].shape
+        self.std_name = self.std_spec.meta['Name']
+        self.std_cal = self.std_spec.meta['File']
+        self.std_ra, self.std_dec \
+            = meta.convert_radec(self.std_spec.meta['RA_2000'], self.std_spec.meta['DEC_2000'])
+        self.airmass = self.meta_spec['AIRMASS']
+        self.exptime = self.meta_spec['EXPTIME']
 
         # Instantiate the main output data table
+        zp_model, zp_model_gpm = zp_bspl.value(zp_spec.wave)
+        nspec = obs_spec.shape[0]
+        norder = 1 if obs_spec.ndim == 1 else obs_spec.shape[1]
         self.sens = self.empty_sensfunc_table(norder, nspec, self.nspec_in)
 
         # Copy the relevant data
         # NOTE: SENS_COEFF is empty!
-        self.sens['SENS_WAVE'] = out_table['SENS_WAVE']
-        self.sens['SENS_COUNTS_PER_ANG'] = out_table['SENS_COUNTS_PER_ANG']
-        self.sens['SENS_ZEROPOINT'] = out_table['SENS_ZEROPOINT']
-        self.sens['SENS_ZEROPOINT_GPM'] = out_table['SENS_ZEROPOINT_GPM']
-        self.sens['SENS_ZEROPOINT_FIT'] = out_table['SENS_ZEROPOINT_FIT']
-        self.sens['SENS_ZEROPOINT_FIT_GPM'] = out_table['SENS_ZEROPOINT_FIT_GPM']
+        self.sens['SENS_WAVE'] = self.wave_cnts.T
+        # TODO: self.counts is counts NOT counts per angstrom
+        self.sens['SENS_COUNTS_PER_ANG'] = self.counts.T
+        self.sens['SENS_ZEROPOINT'] = np.expand_dims(zp_spec.flux, 0)
+        self.sens['SENS_ZEROPOINT_GPM'] = np.expand_dims(zp_spec.gpm, 0)
+        self.sens['SENS_ZEROPOINT_FIT'] = np.expand_dims(zp_model, 0)
+        self.sens['SENS_ZEROPOINT_FIT_GPM'] = np.expand_dims(zp_model_gpm, 0)
         if self.meta_spec['ECH_ORDERS'] is not None:
             self.sens['ECH_ORDERS'] = self.meta_spec['ECH_ORDERS']
         self.sens['POLYORDER_VEC'] = np.full(norder, self.par['polyorder'])
-        self.sens['WAVE_MIN'] = out_table['WAVE_MIN']
-        self.sens['WAVE_MAX'] = out_table['WAVE_MAX']
+        self.sens['WAVE_MIN'] = [np.min(zp_spec.wave)]
+        self.sens['WAVE_MAX'] = [np.max(zp_spec.wave)]
 
     def eval_zeropoint(self, wave, iorddet):
         """

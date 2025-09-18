@@ -34,8 +34,6 @@ from pypeit.core import wavemask
 from pypeit import dataPaths
 
 
-# TODO: Put these in the relevant functions
-SN2_MAX = (20.0) ** 2
 PYPEIT_FLUX_SCALE = 1e-17
 
 
@@ -52,12 +50,6 @@ def zp_unit_const():
 # costly in the telluric optimization routines.  It has a value of ZP_UNIT_CONST
 # = 40.092117379602044
 ZP_UNIT_CONST = zp_unit_const()
-
-
-#def sensfunc(wave, counts, counts_ivar, counts_mask, exptime, airmass, std_dict, longitude, latitude, extinctfilepar, ech_orders=None,
-#             mask_hydrogen_lines=True, mask_helium_lines=False,
-#             polyorder=4, hydrogen_mask_wid=10.0, nresln=20., resolution=3000.,
-#             trans_thresh=0.9,polycorrect=True, polyfunc=False, debug=False):
 
 
 def sensfunc(obs_spec, std_spec, **kwargs):
@@ -80,14 +72,18 @@ def sensfunc(obs_spec, std_spec, **kwargs):
     -------
 
     """
-    # There is only one observed spectrum, so resample the flux standard and
-    # call the 1D function
-    if isinstance(obs_spec, spectrum.Spectrum) and obs_spec.ndim == 1:
+    # There is only one observed spectrum, so this is a simple wrapper for
+    # standard_zeropoint
+    if isinstance(obs_spec, spectrum.Spectrum):
         return standard_zeropoint(obs_spec, std_spec.resample(obs_spec.wave), **kwargs)
 
+    msgs.error('Entering untested part of the function!!')
+#    embed(header='in sensfunc()')
+#    exit()
+
     _obs_spec = np.asarray(obs_spec)
-    if not all([isinstance(s, spectrum.Spectrum) and s.ndim == 1 for s in _obs_spec]):
-        msgs.error('Multiple spectra must be provided as a list of 1D pypeit Spectrum objects.')
+    if not all([isinstance(s, spectrum.Spectrum) for s in _obs_spec]):
+        msgs.error('Multiple spectra must be provided as a list of pypeit Spectrum objects.')
 
     results = []
     for _spec in _obs_spec:
@@ -210,109 +206,6 @@ def get_sensfunc_factor(wave, wave_zp, zeropoint, exptime, tellmodel=None, delta
     return senstot/exptime/_delta_wave
 
 
-
-def fit_zeropoint(wave, Nlam_star, Nlam_ivar_star, gpm_star, std_dict,
-                  mask_hydrogen_lines=True, mask_helium_lines=False,
-                  polyorder=4, hydrogen_mask_wid=10.0,
-                  nresln=20., resolution=3000.,
-                  trans_thresh=0.9, polycorrect=True, 
-                  polyfunc=False, debug=False):
-
-    """
-    Function to generate the sensitivity function. This function fits
-    a bspline to the 2.5*log10(flux_std/flux_counts). The break
-    points spacing, which determines the scale of variation of the
-    sensitivity function is determined by the nresln parameter.
-
-    Args:
-        wave (`numpy.ndarray`_):
-            Wavelength of the star. Shape (nspec,)
-        Nlam_star (`numpy.ndarray`_):
-            counts/second/Angstrom
-        Nlam_ivar_star (`numpy.ndarray`_):
-            Inverse variance of Nlam_star
-        gpm_star (`numpy.ndarray`_):
-            Good pixel mask for Nlam_star
-        std_dict (dict):
-            Dictionary containing information about the standard star returned by flux_calib.get_standard_spectrum
-        mask_hydrogen_lines (bool, optional):
-            If True, mask stellar hydrogen absorption lines before fitting sensitivity function. Default = True
-        mask_helium_lines (bool, optional):
-            If True, mask stellar helium absorption lines before fitting sensitivity function. Default = False
-        hydrogen_mask_wid (float, optional):
-            Parameter describing the width of the mask for or stellar absorption lines (i.e., ``mask_hydrogen_lines=True``)
-            in Angstroms.  A region equal to ``hydrogen_mask_wid`` on either side of the line center is masked.
-            Default = 10A
-        polycorrect (bool, optional):
-            Whether you want to interpolate the zeropoint with polynomial in the stellar absortion line regions before
-            fitting with the bspline
-        nresln (float, optional):
-            Parameter governing the spacing of the bspline breakpoints. default = 20.0
-        resolution (float, optional):
-            Expected resolution of the standard star spectrum. This should probably be determined from the grating, but is
-            currently hard wired. default=3000.0
-        trans_thresh (float, optional):
-            Parameter for selecting telluric regions which are masked. Locations below this transmission value are masked.
-            If you have significant telluric absorption you should be using telluric.sensnfunc_telluric. default = 0.9
-        polyfunc (bool, optional):
-            If True, the zeropoint was a polynomial and not a bspline
-
-    Returns:
-        tuple: 
-
-          - zeropoint_data (`numpy.ndarray`_) -- Sensitivity function with same shape as wave (nspec,)
-          - zeropoint_data_gpm (`numpy.ndarray`_) -- Good pixel mask for sensitivity function with same shape as wave (nspec,)
-          - zeropoint_fit (`numpy.ndarray`_) -- Fitted sensitivity function with same shape as wave (nspec,)
-          - zeropoint_fit_gpm (`numpy.ndarray`_) -- Good pixel mask for fitted sensitivity function with same shape as wave (nspec,)
-
-    """
-
-    # Interpolate the standard star onto the current set of observed wavelengths
-    flux_true = interpolate.interp1d(std_dict['wave'], std_dict['flux'], bounds_error=False,
-                                     fill_value='extrapolate')(wave)
-    # Do we need to extrapolate? TODO Replace with a model or a grey body?
-    ## TODO This is an ugly hack. Why are we only triggering this if the extrapolated star is negative.
-    if np.min(flux_true) <= 0.:
-        msgs.warn('Your spectrum extends beyond calibrated standard star, extrapolating the spectra with polynomial.')
-        pypeitFit = fitting.robust_fit(std_dict['wave'].value, std_dict['flux'].value,8,function='polynomial',
-                                                    maxiter=50, lower=3.0, upper=3.0, maxrej=3,
-                                                    grow=0, sticky=True, use_mad=True)
-        star_poly = pypeitFit.eval(wave)
-        #flux_true[mask_model] = star_poly[mask_model]
-        flux_true = star_poly.copy()
-        if debug:
-            plt.plot(std_dict['wave'], std_dict['flux'],'bo',label='Raw Star Model')
-            plt.plot(std_dict['wave'],  pypeitFit.eval(std_dict['wave'].value),
-                     'k-',label='robust_poly_fit')
-            plt.plot(wave,flux_true,'r-',label='Your Final Star Model used for sensfunc')
-            plt.show()
-
-    # Get masks from observed star spectrum. True = Good pixels
-    mask_star, mask_recomb, mask_tell = get_mask(wave, Nlam_star, Nlam_ivar_star, gpm_star,
-                                              mask_hydrogen_lines=mask_hydrogen_lines,
-                                              mask_helium_lines=mask_helium_lines,
-                                              mask_telluric=True, hydrogen_mask_wid=hydrogen_mask_wid,
-                                              trans_thresh=trans_thresh)
-
-    # Get zeropoint
-    zeropoint_data, zeropoint_data_gpm, zeropoint_fit, zeropoint_fit_gpm = standard_zeropoint(
-        wave, Nlam_star, Nlam_ivar_star, mask_star, flux_true, mask_recomb=mask_recomb,
-        mask_tell=mask_tell, maxiter=35, upper=3, lower=3, polyorder=polyorder,
-        balm_mask_wid=hydrogen_mask_wid, nresln=nresln, resolution=resolution,
-        polycorrect=polycorrect, polyfunc=polyfunc, debug=debug)
-
-    if debug:
-        sensfactor = Nlam_to_Flam(wave, zeropoint_fit)
-        plt.plot(wave[zeropoint_fit_gpm], flux_true[zeropoint_fit_gpm], color='k',lw=2, label='Reference Star')
-        plt.plot(wave[zeropoint_fit_gpm], Nlam_star[zeropoint_fit_gpm]*sensfactor[zeropoint_fit_gpm], color='r', label='Fluxed Observed Star')
-        plt.xlabel('Wavelength (Angstroms)')
-        plt.ylabel(r'Flux (erg/s/cm$^2$/$\AA$)')
-        plt.legend(fancybox=True, shadow=True)
-        plt.show()
-
-    return zeropoint_data, zeropoint_data_gpm, zeropoint_fit, zeropoint_fit_gpm
-
-
 # These are physical limits on the allowed values of the zeropoint in magnitudes
 def eval_zeropoint(theta, func, wave, wave_min, wave_max, log10_blaze_func_per_ang=None):
     """
@@ -402,47 +295,6 @@ def Flam_to_Nlam(wave, zeropoint, zp_min=5.0, zp_max=30.0):
     factor = np.zeros_like(wave)
     factor[gpm] = np.power(10.0, 0.4*(zeropoint[gpm] - ZP_UNIT_CONST))*np.square(wave[gpm])
     return factor
-
-
-def compute_zeropoint(obs_spec, std_spec, tellmodel=None):
-    """
-    Routine to compute the zeropoint and zeropoint_gpm from the N_lam (counts/s/A) of a standard star
-
-    Parameters
-    ----------
-    wave: `numpy.ndarray`_
-        Wavelength array, float, shape (nspec,)
-    N_lam: `numpy.ndarray`_
-        N_lam spectrum of standard star, float, shape (nspec,)
-    N_lam_gpm: `numpy.ndarray`_
-        N_lam mask, good pixel mask, boolean, shape (nspec,)
-    flam_std_star: `numpy.ndarray`_
-        True standard star spectrum in units of PYPEIT_FLUX_SCALE erg/s/cm^2/Angstrom
-    tellmodel: `numpy.ndarray`_
-        Telluric absorption model, optional, shape (nspec,)
-
-    Returns
-    -------
-    zeropoint:  `numpy.ndarray`_
-        Spectroscopic zeropoint, float, shape (nspec,)
-    zeropoint_gpm: `numpy.ndarray`_
-        Zeropoint good pixel mask, bool, shape  (nspec,)
-    """
-    # Set the optional parameters
-    tellmodel = np.ones_like(N_lam) if tellmodel is None else tellmodel
-    # Calculate the zeropoint
-    S_nu_dimless = np.square(wave)*tellmodel*flam_std_star*utils.inverse(N_lam)
-    zeropoint = -2.5*np.log10(S_nu_dimless + (S_nu_dimless <= 0.0)) + ZP_UNIT_CONST
-    zeropoint_gpm = N_lam_gpm & np.isfinite(zeropoint) & (N_lam > 0.0) & (S_nu_dimless > 0.0) & \
-                    np.isfinite(flam_std_star) & (wave > 1.0)
-    return zeropoint, zeropoint_gpm
-
-#def throughput_from_sensfile(sensfile):
-#
-#    wave, zeropoint, meta_table, out_table, header_sens = sensfunc.SensFunc.load(sensfile)
-#    spectrograph = util.load_spectrograph(header_sens['PYP_SPEC'])
-#    throughput = zeropoint_to_thru(wave, zeropoint, spectrograph.telescope.eff_aperture())
-#    return wave, throughput
 
 
 def zeropoint_to_throughput(wave, zeropoint, eff_aperture):
@@ -559,10 +411,9 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
         calculation.
     bkspace : :obj:`float`, optional
         The spacing in angstroms between breakpoints in the bspline used to fit
-        the sensitivity function zeropoints; see
-        :func:`standard_zeropoint_breakpoints`.  If None, ``resolution`` and
-        ``nresln`` must be provided.  If provided, ``resolution`` and ``nresln``
-        are ignored.
+        the sensitivity function zeropoints; see :func:`zeropoint_breakpoints`.
+        If None, ``resolution`` and ``nresln`` must be provided.  If provided,
+        ``resolution`` and ``nresln`` are ignored.
     resolution : :obj:`int`, :obj:`float`, optional
         The spectral resolution of the *observed* data.  The combination of
         ``resolution`` and ``nresln`` are used to set the breakpoint spacing.
@@ -602,6 +453,53 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
         the observed wavelengths, use ``bspl.value(obs_spec.wave)`` (see
         :func:`~pypeit.bspline.bspline.bspline.value`).
     """
+    zp_spec = calculate_zeropoint(
+        obs_spec, std_spec, exptime=exptime, atm_extinction=atm_extinction, airmass=airmass,
+        telluric_model=telluric_model
+    )
+    fit_gpm, fit_gpm_rej, zp_bspl = fit_zeropoint(
+        zp_spec, bkspace=bkspace, resolution=resolution, nresln=nresln, region_mask=region_mask,
+        maxiter=maxiter, upper=upper, lower=lower
+    )
+    return zp_spec, fit_gpm, fit_gpm_rej, zp_bspl
+
+
+def calculate_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airmass=1.,
+                        telluric_model=None):
+    r"""
+    Calculate the flux zeropoints based on observed flux and standard spectrum.
+
+    Parameters
+    ----------
+    obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
+        Observed spectrum.  The input wavelength and flux units are expected to
+        be angstroms and counts, respectively.  The spectrum is expected to be a
+        single vector..
+    std_spec : :class:`~pypeit.core.spectrum.Spectrum`
+        Standard, flux calibrated spectrum.  Flux must be in :math:`10^{-17}
+        {\rm erg/s/cm}^2/\AA`.  Must be sampled at the same wavelengths as the
+        observed spectrum.
+    exptime : :obj:`float`, optional
+        Exposure time in seconds.
+    atm_extinction : :class:`~pypeit.core.atmextinction.AtmosphericExtinction`, optional
+        Atmospheric extinction profile.  If None, the observed spectrum is
+        assumed to already been corrected for atmospheric extinction.
+    airmass : :obj:`float`, optional
+        The airmass of the observation used to calculate the atmospheric
+        extinction correction factor; see
+        :func:`~pypeit.core.atmextinction.AtmosphericExtinction.correction_factor`.
+    telluric_model : `np.ndarray`_, optional
+        A model of the telluric spectrum sampled at the same wavelengths as the
+        observed spectrum.  This used to remove the telluric signatures in the
+        observed spectrum.  Note that if both ``atm_extinction`` and
+        ``telluric_model`` are provided, they are *both* used in the zeropoint
+        calculation.
+
+    Returns
+    -------
+    :class:`~pypeit.core.spectrum.Spectrum`
+        Measured spectrum of zeropoints.
+    """
     # Check the input
     if not isinstance(obs_spec, spectrum.Spectrum):
         msgs.error('Must provide observed spectrum as a Spectrum object.')
@@ -631,9 +529,67 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
         zp_spec.multiply(telluric_model)
     zp_spec.to_magnitude(zeropoint=ZP_UNIT_CONST)
 
-    # TODO: I think everything above should work if the Spectrum has an ND flux
-    # array.  Changes need to be made to the line below to enable the function
-    # to work on an ND array.
+    return zp_spec
+
+
+# TODO: It would be straight-forward to generalize this to fit a generic
+# spectrum.  I.e., there's nothing in this function that's specific to flux
+# calibration.
+def fit_zeropoint(zp_spec, bkspace=None, resolution=2700., nresln=20., region_mask=None,
+                  maxiter=35, upper=3.0, lower=3.0):
+    """
+    Fit a bspline model to the measured flux zeropoints.
+
+    Parameters
+    ----------
+    zp_spec : :class:`~pypeit.core.spectrum.Spectrum`
+        Measured spectrum of zeropoints.  Note that the good-pixel mask of the
+        spectrum is used to ignore pixels during the fit; see also
+        ``region_mask``
+    bkspace : :obj:`float`, optional
+        The spacing in angstroms between breakpoints in the bspline used to fit
+        the sensitivity function zeropoints; see :func:`zeropoint_breakpoints`.
+        If None, ``resolution`` and ``nresln`` must be provided.  If provided,
+        ``resolution`` and ``nresln`` are ignored.
+    resolution : :obj:`int`, :obj:`float`, optional
+        The spectral resolution of the *observed* data.  The combination of
+        ``resolution`` and ``nresln`` are used to set the breakpoint spacing.
+        If ``bkspace`` is provided, both ``resolution`` and ``nresln`` are
+        ignored.
+    nresln : :obj:`int`, :obj:`float`, optional
+        The number of resolution elements between adjacent breakpoints.  The
+        combination of ``resolution`` and ``nresln`` are used to set the
+        breakpoint spacing in angstroms.  If ``bkspace`` is provided, both
+        ``resolution`` and ``nresln`` are ignored.
+    region_mask : `numpy.ndarray`_, optional
+        A :math:`(N_{\rm mask},2)` array with starting and ending wavelengths
+        for a set of spectral regions to mask during the zeropoint fitting.  See
+        :func:`~pypeit.core.wavemask.build_wavelength_gpm`.
+    maxiter : :obj:`int`, optional
+        Maximum number of fit and rejection iterations for the bspline fitting.
+        See :func:`~pypeit.bspline.bspline.iterfit`.
+    upper : :obj:`int`, :obj:`float`, optional
+        Number of sigma used for rejecting positive residuals during bspline fitting.
+    lower : :obj:`int`, :obj:`float`, optional
+        Number of sigma used for rejecting negative residuals during bspline fitting.
+
+    Returns
+    -------
+    fit_gpm : `numpy.ndarray`_
+        Boolean array (good-pixel mask) selecting pixels that were initially
+        included in the bspline fit.  Note this can be different from
+        ``fit_rej_gpm``, which excludes measurements that are rejected during
+        the iterative fitting procedure.  Shape matches ``zp_spec``.
+    fit_gpm_rej : `numpy.ndarray`_
+        Same as ``fit_gpm``, except that measurements rejected by the iterative
+        fitting procedures have been flagged as bad.  Shape matches ``zp_spec``.
+    zp_bspl : :class:`~pypeit.bspline.bspline.bspline`
+        Best-fitting bspline model for the zeropoints.  To sample the model at
+        the observed wavelengths, use ``bspl.value(obs_spec.wave)`` (see
+        :func:`~pypeit.bspline.bspline.bspline.value`).
+    """
+    # TODO: I think changes need to be made to the lines below to enable the
+    # function to work on an multi-vector spectrum.
 
     # Construct the good-pixel mask to use while fitting
     if region_mask is None:
@@ -642,7 +598,7 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
         fit_gpm = zp_spec.gpm & wavemask.build_wavelength_gpm(zp_spec.wave, region_mask)
 
     # Set the bspline breakpoints
-    init_breakpoints = standard_zeropoint_breakpoints(
+    init_breakpoints = zeropoint_breakpoints(
         zp_spec.wave, gpm=zp_spec.gpm, fit_gpm=fit_gpm, bkspace=bkspace, resolution=resolution,
         nresln=nresln
     )
@@ -657,11 +613,10 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
     )
 
     # Return the results
-    return zp_spec, fit_gpm, fit_gpm_rej, zp_bspl
+    return fit_gpm, fit_gpm_rej, zp_bspl
 
 
-def standard_zeropoint_breakpoints(wave, gpm=None, fit_gpm=None, bkspace=None, resolution=None,
-                                   nresln=None):
+def zeropoint_breakpoints(wave, gpm=None, fit_gpm=None, bkspace=None, resolution=None, nresln=None):
     """
     Create the vector of breakpoints for fitting zeropoints.
 
@@ -935,83 +890,3 @@ def scale_in_filter(wave, flux, gpm, scale_dict):
 
     return scale
 
-
-
-
-
-    spec_gpm = get_mask(wave, Nlam_star, Nlam_ivar_star, gpm_star, spec_mask_files=spec_mask_files,
-                        mask_telluric=mask_telluric, trans_thresh=trans_thresh)
-    
-def get_mask(wave, flux, ivar, gpm=None, spec_mask_files=None, mask_telluric=True,
-             trans_thresh=0.9):
-    r"""
-    Create a good-pixel mask that removes poor measurements (inverse variance or
-    flux is <= 0), specific spectral regions, and regions with significant
-    telluric absoroption.
-
-    Parameters
-    ----------
-    wave : `numpy.ndarray`_
-        Wavelength array in angstroms.
-    flux : `numpy.ndarray`_
-        Flux array.  Shape must match ``wave``.
-    ivar : `numpy.ndarray`_
-        Flux inverse variance array.  Shape must match ``wave``.
-    gpm : bool, optional
-        Good-pixel mask for the spectrum.  Shape must match ``wave``.
-    spec_mask_files : str, Path, list, optional
-        List of mask configuration files used to mask spectral regions.
-    mask_telluric : bool, optional
-        Flag to mask telluric regions
-    trans_thresh: float, optional
-        Mask regions where the atmospheric transmission less than this
-        threshold.  Ignored if ``mask_telluric`` is False.
-
-    Returns
-    -------
-    `numpy.ndarray`_
-        Boolean good-pixel mask with the same shape as ``wave``.
-    """
-    msgs.info(" Masking bad pixels")
-    _gpm = np.ones(wave.shape, dtype=bool) if gpm is None else gpm.copy()
-    _gpm[ivar <= 0.] = False
-    # TODO: Counts in the standard star spectra should be high, but noise could
-    # still mean that the flux drops below zero, particularly at the edges of
-    # the spectral range.  Do we need to do this?
-    _gpm[flux <= 0.] = False
-    # Mask edges
-    # TODO: Why?
-    msgs.info(" Masking edges")
-    _gpm[[0, -1]] = False
-
-    # Mask the designated spectral regions
-    if spec_mask_files is not None:
-        msgs.info("Masking spectral regions")
-        regions = wavemask.read_wavelength_masks(spec_mask_files)
-        _gpm &= wavemask.build_wavelength_gpm(wave, regions)
-
-    # TODO: This needs to be refactored.
-    if mask_telluric:
-        # Mask the telluric bands blueward of 9100.
-        regions = wavemask.read_wavelength_masks(dataPaths.masks.get_file_path('telluric.toml'))
-        _gpm &= wavemask.build_wavelength_gpm(wave, regions)
-        if np.amax(wave) > 9100.0:
-            msgs.info("Masking regions with significant telluric absorption")
-            skytrans_file = dataPaths.skisim.get_file_path('mktrans_zm_10_10.dat')
-            skytrans = ascii.read(skytrans_file)
-            wave_trans = skytrans['wave'].data*10000.0  # Convert to angstroms
-            trans = skytrans['trans'].data
-            trans_use = (wave_trans >= np.min(wave[_gpm])-100.0) \
-                            & (wave_trans <= np.max(wave[_gpm])+100.0)
-            # Estimate the resolution of your spectra.  I assumed 3 pixels per
-            # resolution. This gives an approximate right resolution at the middle
-            # point.
-            resolution = np.median(wave[_gpm]) / np.median(np.diff(wave)) / 3
-            trans_convolved = conv2res(wave_trans[trans_use], trans[trans_use], resolution,
-                                    central_wl='midpt', debug=False)[0]
-            trans_final = interpolate.interp1d(wave_trans[trans_use], trans_convolved,
-                                            bounds_error=False, fill_value='extrapolate')(wave)
-            tell_nir = (trans_final < trans_thresh) & (wave > 9100.0)
-            _gpm[tell_nir] = False
-
-    return _gpm

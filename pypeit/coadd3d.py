@@ -5,7 +5,6 @@ Module containing routines used by 3D datacubes.
 """
 
 import os
-import copy
 import inspect
 
 from astropy import wcs, units
@@ -15,9 +14,18 @@ from scipy.interpolate import interp1d
 import numpy as np
 
 from pypeit import msgs
-from pypeit import alignframe, datamodel, flatfield, io, sensfunc, spec2dobj, utils
+from pypeit import alignframe
+from pypeit import datamodel
+from pypeit import flatfield
+from pypeit import io
+from pypeit import sensfunc
+from pypeit import spec2dobj
+from pypeit import utils
 from pypeit.core.flexure import calculate_image_phase
-from pypeit.core import datacube, extract, flux_calib, parse
+from pypeit.core import datacube
+from pypeit.core import extract
+from pypeit.core import flux_calib
+from pypeit.core import parse
 from pypeit.spectrographs.util import load_spectrograph
 
 from IPython import embed
