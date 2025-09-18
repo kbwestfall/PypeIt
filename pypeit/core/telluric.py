@@ -19,7 +19,7 @@ from astropy.io import fits
 from pypeit import msgs
 from pypeit import dataPaths
 from pypeit import io
-from pypeit.core import flux_calib
+from pypeit.core import flux_calib_refactor
 from pypeit.core.wavecal import wvutils
 from pypeit.core import coadd
 from pypeit.core import fitting
@@ -35,7 +35,6 @@ from pypeit import datamodel
 ##############################
 #  Telluric model functions  #
 ##############################
-ZP_UNIT_CONST = flux_calib.zp_unit_const()
 
 
 # TODO These codes should probably be in a separate qso_pca module. Also pickle functionality needs to be removed.
@@ -787,10 +786,8 @@ def general_spec_reader(specfile, ret_flam=False, chk_version=False, ret_order_s
         head = sobjs.header
         wave, counts, counts_ivar, counts_gpm = unpack_orders(sobjs, ret_flam=ret_flam)
         wave_grid_mid = None
-        # Made a change to the if statement to account for unpack_orders now squeezing returned arrays
-        #if (head['PYPELINE'] !='Echelle') and (wave.shape[1]>1)
-        if (head['PYPELINE'] !='Echelle') and (wave.ndim>1):
-            idx = flux_calib.find_standard(sobjs)
+        if head['PYPELINE'] != 'Echelle' and wave.ndim > 1:
+            idx = sobjs.find_standard()
             npix = head['NPIX']
             wave, counts = np.reshape(wave[:,idx],(npix,1)), np.reshape(counts[:,idx],(npix,1))
             counts_ivar = np.reshape(counts_ivar[:,idx],(npix,1))
@@ -909,10 +906,10 @@ def init_sensfunc_model(obj_params, iord, wave, counts_per_ang, ivar, gpm, tellm
                   'Proceeding by masking these regions, but consider using another standard star')
     N_lam = counts_per_ang/obj_params['exptime']
     zeropoint_data, zeropoint_data_gpm \
-            = flux_calib.compute_zeropoint(wave, N_lam, (gpm & flam_true_gpm), flam_true,
-                                           tellmodel=tellmodel)
+            = flux_calib_refactor.compute_zeropoint(wave, N_lam, (gpm & flam_true_gpm), flam_true,
+                                                    tellmodel=tellmodel)
 
-    zeropoint_poly = zeropoint_data + 5.0*np.log10(wave) - ZP_UNIT_CONST
+    zeropoint_poly = zeropoint_data + 5.0*np.log10(wave) - flux_calib_refactor.ZP_UNIT_CONST
     if obj_params['log10_blaze_func_per_ang'] is not None:
         zeropoint_poly -= 2.5*obj_params['log10_blaze_func_per_ang']
     # Perform an initial fit to the sensitivity function to set the starting
@@ -922,7 +919,7 @@ def init_sensfunc_model(obj_params, iord, wave, counts_per_ang, ivar, gpm, tellm
                                    function=obj_params['func'], minx=wave_min, maxx=wave_max,
                                    in_gpm=zeropoint_data_gpm, lower=obj_params['sigrej'],
                                    upper=obj_params['sigrej'], use_mad=True)
-    zeropoint_fit = flux_calib.eval_zeropoint(pypeitFit.fitc, obj_params['func'], wave, wave_min, wave_max,
+    zeropoint_fit = flux_calib_refactor.eval_zeropoint(pypeitFit.fitc, obj_params['func'], wave, wave_min, wave_max,
                                               log10_blaze_func_per_ang=obj_params['log10_blaze_func_per_ang'])
     zeropoint_fit_gpm = pypeitFit.bool_gpm
 
@@ -944,7 +941,7 @@ def init_sensfunc_model(obj_params, iord, wave, counts_per_ang, ivar, gpm, tellm
 
     if obj_params['debug']:
         title = 'Zeropoint Initialization Guess for order/det={:d}'.format(iord + 1)  # +1 to account 0-index starting
-        flux_calib.zeropoint_qa_plot(wave, zeropoint_data, zeropoint_data_gpm, zeropoint_fit,
+        flux_calib_refactor.zeropoint_qa_plot(wave, zeropoint_data, zeropoint_data_gpm, zeropoint_fit,
                                     zeropoint_fit_gpm, title=title, show=True)
 
 
@@ -980,11 +977,11 @@ def eval_sensfunc_model(theta, obj_dict):
     gpm : `numpy.ndarray`_, bool, shape is the same as obj_dict['wave_star']
         Good pixel mask indicating where the model is valid
     """
-    zeropoint = flux_calib.eval_zeropoint(theta, obj_dict['func'], obj_dict['wave'],
+    zeropoint = flux_calib_refactor.eval_zeropoint(theta, obj_dict['func'], obj_dict['wave'],
                                           obj_dict['wave_min'], obj_dict['wave_max'],
                                           log10_blaze_func_per_ang=obj_dict['log10_blaze_func_per_ang'])
     counts_per_angstrom_model = obj_dict['exptime'] \
-                                    * flux_calib.Flam_to_Nlam(obj_dict['wave'], zeropoint) \
+                                    * flux_calib_refactor.Flam_to_Nlam(obj_dict['wave'], zeropoint) \
                                     * obj_dict['flam_true'] * obj_dict['flam_true_gpm']
     return counts_per_angstrom_model,  obj_dict['flam_true_gpm']
 
@@ -1492,7 +1489,7 @@ def sensfunc_telluric(wave, counts, counts_ivar, counts_mask, exptime, airmass, 
                       debug=debug_init)
 
     # Optionally, mask prominent stellar absorption features
-    mask_bad, mask_recomb, mask_tell = flux_calib.get_mask(wave, counts, counts_ivar, counts_mask,
+    mask_bad, mask_recomb, mask_tell = flux_calib_refactor.get_mask(wave, counts, counts_ivar, counts_mask,
                                               mask_hydrogen_lines=mask_hydrogen_lines,
                                               mask_helium_lines=mask_helium_lines,
                                               mask_telluric=False, hydrogen_mask_wid=hydrogen_mask_wid)
@@ -1754,8 +1751,6 @@ def star_telluric(spec1dfile, telgridfile, telloutfile, outfile, star_type=None,
     star_dec = meta_spec['core']['DEC'] if star_dec is None else star_dec
     std_spec = standard.get_standard_spectrum(spectral_type=star_type, V_mag=star_mag,
                                               ra=star_ra, dec=star_dec)
-#    std_dict = flux_calib.get_standard_spectrum(star_type=star_type, star_mag=star_mag, ra=star_ra,
-#                                                dec=star_dec)
 
     if flux.ndim == 2:
         norders = flux.shape[1]
@@ -1782,7 +1777,7 @@ def star_telluric(spec1dfile, telgridfile, telloutfile, outfile, star_type=None,
                       debug=debug_init)
 
     # Optionally, mask prominent stellar absorption features
-    mask_bad, mask_recomb, mask_tell = flux_calib.get_mask(wave, flux, ivar, mask,
+    mask_bad, mask_recomb, mask_tell = flux_calib_refactor.get_mask(wave, flux, ivar, mask,
                                               mask_hydrogen_lines=mask_hydrogen_lines,
                                               mask_helium_lines=mask_helium_lines,
                                               mask_telluric=False, hydrogen_mask_wid=hydrogen_mask_wid)

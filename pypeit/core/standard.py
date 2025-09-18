@@ -177,6 +177,27 @@ class ArchivedFluxStandard(spectrum.Spectrum):
         return sep, row['Name'], row['File']
 
     @classmethod
+    def found_match(cls, ra, dec, tol=20.):
+        """
+        Check if there is a match to the provided coordinates within the
+        tolerance.
+
+        Parameters
+        ----------
+        ra, dec : float, str
+            On-sky coordinates (as either decimal or sexagesimal string format)
+        tol : float, optional
+            Tolerance for coordinate matching in arcmin
+
+        Returns
+        -------
+        bool
+            Flag that an appropriate match was found.
+        """
+        sep, row = nearest_archive_entry(cls.archive, ra, dec)
+        return sep < tol * units.arcmin
+    
+    @classmethod
     def from_coordinates(cls, ra, dec, tol=20.):
         """
         Instantiate the class using the spectrum for the object closest to the
@@ -626,7 +647,7 @@ def get_archive_sets(archives=['xshooter', 'calspec', 'esofil', 'noao', 'ing']):
     return _archives[good]
 
 
-def get_archive_standard(ra, dec, tol=20., archives='default'):
+def get_archive_standard(ra, dec, tol=20., archives='default', check=False):
     """
     Attempt to find and return an archive flux calibration spectrum that is
     closest to the provided coordinates.
@@ -639,7 +660,7 @@ def get_archive_standard(ra, dec, tol=20., archives='default'):
     
     Parameters
     ----------
-    ra, dec : float, str, optional
+    ra, dec : float, str
         On-sky coordinates (as either decimal or sexagesimal string format)
     tol : float, optional
         The matching tolerance used in arcmin.
@@ -647,11 +668,16 @@ def get_archive_standard(ra, dec, tol=20., archives='default'):
         Name of the archives to search, in a prioritized order.  If
         ``'default'``, all archives are searched.  To only search for suitable
         blackbody parameters, set ``archives='blackbody'``.
+    check : :obj:`bool`, optional
+        Only check if a standard matches the provided coordinates, as opposed to
+        also reading the spectral data.
 
     Returns
     -------
-    spectrum.Spectrum
-        The standard spectrum.
+    spectrum.Spectrum, bool
+        If ``check`` is True, a flag is returned indicating if a standard
+        matches the provided coordinates.  Otherwise, the standard spectrum is
+        returned.
     """
     archive_classes = archived_flux_classes()
     # NOTE: The if statement below has to use `'default' in archives` to allow
@@ -669,18 +695,25 @@ def get_archive_standard(ra, dec, tol=20., archives='default'):
         _archives = np.asarray([])
 
     for key in _archives:
-        try:
-            return archive_classes[key].from_coordinates(ra, dec, tol=tol)
-        except PypeItError:
-            # Ignore PypeItErrors, assuming they're because there was no object
-            # within tol
-            continue
+        if check:
+            if archive_classes[key].found_match(ra, dec, tol=tol):
+                return True
+        else:
+            try:
+                return archive_classes[key].from_coordinates(ra, dec, tol=tol)
+            except PypeItError:
+                # Ignore PypeItErrors, assuming they're because there was no object
+                # within tol
+                continue
 
     # Try to find a nearby blackbody
     # NOTE: The use of "in" here follows the same reason as above.  And note
     # this is using `archives` (i.e., what was provided to the function) not
     # `_archives` (i.e., how the function parses the input).
     if 'default' in archives or 'blackbody' in archives:
+        if check:
+            return BlackbodyStandard.found_match(ra, dec, tol=tol)
+
         _archives = np.append(_archives, ['blackbody'])
         try:
             return BlackbodyStandard.from_coordinates(ra, dec, tol=tol)
@@ -688,6 +721,9 @@ def get_archive_standard(ra, dec, tol=20., archives='default'):
             # Ignore PypeItErrors, assuming they're because there was no object
             # within tol
             pass
+    
+    if check:
+        return False
 
     # Unable to find a standard within the provided tolerance.  Find the closest
     # one, report it, and fault.

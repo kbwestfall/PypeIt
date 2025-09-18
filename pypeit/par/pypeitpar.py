@@ -1385,7 +1385,7 @@ class Coadd1DPar(ParSet):
         # For scaling to an input filter magnitude
         defaults['filter'] = 'none'
         dtypes['filter'] = str
-        descr['filter'] = 'Filter for scaling.  See flux_calib.load_fitler_file() for naming.  Ignore if none'
+        descr['filter'] = 'Filter for scaling.  See :func:`~pypeit.core.flux_calib.load_filter_file` for naming.  Ignore if none'
 
         defaults['mag_type'] = 'AB'
         dtypes['mag_type'] = str

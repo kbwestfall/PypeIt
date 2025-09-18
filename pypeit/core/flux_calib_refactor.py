@@ -17,24 +17,24 @@ from matplotlib import ticker
 from astropy import units
 from astropy import constants
 from astropy import table
-from astropy.io import ascii
-from astropy import stats
 
 from pypeit import msgs
 from pypeit import utils
 from pypeit import bspline
 from pypeit import io
 from pypeit import sampling
-from pypeit.wavemodel import conv2res
 from pypeit.core.wavecal import wvutils
 from pypeit.core import fitting
 from pypeit.core import spectrum
-from pypeit.core import wave
 from pypeit.core import wavemask
 from pypeit import dataPaths
 
 
 PYPEIT_FLUX_SCALE = 1e-17
+r"""
+Global variable defining the flux scale used by PypeIt.  Units are
+erg/s/cm:math:`^2`/Angstrom.
+"""
 
 
 def zp_unit_const():
@@ -46,10 +46,13 @@ def zp_unit_const():
                           (PYPEIT_FLUX_SCALE*units.erg/units.s/units.cm**2/units.angstrom)
                          ).to('Jy')/(3631 * units.Jy)).value
 
-# Define this global variable to avoid constantly recomputing, which could be
-# costly in the telluric optimization routines.  It has a value of ZP_UNIT_CONST
-# = 40.092117379602044
+
 ZP_UNIT_CONST = zp_unit_const()
+"""
+Global variable with the spectroscopic zeropoint.
+
+Value is: ZP_UNIT_CONST = 40.092117379602044.
+"""
 
 
 def sensfunc(obs_spec, std_spec, **kwargs):

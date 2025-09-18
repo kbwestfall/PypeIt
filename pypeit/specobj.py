@@ -17,7 +17,7 @@ from linetools.spectra import xspectrum1d
 
 from pypeit import msgs
 from pypeit.core import flexure
-from pypeit.core import flux_calib
+from pypeit.core import flux_calib_refactor
 from pypeit.core import parse
 from pypeit import utils
 from pypeit import datamodel
@@ -593,7 +593,7 @@ class SpecObj(datamodel.DataContainer):
 
             wave = self[attr+'_WAVE']
             # Interpolate the sensitivity function onto the wavelength grid of the data
-            sens_factor = flux_calib.get_sensfunc_factor(
+            sens_factor = flux_calib_refactor.get_sensfunc_factor(
                 wave, wave_zp, zeropoint, exptime, tellmodel=tellmodel, extinct_correct=extinct_correct, airmass=airmass,
                 longitude=longitude, latitude=latitude, extinctfilepar=extinctfilepar, extrap_sens=extrap_sens)
             flam = self[attr+'_COUNTS']*sens_factor

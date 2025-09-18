@@ -15,7 +15,7 @@ from scipy.interpolate import interp1d
 import numpy as np
 
 from pypeit import msgs, utils, specobj, specobjs
-from pypeit.core import coadd, extract, flux_calib
+from pypeit.core import coadd, extract
 
 # Use a fast histogram for speed!
 from fast_histogram import histogramdd

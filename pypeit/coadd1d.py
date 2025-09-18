@@ -5,8 +5,6 @@ Coadding module.
 .. include common links, assuming primary doc root is up one directory
 .. include:: ../include/links.rst
 """
-import inspect
-
 from IPython import embed
 
 import numpy as np
@@ -22,7 +20,7 @@ from pypeit import sensfunc
 from pypeit import specobjs
 from pypeit import msgs
 from pypeit.core import coadd
-from pypeit.core import flux_calib
+from pypeit.core import flux_calib_refactor
 from pypeit.history import History
 
 
@@ -107,7 +105,7 @@ class CoAdd1D:
 
         # Scale to a filter magnitude?
         if self.par['filter'] != 'none':
-            scale = flux_calib.scale_in_filter(self.wave_coadd, self.flux_coadd, self.gpm_coadd, self.par)
+            scale = flux_calib_refactor.scale_in_filter(self.wave_coadd, self.flux_coadd, self.gpm_coadd, self.par)
             self.flux_coadd *= scale
             self.ivar_coadd = self.ivar_coadd / scale**2
 

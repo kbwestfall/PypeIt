@@ -20,7 +20,6 @@ from pypeit import specobjs
 from pypeit import utils
 from pypeit.core import atmextinction
 from pypeit.core import coadd
-from pypeit.core import flux_calib
 from pypeit.core import flux_calib_refactor
 from pypeit.core import telluric
 from pypeit.core import spectrum
@@ -597,7 +596,7 @@ class SensFunc(datamodel.DataContainer):
                             & (self.wave[:,idet] <= self.sens['WAVE_MAX'][idet]) \
                             & (self.wave[:,idet] > 1.0)
             throughput[:,idet][wave_gpm] \
-                    = flux_calib.zeropoint_to_throughput(self.wave[:,idet][wave_gpm],
+                    = flux_calib_refactor.zeropoint_to_throughput(self.wave[:,idet][wave_gpm],
                                                          self.zeropoint[:,idet][wave_gpm],
                                                          self.spectrograph.telescope.eff_aperture())
         if self.splice_multi_det:
@@ -606,7 +605,7 @@ class SensFunc(datamodel.DataContainer):
                             & (self.wave_splice > 1.0)
             throughput_splice = np.zeros_like(self.wave_splice)
             throughput_splice[wave_gpm] \
-                    = flux_calib.zeropoint_to_throughput(self.wave_splice[wave_gpm],
+                    = flux_calib_refactor.zeropoint_to_throughput(self.wave_splice[wave_gpm],
                                                          self.zeropoint_splice[wave_gpm],
                                                          self.spectrograph.telescope.eff_aperture())
         else:
@@ -646,14 +645,14 @@ class SensFunc(datamodel.DataContainer):
             for ipage in range(npages):
                 figure, (ax1, ax2) = plt.subplots(2, figsize=(8.27, 11.69))
                 if (2 * ipage) < self.norderdet:
-                    flux_calib.zeropoint_qa_plot(self.sens['SENS_WAVE'][2*ipage],
+                    flux_calib_refactor.zeropoint_qa_plot(self.sens['SENS_WAVE'][2*ipage],
                                                  self.sens['SENS_ZEROPOINT'][2*ipage],
                                                  self.sens['SENS_ZEROPOINT_GPM'][2*ipage],
                                                  self.sens['SENS_ZEROPOINT_FIT'][2*ipage],
                                                  self.sens['SENS_ZEROPOINT_FIT_GPM'][2*ipage],
                                                  title=zp_title[2*ipage], axis=ax1)
                 if (2*ipage + 1) < self.norderdet:
-                    flux_calib.zeropoint_qa_plot(self.sens['SENS_WAVE'][2*ipage+1],
+                    flux_calib_refactor.zeropoint_qa_plot(self.sens['SENS_WAVE'][2*ipage+1],
                                                  self.sens['SENS_ZEROPOINT'][2*ipage+1],
                                                  self.sens['SENS_ZEROPOINT_GPM'][2*ipage+1],
                                                  self.sens['SENS_ZEROPOINT_FIT'][2*ipage+1],
@@ -871,7 +870,7 @@ class SensFunc(datamodel.DataContainer):
                 # if the order is not in the sensfunc file, skip it
                 continue
             for iexp in range(nexp):
-                sensfunc_iord = flux_calib.get_sensfunc_factor(waves_stack[:,iord,iexp],
+                sensfunc_iord = flux_calib_refactor.get_sensfunc_factor(waves_stack[:,iord,iexp],
                                                                sens.wave[:,isens],
                                                                sens.zeropoint[:,isens], 1.0,
                                                                extrap_sens=extrap_sens)
@@ -993,14 +992,14 @@ class IRSensFunc(SensFunc):
             self.sens['SENS_COUNTS_PER_ANG'][i,s[i]:e[i]] = self.telluric.flux_arr[s[i]:e[i],i]
             N_lam = self.sens['SENS_COUNTS_PER_ANG'][i,s[i]:e[i]] / self.exptime
             self.sens['SENS_ZEROPOINT'][i,s[i]:e[i]], _ \
-                    = flux_calib.compute_zeropoint(self.sens['SENS_WAVE'][i,s[i]:e[i]], N_lam,
+                    = flux_calib_refactor.compute_zeropoint(self.sens['SENS_WAVE'][i,s[i]:e[i]], N_lam,
                                                    self.sens['SENS_ZEROPOINT_GPM'][i,s[i]:e[i]],
                                                    self.telluric.obj_dict_list[i]['flam_true'],
                                                    tellmodel=self.telluric.tellmodel_list[i])
             # TODO: func is always 'legendre' because that is what's set by
             # sensfunc_telluric
             self.sens['SENS_ZEROPOINT_FIT'][i,s[i]:e[i]] \
-                    = flux_calib.eval_zeropoint(
+                    = flux_calib_refactor.eval_zeropoint(
                 self.sens['SENS_COEFF'][i,:self.sens['POLYORDER_VEC'][i]+2],
                 self.telluric.func, self.sens['SENS_WAVE'][i,s[i]:e[i]],
                 self.sens['WAVE_MIN'][i], self.sens['WAVE_MAX'][i],
@@ -1035,7 +1034,7 @@ class IRSensFunc(SensFunc):
         else:
             log10_blaze_function = None
 
-        return flux_calib.eval_zeropoint(
+        return flux_calib_refactor.eval_zeropoint(
             self.sens['SENS_COEFF'][iorddet,:self.telluric.model['POLYORDER_VEC'][iorddet]+2],
             self.telluric.func, wave, self.sens['WAVE_MIN'][iorddet], self.sens['WAVE_MAX'][iorddet],
             log10_blaze_func_per_ang=log10_blaze_function)

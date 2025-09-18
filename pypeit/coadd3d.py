@@ -22,9 +22,10 @@ from pypeit import sensfunc
 from pypeit import spec2dobj
 from pypeit import utils
 from pypeit.core.flexure import calculate_image_phase
+from pypeit.core import atmextinction
 from pypeit.core import datacube
 from pypeit.core import extract
-from pypeit.core import flux_calib
+from pypeit.core import flux_calib_refactor
 from pypeit.core import parse
 from pypeit.spectrographs.util import load_spectrograph
 
@@ -1154,12 +1155,21 @@ class SlicerIFUCoAdd3D(CoAdd3D):
             if False:
                 # Compute the extinction correction
                 msgs.info("Applying extinction correction")
-                # TODO :: Change the ['UVIS']['extinct_file'] here when the sensitivity function calculation is unified.
-                extinct = flux_calib.load_extinction_data(self.spec.telescope['longitude'],
-                                                          self.spec.telescope['latitude'],
-                                                          self.senspar['UVIS']['extinct_file'])
-                # extinction_correction requires the wavelength is sorted
-                extcorr_sort = flux_calib.extinction_correction(wave_sort * units.AA, airmass, extinct)
+                # Get the atmospheric extinction
+                if self.senspar['UVIS']['extinct_file'] == 'closest':
+                    atmext = atmextinction.AtmosphericExtinction.from_coordinates(
+                        self.spectrograph.telescope['longitude'],
+                        self.spectrograph.telescope['latitude']
+                    )
+                else:
+                    atmext = atmextinction.AtmosphericExtinction.from_file(self.senspar['UVIS']['extinct_file'])
+                extcorr_sort = atmext.correction_factor(wave_sort, airmass=airmass)
+#                # TODO :: Change the ['UVIS']['extinct_file'] here when the sensitivity function calculation is unified.
+#                extinct = flux_calib.load_extinction_data(self.spec.telescope['longitude'],
+#                                                          self.spec.telescope['latitude'],
+#                                                          self.senspar['UVIS']['extinct_file'])
+#                # extinction_correction requires the wavelength is sorted
+#                extcorr_sort = flux_calib.extinction_correction(wave_sort * units.AA, airmass, extinct)
 
             # Correct for sensitivity as a function of grating angle
             # (this assumes the spectrum of the flatfield lamp has the same shape for all setups)
@@ -1182,7 +1192,7 @@ class SlicerIFUCoAdd3D(CoAdd3D):
                 sens = sensfunc.SensFunc.from_file(self.sensfile[ff], chk_version=self.par['rdx']['chk_version'])
                 # Interpolate the sensitivity function onto the wavelength grid of the data
                 # TODO :: Change the ['UVIS']['extinct_file'] here when the sensitivity function calculation is unified.
-                sens_sort = flux_calib.get_sensfunc_factor(
+                sens_sort = flux_calib_refactor.get_sensfunc_factor(
                     wave_sort, sens.wave[:, 0], sens.zeropoint[:, 0], exptime, delta_wave=dwav_sort,
                     extinct_correct=True, longitude=self.spec.telescope['longitude'],
                     latitude=self.spec.telescope['latitude'], extinctfilepar=self.senspar['UVIS']['extinct_file'],
@@ -1243,7 +1253,7 @@ class SlicerIFUCoAdd3D(CoAdd3D):
                     # Prepare the header
                     hdr = self.all_wcs[ff].to_header()
                     if self.fluxcal:
-                        hdr['FLUXUNIT'] = (flux_calib.PYPEIT_FLUX_SCALE, "Flux units -- erg/s/cm^2/Angstrom/arcsec^2")
+                        hdr['FLUXUNIT'] = (flux_calib_refactor.PYPEIT_FLUX_SCALE, "Flux units -- erg/s/cm^2/Angstrom/arcsec^2")
                     else:
                         hdr['FLUXUNIT'] = (1, "Flux units -- counts/s/Angstrom/arcsec^2")
                     # Write out the datacube
@@ -1452,7 +1462,7 @@ class SlicerIFUCoAdd3D(CoAdd3D):
                 # Prepare the header
                 hdr = cube_wcs.to_header()
                 if self.fluxcal:
-                    hdr['FLUXUNIT'] = (flux_calib.PYPEIT_FLUX_SCALE, "Flux units -- erg/s/cm^2/Angstrom/arcsec^2")
+                    hdr['FLUXUNIT'] = (flux_calib_refactor.PYPEIT_FLUX_SCALE, "Flux units -- erg/s/cm^2/Angstrom/arcsec^2")
                 else:
                     hdr['FLUXUNIT'] = (1, "Flux units -- counts/s/Angstrom/arcsec^2")
                 # Write out the datacube
@@ -1480,7 +1490,7 @@ class SlicerIFUCoAdd3D(CoAdd3D):
                     # Prepare the header
                     hdr = cube_wcs.to_header()
                     if self.fluxcal:
-                        hdr['FLUXUNIT'] = (flux_calib.PYPEIT_FLUX_SCALE, "Flux units -- erg/s/cm^2/Angstrom/arcsec^2")
+                        hdr['FLUXUNIT'] = (flux_calib_refactor.PYPEIT_FLUX_SCALE, "Flux units -- erg/s/cm^2/Angstrom/arcsec^2")
                     else:
                         hdr['FLUXUNIT'] = (1, "Flux units -- counts/s/Angstrom/arcsec^2")
                     # Write out the datacube

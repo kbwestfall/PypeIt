@@ -607,6 +607,21 @@ class SpecObjs:
                 # chk
                 chk &= (sub_box or sub_opt)
         return chk
+    
+    def find_standard(self):
+        """
+        Determine which spectrum is of the standard star, assuming it is the
+        brightest one.
+
+        Returns
+        -------
+        int
+            Index of the spectrum that has the highest median flux.
+        """
+        # Repackage as necessary (some backwards compatability)
+        # Do it
+        mflux = [0. if spobj is None else np.median(spobj.BOX_COUNTS) for spobj in self.specobjs]
+        return np.argmax(mflux)
 
     def apply_flux_calib(self, par, spectrograph, sens, tell=False):
         """
