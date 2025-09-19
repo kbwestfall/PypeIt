@@ -80,37 +80,26 @@ class SensFunc(datamodel.DataContainer):
 #    output_float_dtype = np.float32
 #    """Regardless of datamodel, output floating-point data have this fixed bit size."""
 
-    datamodel = {'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name'),
-                 'pypeline': dict(otype=str, descr='PypeIt pipeline reduction path'),
-                 'spec1df': dict(otype=str,
-                                 descr='PypeIt spec1D file used to for sensitivity function'),
-                 'extr': dict(otype=str, descr='Extraction method used for the standard star (OPT or BOX)'),
-                 'std_name': dict(otype=str, descr='Type of standard source'),
-                 'std_cal': dict(otype=str,
-                                 descr='File name (or shorthand) with the standard flux data'),
-                 # TODO: Is it possible/useful to force the coordinates to always be floats
-                 'std_ra': dict(otype=float, descr='RA of the standard source'),
-                 'std_dec': dict(otype=float, descr='DEC of the standard source'),
-                 'airmass': dict(otype=float, descr='Airmass of the observation'),
-                 'exptime': dict(otype=float, descr='Exposure time'),
-                 'telluric': dict(otype=telluric.Telluric,
-                                  descr='Telluric model; see '
-                                        ':class:`~pypeit.core.telluric.Telluric`'),
-                 'sens': dict(otype=table.Table, descr='Table with the sensitivity function'),
-                 'wave': dict(otype=np.ndarray, atype=float, descr='Wavelength vectors'),
-                 'zeropoint': dict(otype=np.ndarray, atype=float,
-                                   descr='Sensitivity function zeropoints'),
-                 'throughput': dict(otype=np.ndarray, atype=float,
-                                    descr='Spectrograph throughput measurements'),
-                 'algorithm': dict(otype=str, descr='Algorithm used for the sensitivity calculation.')}
-#                                    ,
-#                 'wave_splice': dict(otype=np.ndarray, atype=float,
-#                                     descr='Spliced-together wavelength vector'),
-#                 'zeropoint_splice': dict(otype=np.ndarray, atype=float,
-#                                          descr='Spliced-together sensitivity function zeropoints'),
-#                 'throughput_splice': dict(otype=np.ndarray, atype=float,
-#                                           descr='Spliced-together spectrograph throughput '
-#                                                 'measurements')}
+    datamodel = {
+        'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name'),
+        'pypeline': dict(otype=str, descr='PypeIt pipeline reduction path'),
+        'spec1df': dict(otype=str, descr='PypeIt spec1D file used to for sensitivity function'),
+        'extr': dict(otype=str, descr='Extraction method used for the standard star (OPT or BOX)'),
+        'std_name': dict(otype=str, descr='Type of standard source'),
+        'std_cal': dict(otype=str, descr='File name (or shorthand) with the standard flux data'),
+        'std_ra': dict(otype=float, descr='RA of the standard source'),
+        'std_dec': dict(otype=float, descr='DEC of the standard source'),
+        'airmass': dict(otype=float, descr='Airmass of the observation'),
+        'exptime': dict(otype=float, descr='Exposure time'),
+        'telluric': dict(otype=telluric.Telluric,
+                         descr='Telluric model; see :class:`~pypeit.core.telluric.Telluric`'),
+        'sens': dict(otype=table.Table, descr='Table with the sensitivity function'),
+        'wave': dict(otype=np.ndarray, atype=float, descr='Wavelength vectors'),
+        'zeropoint': dict(otype=np.ndarray, atype=float, descr='Sensitivity function zeropoints'),
+        'throughput': dict(otype=np.ndarray, atype=float,
+                           descr='Spectrograph throughput measurements'),
+        'algorithm': dict(otype=str, descr='Algorithm used for the sensitivity calculation.')
+    }
     """DataContainer datamodel."""
 
     internals = ['sensfile',
@@ -256,18 +245,23 @@ class SensFunc(datamodel.DataContainer):
         self.splice_multi_det = True if self.par['multi_spec_det'] is not None else False
 
         # # Unpack standard star data
-        wave, counts, counts_ivar, counts_mask, log10_blaze_function, self.meta_spec, header, self.sobjs_std = \
-        self.unpack_std()
+        wave, counts, counts_ivar, counts_mask, log10_blaze_function, self.meta_spec, header, \
+             self.sobjs_std = self.unpack_std()
 
         # Perform any instrument tweaks
         wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk, log10_blaze_function_twk = \
-            self.spectrograph.tweak_standard(wave, counts, counts_ivar, counts_mask, self.meta_spec,
-                                             log10_blaze_function=log10_blaze_function,
-                                             trim_std_pixs=self.par['trim_std_pixs'],)
+            self.spectrograph.tweak_standard(
+                wave, counts, counts_ivar, counts_mask, self.meta_spec,
+                log10_blaze_function=log10_blaze_function,
+                trim_std_pixs=self.par['trim_std_pixs']
+            )
+
         # Reshape to 2d arrays
-        self.wave_cnts, self.counts, self.counts_ivar, self.counts_mask, self.log10_blaze_function, self.nspec_in, \
-            self.norderdet = utils.spec_atleast_2d(wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk,
-                                                   log10_blaze_function=log10_blaze_function_twk)
+        self.wave_cnts, self.counts, self.counts_ivar, self.counts_mask, \
+            self.log10_blaze_function, self.nspec_in, self.norderdet = utils.spec_atleast_2d(
+                wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk,
+                log10_blaze_function=log10_blaze_function_twk
+            )
 
         # If the user provided RA and DEC use those instead of what is in meta
         star_ra = self.meta_spec['RA'] if self.par['star_ra'] is None else self.par['star_ra']
@@ -279,7 +273,7 @@ class SensFunc(datamodel.DataContainer):
         self.std_spec = standard.get_standard_spectrum(spectral_type=self.par['star_type'],
                                                        V_mag=self.par['star_mag'],
                                                        ra=star_ra, dec=star_dec)
-
+        
         # Check if this is the right standard star for the observation, i.e., if
         # there is overlap in the wavelength coverage between the archival and
         # observed standard star spectrum
@@ -336,49 +330,73 @@ class SensFunc(datamodel.DataContainer):
             returned by :func:`~pypeit.core.flux_calib.get_standard_spectrum`.
 
         """
-
+        # Get the datamodel type
         with io.fits_open(self.spec1df) as hdul:
-            if hdul[1].header.get('DMODCLS') == 'SpecObj':
-                sobjs_std = specobjs.SpecObjs.from_fitsfile(self.spec1df,
-                                                            chk_version=self.chk_version).get_std(
-                    multi_spec_det=self.par['multi_spec_det'])
+            dmodcls = hdul[1].header.get('DMODCLS')
 
-                if sobjs_std is None:
-                    msgs.error(f'There is a problem with your standard star spec1d file: {self.spec1df}')
+        if dmodcls == 'SpecObj':
+            sobjs_std = specobjs.SpecObjs.from_fitsfile(
+                self.spec1df, chk_version=self.chk_version
+            ).get_std(multi_spec_det=self.par['multi_spec_det'])
 
-                # Unpack standard
-                wave, counts, counts_ivar, counts_mask, log10_blaze_function, meta_spec, header \
-                    = sobjs_std.unpack_object(ret_flam=False, log10blaze=True, extract_blaze=self.par['use_flat'],
-                                              extract_type=self.extr, remove_missing=True)
-            elif hdul[1].header.get('DMODCLS') == 'OneSpec':
-                spec = OneSpec.from_file(self.spec1df, chk_version=self.chk_version)
-                if spec.head0['PYPELINE'] == 'Echelle':
-                    msgs.error('Standard star 1D spectrum from OneSpec class cannot be used for Echelle data.')
-                if spec.fluxed:
-                    msgs.error('Standard star 1D spectrum from OneSpec class is already fluxed '
-                               'and cannot be used to generate the sensitivity function.')
-                if self.par['use_flat']:
-                    msgs.error('"use_flat" set to True, but standard star 1D spectrum from OneSpec class '
-                              'does not contain the flat spectrum. The blaze function cannot be estimated.')
-                if spec.ext_mode != self.par['extr']:
-                    msgs.warn(f'Standard star 1D spectrum from OneSpec class was obtained using the {spec.ext_mode} '
-                               f'extraction, while the requested extraction is {self.par["extr"]}. '
-                               f'The available {spec.ext_mode} extraction will be used instead.')
-                    self.extr = spec.ext_mode
+            if sobjs_std is None:
+                msgs.error(f'Unable to read standard star spectrum from: {self.spec1df}')
 
-                wave, counts, counts_ivar, counts_mask, log10_blaze_function, meta_spec, header = \
-                    spec.wave_grid_mid, spec.flux, spec.ivar, spec.mask.astype(bool), None, spec.spect_meta, spec.head0
-                # add some meta data
-                meta_spec['ECH_ORDERS'] = None
-                # create sobjs_std
-                sobj = specobj.SpecObj.from_arrays(spec.head0['PYPELINE'], wave, counts, counts_ivar, mode=self.extr)
-                # add mask from OneSpec, since `from_arrays` creates a mask based on the flux ivar
-                sobj[f'{self.extr}_MASK'] |= counts_mask
-                sobjs_std = specobjs.SpecObjs(specobjs=np.array([sobj]), header=spec.head0)
-            else:
-                msgs.error('Unrecognized class for the 1D spectrum file. Cannot read in the standard')
+            # Unpack standard
+            wave, counts, counts_ivar, counts_mask, log10_blaze_function, meta_spec, header \
+                = sobjs_std.unpack_object(
+                    ret_flam=False, log10blaze=True, extract_blaze=self.par['use_flat'],
+                    extract_type=self.extr, remove_missing=True
+                )
+        elif dmodcls == 'OneSpec':
+            spec = OneSpec.from_file(self.spec1df, chk_version=self.chk_version)
+            if spec.head0['PYPELINE'] == 'Echelle':
+                msgs.error(
+                    'Standard star 1D spectrum from OneSpec class cannot be used for Echelle data.'
+                )
+            if spec.fluxed:
+                msgs.error(
+                    'Standard star 1D spectrum from OneSpec class is already fluxed and cannot be '
+                    'used to generate the sensitivity function.'
+                )
+            if self.par['use_flat']:
+                msgs.error(
+                    '"use_flat" set to True, but standard star 1D spectrum from OneSpec class '
+                    'does not contain the flat spectrum. The blaze function cannot be estimated.'
+                )
+            if spec.ext_mode != self.par['extr']:
+                msgs.warn(
+                    'Standard star 1D spectrum from OneSpec class was obtained using the '
+                    f'{spec.ext_mode} extraction, while the requested extraction is '
+                    f'{self.par["extr"]}.  The available {spec.ext_mode} extraction will be used '
+                    'instead.'
+                )
+                self.extr = spec.ext_mode
 
-        return wave, counts, counts_ivar, counts_mask, log10_blaze_function, meta_spec, header, sobjs_std
+            wave = spec.wave_grid_mid
+            counts = spec.flux
+            counts_ivar = spec.ivar
+            counts_mask = spec.mask.astype(bool)
+            log10_blaze_function = None
+            meta_spec = spec.spect_meta
+            header = spec.head0
+
+            # add some meta data
+            meta_spec['ECH_ORDERS'] = None
+            # create sobjs_std
+            sobj = specobj.SpecObj.from_arrays(
+                spec.head0['PYPELINE'], wave, counts, counts_ivar, mode=self.extr
+            )
+            # add mask from OneSpec, since `from_arrays` creates a mask based on the flux ivar
+            sobj[f'{self.extr}_MASK'] |= counts_mask
+            sobjs_std = specobjs.SpecObjs(specobjs=np.array([sobj]), header=spec.head0)
+        else:
+            msgs.error('Unrecognized class for the 1D spectrum file. Cannot read in the standard')
+
+        return (
+            wave, counts, counts_ivar, counts_mask, log10_blaze_function, meta_spec, header,
+            sobjs_std
+        )
 
     def _bundle(self):
         """
@@ -1005,6 +1023,10 @@ class IRSensFunc(SensFunc):
         TelObj : :class:`~pypeit.core.telluric.Telluric`
             Best-fitting telluric model
         """
+
+        embed(header='in compute_zerpoint')
+        exit()
+
         self.telluric = telluric.sensfunc_telluric(self.wave_cnts, self.counts, self.counts_ivar,
                                                    self.counts_mask, self.meta_spec['EXPTIME'],
                                                    self.meta_spec['AIRMASS'], self.std_spec,
