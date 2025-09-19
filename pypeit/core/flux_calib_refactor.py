@@ -24,6 +24,7 @@ from pypeit import bspline
 from pypeit import io
 from pypeit import sampling
 from pypeit.core.wavecal import wvutils
+from pypeit.core import atmextinction
 from pypeit.core import fitting
 from pypeit.core import spectrum
 from pypeit.core import wavemask
@@ -192,14 +193,15 @@ def get_sensfunc_factor(wave, wave_zp, zeropoint, exptime, tellmodel=None, delta
         sensfunc_obs = sensfunc_obs * (tellmodel > 1e-10) / (tellmodel + (tellmodel < 1e-10))
 
     if extinct_correct:
-        if longitude is None or latitude is None:
-            msgs.error('You must specify longitude and latitude if we are extinction correcting')
         # Apply Extinction if optical bands
         msgs.info("Applying extinction correction")
         msgs.warn("Extinction correction applied only if the spectra covers <10000Ang.")
-        extinct = load_extinction_data(longitude, latitude, extinctfilepar)
-        ext_corr = extinction_correction(wave * units.AA, airmass, extinct)
-        senstot = sensfunc_obs * ext_corr
+        # Get the atmospheric extinction
+        if extinctfilepar == 'closest':
+            atmext = atmextinction.AtmosphericExtinction.from_coordinates(longitude, latitude)
+        else:
+            atmext = atmextinction.AtmosphericExtinction.from_file(extinctfilepar)
+        senstot = sensfunc_obs * atmext.correction_factor(wave, airmass=airmass)
     else:
         senstot = sensfunc_obs.copy()
 
