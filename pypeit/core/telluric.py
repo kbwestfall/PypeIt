@@ -24,6 +24,7 @@ from pypeit.core.wavecal import wvutils
 from pypeit.core import coadd
 from pypeit.core import fitting
 from pypeit.core import standard
+from pypeit.core import wavemask
 from pypeit import specobjs
 from pypeit import utils
 from pypeit import onespec
@@ -1327,11 +1328,19 @@ def eval_poly_model(theta, obj_dict):
     return polymodel, (polymodel > 0.0)
 
 
-def sensfunc_telluric(wave, counts, counts_ivar, counts_mask, exptime, airmass, std_spec,
-                      #std_dict,
-                      telgridfile, log10_blaze_function=None, ech_orders=None, polyorder=8,
+#def sensfunc_telluric(wave, counts, counts_ivar, counts_mask, exptime, airmass, std_spec,
+#                      #std_dict,
+#                      telgridfile, log10_blaze_function=None, ech_orders=None, polyorder=8,
+#                      tell_npca=5, teltype='pca',
+#                      mask_hydrogen_lines=True, mask_helium_lines=False, hydrogen_mask_wid=10.,
+#                      resln_guess=None, resln_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0, 5.0),
+#                      delta_coeff_bounds=(-20.0, 20.0), minmax_coeff_bounds=(-5.0, 5.0),
+#                      sn_clip=30.0, ballsize=5e-4, only_orders=None, maxiter=3, lower=3.0,
+#                      upper=3.0, tol=1e-3, popsize=30, recombination=0.7, polish=True, disp=False,
+#                      debug_init=False, debug=False):
+def sensfunc_telluric(obs_spec, std_spec, telgridfile, exptime=1., airmass=1., region_mask=None,
+                      log10_blaze_function=None, ech_orders=None, polyorder=8,
                       tell_npca=5, teltype='pca',
-                      mask_hydrogen_lines=True, mask_helium_lines=False, hydrogen_mask_wid=10.,
                       resln_guess=None, resln_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0, 5.0),
                       delta_coeff_bounds=(-20.0, 20.0), minmax_coeff_bounds=(-5.0, 5.0),
                       sn_clip=30.0, ballsize=5e-4, only_orders=None, maxiter=3, lower=3.0,
@@ -1487,16 +1496,22 @@ def sensfunc_telluric(wave, counts, counts_ivar, counts_mask, exptime, airmass, 
                       output_meta_keys=('airmass', 'exptime', 'polyorder_vec', 'func', 'std_src',
                                         'std_ra', 'std_dec', 'std_name', 'std_cal'),
                       debug=debug_init)
+    
+    # Construct the good-pixel mask to use while fitting
+    if region_mask is None:
+        fit_gpm = obs_spec.gpm.copy()
+    else:
+        fit_gpm = obs_spec.gpm & wavemask.build_wavelength_gpm(zp_spec.wave, region_mask)
 
-    # Optionally, mask prominent stellar absorption features
-    mask_bad, mask_recomb, mask_tell = flux_calib_refactor.get_mask(wave, counts, counts_ivar, counts_mask,
-                                              mask_hydrogen_lines=mask_hydrogen_lines,
-                                              mask_helium_lines=mask_helium_lines,
-                                              mask_telluric=False, hydrogen_mask_wid=hydrogen_mask_wid)
-    mask_tot = mask_bad & mask_recomb & mask_tell
+#    # Optionally, mask prominent stellar absorption features
+#    mask_bad, mask_recomb, mask_tell = flux_calib_refactor.get_mask(wave, counts, counts_ivar, counts_mask,
+#                                              mask_hydrogen_lines=mask_hydrogen_lines,
+#                                              mask_helium_lines=mask_helium_lines,
+#                                              mask_telluric=False, hydrogen_mask_wid=hydrogen_mask_wid)
+#    mask_tot = mask_bad & mask_recomb & mask_tell
 
     # Since we are fitting a sensitivity function, first compute counts per second per angstrom.
-    TelObj = Telluric(wave, counts, counts_ivar, mask_tot, telgridfile, obj_params,
+    TelObj = Telluric(wave, counts, counts_ivar, fit_gpm, telgridfile, obj_params,
                       init_sensfunc_model, eval_sensfunc_model, log10_blaze_function=log10_blaze_function,
                       teltype=teltype, tell_npca=tell_npca,
                       ech_orders=ech_orders, pix_shift_bounds=pix_shift_bounds,
@@ -2691,38 +2706,6 @@ class Telluric(datamodel.DataContainer):
         self.model['CHI2'][iord] = self.result_list[iord].fun
         self.model['SUCCESS'][iord] = self.result_list[iord].success
         self.model['NITER'][iord] = self.result_list[iord].nit
-
-    # TODO Purge? This does not appear to be used at the moment.
-#    def interpolate_inmask(self, mask, wave_inmask, inmask):
-#        """
-#        Utitlity routine to interpolate the input mask.
-#        """
-#
-#        if inmask is not None:
-#            if wave_inmask is None:
-#                msgs.error('If you are specifying a mask you need to pass in the corresponding '
-#                           'wavelength grid')
-#
-#            # TODO we shoudld consider refactoring the interpolator to take a
-#            # list of images and masks to remove the the fake zero images in the
-#            # call below
-#            _, _, inmask_int = coadd.interp_spec(self.wave_grid, wave_inmask,
-#                                                 np.ones_like(wave_inmask),
-#                                                 np.ones_like(wave_inmask), inmask)
-#
-#            # If the data mask is 2d, and inmask is 1d, tile to create the
-#            # inmask aligned with the data
-#            if mask.ndim == 2 & inmask.ndim == 1:
-#                inmask_out = np.tile(inmask_int, (self.norders, 1)).T
-#            # If the data mask and inmask have the same dimensionlaity,
-#            # interpolated mask has correct dimensions
-#            elif mask.ndim == inmask.ndim:
-#                inmask_out = inmask_int
-#            else:
-#                msgs.error('Unrecognized shape for data mask')
-#            return (mask & inmask_out)
-#        else:
-#            return mask
 
     def get_ind_lower_upper(self):
         """

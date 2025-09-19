@@ -1190,8 +1190,11 @@ class UVISSensFunc(SensFunc):
             gpm=self.counts_mask.squeeze()
         )
 
-        # Get the zero-point
-        # TODO: Missing trans_thresh and polycorrect
+        # Get the zeropoints
+        # TODO:
+        #   - Missing trans_thresh and polycorrect
+        #   - Make parameters that specifiy the location of the breakpoints (not
+        #     just resolution based) available to the user?
         zp_spec, fit_gpm, fit_gpm_rej, zp_bspl = flux_calib_refactor.sensfunc(
             obs_spec, self.std_spec, exptime=self.meta_spec['EXPTIME'], atm_extinction=self.atmext,
             airmass=self.meta_spec['AIRMASS'], nresln=self.par['UVIS']['nresln'],
@@ -1220,10 +1223,12 @@ class UVISSensFunc(SensFunc):
         # Copy the relevant data
         # NOTE: SENS_COEFF is empty!
         self.sens['SENS_WAVE'] = self.wave_cnts.T
-        # TODO: self.counts is counts NOT counts per angstrom
+        # TODO:
+        #   - self.counts is counts NOT counts per angstrom
+        #   - keep the bspline model
         self.sens['SENS_COUNTS_PER_ANG'] = self.counts.T
         self.sens['SENS_ZEROPOINT'] = np.expand_dims(zp_spec.flux, 0)
-        self.sens['SENS_ZEROPOINT_GPM'] = np.expand_dims(zp_spec.gpm, 0)
+        self.sens['SENS_ZEROPOINT_GPM'] = np.expand_dims(fit_gpm_rej, 0)
         self.sens['SENS_ZEROPOINT_FIT'] = np.expand_dims(zp_model, 0)
         self.sens['SENS_ZEROPOINT_FIT_GPM'] = np.expand_dims(zp_model_gpm, 0)
         if self.meta_spec['ECH_ORDERS'] is not None:
@@ -1249,6 +1254,7 @@ class UVISSensFunc(SensFunc):
             Zeropoint array evaluated at the input wavelength grid and with the gpm applied.
         """
         # This routine can extrapolate
+        # TODO: Keep the bspline model so that it can be used here.
         return scipy.interpolate.interp1d(self.sens['SENS_WAVE'][iorddet,:],
                                           self.sens['SENS_ZEROPOINT_FIT'][iorddet,:],
                                           bounds_error=False, fill_value='extrapolate')(wave)

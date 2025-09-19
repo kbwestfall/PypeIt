@@ -542,7 +542,7 @@ def calculate_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, air
 # calibration.
 def fit_zeropoint(zp_spec, bkspace=None, resolution=2700., nresln=20., region_mask=None,
                   maxiter=35, upper=3.0, lower=3.0):
-    """
+    r"""
     Fit a bspline model to the measured flux zeropoints.
 
     Parameters
