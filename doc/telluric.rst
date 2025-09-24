@@ -34,6 +34,17 @@ convolved by instrument resolution and shifted/stretched along the spectral
 direction to account for uncertainties in the wavelength calibration (as well
 as correct for the heliocentric velocity offset). 
 
+Files
+=====
+
+The available atmospheric grid files (not recommended) are:
+
+.. include:: include/TelFit_files.rst
+
+The available PCA files (**recommended**) are:
+
+.. include:: include/TellPCA_files.rst
+
 
 .. _pypeit_tellfit:
 
