@@ -6,9 +6,8 @@ from scipy import interpolate
 
 from pypeit import msgs
 from pypeit import dataPaths
-from pypeit import __version__
-from pypeit import io
-from pypeit.core.wavecal import wvutils
+from pypeit.core import coadd
+from pypeit.core import standard
 
 
 class QSOPCAModel:
@@ -69,7 +68,44 @@ class QSOPCAModel:
         dshift = int(np.round(np.log10((1.0 + theta[0])/(1.0 + self.z_fid))/self.dloglam))
         _comp = np.roll(self.components[:self.npca,:], dshift, axis=1)
         return theta[1] * np.exp(np.dot(np.append(1.0,theta[2:]), _comp))
-    
+
+
+class StarModel:
+    """
+    """
+    def __init__(self, wave, spectral_type=None, V_mag=None, ra=None, dec=None, tol=20.,
+                 archives='default', func='legendre', model='exp'):
+        self.spec = standard.get_standard_spectrum(
+            spectral_type=spectral_type, V_mag=V_mag, ra=ra, dec=dec, tol=tol, archives=archives
+        ).resample(wave)
+        self.wave_min = np.min(self.spec.wave)
+        self.wave_max = np.max(self.spec.wave)
+        self.func = func
+        self.model = model
+
+    def sample(self, theta):
+        scale = coadd.poly_model_eval(
+            theta, self.func, self.model, self.spec.wave, self.wave_min, self.wave_max
+        )
+        model_flux = self.spec.flux * scale
+        return model_flux, (model_flux > 0.0) & self.spec.gpm
+
+
+class PolyModel:
+    """
+    """
+    def __init__(self, wave, func='legendre', model='exp'):
+        self.wave = wave
+        self.wave_min = np.min(self.wave)
+        self.wave_max = np.max(self.wave)
+        self.func = func
+        self.model = model
+
+    def sample(self, theta):
+        model_flux = coadd.poly_model_eval(theta, self.func, self.model,
+                                      self.wave, self.wave_min, self.wave_max)
+        return model_flux, model_flux > 0.0
+
 
 ##############
 # QSO Model #
