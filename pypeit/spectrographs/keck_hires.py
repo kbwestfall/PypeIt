@@ -12,9 +12,7 @@ from IPython import embed
 import numpy as np
 from scipy.io import readsav
 
-from astropy.table import Table
 from astropy import time
-from astropy import units
 
 from pypeit import msgs
 from pypeit import telescopes

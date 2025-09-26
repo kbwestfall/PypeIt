@@ -6,7 +6,6 @@ Module for the SOAR/Goodman instrument
 import numpy as np
 
 from astropy.time import Time
-from astropy import units
 
 from pypeit import msgs
 from pypeit import telescopes
@@ -187,8 +186,10 @@ class SOARGoodmanSpectrograph(spectrograph.Spectrograph):
             std = np.zeros(len(fitstbl), dtype=bool)
             # Identify standard stars
             if 'ra' in fitstbl.keys() and 'dec' in fitstbl.keys():
-                std = np.array([standard.get_archive_standard(ra, dec, tol=10., check=True)                    
-                                for ra, dec in zip(fitstbl['ra'], fitstbl['dec'])])
+                std = np.array([
+                    standard.get_archive_standard(ra, dec, tol=10., check=True)
+                    for ra, dec in zip(fitstbl['ra'], fitstbl['dec'])
+                ])
             base = good_exp & (fitstbl['idname'] == 'SPECTRUM') & self.lamps(fitstbl, 'off')
             if ftype == 'science':
                 return base & np.logical_not(std)

@@ -362,8 +362,10 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         if ftype == 'standard':
             std = np.zeros(len(fitstbl), dtype=bool)
             if 'ra' in fitstbl.keys() and 'dec' in fitstbl.keys():
-                std = np.array([standard.get_archive_standard(ra, dec, tol=10., check=True) 
-                                for ra, dec in zip(fitstbl['ra'], fitstbl['dec'])])
+                std = np.array([
+                    standard.get_archive_standard(ra, dec, tol=10., check=True)
+                    for ra, dec in zip(fitstbl['ra'], fitstbl['dec'])
+                ])
             return good_exp & self.lamps(fitstbl, 'off') & (fitstbl['hatch'] == 'open') & no_img & std
         if ftype == 'bias':
             return good_exp & self.lamps(fitstbl, 'off') & (fitstbl['hatch'] == 'closed')

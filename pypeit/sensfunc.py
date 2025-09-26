@@ -269,11 +269,12 @@ class SensFunc(datamodel.DataContainer):
         # Convert to decimal deg, as needed
         star_ra, star_dec = meta.convert_radec(star_ra, star_dec)
 
-        # Get the flux standard spectrum    
-        self.std_spec = standard.get_standard_spectrum(spectral_type=self.par['star_type'],
-                                                       V_mag=self.par['star_mag'],
-                                                       ra=star_ra, dec=star_dec)
-        
+        # Read in standard star dictionary
+        self.std_spec = standard.get_standard_spectrum(
+            spectral_type=self.par['star_type'], V_mag=self.par['star_mag'], ra=star_ra,
+            dec=star_dec
+        )
+
         # Check if this is the right standard star for the observation, i.e., if
         # there is overlap in the wavelength coverage between the archival and
         # observed standard star spectrum
@@ -299,7 +300,7 @@ class SensFunc(datamodel.DataContainer):
                 self.spectrograph.telescope['latitude']
             )
         else:
-            self.atmext = atmextinction.AtmosphericExtinction.from_file(par['UVIS']['extinct_file'])
+            self.atmext = atmextinction.AtmosphericExtinction.from_file(par['UVIS']['extinct_file']
 
     def unpack_std(self):
         """
@@ -307,7 +308,7 @@ class SensFunc(datamodel.DataContainer):
 
         Returns
         -------
-        wave_cnts : `numpy.ndarray`_
+        wave : `numpy.ndarray`_
             Wavelength array in Angstroms
         counts : `numpy.ndarray`_
             Flux array in counts
@@ -317,18 +318,13 @@ class SensFunc(datamodel.DataContainer):
             Boolean Mask array selecting the valid data points
         log10_blaze_function : `numpy.ndarray`_
             Log10 of the blaze function array. THIS is always None for OneSpec class.
-        nspec_in : :obj:`int`
-            The number of spectral pixels for the input standard star spectrum.
-        norderdet : :obj:`int`
-            The number of orders/spectra in the input standard star spectrum.
         meta_spec : :obj:`dict`
             Dictionary containing the meta data for the standard star spectrum
+        header : `astropy.io.fits.Header`_
+            Header of the spec1d or OneSpec file.
         sobjs_std : :class:`~pypeit.specobjs.SpecObjs`
-            The SpecObjs of the standard star spectrum. THIS is always None for OneSpec class.
-        std_dict : :obj:`dict`
-            Dictionary containing the standard star spectrum data. This is
-            returned by :func:`~pypeit.core.flux_calib.get_standard_spectrum`.
-
+            The SpecObjs of the standard star spectrum. THIS is always None for
+            OneSpec class.
         """
         # Get the datamodel type
         with io.fits_open(self.spec1df) as hdul:
@@ -544,8 +540,6 @@ class SensFunc(datamodel.DataContainer):
         self.sens['SENS_FLUXED_STD_MASK'] = flam_mask.T
 
         #save the model that was used
-#        model_interp_func = scipy.interpolate.interp1d(self.std_dict['wave'].value, self.std_dict['flux'].value,
-#                                                       bounds_error=False, fill_value='extrapolate')
         model_interp_func = scipy.interpolate.interp1d(self.std_spec.wave, self.std_spec.flux,
                                                        bounds_error=False, fill_value='extrapolate')
         model_flux_sav = np.zeros_like(self.sens['SENS_FLUXED_STD_FLAM'])
@@ -869,8 +863,6 @@ class SensFunc(datamodel.DataContainer):
         # Plot fluxed standard star for all orders/det
         fig = plt.figure(figsize=(12,8))
         axis = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-#        axis.plot(self.std_dict['wave'].value, self.std_dict['flux'].value, color='green',linewidth=3.0,
-#                  label=self.std_dict['name'], zorder=100, alpha=0.7)
         axis.plot(self.std_spec.wave, self.std_spec.flux, color='green',linewidth=3.0,
                   label=self.std_spec.meta['Name'], zorder=100, alpha=0.7)
         for iorddet in range(self.sens['SENS_FLUXED_STD_WAVE'].shape[0]):
@@ -892,10 +884,8 @@ class SensFunc(datamodel.DataContainer):
         else:
             wave_min = 0.98*_wave_min
             wave_max = 1.02*_wave_max
-#        pix_wave_std = (self.std_dict['wave'].value >= wave_min) & (self.std_dict['wave'].value <= wave_max)
         pix_wave_std = (self.std_spec.wave >= wave_min) & (self.std_spec.wave <= wave_max)
         flux_min = -1.0
-#        flux_max = 1.10*self.std_dict['flux'][pix_wave_std].value.max()
         flux_max = 1.10*np.max(self.std_spec.flux[pix_wave_std])
         axis.set_xlim((wave_min, wave_max))
         axis.set_ylim((flux_min, flux_max))

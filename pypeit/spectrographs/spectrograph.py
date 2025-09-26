@@ -1730,8 +1730,9 @@ class Spectrograph:
                 if ra == 'None' or dec == 'None' or np.isnan(ra) or np.isnan(dec):
                     is_std = np.append(is_std, False)
                 else:
-                    is_std = np.append(is_std,
-                                       standard.get_archive_standard(ra, dec, tol=10., check=True))
+                    is_std = np.append(is_std, 
+                        standard.get_archive_standard(ra, dec, tol=10., check=True)
+                    )
 
             foundstd = indx & is_std
             # turn off the science flag for frames that are found to be standard stars and

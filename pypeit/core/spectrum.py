@@ -40,7 +40,9 @@ class Spectrum:
         Boolean good-pixel mask.  Shape must match ``flux``.  If None, assumes
         all pixels are valid.
     meta : dict, optional
-        Collection of relevant metadata.  Note that this is *not* copied.
+        Collection of relevant metadata.
+    copy : bool, optional
+        Copy all the input data, including the metadata.
     """
     def __init__(self, wave, flux, ivar=None, gpm=None, meta=None, copy=True):
         
@@ -78,19 +80,28 @@ class Spectrum:
 
     @property
     def size(self):
+        """
+        The size of the flux array
+        """
         return self.flux.size
     
     @property
     def shape(self):
+        """
+        The shape of the flux array
+        """
         return self.flux.shape
     
     @property
     def ndim(self):
+        """
+        The dimensionality of the flux array
+        """
         return self.flux.ndim
     
     def copy(self):
         """
-        Make a deepcopy of the object
+        Return a deepcopy of the object.
         """
         _ivar = None if self.ivar is None else self.ivar.copy()
         _meta = None if self.meta is None else deepcopy(self.meta)
@@ -102,18 +113,20 @@ class Spectrum:
         """
         Multiply the spectrum by a scalar, vector, or another spectrum.
 
-        This modifies the spectral data in place.  If uncertainties are
+        *This modifies the spectral data in place.*  If uncertainties are
         available, they are propagated.  Any divisions by 0 result in an inverse
         variance of 0 and the good pixel mask is set to False.
 
         Parameters
         ----------
         a : scalar, array-like, :class:`pypeit.core.spectrum.Spectrum`
-            Multiplicative factor.  If an array, its shape must match :attr:`flux`.
+            Multiplicative factor.  If an array, its shape must match
+            :attr:`flux`.  If a spectrum, the wavelength arrays of the two
+            spectrum *must be identical*.
         """
         # Multiply by a scalar
         if isinstance(a, (int, np.integer, float, np.floating)):
-            if a == 0.:
+            if float(a) == 0.:
                 msgs.warn('Multiplicative factor is 0!')
             self.flux *= a
             if self.ivar is not None:
@@ -150,9 +163,9 @@ class Spectrum:
                 f'The dimensionality of this spectrum is {self.ndim} and the multiplier is '
                 f'{a_flux.ndim}.'
             )
-        # Numpy broadcasting rules should mean that the arithmetic operations
-        # performed below should work, as long as the last a.ndim dimensions of
-        # a and this spectrum match.
+        # Numpy broadcasting rules mean that the arithmetic operations performed
+        # below should work, as long as the last a.ndim dimensions of a and this
+        # spectrum match.
         if a_flux.shape != self.shape[:a_flux.ndim]:
             msgs.error(
                 'Numpy will not be able to successfully broadcast arithmetic operations between '
@@ -197,7 +210,7 @@ class Spectrum:
         """
         Replace the spectrum with its multiplicative inverse.
 
-        This modifies the spectrum in place.  If uncertainties are available,
+        *This modifies the spectrum in place.*  If uncertainties are available,
         they are propagated.  Any divisions by 0 result in an inverse variance
         of 0 and the good pixel mask is set to False.
         """
@@ -218,7 +231,7 @@ class Spectrum:
 
         where :math:`Z` is the provided zeropoint.
 
-        This modifies the spectrum in place.  If uncertainties are available,
+        *This modifies the spectrum in place.*  If uncertainties are available,
         they are propagated.  Any pixels with non-positive fluxes are masked.
 
         Parameters
@@ -233,7 +246,7 @@ class Spectrum:
         self.flux[self.gpm] = -2.5 * np.log10(self.flux[self.gpm]) + zeropoint
 
     def resample(self, new_wave, pixel_fraction_threshold=0.8, conserve=False):
-        """
+        r"""
         Resample the spectrum to a new wavelength array.
 
         If available, errors and masking are both propagated through the
@@ -251,8 +264,8 @@ class Spectrum:
         conserve : bool, optional
             Conserve the flux in the resampled spectrum.  If the units of the
             spectrum are flux integrated over the pixel, this should typically
-            be True; if the units are flux density (e.g., ergs/s/cm^2/angstrom),
-            this should typically be False.
+            be True; if the units are flux density (e.g., :math:`{\rm
+            ergs/s/cm}^2{\rm /angstrom}`), this should typically be False.
 
         Returns
         -------

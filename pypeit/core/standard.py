@@ -1,71 +1,50 @@
 """
-Container class for an archived standard star spectrum used for flux
-calibration.
+Implements classes for flux standard spectra used for flux calibration.
 
 .. include common links, assuming primary doc root is up one directory
 .. include:: ../include/links.rst
 """
 
-from IPython import embed
-
-import numpy as np
-
-from astropy import units
 from astropy import constants
 from astropy import coordinates
 from astropy import table
+from astropy import units
 from astropy.io import fits
 from astropy.io import ascii
+from IPython import embed
+import numpy as np
 
 from pypeit import msgs
 from pypeit import dataPaths
 from pypeit.pypmsgs import PypeItError
 from pypeit.core import spectrum
+from pypeit.core.meta import convert_radec
+from pypeit.core.wave import airtovac
 from pypeit.utils import all_subclasses
 
 
 def mAB_to_cgs(wave, mAB):
-    """
-    Convert AB magnitudes to flambda cgs unit erg cm^-2 s^-1 A^-1
+    r"""
+    Convert AB magnitudes to :math:`F_\lambda` in the cgs units :math:`{\rm
+    erg/cm}^2{\rm/s}/\AA`.
 
     Parameters
     ----------
-    wave: float, `numpy.ndarray`_
+    wave: scalar-like, array-like
         Vacuum Wavelength in Angstrom.
-    mAB : float, `numpy.ndarray`_
-        AB magnitudes.  If an array, shape must match ``wave``.
+    mAB : scalar-like, array-like
+        AB magnitudes.  If array-like, must be possible to broadcast to match
+        ``wave``.
 
     Returns
     -------
     float, `numpy.ndarray`_
-        f_lambda flux in cgs units.  Returned as scalar or array depending on
+        Flux density in cgs units.  Returned as scalar or array depending on
         input.
     """
-    _mAB = np.asarray(mAB) if isinstance(mAB, list) else mAB
-    _wave = np.asarray(wave) if isinstance(wave, list) else wave
+    _mAB = mAB if isinstance(mAB, (float, np.floating, int, np.integer)) else np.asarray(mAB)
+    _wave = wave if isinstance(wave, (float, np.floating, int, np.integer)) else np.asarray(wave)
     return 10**((-48.6-_mAB)/2.5) * 3e18 / _wave**2
-
-
-def airtovac(wave):
-    """
-    Convert air-based wavelengths to vacuum
-
-    Parameters
-    ----------
-    wave : float, array-like
-        Air wavelengths in Angstroms
-
-    Returns
-    -------
-    float, `numpy.ndarray`_
-        Vacuum wavelengths in Angstroms.  Type matches input.
-    """
-    # Standard conversion format
-    _wave = np.asarray(wave) if isinstance(wave, list) else wave
-    sigma_sq = (1.e4/_wave)**2. #wavenumber squared
-    factor = 1 + (5.792105e-2/(238.0185-sigma_sq)) + (1.67918e-3/(57.362-sigma_sq))
-    factor = factor*(_wave>=2000.) + 1.*(_wave<2000.) #only modify above 2000A
-    return _wave * factor
 
 
 def archive_entry(archive, name):
@@ -76,8 +55,8 @@ def archive_entry(archive, name):
     Parameters
     ----------
     archive : str
-        Name of the archive to search.  It must be one of the valid
-        archives.
+        Name of the archive to search; see :func:`get_archive_sets`.  This
+        function also works for `archive='blackbody'`.
     name : str
         The name of the archive source.  Must be an exact match.
 
@@ -86,8 +65,9 @@ def archive_entry(archive, name):
     `astropy.table.Row`_
         Single table row with the data from the archive.
     """
+    # Set the path (creates a new PypeItDataPath object)
+    stds_path = dataPaths.standards / archive
     # Get the file
-    stds_path = dataPaths.standards / archive  # This creates a new PypeItDataPath object
     star_file = stds_path.get_file_path(f'{archive}_info.txt')
     if not star_file.is_file():
         msgs.error(f'File does not exist!: {star_file}')
@@ -107,12 +87,12 @@ def nearest_archive_entry(archive, ra, dec, unit=None):
     Parameters
     ----------
     archive : str
-        Name of the archive to search.  It must be one of the valid
-        archives.
+        Name of the archive to search; see :func:`get_archive_sets`.  This
+        function also works for `archive='blackbody'`.
     ra, dec : float, str
-        On-sky coordinates.  If ``units`` are None, the coordinates assumed to
-        be in degree if provided as floats, and they are assumed to be in hours
-        and degrees if provided as (e.g., sexagesimal) strings.
+        On-sky coordinates.  If ``units`` are None, the coordinates are assumed
+        to be in degree if provided as floats, and they are assumed to be in
+        hours and degrees if provided as (e.g., sexagesimal) strings.
     unit : str, tuple, optional
         Units for the on-sky coordinates.  See ``ra`` and ``dec`` for the
         default behavior.
@@ -126,7 +106,7 @@ def nearest_archive_entry(archive, ra, dec, unit=None):
     """
     # Instatiate the coordinates
     if unit is None:
-        _unit = units.deg if isinstance(ra, (float, np.floating)) \
+        _unit = units.deg if isinstance(ra, (float, np.floating, int, np.integer)) \
                     else (units.hourangle, units.deg)
     else:
         _unit = unit
@@ -134,8 +114,9 @@ def nearest_archive_entry(archive, ra, dec, unit=None):
     if obj_coord.size > 1:
         msgs.error('Matching to archive can only be done one object at a time.')
 
+    # Set the path (creates a new PypeItDataPath object)
+    stds_path = dataPaths.standards / archive
     # Get the file
-    stds_path = dataPaths.standards / archive  # This creates a new PypeItDataPath object
     star_file = stds_path.get_file_path(f"{archive}_info.txt")
     if not star_file.is_file():
         msgs.error(f"File does not exist!: {star_file}")
@@ -149,20 +130,35 @@ def nearest_archive_entry(archive, ra, dec, unit=None):
 
 
 class ArchivedFluxStandard(spectrum.Spectrum):
+    """
+    Abstract class used to provide common methods for all archive standards.
+    """
     
     archive = None
+    """
+    Archive identifier
+    """
+
     path = None
+    """
+    Root with data files
+    """
 
     @classmethod
-    def nearest_standard(cls, ra, dec):
+    def nearest_standard(cls, ra, dec, unit=None):
         """
-        Find the standard star with an archived calibrated spectrum nearest the
-        provided set of coordinates.
+        Find the standard star with an archived flux-calibration spectrum
+        nearest the provided set of coordinates.
 
         Parameters
         ----------
         ra, dec : float, str
-            On-sky coordinates (as either decimal or sexagesimal string format)
+            On-sky coordinates.  If ``units`` are None, the coordinates are assumed
+            to be in degree if provided as floats, and they are assumed to be in
+            hours and degrees if provided as (e.g., sexagesimal) strings.
+        unit : str, tuple, optional
+            Units for the on-sky coordinates.  See ``ra`` and ``dec`` for the
+            default behavior.
 
         Returns
         -------
@@ -173,11 +169,11 @@ class ArchivedFluxStandard(spectrum.Spectrum):
         str
             Name of the file with the archived spectrum.
         """
-        sep, row = nearest_archive_entry(cls.archive, ra, dec)
+        sep, row = nearest_archive_entry(cls.archive, ra, dec, unit=unit)
         return sep, row['Name'], row['File']
 
     @classmethod
-    def found_match(cls, ra, dec, tol=20.):
+    def found_match(cls, ra, dec, tol=20., unit=None):
         """
         Check if there is a match to the provided coordinates within the
         tolerance.
@@ -185,20 +181,25 @@ class ArchivedFluxStandard(spectrum.Spectrum):
         Parameters
         ----------
         ra, dec : float, str
-            On-sky coordinates (as either decimal or sexagesimal string format)
+            On-sky coordinates.  If ``units`` are None, the coordinates are assumed
+            to be in degree if provided as floats, and they are assumed to be in
+            hours and degrees if provided as (e.g., sexagesimal) strings.
         tol : float, optional
             Tolerance for coordinate matching in arcmin
+        unit : str, tuple, optional
+            Units for the on-sky coordinates.  See ``ra`` and ``dec`` for the
+            default behavior.
 
         Returns
         -------
         bool
             Flag that an appropriate match was found.
         """
-        sep, row = nearest_archive_entry(cls.archive, ra, dec)
+        sep, row = nearest_archive_entry(cls.archive, ra, dec, unit=unit)
         return sep < tol * units.arcmin
     
     @classmethod
-    def from_coordinates(cls, ra, dec, tol=20.):
+    def from_coordinates(cls, ra, dec, tol=20., unit=None):
         """
         Instantiate the class using the spectrum for the object closest to the
         provided set of coordinates.
@@ -206,13 +207,18 @@ class ArchivedFluxStandard(spectrum.Spectrum):
         Parameters
         ----------
         ra, dec : float, str
-            On-sky coordinates (as either decimal or sexagesimal string format)
+            On-sky coordinates.  If ``units`` are None, the coordinates are assumed
+            to be in degree if provided as floats, and they are assumed to be in
+            hours and degrees if provided as (e.g., sexagesimal) strings.
         tol : float, optional
             Tolerance for coordinate matching in arcmin
+        unit : str, tuple, optional
+            Units for the on-sky coordinates.  See ``ra`` and ``dec`` for the
+            default behavior.
         """
-        sep, row = nearest_archive_entry(cls.archive, ra, dec)
+        sep, row = nearest_archive_entry(cls.archive, ra, dec, unit=unit)
         if sep > tol * units.arcmin:
-            msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to('arcmin').value} '
+            msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to("arcmin").value} '
                        f'arcmin, which is beyond the required tolerance ({tol} arcmin).')
         return cls(row['File'], meta=cls._init_meta(row=row))
     
@@ -224,7 +230,8 @@ class ArchivedFluxStandard(spectrum.Spectrum):
         Parameters
         ----------
         name : str
-            Name of the source in the archive data table
+            Name of the source in the archive data table.  Must be an exact
+            match.
         """
         row = archive_entry(cls.archive, name)
         return cls(row['File'], meta=cls._init_meta(row=row))
@@ -238,12 +245,18 @@ class ArchivedFluxStandard(spectrum.Spectrum):
         meta = {} if row is None else dict(row)
         # Also add the "source"
         meta['source'] = cls.archive
+
+        # If the coordinates are in the row, add entries that convert the
+        # coordinates to degrees
+        if 'RA_2000' in meta and 'DEC_2000' in meta:
+            meta['ra_deg'], meta['dec_deg'] = convert_radec(meta['RA_2000'], meta['DEC_2000'])
+
         return meta
 
 
 class CalSpecFluxStandard(ArchivedFluxStandard):
     """
-    Container class for a calspec standard star spectrum.
+    Container class for a "calspec" standard star spectrum.
     """
     archive = 'calspec'
     path = dataPaths.standards / archive
@@ -258,18 +271,21 @@ class CalSpecFluxStandard(ArchivedFluxStandard):
 
 class ESOFilFluxStandard(ArchivedFluxStandard):
     """
-    Container class for an esofil standard star spectrum.
+    Container class for an "esofil" standard star spectrum.
     """
     archive = 'esofil'
     path = dataPaths.standards / archive
 
     def __init__(self, file, meta=None):
         self.file = self.path.get_file_path(file)
-        if not self.file.name.startswith('f'):
-            msgs.error('The ESO reference standard filename must start with the string '
-                        '`f`;  make sure it is the case. Also make sure that the flux '
-                        'units in the file are in 10**(-16) erg/s/cm2/AA.')
-
+        # NOTE: When the file is in the cache, the name of the file becomes
+        # 'contents', so this check for the file name fails.  General users
+        # won't be adding files to the directory, so I think we can skip this
+        # step.
+#        if not self.file.name.startswith('f'):
+#            msgs.error(f'The ESO reference standard filename must start with the string '
+#                        '`f`;  make sure it is the case. Also make sure that the flux '
+#                        'units in the file are in 10**(-16) erg/s/cm2/AA.')
         std_spec = table.Table.read(self.file, format='ascii')
         wave = std_spec['col1']
         flux = std_spec['col2'] * 10    # Convert from 1e-16 to 1e-17 erg/s/cm^2/Angstrom
@@ -281,7 +297,7 @@ class ESOFilFluxStandard(ArchivedFluxStandard):
 
 class INGFluxStandard(ArchivedFluxStandard):
     """
-    Container class for a calspec standard star spectrum.
+    Container class for an "ing" standard star spectrum.
     """
     archive = 'ing'
     path = dataPaths.standards / archive
@@ -299,7 +315,7 @@ class INGFluxStandard(ArchivedFluxStandard):
 
 class NOAOFluxStandard(ArchivedFluxStandard):
     """
-    Container class for a calspec standard star spectrum.
+    Container class for an "noao" standard star spectrum.
     """
     archive = 'noao'
     path = dataPaths.standards / archive
@@ -318,7 +334,7 @@ class NOAOFluxStandard(ArchivedFluxStandard):
 
 class XShooterFluxStandard(ArchivedFluxStandard):
     """
-    Container class for a calspec standard star spectrum.
+    Container class for an "xshooter" standard star spectrum.
     """
     archive = 'xshooter'
     path = dataPaths.standards / archive
@@ -327,7 +343,7 @@ class XShooterFluxStandard(ArchivedFluxStandard):
         self.file = self.path.get_file_path(file)
         std_spec = table.Table.read(self.file, format='ascii')
         # XShooter standard files use air wavelengths, convert them to vacuum
-        wave = airtovac(std_spec['col1'])
+        wave = airtovac(std_spec['col1'] * units.AA).value
         flux = std_spec['col2'] * 1e17
         super().__init__(wave, flux, meta=meta)
 
@@ -335,13 +351,12 @@ class XShooterFluxStandard(ArchivedFluxStandard):
 def archived_flux_classes():
     """
     Construct a dictionary with the set of classes that subclass from
-    :class:`ArchivedFluxStandard`.
+    :class:`~pypeit.core.standard.ArchivedFluxStandard`.
 
     Returns
     -------
     dict
-        Dictionary with keys that identify the archive name and values that are
-        the classes.
+        Dictionary with keys that identify the archive name and class.
     """
     # Recursively collect all subclasses
     c = np.array(list(all_subclasses(ArchivedFluxStandard)))
@@ -354,10 +369,10 @@ def archived_flux_classes():
 
 class ModelFluxStandard(spectrum.Spectrum):
     """
-    Base class for model-based flux standard spectra.
+    Base class for "model-based" flux standard spectra.
     """
     model_type = None
-    required_metadata = ['Name', 'File', 'RA', 'Dec']
+    required_metadata = ['Name', 'File', 'ra_deg', 'dec_deg']
 
     @classmethod
     def _init_meta(cls, row=None):
@@ -368,6 +383,12 @@ class ModelFluxStandard(spectrum.Spectrum):
         meta = {} if row is None else dict(row)
         # Also add the "source"
         meta['source'] = cls.model_type
+
+        # If the coordinates are in the row, add entries that convert the
+        # coordinates to degrees
+        if 'RA_2000' in meta and 'DEC_2000' in meta:
+            meta['ra_deg'], meta['dec_deg'] = convert_radec(meta['RA_2000'], meta['DEC_2000'])
+
         # Add in required meta
         for key in cls.required_metadata:
             if key not in meta.keys():
@@ -391,9 +412,14 @@ class BlackbodyStandard(ModelFluxStandard):
         Vacuum wavelength in angstroms at which to calculate the blackbody flux.
         If None, the default wavelength range is set to 912 - 26000 Angstrom at
         a step of 0.1 Angstrom.
+    meta : dict, optional
+        The metadata to keep with the spectrum.
     """
 
     model_type = 'blackbody'
+    """
+    Identifier for the type of model spectrum.
+    """
 
     def __init__(self, a, teff, wave=None, meta=None):
         # TODO: Simplify the unit stuff here!
@@ -414,12 +440,64 @@ class BlackbodyStandard(ModelFluxStandard):
         super().__init__(_wave.value, flam, meta=self._init_meta(row=meta))
 
     @classmethod
-    def nearest_blackbody_coeffs(cls, ra, dec):
-        sep, row = nearest_archive_entry(cls.model_type, ra, dec)
+    def nearest_blackbody_coeffs(cls, ra, dec, unit=None):
+        """
+        Find the entry in the blackbody reference table nearest to the provided
+        coordinates and return the angular separation and the coefficients
+        needed to construct the model.
+
+        Parameters
+        ----------
+        ra, dec : float, str
+            On-sky coordinates.  If ``units`` are None, the coordinates are assumed
+            to be in degree if provided as floats, and they are assumed to be in
+            hours and degrees if provided as (e.g., sexagesimal) strings.
+        unit : str, tuple, optional
+            Units for the on-sky coordinates.  See ``ra`` and ``dec`` for the
+            default behavior.
+
+        Returns
+        -------
+        sep : Quantity
+            Angular separation between the provided coordinates and the nearest
+            entry in the blackbody reference table.
+        name : str
+            Name of the blackbody reference object.
+        a, teff : float
+            Parameters used to construct the blackbody spectrum.
+        """
+        sep, row = nearest_archive_entry(cls.model_type, ra, dec, unit=unit)
         return sep, row['Name'], row['a_x10m23'], row['T_K']
 
+    # TODO: Consolidate this with ArchivedFluxStandard?
     @classmethod
-    def from_coordinates(cls, ra, dec, tol=20., wave=None):
+    def found_match(cls, ra, dec, tol=20., unit=None):
+        """
+        Check if there is a match to the provided coordinates within the
+        tolerance.
+
+        Parameters
+        ----------
+        ra, dec : float, str
+            On-sky coordinates.  If ``units`` are None, the coordinates are assumed
+            to be in degree if provided as floats, and they are assumed to be in
+            hours and degrees if provided as (e.g., sexagesimal) strings.
+        tol : float, optional
+            Tolerance for coordinate matching in arcmin
+        unit : str, tuple, optional
+            Units for the on-sky coordinates.  See ``ra`` and ``dec`` for the
+            default behavior.
+
+        Returns
+        -------
+        bool
+            Flag that an appropriate match was found.
+        """
+        sep, row = nearest_archive_entry(cls.model_type, ra, dec, unit=unit)
+        return sep < tol * units.arcmin
+
+    @classmethod
+    def from_coordinates(cls, ra, dec, tol=20., unit=None, wave=None):
         """
         Instantiate the class using coefficients for the object closest to the
         provided set of coordinates.
@@ -427,17 +505,22 @@ class BlackbodyStandard(ModelFluxStandard):
         Parameters
         ----------
         ra, dec : float, str
-            On-sky coordinates (as either decimal or sexagesimal string format)
+            On-sky coordinates.  If ``units`` are None, the coordinates are assumed
+            to be in degree if provided as floats, and they are assumed to be in
+            hours and degrees if provided as (e.g., sexagesimal) strings.
         tol : float, optional
             Tolerance for coordinate matching in arcmin
+        unit : str, tuple, optional
+            Units for the on-sky coordinates.  See ``ra`` and ``dec`` for the
+            default behavior.
         wave : array-like, optional
             Vacuum wavelength in angstroms at which to calculate the blackbody flux.
             If None, the default wavelength range is set to 912 - 26000 Angstrom at
             a step of 0.1 Angstrom.
         """
-        sep, row = nearest_archive_entry(cls.model_type, ra, dec)
+        sep, row = nearest_archive_entry(cls.model_type, ra, dec, unit=unit)
         if sep > tol * units.arcmin:
-            msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to('arcmin').value} '
+            msgs.error(f'Closest object ({row["Name"]}) is separated by {sep.to("arcmin").value} '
                        f'arcmin, which is beyond the required tolerance ({tol} arcmin).')
         return cls(row['a_x10m23'], row['T_K'], wave=wave, meta=cls._init_meta(row=row))
 
@@ -449,7 +532,8 @@ class BlackbodyStandard(ModelFluxStandard):
         Parameters
         ----------
         name : str
-            Name of the source in the archive data table
+            Name of the source in the archive data table.  Must be an exact
+            match.
         """
         row = archive_entry(cls.model_type, name)
         return cls(row['a_x10m23'], row['T_K'], wave=wave, meta=cls._init_meta(row=row))
@@ -463,14 +547,16 @@ class KuruczModelStandard(ModelFluxStandard):
 
         - Get the temperature, logg, and bolometric luminosity from the
           Schmidt-Kaler (1982) table for the provided spectral type.
+
         - Find the nearest neighbor in the Kurucz stellar atmosphere ATLAS.
+
         - Convert the units for the wavelength and flux.
 
     .. warning::
 
         Spectra can currently only be generated for spectral types provided in
         the Schmidt-Kaler (1982) table.  See
-        :ref:`here<https://github.com/pypeit/PypeIt/blob/release/pypeit/data/standards/kurucz93/schmidt-kaler_table.txt>`
+        `here <https://github.com/pypeit/PypeIt/blob/release/pypeit/data/standards/kurucz93/schmidt-kaler_table.txt>`__
         for available spectral types.
 
     Parameters
@@ -482,6 +568,9 @@ class KuruczModelStandard(ModelFluxStandard):
     """
 
     model_type = 'Kurucz'
+    """
+    Identifier for the type of model spectrum.
+    """
 
     def __init__(self, V_mag, spectral_type):
 
@@ -560,6 +649,9 @@ class VegaStandard(ModelFluxStandard):
     """
 
     model_type = 'Vega'
+    """
+    Identifier for the type of model spectrum.
+    """
 
     def __init__(self, V_mag):
         file = dataPaths.standards.get_file_path('vega_tspectool_vacuum.dat')
@@ -582,6 +674,9 @@ class PhoenixStandard(ModelFluxStandard):
     """
 
     model_type = 'PHOENIX'
+    """
+    Identifier for the type of model spectrum.
+    """
 
     def __init__(self, V_mag):
         file = dataPaths.standards.get_file_path('PHOENIX_10000K_4p0.fits')
@@ -605,6 +700,9 @@ class PseudoStandard(ModelFluxStandard):
     """
 
     model_type = 'pseudo'
+    """
+    Identifier for the type of model spectrum.
+    """
 
     def __init__(self, wave=None):
         _wave = np.arange(2000,50000,1.0) if wave is None else np.asarray(wave)
@@ -647,7 +745,7 @@ def get_archive_sets(archives=['xshooter', 'calspec', 'esofil', 'noao', 'ing']):
     return _archives[good]
 
 
-def get_archive_standard(ra, dec, tol=20., archives='default', check=False):
+def get_archive_standard(ra, dec, tol=20., unit=None, archives='default', check=False):
     """
     Attempt to find and return an archive flux calibration spectrum that is
     closest to the provided coordinates.
@@ -661,9 +759,14 @@ def get_archive_standard(ra, dec, tol=20., archives='default', check=False):
     Parameters
     ----------
     ra, dec : float, str
-        On-sky coordinates (as either decimal or sexagesimal string format)
+        On-sky coordinates.  If ``units`` are None, the coordinates are assumed
+        to be in degree if provided as floats, and they are assumed to be in
+        hours and degrees if provided as (e.g., sexagesimal) strings.
     tol : float, optional
-        The matching tolerance used in arcmin.
+        Tolerance for coordinate matching in arcmin
+    unit : str, tuple, optional
+        Units for the on-sky coordinates.  See ``ra`` and ``dec`` for the
+        default behavior.
     archives : array-like, str, optional
         Name of the archives to search, in a prioritized order.  If
         ``'default'``, all archives are searched.  To only search for suitable
@@ -696,11 +799,11 @@ def get_archive_standard(ra, dec, tol=20., archives='default', check=False):
 
     for key in _archives:
         if check:
-            if archive_classes[key].found_match(ra, dec, tol=tol):
+            if archive_classes[key].found_match(ra, dec, tol=tol, unit=unit):
                 return True
         else:
             try:
-                return archive_classes[key].from_coordinates(ra, dec, tol=tol)
+                return archive_classes[key].from_coordinates(ra, dec, tol=tol, unit=unit)
             except PypeItError:
                 # Ignore PypeItErrors, assuming they're because there was no object
                 # within tol
@@ -712,11 +815,11 @@ def get_archive_standard(ra, dec, tol=20., archives='default', check=False):
     # `_archives` (i.e., how the function parses the input).
     if 'default' in archives or 'blackbody' in archives:
         if check:
-            return BlackbodyStandard.found_match(ra, dec, tol=tol)
+            return BlackbodyStandard.found_match(ra, dec, tol=tol, unit=unit)
 
         _archives = np.append(_archives, ['blackbody'])
         try:
-            return BlackbodyStandard.from_coordinates(ra, dec, tol=tol)
+            return BlackbodyStandard.from_coordinates(ra, dec, tol=tol, unit=unit)
         except PypeItError:
             # Ignore PypeItErrors, assuming they're because there was no object
             # within tol
@@ -727,13 +830,13 @@ def get_archive_standard(ra, dec, tol=20., archives='default', check=False):
 
     # Unable to find a standard within the provided tolerance.  Find the closest
     # one, report it, and fault.
-    res = np.asarray(list([nearest_archive_entry(key, ra, dec) for key in _archives]))
+    res = np.asarray(list([nearest_archive_entry(key, ra, dec, unit=unit) for key in _archives]))
     indx = np.argmin(res[:,0])
     sep, row = res[indx]
     msgs.error(f'Unable to find a standard star within {tol:.1f} arcmin of RA={ra}, DEC={dec} in '
-               f'the following archives: {_archives}.  The nearest object is {row['Name']} in '
-               f'{_archives[indx]} at RA={row['RA_2000']}, DEC={row['DEC_2000']}, separated by '
-               f'{sep.to('arcmin').value:.1f} arcmin.')
+               f'the following archives: {_archives}.  The nearest object is {row["Name"]} in '
+               f'{_archives[indx]} at RA={row["RA_2000"]}, DEC={row["DEC_2000"]}, separated by '
+               f'{sep.to("arcmin").value:.1f} arcmin.')
 
 
 def get_model_standard(spectral_type, V_mag):
@@ -769,16 +872,18 @@ def get_model_standard(spectral_type, V_mag):
     spectrum.Spectrum
         The standard spectrum.
     """
-    if spectral_type == 'A0':
-        return VegaStandard(V_mag)
-    if spectral_type == 'PHOENIX':
-        return PhoenixStandard(V_mag)
-    if spectral_type == 'NONE':
-        return PseudoStandard()
-    return KuruczModelStandard(V_mag, spectral_type)
+    match spectral_type:
+        case 'A0':
+            return VegaStandard(V_mag)
+        case 'PHOENIX':
+            return PhoenixStandard(V_mag)
+        case 'NONE':
+            return PseudoStandard()
+        case _:
+            return KuruczModelStandard(V_mag, spectral_type)
 
 
-def get_standard_spectrum(spectral_type=None, V_mag=None, ra=None, dec=None, tol=20.,
+def get_standard_spectrum(spectral_type=None, V_mag=None, ra=None, dec=None, tol=20., unit=None,
                           archives='default'):
     """
     Return a standard spectrum.
@@ -796,10 +901,15 @@ def get_standard_spectrum(spectral_type=None, V_mag=None, ra=None, dec=None, tol
         See :func:`~pypeit.core.standard.get_model_standard`.
     V_mag : float, optional
         The V-band magnitude for the star.
-    ra, dec : float, str, optional
-        On-sky coordinates (as either decimal or sexagesimal string format)
+    ra, dec : float, str
+        On-sky coordinates.  If ``units`` are None, the coordinates are assumed
+        to be in degree if provided as floats, and they are assumed to be in
+        hours and degrees if provided as (e.g., sexagesimal) strings.
     tol : float, optional
-        The matching tolerance used in arcmin.
+        Tolerance for coordinate matching in arcmin
+    unit : str, tuple, optional
+        Units for the on-sky coordinates.  See ``ra`` and ``dec`` for the
+        default behavior.
     archives : array-like, str, optional
         Name of the archives to search, in a prioritized order.  If
         ``'default'``, all archives are searched.
@@ -815,5 +925,5 @@ def get_standard_spectrum(spectral_type=None, V_mag=None, ra=None, dec=None, tol
         msgs.error('Insufficient data provided to determine the appropriate standard spectrum.  '
                    'Provide either the coordinates of the standard or a stellar type and '
                    'magnitude.')
-    return get_archive_standard(ra, dec, tol=tol, archives=archives)
+    return get_archive_standard(ra, dec, tol=tol, unit=unit, archives=archives)
 

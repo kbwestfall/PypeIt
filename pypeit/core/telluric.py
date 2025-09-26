@@ -1375,7 +1375,7 @@ def sensfunc_telluric(obs_spec, std_spec, telgridfile, exptime=1., airmass=1., r
     airmass : :obj:`float`
         Airmass of the observation
     std_spec : :class:`~pypeit.core.spectrum.Spectrum`
-        Flux-calibration standard spectrum.
+        Spectrum of the flux-calibration standard.
     log10_blaze_function : `numpy.ndarray`_ , optional
         The log10 blaze function determined from a flat field image.  If this is
         passed in the sensitivity function model will be a (parametric)
@@ -1491,7 +1491,7 @@ def sensfunc_telluric(obs_spec, std_spec, telgridfile, exptime=1., airmass=1., r
     obj_params = dict(std_spec=std_spec, airmass=airmass, delta_coeff_bounds=delta_coeff_bounds,
                       minmax_coeff_bounds=minmax_coeff_bounds, polyorder_vec=polyorder_vec,
                       exptime=exptime, func=func, sigrej=3.0, std_src=std_spec.meta['source'],
-                      std_ra=std_spec.meta['RA'], std_dec=std_spec.meta['Dec'],
+                      std_ra=std_spec.meta['ra_deg'], std_dec=std_spec.meta['dec_deg'],
                       std_name=std_spec.meta['Name'], std_cal=std_spec.meta['File'],
                       output_meta_keys=('airmass', 'exptime', 'polyorder_vec', 'func', 'std_src',
                                         'std_ra', 'std_dec', 'std_name', 'std_cal'),
@@ -1764,8 +1764,9 @@ def star_telluric(spec1dfile, telgridfile, telloutfile, outfile, star_type=None,
     # Read in standard star dictionary and interpolate onto regular telluric wave_grid
     star_ra = meta_spec['core']['RA'] if star_ra is None else star_ra
     star_dec = meta_spec['core']['DEC'] if star_dec is None else star_dec
-    std_spec = standard.get_standard_spectrum(spectral_type=star_type, V_mag=star_mag,
-                                              ra=star_ra, dec=star_dec)
+    std_spec = standard.get_standard_spectrum(
+        spectral_type=star_type, V_mag=star_mag, ra=star_ra, dec=star_dec
+    )
 
     if flux.ndim == 2:
         norders = flux.shape[1]
@@ -1785,7 +1786,7 @@ def star_telluric(spec1dfile, telgridfile, telloutfile, outfile, star_type=None,
                       delta_coeff_bounds=delta_coeff_bounds,
                       minmax_coeff_bounds=minmax_coeff_bounds, polyorder_vec=polyorder_vec,
                       exptime=meta_spec['core']['EXPTIME'], func=func, model=model, sigrej=3.0,
-                      std_ra=std_spec.meta['RA'], std_dec=std_spec.meta['Dec'],
+                      std_ra=std_spec.meta['ra_deg'], std_dec=std_spec.meta['dec_deg'],
                       std_name=std_spec.meta['Name'], std_cal=std_spec.meta['File'],
                       output_meta_keys=('airmass', 'polyorder_vec', 'exptime', 'func', 'std_ra',
                                         'std_dec', 'std_cal'),
