@@ -6,12 +6,7 @@ from IPython import embed
 import numpy as np
 import pytest
 
-from astropy import units
-
-from pypeit.core import flux_calib
 from pypeit import telescopes
-from pypeit.par.pypeitpar import Coadd1DPar
-
 
 from pypeit.pypmsgs import PypeItError
 from pypeit.core.atmextinction import AtmosphericExtinction
@@ -49,6 +44,7 @@ def test_from_coordinates():
 
     mtham = telescopes.ShaneTelescopePar()
     atmext = AtmosphericExtinction.from_coordinates(mtham['longitude'], mtham['latitude'])
+    assert atmext.file == 'mthamextinct.dat', 'Found the wrong file'
 
     np.testing.assert_allclose(atmext.wave[0], 3200.)
     np.testing.assert_allclose(atmext.mag_ext[0], 1.084)
@@ -62,7 +58,9 @@ def test_from_file():
 
     mtham = telescopes.ShaneTelescopePar()
     _file = AtmosphericExtinction.closest_extinction_file(mtham['longitude'], mtham['latitude'])
+    assert _file == 'mthamextinct.dat', 'Found the wrong file'
     atmext = AtmosphericExtinction.from_file(_file)
+    assert atmext.file == _file, 'File name not recorded correctly'
 
     np.testing.assert_allclose(atmext.wave[0], 3200.)
     np.testing.assert_allclose(atmext.mag_ext[0], 1.084)

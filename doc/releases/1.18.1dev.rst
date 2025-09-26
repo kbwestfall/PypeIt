@@ -24,7 +24,7 @@ Functionality/Performance Improvements and Additions
 
 - Significant refactor of interface with flux-calibration standards.
 
-
+- Added a new class to interface with the atmospheric extinction data.
 
 
 Instrument-specific Updates

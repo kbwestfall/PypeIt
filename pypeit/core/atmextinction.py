@@ -33,6 +33,9 @@ class AtmosphericExtinction:
         ``wave``.
     assume_sorted : :obj:`bool`
         Assume the wavelength vector is sorted
+    file : str, optional
+        *Used for informational purposes only.*  If the data were read from a
+        file, this provides the name of the source file.
 
     Raises
     ------
@@ -40,7 +43,7 @@ class AtmosphericExtinction:
         Raised if the length of ``wave`` and ``mag_ext`` is not identical, or if
         they are multidimensional.
     """
-    def __init__(self, wave, mag_ext, assume_sorted=True):
+    def __init__(self, wave, mag_ext, assume_sorted=True, file=None):
 
         if len(wave) != len(mag_ext):
             msgs.error('Wavelength and extinction vectors must have the same length.')
@@ -55,6 +58,8 @@ class AtmosphericExtinction:
             srt = np.argsort(self.wave)
             self.wave = self.wave[srt]
             self.mag_ext = self.mag_ext[srt]
+
+        self.file = file
 
     @property
     def size(self):
@@ -135,7 +140,7 @@ class AtmosphericExtinction:
         """
         _file = dataPaths.extinction.get_file_path(extinct_file)
         data = table.Table.read(_file, comment='#', format='ascii', names=('iwave', 'mag_ext'))
-        return cls(data['iwave'], data['mag_ext'])
+        return cls(data['iwave'], data['mag_ext'], file=extinct_file)
 
     def correction_factor(self, wave, airmass=1.):
         """

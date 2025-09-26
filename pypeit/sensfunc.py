@@ -294,15 +294,7 @@ class SensFunc(datamodel.DataContainer):
         self.region_mask = wavemask.read_wavelength_masks(par['spec_mask_files'])
 
         # Get the atmospheric extinction
-        if par['UVIS']['extinct_file'] == 'closest':
-            self.atmext = atmextinction.AtmosphericExtinction.from_coordinates(
-                self.spectrograph.telescope['longitude'],
-                self.spectrograph.telescope['latitude']
-            )
-        else:
-            self.atmext = atmextinction.AtmosphericExtinction.from_file(
-                par['UVIS']['extinct_file']
-            )
+        self.atmext = self.spectrograph.get_atmospheric_extinction(par['UVIS']['extinct_file'])
 
     def unpack_std(self):
         """
@@ -1172,7 +1164,6 @@ class UVISSensFunc(SensFunc):
         """
         Calls routine to compute the sensitivity function.
         """
-
         if self.wave_cnts.ndim == 2 and self.wave_cnts.shape[1] != 1:
             msgs.error('Not ready for multiple wavelength vectors.')
 
