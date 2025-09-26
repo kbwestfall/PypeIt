@@ -300,7 +300,9 @@ class SensFunc(datamodel.DataContainer):
                 self.spectrograph.telescope['latitude']
             )
         else:
-            self.atmext = atmextinction.AtmosphericExtinction.from_file(par['UVIS']['extinct_file']
+            self.atmext = atmextinction.AtmosphericExtinction.from_file(
+                par['UVIS']['extinct_file']
+            )
 
     def unpack_std(self):
         """
