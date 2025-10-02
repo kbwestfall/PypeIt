@@ -262,6 +262,8 @@ class SensFunc(datamodel.DataContainer):
                 wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk,
                 log10_blaze_function=log10_blaze_function_twk
             )
+        if self.nspec_in == 0:
+            msgs.error('1D spectra have 0 length!')
 
         # If the user provided RA and DEC use those instead of what is in meta
         star_ra = self.meta_spec['RA'] if self.par['star_ra'] is None else self.par['star_ra']
