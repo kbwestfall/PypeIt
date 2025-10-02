@@ -102,8 +102,9 @@ class PolyModel:
         self.model = model
 
     def sample(self, theta):
-        model_flux = coadd.poly_model_eval(theta, self.func, self.model,
-                                      self.wave, self.wave_min, self.wave_max)
+        model_flux = coadd.poly_model_eval(
+            theta, self.func, self.model, self.wave, self.wave_min, self.wave_max
+        )
         return model_flux, model_flux > 0.0
 
 
