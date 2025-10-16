@@ -16,7 +16,8 @@ from astropy import units
 
 import linetools.utils
 
-from pypeit import msgs
+from pypeit import log
+from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit import utils
 from pypeit import io
@@ -48,9 +49,9 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         instrume = self.get_meta_value(filename, 'instrument')
 
         if 'keck_lris_red' in self.name and instrume != 'LRIS':
-            msgs.error('This is not the correct spectrograph. You may want to use keck_lris_blue instead.')
+            raise PypeItError('This is not the correct spectrograph. You may want to use keck_lris_blue instead.')
         elif 'keck_lris_blue' in self.name and instrume == 'LRIS':
-            msgs.error('This is not the correct spectrograph. You may want to use keck_lris_red instead.')
+            raise PypeItError('This is not the correct spectrograph. You may want to use keck_lris_red instead.')
 
     @classmethod
     def default_pypeit_par(cls):
@@ -136,7 +137,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         #  This is a little risky as a user could put long into their maskname
         #  But they would then need to over-ride in their PypeIt file
         if scifile is None:
-            msgs.error("You have not included a standard or science file in your PypeIt file to determine the configuration")
+            raise PypeItError("You have not included a standard or science file in your PypeIt file to determine the configuration")
         if 'long' in self.get_meta_value(scifile, 'decker'):
             par['calibrations']['slitedges']['sync_predict'] = 'nearest'
             # This might only be required for det=2, but we'll see..
@@ -209,13 +210,13 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         # LRIS sometime misses RA and/or Dec in the header. When this happens, set them to 0
         if meta_key == 'ra':
             if headarr[0].get('RA') is None:
-                msgs.warn('Keyword RA not found in header. Setting to 0')
+                log.warning('Keyword RA not found in header. Setting to 0')
                 return '00:00:00.00'
             else:
                 return headarr[0]['RA']
         elif meta_key == 'dec':
             if headarr[0].get('DEC') is None:
-                msgs.warn('Keyword DEC not found in header. Setting to 0')
+                log.warning('Keyword DEC not found in header. Setting to 0')
                 return '+00:00:00.0'
             else:
                 return headarr[0]['DEC']
@@ -284,7 +285,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
             else:
                 return 'off'
         else:
-            msgs.error("Not ready for this compound meta")
+            raise PypeItError("Not ready for this compound meta")
 
     def configuration_keys(self):
         """
@@ -402,7 +403,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         if ftype in ['arc', 'tilt']:
             return good_exp & self.lamps(fitstbl, 'arcs') & (fitstbl['hatch'] == 'closed') & no_img
 
-        msgs.warn('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def vet_assigned_ftypes(self, type_bits, fitstbl):
@@ -490,7 +491,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         elif status == 'internal':
             return np.array([lamp in ['Halogen', '2H'] for lamp in fitstbl['lampstat01']])
         else:
-            msgs.error(f"Bad status option! {status}")
+            raise PypeItError(f"Bad status option! {status}")
 
         raise ValueError('No implementation for status = {0}'.format(status))
 
@@ -550,7 +551,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         fil = utils.find_single_file(f'{raw_file}*', required=True)
 
         # Read
-        msgs.info(f'Reading LRIS file: {fil}')
+        log.info(f'Reading LRIS file: {fil}')
         hdu = io.fits_open(fil)
         head0 = hdu[0].header
 
@@ -748,10 +749,10 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
         if filename is not None:
             self.get_slitmask(filename)
         else:
-            msgs.error('The name of a science file should be provided for the mask info')
+            raise PypeItError('The name of a science file should be provided for the mask info')
 
         if self.slitmask is None:
-            msgs.error('Unable to read slitmask design info. Provide a file.')
+            raise PypeItError('Unable to read slitmask design info. Provide a file.')
 
         platescale = self.get_detector_par(det=1)['platescale']
 
@@ -805,13 +806,13 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
                 xstart = 2073//bin_spat
                 good = centers < max_spat # No chip gap
             else:
-                msgs.error(f'Not ready to use slitmasks for {self.name}.  Develop it!')
+                raise PypeItError(f'Not ready to use slitmasks for {self.name}.  Develop it!')
         else:
             if self.name in ['keck_lris_red', 'keck_lris_blue']:
                 good = centers >= 0.
                 xstart = -48//bin_spat
             else:             
-                msgs.error(f'Not ready to use slitmasks for {self.name}.  Develop it!')
+                raise PypeItError(f'Not ready to use slitmasks for {self.name}.  Develop it!')
         left_edges += xstart
         right_edges += xstart
         left_edges[~good] = -1
@@ -917,7 +918,7 @@ class KeckLRISBSpectrograph(KeckLRISSpectrograph):
         elif namps == 4:
             pass
         else:
-            msgs.error("Did not see this namps coming..")
+            raise PypeItError("Did not see this namps coming..")
 
         # Return
         return detector
@@ -938,9 +939,9 @@ class KeckLRISBSpectrograph(KeckLRISSpectrograph):
         # last day of keck_lris_blue_orig
         date_orig = time.Time('2009-04-30', format='iso')
         if _dateobs <= date_orig and self.name in ['keck_lris_blue']:
-            msgs.error('This is not the correct spectrograph. Use keck_lris_blue_orig instead.')
+            raise PypeItError('This is not the correct spectrograph. Use keck_lris_blue_orig instead.')
         elif _dateobs > date_orig and self.name in ['keck_lris_blue_orig']:
-            msgs.error('This is not the correct spectrograph. Use keck_lris_blue instead.')
+            raise PypeItError('This is not the correct spectrograph. Use keck_lris_blue instead.')
 
     @classmethod
     def default_pypeit_par(cls):
@@ -1082,7 +1083,7 @@ class KeckLRISBSpectrograph(KeckLRISSpectrograph):
 
         # Only defined for det=1
         if det == 1:
-            msgs.info("Using hard-coded BPM for det=1 on LRISb")
+            log.info("Using hard-coded BPM for det=1 on LRISb")
             bpm_img[:,:3] = 1
 
         return bpm_img
@@ -1155,7 +1156,7 @@ class KeckLRISBOrigSpectrograph(KeckLRISBSpectrograph):
         image, hdul, elaptime, rawdatasec_img, oscansec_img = get_orig_rawimage(raw_file)
         # Cut down
         if np.max(rawdatasec_img) != 4:
-            msgs.error("Deal with not 2 AMP mode!!")
+            raise PypeItError("Deal with not 2 AMP mode!!")
         if det == 1:
             bad_amp = rawdatasec_img > 2
             rawdatasec_img[bad_amp] = 0
@@ -1171,7 +1172,7 @@ class KeckLRISBOrigSpectrograph(KeckLRISBSpectrograph):
                 good_amp = timage > 2
                 timage[good_amp] -= 2
         else:
-            msgs.error("Should not be here in keck_lris!")
+            raise PypeItError("Should not be here in keck_lris!")
 
         # Detector
         detector_par = self.get_detector_par(det-1, hdu=hdul)
@@ -1284,16 +1285,16 @@ class KeckLRISRSpectrograph(KeckLRISSpectrograph):
             if date < t2020_1:
                 pass
             elif date < t2020_2: # This is for the June 30 2020 run
-                msgs.warn("We are using LRISr gain/RN values based on WMKO estimates.")
+                log.warning("We are using LRISr gain/RN values based on WMKO estimates.")
                 detector_dict1['gain'] = np.atleast_1d([37.6])
                 detector_dict2['gain'] = np.atleast_1d([1.26])
                 detector_dict1['ronoise'] = np.atleast_1d([99.])
                 detector_dict2['ronoise'] = np.atleast_1d([5.2])
             elif date >= t2021_upgrade:
                 # Note:  We are unlikely to trip this.  Other things probably failed first
-                msgs.error("This is the new detector.  Use keck_lris_red_mark4")
+                raise PypeItError("This is the new detector.  Use keck_lris_red_mark4")
             else: # This is the 2020 July 29 run
-                msgs.warn("We are using LRISr gain/RN values based on WMKO estimates.")
+                log.warning("We are using LRISr gain/RN values based on WMKO estimates.")
                 detector_dict1['gain'] = np.atleast_1d([1.45])
                 detector_dict2['gain'] = np.atleast_1d([1.25])
                 detector_dict1['ronoise'] = np.atleast_1d([4.47])
@@ -1323,7 +1324,7 @@ class KeckLRISRSpectrograph(KeckLRISSpectrograph):
         elif namps == 4:
             pass
         else:
-            msgs.error("Did not see this namps coming..")
+            raise PypeItError("Did not see this namps coming..")
 
         # Return
         return detector
@@ -1345,11 +1346,11 @@ class KeckLRISRSpectrograph(KeckLRISSpectrograph):
         # last day of keck_lris_red_orig
         date_orig = time.Time('2009-05-02', format='iso')
         if _dateobs <= date_orig and self.name in ['keck_lris_red_mark4', 'keck_lris_red']:
-            msgs.error('This is not the correct spectrograph. Use keck_lris_red_orig instead.')
+            raise PypeItError('This is not the correct spectrograph. Use keck_lris_red_orig instead.')
         elif _dateobs >= date_mark4 and self.name in ['keck_lris_red_orig', 'keck_lris_red']:
-            msgs.error('This is not the correct spectrograph. Use keck_lris_red_mark4 instead.')
+            raise PypeItError('This is not the correct spectrograph. Use keck_lris_red_mark4 instead.')
         elif date_orig < _dateobs < date_mark4 and self.name in ['keck_lris_red_orig', 'keck_lris_red_mark4']:
-            msgs.error('This is not the correct spectrograph. Use keck_lris_red instead.')
+            raise PypeItError('This is not the correct spectrograph. Use keck_lris_red instead.')
 
     @classmethod
     def default_pypeit_par(cls):
@@ -1554,7 +1555,7 @@ class KeckLRISRSpectrograph(KeckLRISSpectrograph):
 
         # Only defined for det=2
         if det == 2:
-            msgs.info("Using hard-coded BPM for det=2 on LRISr")
+            log.info("Using hard-coded BPM for det=2 on LRISr")
 
             # Get the binning
             hdu = io.fits_open(filename)
@@ -1634,12 +1635,12 @@ class KeckLRISRMark4Spectrograph(KeckLRISRSpectrograph):
         date = time.Time(hdu[0].header['MJD'], format='mjd')
 
         if date < t2021_upgrade:
-            msgs.error("This is not the Mark4 detector.  Use a different keck_lris_red spectrograph")
+            raise PypeItError("This is not the Mark4 detector.  Use a different keck_lris_red spectrograph")
 
         # Deal with the intermediate headers
         if date < t_gdhead:
             amp_mode = hdu[0].header['AMPMODE']
-            msgs.info("AMPMODE = {:s}".format(amp_mode))
+            log.info("AMPMODE = {:s}".format(amp_mode))
             # Load up translation dict
             ampmode_translate_file = dataPaths.spectrographs.get_file_path(
                     'keck_lris_red_mark4/dict_for_ampmode.json')
@@ -1670,7 +1671,7 @@ class KeckLRISRMark4Spectrograph(KeckLRISRSpectrograph):
                                                     1.67*1.0052]) # U2
             detector_dict1['ronoise'] = np.atleast_1d([3.64, 3.45, 3.65, 3.52])
         else:
-            msgs.error("Did not see this namps coming..")
+            raise PypeItError("Did not see this namps coming..")
 
         detector_dict1['datasec'] = []
         detector_dict1['oscansec'] = []
@@ -1875,7 +1876,7 @@ class KeckLRISROrigSpectrograph(KeckLRISRSpectrograph):
 
         # Deal with number of amps
         if hdu is not None and hdu[0].header['NUMAMPS'] != 2:
-            msgs.error("Did not see this namps coming..")
+            raise PypeItError("Did not see this namps coming..")
 
         # Return
         return detector
@@ -2013,10 +2014,10 @@ def lris_read_amp(inp, ext):
     #data     = temp[xdata1-1:xdata2-1,*]
     #data = temp[xdata1:xdata2+1, :]
     if (xdata1-1) != precol:
-        msgs.error("Something wrong in LRIS datasec or precol")
+        raise PypeItError("Something wrong in LRIS datasec or precol")
     xshape = 1024 // xbin * (4//n_ext)  # Allow for single amp
     if (xshape+precol+postpix) != temp.shape[0]:
-        msgs.warn("Unexpected size for LRIS detector.  We expect you did some windowing...")
+        log.warning("Unexpected size for LRIS detector.  We expect you did some windowing...")
         xshape = temp.shape[0] - precol - postpix
     data = temp[precol:precol+xshape,:]
     postdata = temp[nxt-postpix:nxt, :]

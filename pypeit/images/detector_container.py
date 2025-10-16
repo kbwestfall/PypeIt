@@ -11,7 +11,7 @@ from IPython import embed
 import numpy as np
 
 from pypeit import datamodel
-from pypeit import msgs
+from pypeit import log
 from pypeit.core import procimg
 
 

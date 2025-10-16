@@ -14,7 +14,8 @@ class TraceEdges(scriptbase.ScriptBase):
     def get_parser(cls, width=None):
         from pypeit.spectrographs import available_spectrographs
 
-        parser = super().get_parser(description='Trace slit edges', width=width)
+        parser = super().get_parser(description='Trace slit edges', width=width,
+                                    default_log_file=True)
 
         # Require either a pypeit file or a fits file
         inp = parser.add_mutually_exclusive_group(required=True)
@@ -50,22 +51,16 @@ class TraceEdges(scriptbase.ScriptBase):
                                  'plots related to the PCA decomposition and the slit and order '
                                  'matching.  (3) Also show the individual polynomial fits to the '
                                  'detected edges.')
-        parser.add_argument('--show', default=False, action='store_true',
-                            help='DEPRECATED!  If set, the code will assume you mean to set '
-                                 '--debug 1.')
-        parser.add_argument('-v', '--verbosity', type=int, default=1,
-                            help='Verbosity level between 0 [none] and 2 [all]. Default: 1. '
-                                 'Level 2 writes a log with filename trace_edges_YYYYMMDD-HHMM.log')
-
         return parser
 
-    @staticmethod
-    def main(args):
+    @classmethod
+    def main(cls, args):
 
         import time
         from pathlib import Path
         import numpy as np
-        from pypeit import msgs
+        from pypeit import log
+        from pypeit import PypeItError
         from pypeit.spectrographs.util import load_spectrograph
         from pypeit import edgetrace
         from pypeit.pypeit import PypeIt
@@ -73,17 +68,17 @@ class TraceEdges(scriptbase.ScriptBase):
 
         from IPython import embed
 
-        # Set the verbosity, and create a logfile if verbosity == 2
-        msgs.set_logfile_and_verbosity('trace_edges', args.verbosity)
+        # Initialize the log
+        cls.init_log(args)
 
         if args.show:
-            msgs.warn('"show" option is deprecated.  Setting debug = 1.')
+            log.warning('"show" option is deprecated.  Setting debug = 1.')
             args.debug = 1
 
         if args.pypeit_file is not None:
             pypeit_file = Path(args.pypeit_file).absolute()
             if not pypeit_file.exists():
-                msgs.error(f'File does not exist: {pypeit_file}')
+                raise PypeItError(f'File does not exist: {pypeit_file}')
             redux_path = pypeit_file.parent if args.redux_path is None \
                             else Path(args.redux_path).absolute()
 
@@ -94,7 +89,7 @@ class TraceEdges(scriptbase.ScriptBase):
             # Get the calibration group to use
             group = np.unique(rdx.fitstbl['calib'])[0] if args.group is None else args.group
             if group not in np.unique(rdx.fitstbl['calib']):
-                msgs.error(f'Invalid calibration group: {group}')
+                raise PypeItError(f'Invalid calibration group: {group}')
             # Find the rows in the metadata table with trace frames in the
             # specified calibration group
             tbl_rows = rdx.fitstbl.find_frames('trace', calib_ID=int(group), index=True)
@@ -139,7 +134,7 @@ class TraceEdges(scriptbase.ScriptBase):
             binning = '1,1' if args.binning is None else args.binning
             trace_file = Path(args.trace_file).absolute()
             if not trace_file.exists():
-                msgs.error(f'File does not exist: {trace_file}')
+                raise PypeItError(f'File does not exist: {trace_file}')
             files = [str(trace_file)]
             redux_path = trace_file.parent if args.redux_path is None \
                             else Path(args.redux_path).absolute()
@@ -208,10 +203,10 @@ class TraceEdges(scriptbase.ScriptBase):
             edges = edgetrace.EdgeTraceSet(traceImage, spec, trace_par, auto=True,
                                            debug=args.debug, qa_path=qa_path)
             if not edges.success:
-                msgs.warn(f'Edge tracing for detector {det} failed.  Continuing...')
+                log.warning(f'Edge tracing for detector {det} failed.  Continuing...')
                 continue
 
-            msgs.info(f'Tracing for detector {det} finished in { time.perf_counter()-t:.1f} s.')
+            log.info(f'Tracing for detector {det} finished in { time.perf_counter()-t:.1f} s.')
             # Write the two calibration frames
             edges.to_file()
             edges.get_slits().to_file()

@@ -35,6 +35,7 @@ Submodules
    pypeit.coadd3d
    pypeit.datamodel
    pypeit.edgetrace
+   pypeit.exceptions
    pypeit.extraction
    pypeit.find_objects
    pypeit.flatfield
@@ -42,6 +43,7 @@ Submodules
    pypeit.history
    pypeit.inputfiles
    pypeit.io
+   pypeit.logger
    pypeit.manual_extract
    pypeit.metadata
    pypeit.onespec
@@ -49,7 +51,6 @@ Submodules
    pypeit.pypeit
    pypeit.pypeitdata
    pypeit.pypeitsetup
-   pypeit.pypmsgs
    pypeit.sampling
    pypeit.scattlight
    pypeit.sensfilearchive

@@ -1,6 +1,7 @@
 # Module for flux calibrating spectra
 from astropy.io import fits
 
+from pypeit import log
 from pypeit.spectrographs.util import load_spectrograph
 from pypeit import specobjs
 from pypeit import sensfunc

@@ -7,8 +7,7 @@ import numpy as np
 import pytest
 
 from pypeit import telescopes
-
-from pypeit.pypmsgs import PypeItError
+from pypeit import PypeItError
 from pypeit.core.atmextinction import AtmosphericExtinction
 
 

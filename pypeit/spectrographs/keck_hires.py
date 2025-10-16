@@ -14,7 +14,8 @@ from scipy.io import readsav
 
 from astropy import time
 
-from pypeit import msgs
+from pypeit import log
+from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit import io
 from pypeit.core import parse
@@ -312,7 +313,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
                     return 'IntFlat'
 
         else:
-            msgs.error("Not ready for this compound meta")
+            raise PypeItError("Not ready for this compound meta")
 
     def configuration_keys(self):
         """
@@ -427,7 +428,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
             # Arc and tilt frames are typed together
             return good_exp & (fitstbl['idname'] == 'Line')
 
-        msgs.warn('Cannot determine if frames are of type {0}.'.format(ftype))
+        log.debug('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
     def vet_assigned_ftypes(self, type_bits, fitstbl):
@@ -509,11 +510,11 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
         if ftype == 'slitless_pixflat':
             # Check for the required info
             if len(fitstbl) == 0:
-                msgs.warn('Fitstbl provided is emtpy. No parsing done.')
+                log.warning('Fitstbl provided is emtpy. No parsing done.')
                 # return empty array
                 return np.array([], dtype=int)
             elif det is None:
-                msgs.warn('Detector number must be provided to parse slitless_pixflat frames.  No parsing done.')
+                log.warning('Detector number must be provided to parse slitless_pixflat frames.  No parsing done.')
                 # return index array of length of fitstbl
                 return np.arange(len(fitstbl))
 
@@ -534,7 +535,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
                     # red detector
                     return np.where(np.int32(fitstbl['xdangle'].value) == -5)[0]
             else:
-                msgs.warn('The provided list of slitless_pixflat frames does not have exactly 3 unique XDANGLE values. '
+                log.warning('The provided list of slitless_pixflat frames does not have exactly 3 unique XDANGLE values. '
                           'Pypeit cannot determine which slitless_pixflat frame corresponds to the requested detector. '
                           'All frames will be used.')
                 return np.arange(len(fitstbl))
@@ -581,7 +582,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
 
         # Check for file; allow for extra .gz, etc. suffix
         if not os.path.isfile(raw_file):
-            msgs.error(f'{raw_file} not found!')
+            raise PypeItError(f'{raw_file} not found!')
         hdu = io.fits_open(raw_file)
 
         head0 = hdu[0].header
@@ -600,7 +601,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
         binning = self.get_meta_value(self.get_headarr(hdu), 'binning')
 #        # TODO: JFH I think this works fine
 #        if binning != '3,1':
-#            msgs.warn("This binning for HIRES might not work.  But it might..")
+#            log.warning("This binning for HIRES might not work.  But it might..")
 
         # We are flipping this because HIRES stores the binning oppostire of the (binspec, binspat) pypeit convention.
         binspatial, binspec = parse.parse_binning(head0['BINNING'])
@@ -696,7 +697,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
         detectors = np.array([self.get_detector_par(det, hdu=hdu) for det in mosaic])
         # Binning *must* be consistent for all detectors
         if any(d.binning != detectors[0].binning for d in detectors[1:]):
-            msgs.error('Binning is somehow inconsistent between detectors in the mosaic!')
+            raise PypeItError('Binning is somehow inconsistent between detectors in the mosaic!')
 
         # Collect the offsets and rotations for *all unbinned* detectors in the
         # full instrument, ordered by the number of the detector.  Detector
@@ -813,7 +814,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
             detector_dict2['gain'] = np.atleast_1d([0.86])
             detector_dict3['gain'] = np.atleast_1d([0.84])
         else:
-            msgs.error("Bad CCDGAIN mode for HIRES")
+            raise PypeItError("Bad CCDGAIN mode for HIRES")
             
         # Instantiate
         detector_dicts = [detector_dict1, detector_dict2, detector_dict3]

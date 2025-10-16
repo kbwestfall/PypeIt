@@ -73,7 +73,8 @@ from pypeit.par.parset import ParSet
 from pypeit.par import util
 from pypeit.core.framematch import FrameTypeBitMask
 from pypeit.core import parse
-from pypeit import msgs
+from pypeit import log
+from pypeit import PypeItError
 from pypeit import dataPaths
 
 
@@ -867,7 +868,7 @@ class FlatFieldPar(ParSet):
         # in the right place (data/pixelflats)
         file_path = dataPaths.pixelflat.get_file_path(self.data['pixelflat_file'], return_none=True)
         if file_path is None:
-            msgs.error(
+            raise PypeItError(
                 f'Provided pixelflat file, {self.data["pixelflat_file"]} not found. It is not a direct path, '
                 'a cached file, or a file that can be downloaded from a PypeIt repository.')
 
@@ -2157,12 +2158,12 @@ class SensFuncPar(ParSet):
         """
         allowed_extractions = ['BOX', 'OPT']
         if self.data['extr'] not in allowed_extractions:
-            msgs.error("'extr' must be one of:\n" + ", ".join(allowed_extractions))
+            raise PypeItError("'extr' must be one of:\n" + ", ".join(allowed_extractions))
 
         # check trim_std_pixs format
         if self.data['trim_std_pixs'] is not None:
             if not isinstance(self.data['trim_std_pixs'], (list, tuple)) or len(self.data['trim_std_pixs']) != 2:
-                msgs.error("`trim_std_pixs` must be a list or tuple of two integers.")
+                raise PypeItError("`trim_std_pixs` must be a list or tuple of two integers.")
 
         # NOTE: We could validate the mask files here, but we often instantiate
         # empty parameter sets, meaning this validation would run many times
@@ -4016,10 +4017,10 @@ class EdgeTracePar(ParSet):
             self['sync_predict'] = 'nearest'
 
         if self['max_overlap'] is not None and (self['max_overlap'] < 0 or self['max_overlap'] > 1):
-            msgs.error('If defined, max_overlap must be in the range [0,1].')
+            raise PypeItError('If defined, max_overlap must be in the range [0,1].')
 
         if self['order_outlier'] is not None and self['order_outlier'] < self['order_fitrej']:
-            msgs.warn('Order outlier threshold should not be less than the rejection threshold.')
+            log.warning('Order outlier threshold should not be less than the rejection threshold.')
 
 
 class WaveTiltsPar(ParSet):
@@ -4477,9 +4478,9 @@ class FindObjPar(ParSet):
     def validate(self):
         if self.data['std_spec1d'] is not None:
             if not self.data['use_std_trace']:
-                msgs.error('If you provide a standard star spectrum for tracing, you must set use_std_trace=True.')
+                raise PypeItError('If you provide a standard star spectrum for tracing, you must set use_std_trace=True.')
             elif not Path(self.data['std_spec1d']).absolute().exists():
-                msgs.error(f'{self.data["std_spec1d"]} does not exist!')
+                raise PypeItError(f'{self.data["std_spec1d"]} does not exist!')
 
 
 class SkySubPar(ParSet):
@@ -5241,7 +5242,7 @@ class PypeItPar(ParSet):
             if isinstance(merge_with, list):
                 merge_with = (merge_with,)
             if not isinstance(merge_with, tuple):
-                msgs.error('Input merge_with must be a tuple.')
+                raise PypeItError('Input merge_with must be a tuple.')
             # Proceed
             for f in merge_with:
                 cfg.merge(ConfigObj(f))
