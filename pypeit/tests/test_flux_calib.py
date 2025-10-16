@@ -14,7 +14,7 @@ from pypeit.core import flux_calib_refactor
 from pypeit.core import spectrum
 from pypeit.core import standard
 from pypeit.core import wavemask
-from pypeit.pypmsgs import PypeItError
+from pypeit import PypeItError
 from pypeit.sampling import Resample
 
 def test_standard_zeropoint_basic():

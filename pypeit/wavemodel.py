@@ -589,7 +589,7 @@ def conv2res(wavelength, flux, resolution, central_wl='midpt',
         try:
             wl_cent = float(central_wl)
         except ValueError:
-            msgs.error(f'Unable to convert {central_wl} to a float')
+            raise PypeItError(f'Unable to convert {central_wl} to a float')
 
     wl_sigma =  wl_cent / resolution / 2.355
     if current_resolution is not None:

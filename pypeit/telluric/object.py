@@ -4,8 +4,9 @@ from astropy import table
 import numpy as np
 from scipy import interpolate
 
-from pypeit import msgs
 from pypeit import dataPaths
+from pypeit import log
+from pypeit import PypeItError
 from pypeit.core import coadd
 from pypeit.core import standard
 
@@ -32,7 +33,7 @@ class QSOPCAModel:
         if self.npca is None:
             self.npca = self.components.shape[0]
         if self.npca > self.components.shape[0]:
-            msgs.warn(
+            log.warning(
                 f'Number of requested PCA components ({self.npca}) for QSO model is larger than '
                 f'the number available ({self.components.shape[0]}).  Using all PCA components.')
             self.npca = self.components.shape[0]
@@ -283,7 +284,7 @@ def init_star_model(obj_params, iord, wave, flux, ivar, mask, tellmodel):
 
     coeff, wave_min, wave_max = fit_tuple
     if(wave_min != wave.min()) or (wave_max != wave.max()):
-        msgs.error('Problem with the wave_min or wave_max')
+        raise PypeItError('Problem with the wave_min or wave_max')
     # Polynomial coefficient bounds
     bounds_obj = [(np.fmin(np.abs(this_coeff)*obj_params['delta_coeff_bounds'][0], obj_params['minmax_coeff_bounds'][0]),
                    np.fmax(np.abs(this_coeff)*obj_params['delta_coeff_bounds'][1], obj_params['minmax_coeff_bounds'][1]))
@@ -403,7 +404,7 @@ def init_poly_model(obj_params, iord, wave, flux, ivar, mask, tellmodel):
 
     coeff, wave_min, wave_max = fit_tuple
     if(wave_min != wave.min()) or (wave_max != wave.max()):
-        msgs.error('Problem with the wave_min or wave_max')
+        raise PypeItError('Problem with the wave_min or wave_max')
     # Polynomial model
     polymodel = coadd.poly_model_eval(coeff, obj_params['func'], obj_params['model'], wave, wave_min, wave_max)
 

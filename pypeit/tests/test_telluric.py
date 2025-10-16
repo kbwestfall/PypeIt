@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from pypeit import telluric
-from pypeit.pypmsgs import PypeItError
+from pypeit import PypeItError
 
 
 def test_init():

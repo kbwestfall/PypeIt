@@ -9,8 +9,9 @@ from IPython import embed
 import numpy as np
 from scipy import signal
 
-from pypeit import msgs
 from pypeit import dataPaths
+from pypeit import log
+from pypeit import PypeItError
 from pypeit import __version__
 from pypeit import io
 from pypeit.core.wavecal import wvutils
@@ -45,7 +46,7 @@ class TelluricModel:
         """
         Load the telluric data from the reference file.
         """
-        msgs.error(f'{self.__class__.__name__} has not defined a load function!')
+        raise PypeItError(f'{self.__class__.__name__} has not defined a load function!')
 
     def _finalize_wave_grid(self, wave_grid_full, model_grid_full):
         r"""
@@ -82,7 +83,7 @@ class TelluricModel:
         nspec_full = wave_grid_full.size
 
         if nspec_full != model_grid_full.shape[-1]:
-            msgs.error(
+            raise PypeItError(
                 'Model telluric grid and wavelength grid have different numbers of spectral '
                 'pixels.'
             )
@@ -108,7 +109,7 @@ class TelluricModel:
         """
         Sample the telluric model at its native resolution and wavelength grid.
         """
-        msgs.error(f'{self.__class__.__name__} has not defined a sample_raw function!')
+        raise PypeItError(f'{self.__class__.__name__} has not defined a sample_raw function!')
 
     # TODO: This should account for the current resolution of the model...
     def _convolve(self, tspec, res):
@@ -132,15 +133,15 @@ class TelluricModel:
         """
         # Check the input values
         if res <= 0.0:
-            msgs.error('Resolution must be positive.')
+            raise PypeItError('Resolution must be positive.')
         if self.dloglam == 0.0:
-            msgs.error('The telluric model grid cannot have a log wavelength spacing that is 0!')
+            raise PypeItError('The telluric model grid cannot have a log wavelength spacing that is 0!')
         # number of dloglam pixels per 1 sigma dispersion
         pix_per_sigma = 1.0/res/(self.dloglam*np.log(10.0))/(2.0 * np.sqrt(2.0 * np.log(2)))
         # number of sigma per 1 pix
         sig2pix = 1.0/pix_per_sigma
         if sig2pix > 2.0:
-            msgs.warn(
+            log.warning(
                 'The telluric model grid is not sampled finely enough to properly convolve to '
                 'the desired resolution.  Skipping resolution convolution for now. Create a '
                 'higher resolution telluric model grid.'
@@ -229,7 +230,7 @@ class TelluricModel:
             Transmission spectrum.
         """
         if len(theta) != self.npar + 3:
-            msgs.error(
+            raise PypeItError(
                 f'Incorrect number of parameters provided.  Expected {self.npar + 3}, got '
                 f'{len(theta)}.'
             )
@@ -269,14 +270,14 @@ class PCATelluricModel(TelluricModel):
         Reads in the telluric PCA components from a file.
         """
         # Open the file
-        msgs.info(f'Attempting to load telluric file: {self.file.name}')
+        log.info(f'Attempting to load telluric file: {self.file.name}')
         hdu = io.fits_open(self.file)
 
         # Make sure the file type is correct
         self.ncomp = hdu[0].header.get('NCOMP')
         # check that the telgrid file is the correct one for this method
         if self.ncomp is None:
-            msgs.error(
+            raise PypeItError(
                 'Could NOT read the number of PCA components of the telluric model.  This error '
                 'can occur if you have set teltype=pca and have instead used a grid-based '
                 'telluric file.  Make sure you are using a TellPCA_* file or set teltype=grid.'
@@ -298,7 +299,7 @@ class PCATelluricModel(TelluricModel):
         if self.npar is None:
             self.npar = self.ncomp
         if self.npar > self.ncomp:
-            msgs.warn(
+            log.warning(
                 f'Requested {self.npar} PCA components, which is more than the maximum '
                 f'available.  Using all {self.ncomp} PCA components.'
             )
@@ -325,7 +326,7 @@ class PCATelluricModel(TelluricModel):
             range of ``start:end`` are set to 0.
         """
         if len(theta) != self.npar:
-            msgs.error(
+            raise PypeItError(
                 f'Incorrect number of coefficients.  Expected {self.npar}, got {len(theta)}'
             )
         # Evaluate PCA model after truncating the wavelength range
@@ -355,12 +356,12 @@ class AtmGridTelluricModel(TelluricModel):
         Reads the telluric models for a full atmospheric grid from a file.
         """
         # Read the file
-        msgs.info(f'Attempting to load telluric file: {self.file.name}')
+        log.info(f'Attempting to load telluric file: {self.file.name}')
         hdu = io.fits_open(self.file)
 
         # Check that the telgrid file is the correct one for this method
         if hdu[0].header.get('PRES0') is None:
-            msgs.error(
+            raise PypeItError(
                 'Could NOT read the atmospheric information from the telluric model.  This error '
                 'can occur if you have set teltype=grid and have instead used a pca-based '
                 'telluric file.  Make sure you are using a TelFit_* file or set teltype=pca.'
@@ -419,7 +420,7 @@ class AtmGridTelluricModel(TelluricModel):
             space.  Pixels outside the range of ``start:end`` are set to 0.
         """
         if len(theta) != 4:
-            msgs.error('Input parameter vector must have 4 and only 4 values.')
+            raise PypeItError('Input parameter vector must have 4 and only 4 values.')
         indx = [
             int(np.round((p - g[0])/(g[1]-g[0]))) if len(g) > 1 else 0 for p, g in zip(theta, [
                 self.pressure_grid, self.temp_grid, self.h2o_grid, self.airmass_grid

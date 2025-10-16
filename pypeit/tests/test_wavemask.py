@@ -13,7 +13,7 @@ from astropy.io import ascii
 
 from pypeit.core import wavemask
 from pypeit import dataPaths
-from pypeit.pypmsgs import PypeItError
+from pypeit import PypeItError
 
 
 def test_read():

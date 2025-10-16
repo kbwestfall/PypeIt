@@ -12,8 +12,9 @@ from matplotlib import pyplot
 
 from astropy.io import ascii
 
-from pypeit import msgs
 from pypeit import dataPaths
+from pypeit import log
+from pypeit import PypeItError
 from pypeit import utils
 from pypeit.sampling import Resample
 from pypeit.wavemodel import conv2res
@@ -49,7 +50,7 @@ def read_wavelength_masks(files, tables=None):
     for f in _files:
         _f = Path(f).absolute()
         if not _f.is_file():
-            msgs.error(f'{f} does not exist!')
+            raise PypeItError(f'{f} does not exist!')
         with open(_f, 'rb') as inp:
             data = tomllib.load(inp)
         for key in data.keys():
@@ -57,7 +58,7 @@ def read_wavelength_masks(files, tables=None):
                 continue
             # Check if the mask set has already been read
             if key in mask_keys:
-                msgs.warn(f'{key} mask set in {f} already parsed by previous file.  '
+                log.warning(f'{key} mask set in {f} already parsed by previous file.  '
                           'Concatenated masks may have repeated regions.')
             else:
                 mask_keys += [key]
@@ -65,7 +66,7 @@ def read_wavelength_masks(files, tables=None):
             # Check the keys used to define the mask
             unknown_keys = set(data[key].keys()) - valid_set_keys
             if len(unknown_keys) > 0:
-                msgs.warn(f'Valid mask keys are {valid_set_keys}; ignoring {unknown_keys}')
+                log.warning(f'Valid mask keys are {valid_set_keys}; ignoring {unknown_keys}')
 
             # Generate the regions to mask    
             if 'range' in data[key].keys():
@@ -74,9 +75,9 @@ def read_wavelength_masks(files, tables=None):
                 regions += [[c-w/2, c+w/2] for c,w in data[key]['center_width']]
             if 'center' in data[key].keys():
                 if 'width' not in data[key].keys():
-                    msgs.error('When using center keyword, must also provide width key.')
+                    raise PypeItError('When using center keyword, must also provide width key.')
                 if isinstance(data[key]['width'], list):
-                    msgs.error('When using center keyword, width must be a single value.')
+                    raise PypeItError('When using center keyword, width must be a single value.')
                 regions += [
                     [c-data[key]['width']/2, c+data[key]['width']/2] for c in data[key]['center']
                 ]
@@ -96,7 +97,7 @@ def read_wavelength_masks(files, tables=None):
     if not np.any(both_none):
         return regions
 
-    msgs.warn('Ignoring ranges with but the lower and upper limits were set to None.')
+    log.warning('Ignoring ranges with but the lower and upper limits were set to None.')
     return regions[np.logical_not(both_none),:]
 
 
@@ -129,9 +130,9 @@ def build_wavelength_gpm(wave, regions):
     # Check input
     _regions = np.asarray(regions)
     if _regions.ndim != 2:
-        msgs.error('regions array must be 2D')
+        raise PypeItError('regions array must be 2D')
     if _regions.shape[1] != 2:
-        msgs.error('regions array must have 2 elements in the 2nd dimension')
+        raise PypeItError('regions array must have 2 elements in the 2nd dimension')
 
     # Create and edit the mask
     gpm = np.ones(wave.shape, dtype=bool)
@@ -210,7 +211,7 @@ def telluric_mask(threshold, wave=None, sres=None, file='mktrans_zm_10_10.dat', 
         tspec_sres = None
     else:
         if len(tspec) != 3:
-            msgs.error('`tspec` argument must be a tuple with three elements')
+            raise PypeItError('`tspec` argument must be a tuple with three elements')
         tspec_wave = np.asarray(tspec[0])
         tspec_tran = np.asarray(tspec[1])
         tspec_sres = None if tspec[2] is None else np.asarray(tspec[2])
@@ -244,11 +245,11 @@ def telluric_mask(threshold, wave=None, sres=None, file='mktrans_zm_10_10.dat', 
     r = Resample(tspec_tran_cnv, x=tspec_wave, newx=wave, conserve=False)
     within_wave_range = r.outf > 0
     if not np.any(within_wave_range):
-        msgs.warn('Transmission spectrum does not overlap with observed spectrum.')
+        log.warning('Transmission spectrum does not overlap with observed spectrum.')
         return np.array([]) if return_regions else np.ones(wave.size, dtype=bool)
 
     if not np.all(within_wave_range):
-        msgs.warn('Regions of the observed spectrum that do not overlap with the transmission '
+        log.warning('Regions of the observed spectrum that do not overlap with the transmission '
                   'spectrum will not be masked.')
     
     bpm = (r.outf > 0) & (r.outy < threshold)

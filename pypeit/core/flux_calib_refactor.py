@@ -18,7 +18,8 @@ from astropy import units
 from astropy import constants
 from astropy import table
 
-from pypeit import msgs
+from pypeit import log
+from pypeit import PypeItError
 from pypeit import utils
 from pypeit import bspline
 from pypeit import io
@@ -81,13 +82,13 @@ def sensfunc(obs_spec, std_spec, **kwargs):
     if isinstance(obs_spec, spectrum.Spectrum):
         return standard_zeropoint(obs_spec, std_spec.resample(obs_spec.wave), **kwargs)
 
-    msgs.error('Entering untested part of the function!!')
+    raise PypeItError('Entering untested part of the function!!')
 #    embed(header='in sensfunc()')
 #    exit()
 
     _obs_spec = np.asarray(obs_spec)
     if not all([isinstance(s, spectrum.Spectrum) for s in _obs_spec]):
-        msgs.error('Multiple spectra must be provided as a list of pypeit Spectrum objects.')
+        raise PypeItError('Multiple spectra must be provided as a list of pypeit Spectrum objects.')
 
     results = []
     for _spec in _obs_spec:
@@ -151,10 +152,10 @@ def get_sensfunc_factor(wave, wave_zp, zeropoint, exptime, tellmodel=None, delta
             _delta_wave = delta_wave
         elif isinstance(delta_wave, np.ndarray):
             if wave.size != delta_wave.size:
-                msgs.error('The wavelength vector and delta_wave vector must be the same size')
+                raise PypeItError('The wavelength vector and delta_wave vector must be the same size')
             _delta_wave = delta_wave
         else:
-            msgs.warn('Invalid type for delta_wave - using a default value')
+            log.warning('Invalid type for delta_wave - using a default value')
             _delta_wave = wvutils.get_delta_wave(wave, wave_mask)
     else:
         # If delta_wave is not passed in, then we will use the native wavelength sampling of the spectrum
@@ -170,15 +171,16 @@ def get_sensfunc_factor(wave, wave_zp, zeropoint, exptime, tellmodel=None, delta
         if extrap_sens:
             zeropoint_obs[wave_mask] \
                     = interpolate.interp1d(wave_zp, zeropoint, bounds_error=False)(wave[wave_mask])
-            msgs.warn("Your data extends beyond the bounds of your sensfunc. You should be "
+            log.warning("Your data extends beyond the bounds of your sensfunc. You should be "
                       "adjusting the par['sensfunc']['extrap_blu'] and/or "
                       "par['sensfunc']['extrap_red'] to extrapolate further and recreate your "
                       "sensfunc. But we are extrapolating per your direction. Good luck!")
         else:
-            msgs.error("Your data extends beyond the bounds of your sensfunc. " + msgs.newline() +
-                       "Adjust the par['sensfunc']['extrap_blu'] and/or "
-                       "par['sensfunc']['extrap_red'] to extrapolate further and recreate "
-                       "your sensfunc.")
+            raise PypeItError(
+                'Your data extends beyond the bounds of your sensfunc.  Adjust the '
+                'par["sensfunc"]["extrap_blu"] and/or par["sensfunc"]["extrap_red"] to '
+                'extrapolate further and recreate your sensfunc.'
+            )
 
     # This is the S_lam factor required to convert N_lam = counts/sec/Ang to
     # F_lam = 1e-17 erg/s/cm^2/Ang, i.e.  F_lam = S_lam*N_lam
@@ -188,14 +190,14 @@ def get_sensfunc_factor(wave, wave_zp, zeropoint, exptime, tellmodel=None, delta
     # Did the user request a telluric correction?
     if tellmodel is not None:
         # This assumes there is a separate telluric key in this dict.
-        #msgs.warn("Telluric corrections via this method are deprecated")
-        msgs.info('Applying telluric correction')
+        #log.warning("Telluric corrections via this method are deprecated")
+        log.info('Applying telluric correction')
         sensfunc_obs = sensfunc_obs * (tellmodel > 1e-10) / (tellmodel + (tellmodel < 1e-10))
 
     if extinct_correct:
         # Apply Extinction if optical bands
-        msgs.info("Applying extinction correction")
-        msgs.warn("Extinction correction applied only if the spectra covers <10000Ang.")
+        log.info("Applying extinction correction")
+        log.warning("Extinction correction applied only if the spectra covers <10000Ang.")
         # Get the atmospheric extinction
         if extinctfilepar == 'closest':
             atmext = atmextinction.AtmosphericExtinction.from_coordinates(longitude, latitude)
@@ -507,13 +509,13 @@ def calculate_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, air
     """
     # Check the input
     if not isinstance(obs_spec, spectrum.Spectrum):
-        msgs.error('Must provide observed spectrum as a Spectrum object.')
+        raise PypeItError('Must provide observed spectrum as a Spectrum object.')
     if obs_spec.ndim != 1:
-        msgs.error('Must provide a single observed spectrum.')
+        raise PypeItError('Must provide a single observed spectrum.')
     if not isinstance(std_spec, spectrum.Spectrum):
-        msgs.error('Must provide standard spectrum as a Spectrum object.')
+        raise PypeItError('Must provide standard spectrum as a Spectrum object.')
     if not np.allclose(obs_spec.wave, std_spec.wave):
-        msgs.error('Standard spectrum is expected to be sampled at the same wavelengths as the '
+        raise PypeItError('Standard spectrum is expected to be sampled at the same wavelengths as the '
                    'observed spectrum.')
 
     # Convert observed spectrum to counts/s/angstrom
@@ -607,7 +609,7 @@ def fit_zeropoint(zp_spec, bkspace=None, resolution=2700., nresln=20., region_ma
         zp_spec.wave, gpm=zp_spec.gpm, fit_gpm=fit_gpm, bkspace=bkspace, resolution=resolution,
         nresln=nresln
     )
-    msgs.info(f'Number of breakpoints: {init_breakpoints.size}')
+    log.info(f'Number of breakpoints: {init_breakpoints.size}')
 
     # Perform the fit
     kwargs_reject = {'maxrej': 5}
@@ -664,23 +666,23 @@ def zeropoint_breakpoints(wave, gpm=None, fit_gpm=None, bkspace=None, resolution
 
     if bkspace is None:
         if resolution is None or nresln is None:
-            msgs.error('If not providing breakpoint spacing, must provide resolution and the '
+            raise PypeItError('If not providing breakpoint spacing, must provide resolution and the '
                        'number of resolution elements between breakpoints (nresln).')
         dw = np.diff(sampling.centers_to_borders(wave))
         std_pix = np.median(dw)
         std_res = np.median(_wave/resolution)
         if nresln * std_res < std_pix:
             _nresln = 2 * std_pix / std_res
-            msgs.warn('Nominal breakpoint spacing is less than one pixel.  Adjusting the number '
+            log.warning('Nominal breakpoint spacing is less than one pixel.  Adjusting the number '
                       f'of resolution elements from {nresln:.1f} to {_nresln:.1f}.')
         else:
             _nresln = nresln
         _bkspace = std_res * _nresln
-        msgs.info(f'Median wavelength step per pixel: {std_pix:.2f} Å')
-        msgs.info(f'Median wavelength step per resolution element: {std_res:.2f} Å')
+        log.info(f'Median wavelength step per pixel: {std_pix:.2f} Å')
+        log.info(f'Median wavelength step per resolution element: {std_res:.2f} Å')
     else:
         _bkspace = bkspace
-    msgs.info(f'Breakpoint spacing: {_bkspace:.2f} Å')
+    log.info(f'Breakpoint spacing: {_bkspace:.2f} Å')
 
     # Control the set of breakpoints used
     init_bspline = bspline.bspline(_wave, bkspace=_bkspace)
@@ -816,7 +818,7 @@ def load_filter_file(filter):
 
     # Check
     if filter not in allowed_options:
-        msgs.error("PypeIt is not ready for filter = {}".format(filter))
+        raise PypeItError("PypeIt is not ready for filter = {}".format(filter))
 
     trans_file = dataPaths.filters.get_file_path('filtercurves.fits')
     trans = io.fits_open(trans_file)
@@ -869,7 +871,7 @@ def scale_in_filter(wave, flux, gpm, scale_dict):
     flux = flux[gpm]
 
     # Grab the instrument response function
-    msgs.info("Integrating spectrum in filter: {}".format(scale_dict['filter']))
+    log.info("Integrating spectrum in filter: {}".format(scale_dict['filter']))
     fwave, trans = load_filter_file(scale_dict['filter'])
     tfunc = interpolate.interp1d(fwave, trans, bounds_error=False, fill_value=0.)
 
@@ -889,9 +891,9 @@ def scale_in_filter(wave, flux, gpm, scale_dict):
         # Scale factor
         Dm = AB - scale_dict['filter_mag']
         scale = np.power(10.0,(Dm/2.5))
-        msgs.info("Scaling spectrum by {}".format(scale))
+        log.info("Scaling spectrum by {}".format(scale))
     else:
-        msgs.error("Bad magnitude type")
+        raise PypeItError("Bad magnitude type")
 
     return scale
 

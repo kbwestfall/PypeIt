@@ -496,8 +496,10 @@ class SensFunc(datamodel.DataContainer):
         """
         Dummy method overloaded by subclasses
         """
-        msgs.error(f'This subclass of SensFunc ({self.__class__.__name__}) had not defined the '
-                   'compute_zeropoint method!')
+        raise PypeItError(
+            f'This subclass of SensFunc ({self.__class__.__name__}) had not defined the '
+            'compute_zeropoint method!'
+        )
 
     def run(self):
         """
@@ -1174,7 +1176,7 @@ class UVISSensFunc(SensFunc):
         Calls routine to compute the sensitivity function.
         """
         if self.wave_cnts.ndim == 2 and self.wave_cnts.shape[1] != 1:
-            msgs.error('Not ready for multiple wavelength vectors.')
+            raise PypeItError('Not ready for multiple wavelength vectors.')
 
         # Construct the Spectrum object
         obs_spec = spectrum.Spectrum(
