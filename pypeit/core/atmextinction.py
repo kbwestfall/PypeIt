@@ -31,7 +31,7 @@ class AtmosphericExtinction:
     mag_ext : array-like
         Magnitudes of extinction at 1 airmass.  Must be the same length as
         ``wave``.
-    assume_sorted : :obj:`bool`
+    assume_sorted : :obj:`bool`, optional
         Assume the wavelength vector is sorted
     file : str, optional
         *Used for informational purposes only.*  If the data were read from a

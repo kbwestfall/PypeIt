@@ -1,5 +1,5 @@
 """
-Module to run tests on a few flux routines
+Module to run tests on the atmospheric extinction class.
 """
 from IPython import embed
 

@@ -87,7 +87,7 @@ def find_standard(specobj_list):
     return mxix
 
 
-def sensfunc(wave, counts, counts_ivar, counts_mask, exptime, airmass, std_dict, atmext, ech_orders=None,
+def sensfunc(wave, counts, counts_ivar, counts_mask, exptime, airmass, std_spec, atmext, ech_orders=None,
              mask_hydrogen_lines=True, mask_helium_lines=False,
              polyorder=4, hydrogen_mask_wid=10.0, nresln=20., resolution=3000.,
              trans_thresh=0.9,polycorrect=True, polyfunc=False, debug=False):
@@ -112,8 +112,8 @@ def sensfunc(wave, counts, counts_ivar, counts_mask, exptime, airmass, std_dict,
             Exposure time in seconds
         airmass (float):
             Airmass
-        std_dict (dict):
-            Dictionary containing information about the standard star returned by flux_calib.get_standard_spectrum
+        std_spec (:class:`~pypeit.core.spectrum.Spectrum`):
+            Spectrum of the flux-calibration standard.
         atmext (:class:`~pypeit.core.atmextinction.AtmosphericExtinction`):
             Class that provides the interface to the atmospheric extinction data.
         ech_orders (int `numpy.ndarray`_):

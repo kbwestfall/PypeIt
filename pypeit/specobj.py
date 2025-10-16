@@ -574,11 +574,12 @@ class SpecObj(datamodel.DataContainer):
             airmass (float, optional):
                 Airmass
             extinct_file (str, optional):
-                Either (1) one of the extinction files provided by pypeit (see HERE),
-                (2) the path to a local file on disk, or (3) set
-                ``extinct_file='closest'`` to have the code find the most relevant
-                extinction data based on the longitude and latitude of the
-                telescope for the spectrograph used to observe the spectrum.
+                Either (1) one of the extinction files provided by pypeit (see
+                :ref:`extinction_correction`), (2) the path to a local file on
+                disk, or (3) set ``extinct_file='closest'`` to have the code
+                find the most relevant extinction data based on the longitude
+                and latitude of the telescope for the spectrograph used to
+                observe the spectrum.
             extrap_sens (bool, optional):
                 Extrapolate the sensitivity function (instead of crashing out)
         """

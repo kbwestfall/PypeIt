@@ -723,10 +723,10 @@ class Spectrograph:
         Parameters
         ----------
         extinct_file : str
-            Either (1) one of the extintion files provided by pypeit (see HERE),
-            (2) the path to a local file on disk, or (3) set
-            ``extinct_file='closest'`` to have the code find the most relevant
-            extinction data based on the longitude and latitude of the
+            Either (1) one of the extintion files provided by pypeit (see
+            :ref:`extinction_correction`), (2) the path to a local file on disk,
+            or (3) set ``extinct_file='closest'`` to have the code find the most
+            relevant extinction data based on the longitude and latitude of the
             telescope.
 
         Returns
