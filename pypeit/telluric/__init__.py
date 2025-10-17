@@ -1,2 +1,2 @@
-from . import model
-from . import object
+from pypeit.telluric import model
+from pypeit.telluric import object

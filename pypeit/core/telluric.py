@@ -1476,7 +1476,7 @@ def sensfunc_telluric(obs_spec, std_spec, telgridfile, exptime=1., airmass=1., r
     if debug:
         disp = True
 
-    norders = counts.shape[1] if counts.ndim == 2 else 1
+    norders = obs_spec.flux.shape[1] if obs_spec.ndim == 2 else 1
 
     # Create the polyorder_vec
     if np.size(polyorder) > 1:

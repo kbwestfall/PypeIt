@@ -1204,7 +1204,7 @@ class SlicerIFUCoAdd3D(CoAdd3D):
                 # Interpolate the sensitivity function onto the wavelength grid of the data
                 # TODO :: Change the ['UVIS']['extinct_file'] here when the sensitivity function calculation is unified.
                 atmext = self.spec.get_atmospheric_extinction(self.senspar['UVIS']['extinct_file'])
-                sens_sort = flux_calib.get_sensfunc_factor(
+                sens_sort = flux_calib_refactor.get_sensfunc_factor(
                     wave_sort, sens.wave[:, 0], sens.zeropoint[:, 0], exptime,
                     delta_wave=dwav_sort, atmext=atmext,
                     airmass=airmass, extrap_sens=self.par['fluxcalib']['extrap_sens']

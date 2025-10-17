@@ -223,6 +223,10 @@ def test_sample():
 def test_qso_pca_model():
 
     obj = telluric.object.QSOPCAModel('qso_pca_1200_3100.fits')
+    assert obj.npca == 10, 'Wrong number of PCA components'
+    assert obj.z_fid == 0., 'Wrong redshift'
+
+    theta = rng.uniform(size=tellmod.npar)
 
     embed()
     exit()
