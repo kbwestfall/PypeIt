@@ -1989,5 +1989,5 @@ class PypeItMetaData:
         """
         idx = self.table['filename'] == Path(filename).name
         if not any(idx):
-            msgs.error(f"Requested file {filename} not in the metadata table.")
+            raise PypeItError(f"Requested file {filename} not in the metadata table.")
         return self.table[idx].copy()

@@ -564,10 +564,10 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
 
             case 'DV10 (2160/5000)':
                 # Presently unsupported; no parameter changes
-                msgs.warn("The DV10 grating is not present supported; no config-specific pars set!")
+                log.warning("The DV10 grating is not present supported; no config-specific pars set!")
 
             case _:
-                msgs.warn("No recognized grating passed; no config-specific pars set!")
+                log.warning("No recognized grating passed; no config-specific pars set!")
 
         # Adjust parameters based on CCD binning
         bin_spec, bin_spat = parse.parse_binning(binning)

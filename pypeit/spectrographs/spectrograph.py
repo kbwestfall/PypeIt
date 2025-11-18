@@ -234,7 +234,7 @@ class Spectrograph:
             adjusted for configuration specific parameter values.
         """
         if inp is None:
-            msgs.error("You have not included a standard or science file in your PypeIt file to determine the configuration")
+            raise PypeItError("You have not included a standard or science file in your PypeIt file to determine the configuration")
         return self.__class__.default_pypeit_par() if inp_par is None else inp_par
 
     def update_edgetracepar(self, par):
@@ -493,7 +493,7 @@ class Spectrograph:
                     try:
                         subheader[key] = row_fitstbl[key]
                     except KeyError:
-                        msgs.error(
+                        raise PypeItError(
                             f"Required SlicerIFU keyword {key} not present in your fitstbl/Header"
                         )
 
