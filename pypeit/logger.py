@@ -12,16 +12,18 @@ from pathlib import Path
 import re
 import sys
 import traceback
-from typing import Optional, List
 import warnings
 
 from IPython import embed
 
+# NOTE: BEWARE of importing anything from pypeit into this module.  It is likely
+# to cause a circular import.
+
 # TODO: Can we put this *inside* the logger?
-def short_warning(message, category, filename, lineno, file=None, line=None):
+def short_warning(message, category, filename, lineno, line=None):
     """
-    Formatter for warning messages.  Shortens default output to just the warning
-    type and warning message.
+    Overrides default formatting of warning messages.  The only arguments used
+    are ``message`` and ``category``.  See :func:`warnings.formatwarning`.
     """
     return f'{category.__name__}: {message}'
 warnings.formatwarning = short_warning
@@ -39,9 +41,9 @@ warnings.simplefilter('default', np.exceptions.RankWarning)
 
 def color_text(
     text:str,
-    color:List[int],
-    bold:Optional[bool] = False,
-    nchar:Optional[int] = None
+    color:list[int],
+    bold:bool = False,
+    nchar:int | None = None
 ) -> str:
     """
     Return an input string with escape characters to colorize text written to
@@ -154,9 +156,9 @@ class PypeItLogger(logging.Logger):
 
     def init(self,
         level: int = logging.INFO,
-        stream: Optional[io.TextIOBase] = None,
-        log_file: Optional[str | Path] = None,
-        log_file_level: Optional[int] = None,
+        stream: io.TextIOBase | None = None,
+        log_file: str | Path | None = None,
+        log_file_level: int | None = None,
     ):
         """
         Initialise the logger.
@@ -332,9 +334,9 @@ class PypeItLogger(logging.Logger):
 # add them as parameters here as well.
 def get_logger(
     level: int = logging.INFO,
-    stream: Optional[io.TextIOBase] = None,
-    log_file: Optional[str | Path] = None,
-    log_file_level: Optional[int] = None,
+    stream: io.TextIOBase | None = None,
+    log_file: str | Path | None = None,
+    log_file_level: int | None = None,
 ) -> PypeItLogger:
     """
     Instantiate a new logger.

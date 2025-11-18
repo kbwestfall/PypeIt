@@ -93,7 +93,7 @@ class CalibFrame(datamodel.DataContainer):
         :attr:`calib_id`, and :attr:`calib_key`.
 
         Args:
-            odir (:obj:`str`, `Path`_):
+            odir (:obj:`str`, :class:`~pathlib.Path`):
                 Output directory for the processed calibration frames
             setup (:obj:`str`):
                 The string identifier for the instrument setup/configuration;

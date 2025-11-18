@@ -770,11 +770,15 @@ class EdgeTraceSet(calibframe.CalibFrame):
             self.maskdesign_matching(debug=debug > 1)
             if debug > 0:
                 self.show(title='After matching to slit-mask design metadata.')
-            if np.all(self.bitmask.flagged(self.edge_msk, self.bitmask.bad_flags)):
-                raise PypeItError('All traces masked!  Problem with mask-design matching, which may be '
-                           'due to spurious edges.  Try changing the edge detection threshold '
-                           '(edge_thresh) and troubleshooting the problem using the '
-                           'pypeit_trace_edges script.')
+            if (
+                self.edge_msk is None
+                or np.all(self.bitmask.flagged(self.edge_msk, self.bitmask.bad_flags))
+            ):
+                raise PypeItError(
+                    'All traces masked!  Problem with mask-design matching, which may be due to '
+                    'spurious edges.  Try changing the edge detection threshold (edge_thresh) and '
+                    'troubleshooting the problem using the pypeit_trace_edges script.'
+                )
 
         if self.par['auto_pca'] and not self.can_pca() and not self.is_empty and self.par['sync_predict'] == 'pca':
             # TODO: This causes the code to fault. Maybe there's a way

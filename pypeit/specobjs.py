@@ -6,8 +6,6 @@ Module for the SpecObjs and SpecObj classes
 """
 import os
 from pathlib import Path
-import re
-from typing import List
 
 from IPython import embed
 
@@ -45,14 +43,11 @@ class SpecObjs:
           specobjs.
 
     Args:
-        specobjs (`numpy.ndarray`_, list, optional):
+        specobjs (:class:`numpy.ndarray`, :class:`list`, optional):
             One or more :class:`~pypeit.specobj.SpecObj`  objects
-        header (`astropy.io.fits.Header`_, optional):
+        header (:class:`~astropy.io.fits.Header`, optional):
             Baseline header to use
 
-    Attributes:
-        summary (`astropy.table.Table`_):
-            Summary table (?)
     """
     version = '1.0.0'
 
@@ -1038,11 +1033,13 @@ class SpecObjs:
             # Write
             obj_tbl.write(outfile,format='ascii.fixed_width', overwrite=True)
 
-    def get_extraction_groups(self, model_full_slit=False) -> List[List[int]]:
+    def get_extraction_groups(self, model_full_slit=False) -> list[list[int]]:
         """
-        Returns:
-            List[List[int]]: A list of extraction groups, each of which is a list of integer
-                object indices that should be extracted together by core.skysub.local_skysub_extract
+        Returns
+        -------
+            A list of extraction groups, each of which is a list of integer
+            object indices that should be extracted together by
+            core.skysub.local_skysub_extract
         """
         nobj = len(self.specobjs)
 
