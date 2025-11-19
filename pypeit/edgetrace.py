@@ -2923,9 +2923,6 @@ class EdgeTraceSet(calibframe.CalibFrame):
                                     else self.pca.reference_row)
             msgs.info('Re-sorting edges based on where they cross row {0}'.format(reference_row))
             srt = np.argsort(cen[reference_row,:])
-            print('resorting:')
-            print(f'reference row: {reference_row}')
-            print(f'sorting order: {srt}')
 
         # Resort the arrays
         self.traceid = self.traceid[srt]

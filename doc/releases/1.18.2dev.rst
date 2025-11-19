@@ -23,6 +23,9 @@ Functionality/Performance Improvements and Additions
   the OneSpec datamodel.  Note that this is only possible for non-echelle data.
 - Added a new class to interface with the atmospheric extinction data.
 - Significant refactor of interface with flux-calibration standards.
+- Added 'matched' option for the ``sync_predict`` parameter in the edge-tracing
+  parameter set.  Allows the form of the inserted edge to be based on the
+  matched trace in the left-right pair.
 
 Instrument-specific Updates
 ---------------------------
