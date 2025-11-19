@@ -3629,11 +3629,12 @@ class EdgeTracePar(ParSet):
         defaults['sync_predict'] = 'pca'
         options['sync_predict'] = EdgeTracePar.valid_predict_modes()
         dtypes['sync_predict'] = str
-        descr['sync_predict'] = 'Mode to use when predicting the form of the trace to insert.  ' \
-                                'Use `pca` to use the PCA decomposition, `nearest` to ' \
-                                'reproduce the shape of the nearest trace, or `auto` to let PypeIt ' \
-                                'decide which mode to use between `pca` and `nearest`. In general, ' \
-                                'it will first try `pca`, and if that is not possible, it will use `nearest`.'
+        descr['sync_predict'] = (
+            'Mode to use when predicting the form of the trace to insert.  Set to `pca` to use '
+            'the PCA decomposition, `nearest` to use the shape of the trace nearest to the new '
+            'trace on the detector, `matched` to use the shape of the opposite edge of the slit,'
+            'or `auto` to use `pca`, if possible, and `nearest`, if not.'
+        )
 
         defaults['sync_center'] = 'median'
         options['sync_center'] = EdgeTracePar.valid_center_modes()
@@ -3996,7 +3997,7 @@ class EdgeTracePar(ParSet):
     @staticmethod
     def valid_predict_modes():
         """Return the valid trace prediction modes."""
-        return ['pca', 'nearest', 'auto']
+        return ['pca', 'nearest', 'matched', 'auto']
 
     @staticmethod
     def valid_center_modes():

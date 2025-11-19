@@ -2578,7 +2578,7 @@ class EdgeTraceSet(calibframe.CalibFrame):
             sync_inserts = self.fully_masked_traces(flag='SYNCINSERT')
             for slc in short_slits:
                 # Remove the edges just before and after this region of short
-                # slits, if they inserted by the left-right syncing.
+                # slits, if they are inserted by the left-right syncing.
                 rmtrace[max(0,slc.start-1)] = sync_inserts[max(0,slc.start-1)]
                 rmtrace[min(self.ntrace-1, slc.stop)] = sync_inserts[min(self.ntrace-1, slc.stop)]
                 # Flip the sign of the edges (i.e., turn lefts into rights and
@@ -2923,6 +2923,9 @@ class EdgeTraceSet(calibframe.CalibFrame):
                                     else self.pca.reference_row)
             msgs.info('Re-sorting edges based on where they cross row {0}'.format(reference_row))
             srt = np.argsort(cen[reference_row,:])
+            print('resorting:')
+            print(f'reference row: {reference_row}')
+            print(f'sorting order: {srt}')
 
         # Resort the arrays
         self.traceid = self.traceid[srt]
@@ -3970,8 +3973,8 @@ class EdgeTraceSet(calibframe.CalibFrame):
             return True
 
         # Edges are currently not synced, so check the input
-        if self.par['sync_predict'] not in ['pca', 'nearest', 'auto']:
-            msgs.error('Unknown trace mode: {0}'.format(self.par['sync_predict']))
+        if self.par['sync_predict'] not in EdgeTracePar.valid_predict_modes():
+            msgs.error(f"Unknown trace mode: {self.par['sync_predict']}")
         if self.par['sync_predict'] == 'pca' and self.pcatype is None:
             msgs.error('The PCA decomposition does not exist.  Either run self.build_pca or use '
                        'a different trace_mode.')
@@ -4002,7 +4005,9 @@ class EdgeTraceSet(calibframe.CalibFrame):
             # least two traces. Get rid of this test once satisfied
             # that this exception is never raised...
             if self.par['sync_predict'] == 'pca':
-                msgs.error('Coding error: this should not happen.')
+                msgs.error(
+                    'CODING ERROR: sync_predict cannot be pca if there are only 2 slit edges.'
+                )
             # Set the offset to add to the existing trace
             offset = self.par['det_buffer'] - np.amin(trace_cen[:,0]) if add_edge[0] \
                         else self.nspat - np.amax(trace_cen[:,0]) - self.par['det_buffer']
@@ -4031,28 +4036,44 @@ class EdgeTraceSet(calibframe.CalibFrame):
             trace_ref = self._get_reference_locations(trace_cen, add_edge)
 
             # Determine which sync_predict to use
-            if self.par['sync_predict'] == 'pca' \
-                    or (self.par['sync_predict'] == 'auto' and self.can_pca()):
-                _sync_predict = 'pca'
+            if self.par['sync_predict'] == 'auto':
+                _sync_predict = 'pca' if self.can_pca() else 'nearest'
+            elif self.par['sync_predict'] == 'pca':
+                if not self.can_pca():
+                    msgs.error('Form to use for traces added during syncing is set to PCA, but '
+                               'the PCA cannot be formed.  Set sync_predict to auto, nearest, or '
+                               'matched.')
+                _sync_predict = 'pca'         
             else:
-                _sync_predict = 'nearest'
+                _sync_predict = self.par['sync_predict']
 
             # Predict the traces either using the PCA or using the nearest slit edge
             if _sync_predict == 'pca':
                 trace_add = self.predict_traces(trace_ref[add_edge], side=side[add_edge])
-            elif _sync_predict == 'nearest':
-                # Index of trace nearest the ones to add
-                # TODO: Force it to use the nearest edge of the same side;
-                # i.e., when inserting a new right, force it to use the
-                # nearest right instead of the nearest left?
-                nearest = utils.nearest_unmasked(np.ma.MaskedArray(trace_ref, mask=add_edge))
+            elif _sync_predict in ['nearest', 'matched']:
+                # Index of trace to use as the form of the new trace.
+                if _sync_predict == 'nearest':
+                    # Find the index of the trace nearest the ones to add
+                    # TODO: Force it to use the nearest edge of the same side;
+                    # i.e., when inserting a new right, force it to use the
+                    # nearest right instead of the nearest left?
+                    form_indx = utils.nearest_unmasked(np.ma.MaskedArray(trace_ref, mask=add_edge))
+                else:
+                    # Find the index of the trace of the relevant left-right partner
+                    form_indx = np.arange(add_edge.size).reshape(-1,2)[:,::-1].ravel()
                 # Indices of the original traces
                 indx = np.zeros(len(add_edge), dtype=int)
                 indx[np.logical_not(add_edge)] = np.arange(self.ntrace)
+
+
                 # Offset the original traces by a constant based on the
                 # reference trace position to construct the new traces.
-                trace_add = trace_cen[:,indx[nearest[add_edge]]] + trace_ref[add_edge] \
-                                - trace_ref[nearest[add_edge]]
+                #   - indx[form_indx[add_edge]]: Selects the indices of the traces
+                #     to use as the form of the new trace.
+                #   - trace_ref[add_edge]: Theses are the reference locations of
+                #     the tract at "reference_row"
+                trace_add = trace_cen[:,indx[form_indx[add_edge]]] + trace_ref[add_edge] \
+                                - trace_ref[form_indx[add_edge]]
 
             # Insert the new traces and resort them spatially
             self.insert_traces(side[add_edge], trace_add, loc=add_indx[add_edge], mode='sync')
