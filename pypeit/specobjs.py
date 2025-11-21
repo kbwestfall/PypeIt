@@ -23,8 +23,6 @@ from pypeit import io
 from pypeit.spectrographs.util import load_spectrograph
 from pypeit.core import parse
 from pypeit.images.detector_container import DetectorContainer
-# NOTE: Mosaic cannot be found in this module explicitly, but it is used in
-# statements like: dmodcls = eval(hdu.header['DMODCLS'])
 from pypeit.images.mosaic import Mosaic
 from pypeit import utils
 
@@ -100,11 +98,18 @@ class SpecObjs:
                 if 'DETECTOR' not in hdu.name:
                     continue
                 if 'DMODCLS' not in hdu.header:
-                    raise PypeItError('HDUs with DETECTOR in the name must have DMODCLS in their header.')
-                try:
-                    dmodcls = eval(hdu.header['DMODCLS'])
-                except:
-                    raise PypeItError(f"Unknown detector type datamodel class: {hdu.header['DMODCLS']}")
+                    raise PypeItError(
+                        'HDUs with DETECTOR in the name must have DMODCLS in their header.'
+                    )
+                match hdu.header['DMODCLS']:
+                    case 'DetectorContainer':
+                        dmodcls = DetectorContainer
+                    case 'Mosaic':
+                        dmodcls = Mosaic
+                    case _:
+                        raise PypeItError(
+                            f"Unknown detector datamodel class: {hdu.header['DMODCLS']}"
+                        )
                 # NOTE: This requires that any "detector" datamodel class has a
                 # from_hdu method, and the name of the HDU must have a known format
                 # (e.g., 'DET01-DETECTOR').

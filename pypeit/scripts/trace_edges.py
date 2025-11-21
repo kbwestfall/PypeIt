@@ -58,15 +58,18 @@ class TraceEdges(scriptbase.ScriptBase):
 
         import time
         from pathlib import Path
-        import numpy as np
-        from pypeit import log
-        from pypeit import PypeItError
-        from pypeit.spectrographs.util import load_spectrograph
-        from pypeit import edgetrace
-        from pypeit.pypeit import PypeIt
-        from pypeit.images import buildimage
 
         from IPython import embed
+        import numpy as np
+
+        from pypeit import edgetrace
+        from pypeit import log
+        from pypeit import PypeItError
+        from pypeit.core import parse
+        from pypeit.images import buildimage
+        from pypeit.pypeit import PypeIt
+        from pypeit.spectrographs.util import load_spectrograph
+
 
         # Initialize the log
         cls.init_log(args)
@@ -159,7 +162,7 @@ class TraceEdges(scriptbase.ScriptBase):
         elif isinstance(detectors, (int, tuple)):
             detectors = [detectors]
         elif any([isinstance(d,str) for d in detectors]):
-            detectors = [eval(d) for d in detectors]
+            detectors = [parse.eval_detectors(d) for d in detectors]
 
         calib_dir = redux_path / args.calib_dir
         for det in detectors:
