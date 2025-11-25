@@ -2,460 +2,243 @@ from IPython import embed
 
 from astropy import table
 import numpy as np
-from scipy import interpolate
 
 from pypeit import dataPaths
 from pypeit import log
 from pypeit import PypeItError
 from pypeit.core import coadd
 from pypeit.core import standard
+from pypeit.core import spectrum
 
 
-class QSOPCAModel:
+class AdjustedSpectrumModel:
     """
+    A model consisting of an underlying spectrum multiplied by a polynomial.
 
+    This is the base model where the spectrum must be provided directly.  Other
+    subclasses below build the spectrum as part of the instantiation of the
+    model.
+
+    Parameters
+    ----------
+    spec : :class:`~pypeit.core.spectrum.Spectrum`
+        Underlying spectrum for the model.
+    wave : `numpy.ndarray`, optional
+        If provided, resample the provided spectrum to this wavelength grid.
+        Unobserved regions in the spectrum will be masked.  If None, the
+        wavelength grid used is the same as provided by the input spectrum.
+    func : str, optional
+        Type of multiplicative polynomial to use.
+    model : str, optional
+        Operator to use on the polynomial *before* multiplying it with the
+        spectrum.  Must be 'poly', 'exp', or 'square'.
+
+    Attributes
+    ----------
+    spec : :class:`~pypeit.core.spectrum.Spectrum`
+        Underlying spectrum for the model.
+    func : str
+        Type of multiplicative polynomial to use.
+    model : str
+        Operator to use on the polynomial *before* multiplying it with the
+        spectrum.  Must be 'poly', 'exp', or 'square'.
+    wave_min : float
+        Minimum wavelength of the spectrum.
+    wave_max : float
+        Maximum wavelength of the spectrum.
+    nspec_par : int
+        Number of parameters required to generate the underlying spectrum.
     """
-    def __init__(self, filename, wave=None, redshift=None, npca=None):
+    def __init__(self, spec, wave=None, func='legendre', model='exp'):
+        # TODO: Add parameters that can be passed to resample?
+        self.spec = spec if wave is None else spec.resample(wave)
+        self.func = func
+        self.model = model
+        self.wave_min = np.min(self.spec.wave)
+        self.wave_max = np.max(self.spec.wave)
+        self.nspec_par = 0
 
-        self.file = dataPaths.tel_model.get_file_path(filename)
-        tbl = table.Table.read(self.file)
+    @property
+    def wave(self):
+        """Return the wavelength of the spectrum."""
+        return self.spec.wave
 
-        self.wave = np.squeeze(tbl['WAVE_PCA'][0])
-        if redshift is None:
-            self.z_fid = 0.0
-        else:
-            self.z_fid = redshift
-            self.wave *= (1 + self.z_fid)
+    def spectrum_flux(self, theta):
+        """
+        Return the model spectrum before any modifications by the polynomial.
 
-        self.components = np.squeeze(tbl['PCA_COMP'])
-        self.coeffs = np.squeeze(tbl['PCA_COEFFS'])
-        self.npca = npca
-        if self.npca is None:
-            self.npca = self.components.shape[0]
-        if self.npca > self.components.shape[0]:
-            log.warning(
-                f'Number of requested PCA components ({self.npca}) for QSO model is larger than '
-                f'the number available ({self.components.shape[0]}).  Using all PCA components.')
-            self.npca = self.components.shape[0]
+        Generally speaking, this is the function that should be overridden by
+        subclasses.
 
-        if wave is not None:
-            interp = interpolate.interp1d(
-                self.wave, self.components, bounds_error=False, fill_value=0.0, axis=1
-            )
-            self.components = interp(wave)
-            self.wave = wave
+        .. note::
 
-        self.dloglam = np.median(np.diff(np.log10(self.wave)))
+            This function should *not* affect the overall normalization of the
+            spectrum.  That *must* be handled by the polynomial.
+
+        Parameters
+        ----------
+        theta : `numpy.ndarray`
+            Parameters required to generate the model spectrum.  This *should
+            not* include any of the polynomial coefficients.  In this base
+            class, the spectrum has no parameters and ``theta`` is ignored.
+
+        Returns
+        -------
+        flux : `numpy.ndarray`
+            Flux of the model spectrum.
+        gpm : `numpy.ndarray`
+            Good pixel mask of the model spectrum.
+        """
+        return self.spec.flux.copy(), self.spec.gpm.copy()
 
     def sample(self, theta):
+        """
+        Sample the full model spectrum.
+
+        Parameters
+        ----------
+        theta : `numpy.ndarray`
+            The full parameter vector required to generate the model spectrum.
+            The first :attr:`nspec_par` parameters are used to generate the
+            underlying spectrum, and the remainder are treated as coefficients
+            of the polynomial.  This can be None as long as the
+            ``spectrum_flux`` method of the class can handle it.
+
+        Returns
+        -------
+        flux : `numpy.ndarray`
+            Flux of the model spectrum.
+        gpm : `numpy.ndarray`
+            Good pixel mask of the model spectrum.
+        """
+        if theta is None:
+            return self.spectrum_flux(None)
+        model_flux, model_gpm = self.spectrum_flux(theta[:self.nspec_par])
+        if theta.size > self.nspec_par:
+            model_flux *= coadd.poly_model_eval(
+                theta[self.nspec_par:], self.func, self.model, self.wave, self.wave_min,
+                self.wave_max
+            )
+        return model_flux, (model_flux > 0.0) & model_gpm
+
+
+class QSOPCAModel(AdjustedSpectrumModel):
+    """
+    A QSO spectrum model based on a PCA decomposition.
+
+    Parameters
+    ----------
+    filename : str
+        A local file or a QSO PCA model file provided by PypeIt.
+    redshift : float, optional
+        The fiducial redshift of the QSO model.  The model parameters include
+        the redshift, as well.  This should be a redshift used to approximately
+        match the observed wavelength range of the observed spectrum to be
+        modeled.
+    npca : int, optional
+        The number of PCA components to use in constructing the model.  A
+        warning will be issued if this is larger than the number of components
+        available in the data provided by ``filename``.
+    kwargs : dict, optional
+        Passed directly to the instantiation of the base class.  I.e., these are
+        the parameters used to define the polynomial.
+    """
+    def __init__(self, filename, redshift=None, npca=None, **kwargs):
+
+        file = dataPaths.tel_model.get_file_path(filename)
+        tbl = table.Table.read(file)
+
+        wave = np.squeeze(tbl['WAVE_PCA'][0])
+        if redshift is not None:
+            wave *= (1 + redshift)
+
+        components = np.squeeze(tbl['PCA_COMP'])
+        _npca = npca
+        if _npca is None:
+            _npca = components.shape[0]
+        if _npca > components.shape[0]:
+            log.warning(
+                f'Number of requested PCA components ({_npca}) for QSO model is larger than '
+                f'the number available ({components.shape[0]}).  Using all PCA components.'
+            )
+            _npca = components.shape[0]
+
+        # Instantiate the base class
+        # TODO: Pass the file name to the metadata of the spectrum?
+        super().__init__(spectrum.Spectrum(wave, components[:_npca,:].T), **kwargs)
+
+        self.z_fid = 0.0 if redshift is None else redshift
+        # TODO: Do I need to keep npca?
+        self.npca = _npca
+        self.nspec_par = self.npca # redshift + npca-1
+
+        # Calculate quantities that only need to be calculated once to construct
+        # the spectrum    
+        # NOTE: This gpm will always be the same, independent of the PCA
+        # coefficients
+        self.spec_gpm = np.any(self.spec.gpm, axis=1)
+        self.dloglam = np.median(np.diff(np.log10(self.spec.wave)))
+
+    def spectrum_flux(self, theta):
         r"""
-        Sample the QSO model.
+        Sample the QSO model spectrum.
 
         Parameters
         ----------
         theta : `numpy.ndarray`_
-            Parameter vector.  The parameters are (0) redshift, (1)
-            normalization, and the remaining :math:`N_{\rm PCA}` parameters are
-            the PCA coefficients.
+            Parameter vector.  The parameters are the redshift and the
+            :math:`N_{\rm PCA}-1` coefficients; the coefficient for the first
+            PCA component is always set to 1.
 
         Returns
+        -------
         `numpy.ndarray`_
             The model QSO spectrum
         """
+        if theta is None:
+            raise PypeItError(f'Parameter vector cannot be None for {self.__class__.__name__}')
         # TODO:
         #   - Allow for subpixel shifts
-        #   - Mask regions that roll to the other end
+        #   - Mask regions unobserved spectral regions
         #   - Construct the linear combination of components first, then shift.
+        # NOTE: this raises a ValueError when the number of parameters is incorrect
+        _flux = np.dot(self.spec.flux, np.append(1.0,theta[1:]))
         dshift = int(np.round(np.log10((1.0 + theta[0])/(1.0 + self.z_fid))/self.dloglam))
-        _comp = np.roll(self.components[:self.npca,:], dshift, axis=1)
-        return theta[1] * np.exp(np.dot(np.append(1.0,theta[2:]), _comp))
+        return np.exp(np.roll(_flux, dshift)), np.roll(self.spec_gpm, dshift)
 
 
-class StarModel:
+class StellarSpectrumModel(AdjustedSpectrumModel):
     """
+    A stellar spectrum model.
+
+    This is a simple wrapper that builds the standard star spectrum and
+    instantiates the :class:`AdjustedSpectrumModel` base class.
+
+    For the parameters, see :func:`pypeit.core.standard.get_standard_spectrum`.
+    The remaining ``kwargs`` are passed directly to the instantiation of the
+    base class.
     """
-    def __init__(self, wave, spectral_type=None, V_mag=None, ra=None, dec=None, tol=20.,
-                 archives='default', func='legendre', model='exp'):
-        self.spec = standard.get_standard_spectrum(
+    def __init__(self, spectral_type=None, V_mag=None, ra=None, dec=None, tol=20.,
+                 archives='default', **kwargs):
+        spec = standard.get_standard_spectrum(
             spectral_type=spectral_type, V_mag=V_mag, ra=ra, dec=dec, tol=tol, archives=archives
-        ).resample(wave)
-        self.wave_min = np.min(self.spec.wave)
-        self.wave_max = np.max(self.spec.wave)
-        self.func = func
-        self.model = model
-
-    def sample(self, theta):
-        scale = coadd.poly_model_eval(
-            theta, self.func, self.model, self.spec.wave, self.wave_min, self.wave_max
         )
-        model_flux = self.spec.flux * scale
-        return model_flux, (model_flux > 0.0) & self.spec.gpm
+        super().__init__(spec, **kwargs)
 
 
-class PolyModel:
+# TODO: It's a bit wasteful to generate a unity spectrum to then multiply it by
+# a polynomial.  Consider a better solution.
+class PolynomialModel(AdjustedSpectrumModel):
     """
+    A model consisting of only a polynomial.
+
+    It uses :class:`~pypeit.core.standard.PseudoStandard` as the underlying
+    spectrum.  See :class:`AdjustedSpectrumModel` for the parameters; the
+    keyword arguments are passed directly to the base class.
     """
-    def __init__(self, wave, func='legendre', model='exp'):
-        self.wave = wave
-        self.wave_min = np.min(self.wave)
-        self.wave_max = np.max(self.wave)
-        self.func = func
-        self.model = model
-
-    def sample(self, theta):
-        model_flux = coadd.poly_model_eval(
-            theta, self.func, self.model, self.wave, self.wave_min, self.wave_max
-        )
-        return model_flux, model_flux > 0.0
-
-
-##############
-# QSO Model #
-##############
-def init_qso_model(obj_params, iord, wave, flux, ivar, mask, tellmodel):
-    """
-    Routine used to initialize the quasar spectrum telluric fits
-
-    Parameters
-    ----------
-    obj_params : dict
-
-        Dictionary containing parameters necessary for initializing the quasar
-        model
-
-    iord : int
-
-        Order in question. This is not used for initializing the qso model, but
-        is kept here for compatibility with the standard function argument list
-
-    wave : array shape (nspec,)
-        Wavelength array for the object in question
-
-    flux : array shape (nspec,)
-        Flux array for the object in question
-
-    ivar : array shape (nspec,)
-        Inverse variance array for the oejct in question
-
-    mask : array shape (nspec,)
-        Good pixel mask for the object in question
-
-    tellmodel : array shape (nspec,)
-
-        This is a telluric model computed on the wave wavelength grid.
-        Initialization usually requires some initial best guess for the telluric
-        absorption, which is computed from the mean of the telluric model grid
-        using the resolution of the spectrograph.
-
-    Returns
-    -------
-    obj_dict : dict
-
-        Dictionary containing the meta-information and variables that are used
-        for the object model evaluations.  For example for the quasar model
-        which based on a PCA decomposition, this dictionary holds the number of
-        PCA basis vectors and those basis vectors.
-
-    bounds_obj : tuple
-
-        Tuple of bounds for each parameter that will be fit for the object model
-
-
-
-    """
-
-    qso_pca_dict = qso_init_pca(obj_params['pca_file'], wave, obj_params['z_qso'], obj_params['npca'])
-    qso_pca_mean = np.exp(qso_pca_dict['components'][0, :])
-    tell_mask = tellmodel > obj_params['tell_norm_thresh']
-    # Create a reference model and bogus noise
-    flux_ref = qso_pca_mean * tellmodel
-    ivar_ref = utils.inverse((qso_pca_mean/100.0) ** 2)
-    flam_norm_inv = coadd.robust_median_ratio(flux, ivar, flux_ref, ivar_ref, mask=mask, mask_ref=tell_mask)
-    flam_norm = 1.0/flam_norm_inv
-
-    # Set the bounds for the PCA and truncate to the right dimension
-    coeffs = qso_pca_dict['coeffs'][:,1:obj_params['npca']]
-    # Compute the min and max arrays of the coefficients which are not the norm, i.e. grab the coeffs that aren't the first one
-    coeff_min = np.amin(coeffs, axis=0)  # only
-    coeff_max = np.amax(coeffs, axis=0)
-    # QSO redshift: can vary within delta_zqso
-    bounds_z = [(obj_params['z_qso'] - obj_params['delta_zqso'], obj_params['z_qso'] + obj_params['delta_zqso'])]
-    bounds_flam = [(flam_norm*obj_params['lbound_norm'], flam_norm*obj_params['ubound_norm'])] # Norm: bounds determined from estimate above
-    bounds_pca = [(i, j) for i, j in zip(coeff_min, coeff_max)]        # Coefficients:  determined from PCA model
-    bounds_obj = bounds_z + bounds_flam + bounds_pca
-    # Create the obj_dict
-    obj_dict = dict(npca=obj_params['npca'], pca_dict=qso_pca_dict)
-
-    return obj_dict, bounds_obj
-
-# QSO evaluation function. Model for QSO is a PCA spectrum
-def eval_qso_model(theta, obj_dict):
-    """
-    Routine to evaluate a sensitivity function model
-    for a QSO spectrum.
-
-    Parameters
-    ----------
-    theta : `numpy.ndarray`_
-        Array containing the PCA coefficients
-        shape=(ntheta,)
-
-    obj_dict : dict
-       Dictionary containing additional arguments needed to evaluate the PCA model
-
-    Returns
-    -------
-    qso_pca_model : array with same shape as the PCA vectors (stored in the obj_dict['pca_dict'])
-       PCA vectors were already interpolated onto the telluric model grid by init_qso_model
-
-    gpm : `numpy.ndarray`_ : array with same shape as the qso_pca_model
-       Good pixel mask indicating where the model is valid
-
-    """
-
-    qso_pca_model = qso_pca_eval(theta, obj_dict['pca_dict'])
-    # TODO Is the prior evaluation slowing things down??
-    # TODO Disablingthe prior for now as I think it slows things down for no big gain
-    #ln_pca_pri = qso_pca.pca_lnprior(theta_PCA, arg_dict['pca_dict'])
-    #ln_pca_pri = 0.0
-    #flux_model, tell_model, spec_model, modelmask
-    return qso_pca_model, (qso_pca_model > 0.0)
-
-
-##############
-# Star Model #
-##############
-def init_star_model(obj_params, iord, wave, flux, ivar, mask, tellmodel):
-    """
-
-    Routine used to initialize the star spectrum model for telluric fits. The
-    star model is the true spectrum of the standard star times a polynomial to
-    accomodate situations where the star-model is not perfect.
-
-    Parameters
-    ----------
-    obj_params : dict
-        Dictionary containing parameters necessary for initializing the quasar model
-
-    iord : int
-        Order in question. This is used here because each echelle order can  have a different polynomial order
-
-    wave : array shape (nspec,)
-        Wavelength array for the object in question
-
-    flux : array shape (nspec,)
-        Flux array for the object in question
-
-    ivar : array shape (nspec,)
-        Inverse variance array for the oejct in question
-
-    mask : array shape (nspec,)
-        Good pixel mask for the object in question
-
-    tellmodel : array shape (nspec,)
-        This is a telluric model computed on the wave wavelength grid. Initialization usually requires some initial
-        best guess for the telluric absorption, which is computed from the midpoint of the telluric model grid parameter
-        space using the resolution of the spectrograph and the airmass of the observations.
-
-    Returns
-    -------
-    obj_dict : dict
-        Dictionary containing the meta-information and variables that are used for the object model evaluations.
-
-    bounds_obj : tuple
-        Tuple of bounds for each parameter that will be fit for the object model, which are here the polynomial
-        coefficients.
-
-
-    """
-
-    # Model parameter guess for starting the optimizations
-    flam_true = scipy.interpolate.interp1d(obj_params['std_dict']['wave'].value,
-                                           obj_params['std_dict']['flux'].value, kind='linear',
-                                           bounds_error=False, fill_value=np.nan)(wave)
-    flam_model = flam_true*tellmodel
-    flam_model_ivar = (100.0*utils.inverse(flam_model))**2 # This is just a bogus noise to give  S/N of 100
-    flam_model_mask = np.isfinite(flam_model)
-    # As solve_poly_ratio is designed to multiply a scale factor into the flux, and not the flux_ref, we
-    # set the flux_ref to be the data here, i.e. flux
-    scale, fit_tuple, flux_scale, ivar_scale, outmask = coadd.solve_poly_ratio(
-        wave, flam_model, flam_model_ivar, flux, ivar, obj_params['polyorder_vec'][iord],
-        mask=flam_model_mask, mask_ref=mask, func=obj_params['func'], model=obj_params['model'])
-
-    coeff, wave_min, wave_max = fit_tuple
-    if(wave_min != wave.min()) or (wave_max != wave.max()):
-        raise PypeItError('Problem with the wave_min or wave_max')
-    # Polynomial coefficient bounds
-    bounds_obj = [(np.fmin(np.abs(this_coeff)*obj_params['delta_coeff_bounds'][0], obj_params['minmax_coeff_bounds'][0]),
-                   np.fmax(np.abs(this_coeff)*obj_params['delta_coeff_bounds'][1], obj_params['minmax_coeff_bounds'][1]))
-                   for this_coeff in coeff]
-    # Create the obj_dict
-    obj_dict = dict(wave=wave, wave_min=wave_min, wave_max=wave_max, flam_true=flam_true, func=obj_params['func'],
-                    model=obj_params['model'], polyorder=obj_params['polyorder_vec'][iord])
-
-    if obj_params['debug']:
-        plt.plot(wave, flux, drawstyle='steps-mid', alpha=0.7, zorder=5, label='star spectrum')
-        plt.plot(wave, flux_scale, drawstyle='steps-mid', alpha=0.7, zorder=4, label='poly_model*star_model*telluric')
-        plt.plot(wave, flam_model, label='star_model*telluric')
-        plt.plot(wave, flam_true, label='star_model')
-        plt.ylim(-0.1 * flam_model.min(), 1.3 * flam_model.max())
-        plt.legend()
-        plt.title('Sensitivity Function Guess for iord={:d}'.format(iord+1))  # +1 to account 0-index starting
-        plt.show()
-
-
-    return obj_dict, bounds_obj
-
-# Star evaluation function.
-def eval_star_model(theta, obj_dict):
-    """
-    Routine to evaluate a star spectrum model as a true model spectrum times a polynomial.
-
-    Parameters
-    ----------
-    theta : `numpy.ndarray`_
-        Array containing the polynomial coefficients.
-        shape (ntheta,)
-
-    obj_dict : dict
-       Dictionary containing additional arguments needed to evaluate the star model.
-
-    Returns
-    -------
-    star_model : `numpy.ndarray`_
-        PCA vectors were already interpolated onto the telluric model grid by init_qso_model.
-        array with same shape obj_dict['wave']
-
-    gpm : `numpy.ndarray`_
-        Good pixel mask indicating where the model is valid.
-        array with same shape as the star_model
-
-    """
-
-    wave_star = obj_dict['wave']
-    wave_min = obj_dict['wave_min']
-    wave_max = obj_dict['wave_max']
-    flam_true = obj_dict['flam_true']
-    func = obj_dict['func']
-    model = obj_dict['model']
-    ymult = coadd.poly_model_eval(theta, func, model, wave_star, wave_min, wave_max)
-    star_model = ymult*flam_true
-
-    return star_model, (star_model > 0.0)
-
-
-####################
-# Polynomial Model #
-####################
-def init_poly_model(obj_params, iord, wave, flux, ivar, mask, tellmodel):
-    """
-    Routine used to initialize a polynomial object model for telluric fits.
-
-    Parameters
-    ----------
-    obj_params : dict
-        Dictionary containing parameters necessary for initializing the quasar model
-
-    iord : int
-        Order in question. This is used here because each echelle order can have a different polynomial order
-
-    wave : array shape (nspec,)
-        Wavelength array for the object in question
-
-    flux : array shape (nspec,)
-        Flux array for the object in question
-
-    ivar : array shape (nspec,)
-        Inverse variance array for the oejct in question
-
-    mask : array shape (nspec,)
-        Good pixel mask for the object in question
-
-    tellmodel : array shape (nspec,)
-        This is a telluric model computed on the wave wavelength grid. Initialization usually requires some initial
-        best guess for the telluric absorption, which is computed from the midpoint of the telluric model grid parameter
-        space using the resolution of the spectrograph and the airmass of the observations.
-
-    Returns
-    -------
-    obj_dict : dict
-        Dictionary containing the meta-information and variables that are used for the object model evaluations.
-
-    bounds_obj : tuple
-        Tuple of bounds for each parameter that will be fit for the object model, which are here the polynomial
-        coefficients.
-
-
-    """
-
-    tellmodel_ivar = (100.0*utils.inverse(tellmodel))**2 # This is just a bogus noise to give  S/N of 100
-    tellmodel_mask = np.isfinite(tellmodel) & mask
-
-    if obj_params['mask_lyman_a']:
-        mask = mask & (wave>1216.15*(1+obj_params['z_obj']))
-
-    # As solve_poly_ratio is designed to multiply a scale factor into the flux, and not the flux_ref, we
-    # set the flux_ref to be the data here, i.e. flux
-    scale, fit_tuple, flux_scale, ivar_scale, outmask = coadd.solve_poly_ratio(
-        wave, tellmodel, tellmodel_ivar, flux, ivar, obj_params['polyorder_vec'][iord],
-        mask=tellmodel_mask, mask_ref=mask, func=obj_params['func'], model=obj_params['model'], scale_max=1e5)
-    # TODO JFH Sticky = False seems to recover better from bad initial fits. Maybe we should change this since poly ratio
-    # uses a different optimizer.
-
-    coeff, wave_min, wave_max = fit_tuple
-    if(wave_min != wave.min()) or (wave_max != wave.max()):
-        raise PypeItError('Problem with the wave_min or wave_max')
-    # Polynomial model
-    polymodel = coadd.poly_model_eval(coeff, obj_params['func'], obj_params['model'], wave, wave_min, wave_max)
-
-    # Polynomial coefficient bounds
-    bounds_obj = [(np.fmin(np.abs(this_coeff)*obj_params['delta_coeff_bounds'][0], obj_params['minmax_coeff_bounds'][0]),
-                   np.fmax(np.abs(this_coeff)*obj_params['delta_coeff_bounds'][1], obj_params['minmax_coeff_bounds'][1]))
-                   for this_coeff in coeff]
-    # Create the obj_dict
-    obj_dict = dict(wave=wave, wave_min=wave_min, wave_max=wave_max, polymodel=polymodel, func=obj_params['func'],
-                    model=obj_params['model'], polyorder=obj_params['polyorder_vec'][iord])
-
-    if obj_params['debug']:
-        plt.plot(wave, flux, drawstyle='steps-mid', alpha=0.7, zorder=5, label='observed spectrum')
-        plt.plot(wave, flux_scale, drawstyle='steps-mid', alpha=0.7, zorder=4, label='poly_model*telluric')
-        plt.plot(wave, tellmodel, label='telluric')
-        plt.plot(wave, polymodel, label='poly_model')
-        plt.xlim(wave[mask].min(), wave[mask].max())
-        plt.ylim(-0.3 * flux[mask].min(), 1.3 * flux[mask].max())
-        plt.legend()
-        plt.title('Sensitivity Function Guess for iord={:d}'.format(iord + 1))   # +1 to account 0-index starting
-        plt.show()
-
-    return obj_dict, bounds_obj
-
-# Polynomial evaluation function.
-def eval_poly_model(theta, obj_dict):
-    """
-    Routine to evaluate a star spectrum model as a true 
-    model spectrum times a polynomial.
-
-    Parameters
-    ----------
-    theta : `numpy.ndarray`_
-        Array containing the polynomial coefficients.
-        shape=(ntheta,)
-
-    obj_dict : dict
-       Dictionary containing additional arguments needed to evaluate the star model.
-
-    Returns
-    -------
-    star_model : `numpy.ndarray`_
-        array with same shape obj_dict['polymodel']
-
-    gpm : `numpy.ndarray`_
-        Good pixel mask indicating where the model is valid.
-        array with same shape as the star_model.
-
-    """
-    polymodel = coadd.poly_model_eval(theta, obj_dict['func'], obj_dict['model'],
-                                      obj_dict['wave'], obj_dict['wave_min'], obj_dict['wave_max'])
-
-    return polymodel, (polymodel > 0.0)
-
+    def __init__(self, **kwargs):
+        # If wave is provided, use it to generate the PseudoStandard instead of
+        # its default wavelengths.
+        wave = kwargs.pop('wave') if 'wave' in kwargs else None
+        spec = standard.PseudoStandard(wave=wave)
+        super().__init__(spec, **kwargs)

@@ -7,6 +7,7 @@ import pytest
 
 from pypeit import telluric
 from pypeit import PypeItError
+from pypeit.core import standard
 
 
 def test_init():
@@ -222,15 +223,121 @@ def test_sample():
 
 def test_qso_pca_model():
 
-    obj = telluric.object.QSOPCAModel('qso_pca_1200_3100.fits')
+    pcafile = 'qso_pca_1200_3100.fits'
+
+    # Default
+    obj = telluric.object.QSOPCAModel(pcafile)
+    z0_redshift_wave_range = obj.wave_min, obj.wave_max
     assert obj.npca == 10, 'Wrong number of PCA components'
     assert obj.z_fid == 0., 'Wrong redshift'
+    # Set the redshift
+    _obj = telluric.object.QSOPCAModel(pcafile, redshift=7.0)
+    assert _obj.z_fid == 7.0, 'Wrong redshift'
+    assert np.isclose(_obj.wave[0] / obj.wave[0], 8.), 'Wavelength array not redshifted correctly'
+    # Give an observed wavelength array
+    obswave = np.linspace(20000, 24000, 512)
+    obj = telluric.object.QSOPCAModel(pcafile, wave=obswave, redshift=7.0)
+    assert obj.z_fid == 7.0, 'Wrong redshift'
+    assert obj.wave.size == obswave.size, 'Wrong wavelength array size'
+    # Limit the number of PCA components
+    obj = telluric.object.QSOPCAModel(pcafile, wave=obswave, redshift=7.0, npca=7)
+    assert obj.npca == 7, 'Wrong number of PCA components'
+    assert obj.z_fid == 7.0, 'Wrong redshift'
+    assert obj.wave.size == obswave.size, 'Wrong wavelength array size'
 
-    theta = rng.uniform(size=tellmod.npar)
+    # The parameter vector cannot be None for QSOPCAModel
+    with pytest.raises(PypeItError):
+        flux, gpm = obj.sample(None)
 
-    embed()
-    exit()
+    rng = np.random.default_rng(99)
 
-test_qso_pca_model()
+    # This should fail because the number of parameters is wrong.  There must be
+    # at least npca parameters.
+    # NOTE: This test will not work if there are too many parameters because all
+    # parameters beyond the first npca are considered coefficients of the
+    # polynomial.
+    theta = np.append([7.0], rng.uniform(size=4))
+    with pytest.raises(ValueError):
+        flux, gpm = obj.sample(theta)
+
+    # This should be successful
+    theta = np.append([7.0], rng.uniform(size=obj.npca-1))
+    flux, gpm = obj.sample(theta)
+    # NOTE: This may fault if the number of random draws changes earlier in the
+    # test; i.e., the coefficients will have changed.
+    assert np.isclose(np.median(flux), 0.32486), 'QSO model changed'
+
+    # Add a normalization
+    theta = np.append(theta, [2.0])
+    flux, gpm = obj.sample(theta)
+    # NOTE: This divides by np.exp(2.0) because the default "model" parameter is "exp"
+    assert np.isclose(np.median(flux)/np.exp(2.0), 0.32486), 'Normalization not working correctly'
+
+    # Add a 4th order polynomial
+    theta = np.append(theta, rng.uniform(size=3))
+    flux, gpm = obj.sample(theta)
+    assert np.isclose(np.median(flux), 2.19489), 'Normalization not working correctly'
+
+    # Check that regions outside the wavelength range of PCA components are masked
+    obswave = np.linspace(20000, 26000, 512)
+    _obj = telluric.object.QSOPCAModel(pcafile, wave=obswave, redshift=7.0)
+    # NOTE: This test works, but there may be a +/- 1 pixel difference for other
+    # wavelength ranges...  z0_redshift_wave_range is defined at the beginning
+    # of the test.
+    assert np.array_equal(obswave < z0_redshift_wave_range[1]*8., _obj.spec_gpm), \
+        'Pixels beyond wavelength range of PCA components should be masked'
 
 
+def test_star_model():
+
+    # Default
+    ra, dec = '12:57:02.34', '+22:01:52.7'
+    obj = telluric.object.StellarSpectrumModel(ra=ra, dec=dec)
+
+    # This is exactly what is done internally for StellarSpectrumModel
+    spec = standard.get_standard_spectrum(ra=ra, dec=dec)
+
+    # Just return the spectrum
+    flux, gpm = obj.sample(None)
+    assert np.array_equal(spec.flux, flux), 'Stellar spectrum should be identical to standard'
+
+    # Change the wavelength range
+    obswave = np.linspace(3100, 10400, 2048)
+    obj = telluric.object.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave)
+    flux, gpm = obj.sample(None)
+    assert flux.size == obswave.size, 'Spectrum was not resampled'
+
+    # Renormalize
+    _flux, gpm = obj.sample(np.array([2.0]))
+    assert np.allclose(_flux / flux, np.exp(2.)), 'Should be renormalized'
+
+    # Change the normalization model
+    obj = telluric.object.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave, model='poly')
+    _flux, gpm = obj.sample(np.array([2.0]))
+    assert np.allclose(_flux / flux, 2.), 'Should be renormalized'
+
+    # Normalize by a polynomial
+    rng = np.random.default_rng(99)
+    theta = np.append([1.1], rng.uniform(size=3))
+    flux, gpm = obj.sample(theta)
+    assert np.isclose(np.median(flux), 606.096), 'Median flux changed'
+
+
+def test_poly_model():
+
+    # Default wavelengths
+    obj = telluric.object.PolynomialModel(model='poly')
+    assert obj.wave.size == 48000, 'Default wavelength array size changed'
+
+    # Bespoke wavelengths
+    obswave = np.linspace(3100, 10400, 2048)
+    obj = telluric.object.PolynomialModel(wave=obswave, model='poly')
+    flux, gpm = obj.sample(None)
+    assert flux.size == obswave.size, 'Spectrum shape incorrect'
+    assert np.array_equal(flux, np.ones(flux.size, dtype=float)), 'Default flux should be unity.'
+
+    # Normalize by a polynomial
+    rng = np.random.default_rng(99)
+    theta = np.append([1.1], rng.uniform(size=3))
+    flux, gpm = obj.sample(theta)
+    assert np.isclose(np.median(flux), 0.95063), 'Median flux changed'
