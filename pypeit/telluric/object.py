@@ -63,6 +63,26 @@ class AdjustedSpectrumModel:
         """Return the wavelength of the spectrum."""
         return self.spec.wave
 
+    def spectrum_par_guess(self):
+        """
+        Provide guess parameters for the underlying spectrum.
+
+        Returns
+        -------
+        `numpy.ndarray` or None
+            Parameters for the underlying spectrum.  If None, the underlying
+            spectrum has no parameters.
+        """
+        return None
+    
+    def par_guess(self, obs_spec, order=None):
+        """
+        Guess the set of parameters to fit the observed spectrum.
+
+
+        """
+
+    
     def spectrum_flux(self, theta):
         """
         Return the model spectrum before any modifications by the polynomial.
@@ -179,6 +199,18 @@ class QSOPCAModel(AdjustedSpectrumModel):
         self.spec_gpm = np.any(self.spec.gpm, axis=1)
         self.dloglam = np.median(np.diff(np.log10(self.spec.wave)))
 
+    def spectrum_par_guess(self):
+        """
+        Provide guess parameters for the underlying spectrum.
+
+        Returns
+        -------
+        `numpy.ndarray`
+            Parameters for the underlying spectrum.  If None, the underlying
+            spectrum has no parameters.
+        """
+        return np.append([self.z_fid], np.zeros(self.npca-1, dtype=float))
+    
     def spectrum_flux(self, theta):
         r"""
         Sample the QSO model spectrum.
