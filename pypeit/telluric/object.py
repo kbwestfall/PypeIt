@@ -6,6 +6,7 @@ import numpy as np
 from pypeit import dataPaths
 from pypeit import log
 from pypeit import PypeItError
+from pypeit import utils
 from pypeit.core import coadd
 from pypeit.core import standard
 from pypeit.core import spectrum
@@ -74,14 +75,69 @@ class AdjustedSpectrumModel:
             spectrum has no parameters.
         """
         return None
-    
+
+    # TODO: Do I need to allow order to be a vector (listing the orders to
+    # include)?    
     def par_guess(self, obs_spec, order=None):
         """
         Guess the set of parameters to fit the observed spectrum.
 
+        The guess parameters include those for the spectrum model and the
+        polynomial, where the order of the polynomial is provided as a
+        parameter.  If ``order is None``, no polynomial is included in the
+        model.  If ``order == 0``, the model includes a constant normalization
+        of the spectrum, and the guess value is determined by
+        :func:`~pypeit.core.coadd.robust_median_ratio`, where the reference
+        spectrum is based on the guess spectrum model.  If ``order > 0``, the
+        guess parameters are instead determined by
+        :func:`~pypeit.core.coadd.solve_poly_ratio`.
 
+        Parameters
+        ----------
+        obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
+            Observed spectrum to fit
+        order : int, optional
+            Order of the polynomial to include.  Can be None; see description
+            above.
+
+        Returns
+        -------
+        `numpy.ndarray` or None
+            Guess parameters for the model.  The first :attr:`nspec_par` entries
+            are the parameters for the underlying spectrum, and the remaining
+            ``order+1`` parameters are for the polynomial.
         """
+        # The wavelengths must match
+        if not np.allclose(self.spec.wave, obs_spec.wave):
+            raise PypeItError('Model spectrum must have the same wavelength vector as the data.')
 
+        # Get the guess parameters for the underlying spectrum 
+        gsp = self.spectrum_par_guess()
+
+        # No polynomial is included so we're done
+        if order is None:
+            return gsp
+
+        # Get the model spectrum and adopt a S/N = 100 for determining the
+        # parameters
+        spec_flux, spec_gpm = self.spectrum_flux(gsp)
+        spec_ivar = utils.inverse((spec_flux/100.0)**2)
+
+        if order == 0:
+            # Just guess a normalization factor
+            norm = 1.0/coadd.robust_median_ratio(
+                obs_spec.flux, obs_spec.ivar, spec_flux, spec_ivar, mask=obs_spec.gpm,
+                mask_ref=spec_gpm
+            )
+            return np.array([norm]) if gsp is None else np.append(gsp, [norm])
+
+        # Guess the polynomial coefficients
+        _, fit_tuple, _, _, _ = coadd.solve_poly_ratio(
+            obs_spec.wave, obs_spec.flux, obs_spec.ivar, spec_flux, spec_ivar, order,
+            mask=obs_spec.gpm, mask_ref=spec_gpm, func=self.func, model=self.model,
+            scale_max=1e5
+        )
+        return np.asarray(fit_tuple[0]) if gsp is None else np.append(gsp, fit_tuple[0])
     
     def spectrum_flux(self, theta):
         """
