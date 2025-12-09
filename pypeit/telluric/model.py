@@ -81,7 +81,7 @@ class TelluricModel:
         resolution_guess = wvutils.get_sampling(obs_spec.wave)[2]
         return np.append(self.base_par_guess(), [resolution_guess, 0.0, 1.0])
 
-    def base_par_bound(self):
+    def base_par_bounds(self):
         """
         Generate the parameter bounds for the base-level spectral model.
 
@@ -91,10 +91,12 @@ class TelluricModel:
             List of tuples with the lower and upper bounds of the parameters for
             the base-level model.
         """
-        raise PypeItError(f'{self.__class__.__name__} has not defined a base_par_bound function!')
+        raise PypeItError(f'{self.__class__.__name__} has not defined a base_par_bounds function!')
     
-    def par_bound(self, obs_spec, resolution_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0,5.0),
-                  pix_stretch_bounds=(0.98,1.02)):
+    def par_bounds(
+        self, obs_spec, resolution_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0,5.0),
+        pix_stretch_bounds=(0.98,1.02)
+    ):
         """
         Set the boundaries for the model parameters.
 
@@ -104,16 +106,14 @@ class TelluricModel:
             A list of tuples that provide the lower and upper bounds for each
             model parameter.
         """
-        bounds = self.base_par_bound()
-        # TODO: 
-        #   - Need to check that obs_spec.wave is the right thing to pass here...
-        #   - Save this to self?
+        # TODO: Need to check that obs_spec.wave is the right thing to pass
+        # here...
         resolution_guess = wvutils.get_sampling(obs_spec.wave)[2]
-        bounds.append((resolution_guess * resolution_frac_bounds[0],
-                       resolution_guess * resolution_frac_bounds[1]))
-        bounds.append(pix_shift_bounds)
-        bounds.append(pix_stretch_bounds)
-        return bounds
+        return self.base_par_bounds() + [
+            tuple(resolution_guess * np.asarray(resolution_frac_bounds)),
+            pix_shift_bounds,
+            pix_stretch_bounds,
+        ]
 
     def _finalize_wave_grid(self, wave_grid_full, model_grid_full):
         r"""
@@ -383,7 +383,7 @@ class PCATelluricModel(TelluricModel):
         """
         return np.append([1.], np.zeros(self.npar-1, dtype=float))
 
-    def base_par_bound(self):
+    def base_par_bounds(self):
         """
         Generate the parameter bounds for the base-level spectral model.
 
@@ -497,7 +497,7 @@ class AtmGridTelluricModel(TelluricModel):
             np.median(self.airmass_grid)
         ])
 
-    def base_par_bound(self):
+    def base_par_bounds(self):
         """
         Generate the parameter bounds for the base-level spectral model.
 

@@ -75,7 +75,7 @@ class AdjustedSpectrumModel:
             spectrum has no parameters.
         """
         return None
-
+    
     # TODO: Do I need to allow order to be a vector (listing the orders to
     # include)?    
     def par_guess(self, obs_spec, order=None):
@@ -114,7 +114,8 @@ class AdjustedSpectrumModel:
         # Get the guess parameters for the underlying spectrum 
         gsp = self.spectrum_par_guess()
 
-        # No polynomial is included so we're done
+        # No polynomial is included so we're done.  NOTE: This can return None
+        # if there are no spectrum guess parameters.
         if order is None:
             return gsp
 
@@ -139,6 +140,54 @@ class AdjustedSpectrumModel:
         )
         return np.asarray(fit_tuple[0]) if gsp is None else np.append(gsp, fit_tuple[0])
     
+    def spectrum_par_bounds(self):
+        """
+        Provide the bounds for spectrum-specific parameters.
+
+        Returns
+        -------
+        list or None
+            List of two-tuples with the lower and upper boundaries for the
+            spectrum-specific parameters.
+        """
+        return None
+
+    def par_bounds(self, guess_par, rel_coeff_bounds, abs_coeff_bounds):
+        """
+        Provide the bounds for all object model parameters.
+
+        The bounds are set both in an absolute sense (using
+        ``abs_coeff_bounds``) and relative to the guess parameters (using
+        ``rel_coeff_bounds``).  For example, if the guess parameter is 2.0 and
+        the relative lower bound is 0.5, the lower bound will be set to 1.0,
+        unless the absolute bound is greater.
+
+        Parameters
+        ----------
+        guess_par : `numpy.ndarray`_
+            Guess parameters for the model.
+        rel_coeff_bounds : tuple
+            The lower and upper boundary of each coefficient relative to the
+            value of the guess value.  For example, (0.5, 2,0) means that every
+            coefficient must be within a factor of 2 of the guess value.
+        abs_coeff_bounds : tuple
+            The absolute lower and upper boundaries for the coefficients; i.e.,
+            this is *not* relative to the guess value.  These limits are used
+            for *all* coefficients.
+
+        Returns
+        -------
+        list
+            List of two-tuples with the lower and upper boundary for each model
+            parameter.
+        """
+        sbnd = self.spectrum_par_bounds()
+
+
+
+
+
+
     def spectrum_flux(self, theta):
         """
         Return the model spectrum before any modifications by the polynomial.
@@ -187,30 +236,48 @@ class AdjustedSpectrumModel:
         gpm : `numpy.ndarray`
             Good pixel mask of the model spectrum.
         """
-        if theta is None:
-            return self.spectrum_flux(None)
-        model_flux, model_gpm = self.spectrum_flux(theta[:self.nspec_par])
-        if theta.size > self.nspec_par:
+        # Get the base-level spectrum
+        if theta is None or self.nspec_par == 0:
+            model_flux, model_gpm = self.spectrum_flux(None)
+        elif self.nspec_par > 0:
+            model_flux, model_gpm = self.spectrum_flux(theta[:self.nspec_par])
+
+        # Add the polynomial
+        # TODO: Force the polynomial to always be positive?
+        if theta is not None and theta.size > self.nspec_par:
             model_flux *= coadd.poly_model_eval(
                 theta[self.nspec_par:], self.func, self.model, self.wave, self.wave_min,
                 self.wave_max
             )
+
+        # Return the adjusted spectrum and mask
         return model_flux, (model_flux > 0.0) & model_gpm
 
 
 class QSOPCAModel(AdjustedSpectrumModel):
-    """
+    r"""
     A QSO spectrum model based on a PCA decomposition.
+
+    The model parameters for the base level QSO spectrum are the redshift and
+    the :math:`N_{\rm PCA}-1` coefficients; the coefficient for the first PCA
+    component is always set to 1. 
+
+    .. note::
+        The attributes listed below are *in addition* to those provided by the
+        base class.
 
     Parameters
     ----------
     filename : str
         A local file or a QSO PCA model file provided by PypeIt.
-    redshift : float, optional
+    z : float
         The fiducial redshift of the QSO model.  The model parameters include
         the redshift, as well.  This should be a redshift used to approximately
         match the observed wavelength range of the observed spectrum to be
         modeled.
+    dz : float, optional
+        The :math:`\pm` range relative to the provided redshift (`z`) that is
+        allowed during the fitting process.
     npca : int, optional
         The number of PCA components to use in constructing the model.  A
         warning will be issued if this is larger than the number of components
@@ -218,8 +285,15 @@ class QSOPCAModel(AdjustedSpectrumModel):
     kwargs : dict, optional
         Passed directly to the instantiation of the base class.  I.e., these are
         the parameters used to define the polynomial.
+
+    Attributes
+    ----------
+    coeffs : `numpy.ndarray`_
+        Table of coefficients used for 
+
+
     """
-    def __init__(self, filename, redshift=None, npca=None, **kwargs):
+    def __init__(self, filename, z, dz=0.1, npca=None, **kwargs):
 
         file = dataPaths.tel_model.get_file_path(filename)
         tbl = table.Table.read(file)
@@ -243,7 +317,14 @@ class QSOPCAModel(AdjustedSpectrumModel):
         # TODO: Pass the file name to the metadata of the spectrum?
         super().__init__(spectrum.Spectrum(wave, components[:_npca,:].T), **kwargs)
 
+        # Save the coefficients in the table to use for setting the parameters
+        # boundaries.
+        self.coeffs = tbl['PCA_COEFFS'][0][0,:,:self.npca]
+
+        # Set the redshift
         self.z_fid = 0.0 if redshift is None else redshift
+
+        # Set the number of parameters
         # TODO: Do I need to keep npca?
         self.npca = _npca
         self.nspec_par = self.npca # redshift + npca-1
@@ -266,6 +347,25 @@ class QSOPCAModel(AdjustedSpectrumModel):
             spectrum has no parameters.
         """
         return np.append([self.z_fid], np.zeros(self.npca-1, dtype=float))
+    
+    def spectrum_par_bounds(self):
+        """
+        Set the boundaries for the model parameters.
+
+        Returns
+        -------
+        list
+            A list of tuples where each tuple sets the upper and lower boundary
+            on each parameter.
+        """
+        # Redshift bounds
+        bounds = [(self.z-self.dz, self.z+self.dz)]
+        # Coefficient bounds
+        bounds += [tuple(bnds) for bnds in zip(
+            np.min(self.coeffs[:,1:], axis=0),
+            np.max(self.coeffs[:,1:], axis=0)
+        )]
+        return bounds
     
     def spectrum_flux(self, theta):
         r"""
@@ -314,8 +414,8 @@ class StellarSpectrumModel(AdjustedSpectrumModel):
         super().__init__(spec, **kwargs)
 
 
-# TODO: It's a bit wasteful to generate a unity spectrum to then multiply it by
-# a polynomial.  Consider a better solution.
+# TODO: It's wasteful to generate a unity spectrum to then multiply it by a
+# polynomial.  Consider a better solution.
 class PolynomialModel(AdjustedSpectrumModel):
     """
     A model consisting of only a polynomial.

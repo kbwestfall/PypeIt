@@ -2,6 +2,8 @@
 Module for fitting a telluric + object model to an observed spectrum.
 """
 
+import numpy as np
+
 class TelluricFit:
 
     def __init__(self, tell_model, obj_model):
@@ -10,9 +12,10 @@ class TelluricFit:
 
         Parameters
         ----------
-        tell_model : 
-        
-        
+        tell_model : :class:`~pypeit.telluric.model.TelluricModel`
+            The class to use when modeling the telluric spectrum.
+        obj_model : :class`~pypeit.telluric.object.AdjustedSpectrumModel`
+            The class to use when modeling the object spectrum.
         """
         self.tell_model = tell_model
         self.obj_model = obj_model
@@ -22,8 +25,44 @@ class TelluricFit:
                                                    recombination=arg_dict['recombination'], maxiter=arg_dict['diff_evol_maxiter'],
                                                    polish=arg_dict['polish'], disp=arg_dict['disp'])
 
+
+    # TODO: Consider adding the polynomial order to the object model, so that
+    # the order does *not* need to be passed here.
+    def par_guess(self, obs_spec, order=None):
+        """
+        Provide an initial guess for all the model parameters.
+
+        Parameters
+        ----------
+        obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
+            Spectrum to be fit.
+        order : int, optional
+            The order of the polynomial that is used to modify the low-order
+            continuum of the object model.
+
+        Returns
+        -------
+        `numpy.ndarray`_
+            Guess parameters
+        """
+        # The object spectrum parameters can be None, although they should
+        # effectively never be none because that means there's no overall
+        # normalization.  I.e., in general, order should always be >= 0, not
+        # None.
+        obj_par = self.obj_model.par_guess(obs_spec, order=order)
+        tell_par = self.tell_model.par_guess(obs_spec)
+        if obj_par is None:
+            return tell_par
+        return np.append(obj_par, tell_par)
+
+    def par_bounds(self,
+        obs_spec, resolution_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0,5.0),
+        pix_stretch_bounds=(0.98,1.02)
+    ):
+        pass
+
     def fit(
-        self, obs_spec, airmass=None, guess_par=None, bounds=None, resln_frac_bounds=(0.3, 1.5),
+        self, obs_spec, guess_par, bounds, airmass=None,
         ballsize=5e-4, diff_evol_maxiter=1000,
         seed=None, init=None, updating='immediate', popsize=30, recombination=0.7, maxiter=1,
         polish=True, disp=False, 
