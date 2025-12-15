@@ -457,7 +457,7 @@ def solve_poly_ratio(wave, flux, ivar, flux_ref, ivar_ref, norder, mask=None, ma
             guess = np.append(np.log(ratio), np.zeros(norder))
         case _:
             raise PypeItError('Unrecognized model type')
-
+        
     arg_dict = dict(flux=flux, ivar=ivar, mask=mask, flux_med=flux_med, ivar_med=ivar_med,
                     flux_ref_med=flux_ref_med, ivar_ref_med=ivar_ref_med, ivar_ref=ivar_ref,
                     wave=wave, wave_min=wave_min, wave_max=wave_max, func=func, model=model,
@@ -471,6 +471,7 @@ def solve_poly_ratio(wave, flux, ivar, flux_ref, ivar_ref, norder, mask=None, ma
     ymult = np.fmin(np.fmax(ymult1, scale_min), scale_max)
     flux_rescale = ymult*flux
     ivar_rescale = ivar/ymult**2
+
     if debug:
         # Determine the y-range for the QA plots
         scale_spec_qa(
@@ -988,7 +989,6 @@ def robust_median_ratio(
 
     nspec = flux.size
     snr_ref = flux_ref * np.sqrt(ivar_ref)
-    
     snr_ref_best = np.fmax(np.percentile(snr_ref[mask_ref], ref_percentile),snr_do_not_rescale)
     # NOTE: In the case where the S/N is artificially set to a specific number
     # for the entire spectrum, selecting "snr_ref > snr_ref_best" cuts out most
@@ -1326,6 +1326,10 @@ def get_ylim(flux, ivar, mask):
     med_width = (2.0 * np.ceil(0.1 / 2.0 * np.size(flux[mask])) + 1).astype(int)
     flux_med, ivar_med = median_filt_spec(flux, ivar, mask, med_width)
     mask_lim = ivar_med > np.percentile(ivar_med, 20)
+    if not np.any(mask_lim):
+        # All are masked! So just use the original mask.  This can happen for
+        # synthetic data when the ivar is the same for all pixels.
+        mask_lim = mask
     ymax = 2.5 * np.max(flux_med[mask_lim])
     ymin = -0.15 * ymax
     return ymin, ymax

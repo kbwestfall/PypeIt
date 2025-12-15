@@ -210,6 +210,7 @@ class Spectrum:
         if self.ivar is not None:
             self.ivar *= self.flux**4
             self.gpm[np.logical_not(self.ivar > 0)] = False
+        self.gpm[np.logical_not(self.flux > 0)] = False
         self.flux = utils.inverse(self.flux)
 
     def to_magnitude(self, zeropoint=0.):

@@ -2,33 +2,34 @@
 Module for fitting a telluric + object model to an observed spectrum.
 """
 
+from IPython import embed
 import numpy as np
+
+from pypeit import utils
+from pypeit.core import spectrum
+
+#result = scipy.optimize.differential_evolution(tellfit_chi2, bounds, args=(flux, thismask, arg_dict,), seed=rng,
+#                                                   init = init, updating='immediate', popsize=popsize,
+#                                                   recombination=arg_dict['recombination'], maxiter=arg_dict['diff_evol_maxiter'],
+#                                                   polish=arg_dict['polish'], disp=arg_dict['disp'])
 
 class TelluricFit:
 
-    def __init__(self, tell_model, obj_model):
+    def __init__(self, obj_model, tell_model):
         """
-        Class to perform the telluric + object model fit to an observed spectrum.
+        Class to perform the object + telluric model fit to an observed spectrum.
 
         Parameters
         ----------
-        tell_model : :class:`~pypeit.telluric.model.TelluricModel`
-            The class to use when modeling the telluric spectrum.
         obj_model : :class`~pypeit.telluric.object.AdjustedSpectrumModel`
             The class to use when modeling the object spectrum.
+        tell_model : :class:`~pypeit.telluric.model.TelluricModel`
+            The class to use when modeling the telluric spectrum.
         """
-        self.tell_model = tell_model
         self.obj_model = obj_model
+        self.tell_model = tell_model
 
-    result = scipy.optimize.differential_evolution(tellfit_chi2, bounds, args=(flux, thismask, arg_dict,), seed=rng,
-                                                   init = init, updating='immediate', popsize=popsize,
-                                                   recombination=arg_dict['recombination'], maxiter=arg_dict['diff_evol_maxiter'],
-                                                   polish=arg_dict['polish'], disp=arg_dict['disp'])
-
-
-    # TODO: Consider adding the polynomial order to the object model, so that
-    # the order does *not* need to be passed here.
-    def par_guess(self, obs_spec, order=None):
+    def par_guess(self, obs_spec):
         """
         Provide an initial guess for all the model parameters.
 
@@ -36,30 +37,48 @@ class TelluricFit:
         ----------
         obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
             Spectrum to be fit.
-        order : int, optional
-            The order of the polynomial that is used to modify the low-order
-            continuum of the object model.
 
         Returns
         -------
         `numpy.ndarray`_
             Guess parameters
         """
+        # Guess the telluric parameters first.  The object spectrum is passed to
+        # the guess function, but the current models don't actually use the flux
+        # vector.  They only use the wavelength vector to guess the spectral
+        # resolution.
+        tell_par = self.tell_model.par_guess(obs_spec)
+
+        embed()
+        exit()
+
+        # Use the guess parameters to generate an initial telluric model
+        tell_wave, tell_spec = self.tell_model.sample(tell_par)
+        tell_spec_inv = spectrum.Spectrum(tell_wave, tell_spec).inverse()
+        # Divide the observed spectrum by the initial telluric model
+        corr_spec = obs_spec.multiply(tell_spec_inv)
+
         # The object spectrum parameters can be None, although they should
         # effectively never be none because that means there's no overall
-        # normalization.  I.e., in general, order should always be >= 0, not
-        # None.
-        obj_par = self.obj_model.par_guess(obs_spec, order=order)
-        tell_par = self.tell_model.par_guess(obs_spec)
-        if obj_par is None:
-            return tell_par
-        return np.append(obj_par, tell_par)
+        # normalization.  I.e., in general, the order of the polynomial included
+        # in the object model should always be >= 0.
+        obj_par = self.obj_model.par_guess(corr_spec)
+
+        return tell_par if obj_par is None else np.append(obj_par, tell_par)
 
     def par_bounds(self,
-        obs_spec, resolution_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0,5.0),
+        guess_par, rel_coeff_bounds=(-20.0, 20.0), abs_coeff_bounds=(-5.0, 5.0),
+        resolution_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0,5.0),
         pix_stretch_bounds=(0.98,1.02)
     ):
-        pass
+        obj_bounds = self.obj_model.par_bounds(
+            guess_par[:self.obj_model.npar], rel_coeff_bounds, abs_coeff_bounds
+        )
+        tell_bounds = self.tell_model.par_bounds(
+            guess_par[self.obj_model.npar:], resolution_frac_bounds=resolution_frac_bounds,
+            pix_shift_bounds=pix_shift_bounds, pix_stretch_bounds=pix_stretch_bounds
+        )
+        return tell_bounds if obj_bounds is None else obj_bounds + tell_bounds
 
     def fit(
         self, obs_spec, guess_par, bounds, airmass=None,

@@ -19,7 +19,19 @@ from pypeit.core.wavecal import wvutils
 
 class TelluricModel:
     """
-    Base class
+    Base class for all telluric models.
+
+    The subclasses must provide the following functions:
+
+        - :func:`~pypeit.telluric.model.TelluricModel.load`: Load the telluric
+          data and perform the remaining instantiation steps.
+        - :func:`~pypeit.telluric.model.TelluricModel.base_par_guess`: Generate
+          guess parameters for the underlying telluric spectrum.
+        - :func:`~pypeit.telluric.model.TelluricModel.base_par_bounds`: Generate
+          lower and upper parameter boundaries for the underlying telluric
+          spectrum.
+        - :func:`~pypeit.telluric.model.TelluricModel.base_sample`: Sample the
+          underlying telluric spectrum given a set of parameters.
 
     Parameters
     ----------
@@ -34,13 +46,33 @@ class TelluricModel:
         ``wave_max`` are input; ignored otherwise. The resulting grid will
         extend from ``(1.0 - pad_frac)*wave_min`` to ``(1.0 +
         pad_frac)*wave_max``.
+    load : :obj:`bool`, optional
+        Flag to load the data upon instantiation.
     """
-    def __init__(self, filename, wave_min=None, wave_max=None, pad_frac=0.1):
+    def __init__(self, filename, wave_min=None, wave_max=None, pad_frac=0.1, load=True):
         to_pkg = 'move' if ".dev" in __version__ else None
         self.file = dataPaths.telgrid.get_file_path(filename, to_pkg=to_pkg)
         self.wave_min = wave_min
         self.wave_max = wave_max
         self.pad_frac = pad_frac
+
+        # Defined by the subclass load functions
+        self.wave_grid = None
+        self.tell_grid = None
+        self.dloglam = None
+        self.tell_pad_pix = None
+
+        # The number of parameters needed to generate the underlying telluric
+        # model (everything except the resolution, shift, and stretch)
+        self.base_npar = None
+        # The total number of parameters for the model.  This is always
+        # base_npar + 3, but we haven't defined base_npar yet.  It should always
+        # be set by the load() function.
+        self.npar = None
+
+        # Load the data
+        if load:
+            self.load()
 
     def load(self):
         """
@@ -48,73 +80,6 @@ class TelluricModel:
         """
         raise PypeItError(f'{self.__class__.__name__} has not defined a load function!')
     
-    def base_par_guess(self):
-        """
-        Generate a first-guess for the model parameters specific to the
-        construction of the base-level spectral model.
-
-        Returns
-        -------
-        `numpy.ndarray` 
-            Guess model parameters.
-        """
-        raise PypeItError(f'{self.__class__.__name__} has not defined a base_par_guess function!')
-    
-    def par_guess(self, obs_spec):
-        """
-        Generate a first-guess for the model parameters.
-
-        Parameters
-        ----------
-        obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
-            Observed spectrum to be fit
-
-        Returns
-        -------
-        `numpy.ndarray` 
-            Guess model parameters including the resolution, shift, and stretch
-            parameters.
-        """
-        # TODO: 
-        #   - Need to check that obs_spec.wave is the right thing to pass here...
-        #   - Save this to self?
-        resolution_guess = wvutils.get_sampling(obs_spec.wave)[2]
-        return np.append(self.base_par_guess(), [resolution_guess, 0.0, 1.0])
-
-    def base_par_bounds(self):
-        """
-        Generate the parameter bounds for the base-level spectral model.
-
-        Returns
-        -------
-        list
-            List of tuples with the lower and upper bounds of the parameters for
-            the base-level model.
-        """
-        raise PypeItError(f'{self.__class__.__name__} has not defined a base_par_bounds function!')
-    
-    def par_bounds(
-        self, obs_spec, resolution_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0,5.0),
-        pix_stretch_bounds=(0.98,1.02)
-    ):
-        """
-        Set the boundaries for the model parameters.
-
-        Returns
-        -------
-        list
-            A list of tuples that provide the lower and upper bounds for each
-            model parameter.
-        """
-        # TODO: Need to check that obs_spec.wave is the right thing to pass
-        # here...
-        resolution_guess = wvutils.get_sampling(obs_spec.wave)[2]
-        return self.base_par_bounds() + [
-            tuple(resolution_guess * np.asarray(resolution_frac_bounds)),
-            pix_shift_bounds,
-            pix_stretch_bounds,
-        ]
-
     def _finalize_wave_grid(self, wave_grid_full, model_grid_full):
         r"""
         Provided the raw telluric data, limit the wavelength range to the
@@ -170,13 +135,11 @@ class TelluricModel:
         # sigma, and we're always assuming there are three pixels per resolution
         # element.  Isn't this always going to be 13 pixels?
         _, dloglam, _, pix_per_sigma = wvutils.get_sampling(wave_grid)
+        if self.dloglam == 0.0:
+            raise PypeItError(
+                'The telluric model grid cannot have a log wavelength spacing that is 0!'
+            )
         return wave_grid, model_grid, dloglam, int(np.ceil(10.0 * pix_per_sigma))
-
-    def base_sample(self):
-        """
-        Sample the telluric model at its native resolution and wavelength grid.
-        """
-        raise PypeItError(f'{self.__class__.__name__} has not defined a base_sample function!')
 
     # TODO: This should account for the current resolution of the model...
     def _convolve(self, tspec, res):
@@ -198,16 +161,16 @@ class TelluricModel:
             Convolved transmission spectrum, with a shape that matches the input
             model.
         """
-        # Check the input values
+        # Check the input resolution
         if res <= 0.0:
             raise PypeItError('Resolution must be positive.')
-        if self.dloglam == 0.0:
-            raise PypeItError('The telluric model grid cannot have a log wavelength spacing that is 0!')
+
         # number of dloglam pixels per 1 sigma dispersion
         pix_per_sigma = 1.0/res/(self.dloglam*np.log(10.0))/(2.0 * np.sqrt(2.0 * np.log(2)))
         # number of sigma per 1 pix
         sig2pix = 1.0/pix_per_sigma
         if sig2pix > 2.0:
+            # TODO: This feels more catastrophic than this warning implies.
             log.warning(
                 'The telluric model grid is not sampled finely enough to properly convolve to '
                 'the desired resolution.  Skipping resolution convolution for now. Create a '
@@ -249,6 +212,93 @@ class TelluricModel:
             + np.arange(len(loglam)) * self.dloglam * stretch
         return np.interp(loglam_shift, loglam, tspec)
 
+    def base_par_guess(self):
+        """
+        Generate a first-guess for the model parameters specific to the
+        construction of the base-level spectral model.
+
+        Returns
+        -------
+        `numpy.ndarray` 
+            Guess model parameters.
+        """
+        raise PypeItError(f'{self.__class__.__name__} has not defined a base_par_guess function!')
+    
+    def par_guess(self, obs_spec):
+        """
+        Generate a first-guess for the model parameters.
+
+        Parameters
+        ----------
+        obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
+            Observed spectrum to be fit.  The wavelength vector is used to
+            estimate the resolution; see
+            :func:`~pypeit.core.wavecal.wvutils.get_sampling`.
+
+        Returns
+        -------
+        `numpy.ndarray`_
+            Guess model parameters including the resolution, shift, and stretch
+            parameters.  The shift guess is always 0 pixels, and the stretch
+            guess is always 1.0 (i.e., no stretch).
+        """
+        # TODO: Need to check that obs_spec.wave is the right thing to pass
+        # here...
+        resolution_guess = wvutils.get_sampling(obs_spec.wave)[2]
+        return np.append(self.base_par_guess(), [resolution_guess, 0.0, 1.0])
+
+    def base_par_bounds(self):
+        """
+        Generate the parameter bounds for the base-level spectral model.
+
+        Returns
+        -------
+        list
+            List of tuples with the lower and upper bounds of the parameters for
+            the base-level model.
+        """
+        raise PypeItError(f'{self.__class__.__name__} has not defined a base_par_bounds function!')
+    
+    def par_bounds(
+        self, guess_par, resolution_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0,5.0),
+        pix_stretch_bounds=(0.98,1.02)
+    ):
+        """
+        Set the boundaries for the model parameters.
+
+        Parameters
+        ----------
+        guess_par : `numpy.ndarray`_
+            Guess model parameters including the resolution, shift, and stretch
+            parameters.  The shift guess is always 0 pixels, and the stretch
+            guess is always 1.0 (i.e., no stretch).
+        resolution_frac_bounds : :obj:`tuple`, optional
+            Lower and upper bounds for the spectral resolution expressed as a
+            fraction of the guessed resolution.
+        pix_shift_bounds : :obj:`tuple`, optional
+            Lower and upper bounds for the pixel shift.
+        pix_stretch_bounds : :obj:`tuple`, optional
+            Lower and upper bounds for the pixel stretch.
+
+        Returns
+        -------
+        list
+            A list of tuples that provide the lower and upper bounds for each
+            model parameter.
+        """
+        # guess_par[-3] is the guess resolution.
+        return self.base_par_bounds() + [
+            tuple(guess_par[-3] * np.asarray(resolution_frac_bounds)),
+            pix_shift_bounds,
+            pix_stretch_bounds,
+        ]
+
+    def base_sample(self):
+        """
+        Sample the telluric model at its native resolution and wavelength grid.
+        """
+        raise PypeItError(f'{self.__class__.__name__} has not defined a base_sample function!')
+
     def sample(self, theta, start=0, end=None):
         r"""
         Evaluate the telluric model.
@@ -263,11 +313,11 @@ class TelluricModel:
 
             #. shift and stretch the telluric model.
 
-        The parameters are ordered such that the first :attr:`n_raw_par` are
-        used to sample the raw telluric spectrum (e.g., the number of PCA
+        The parameters are ordered such that the first :attr:`base_npar` are
+        used to sample the telluric model spectrum (e.g., the number of PCA
         components to use), and the remaining parameters are the spectral
         resolution, spectral shift, and pixel stretch.  I.e., the true number of
-        parameters is :math:`N_{\rm raw} + 3`.
+        parameters is :math:`N_{\rm base} + 3`.
 
         Sampling the model can be dramatically sped up by only selecting a
         relevant wavelength range, using the ``start`` and ``end`` parameters.
@@ -278,16 +328,18 @@ class TelluricModel:
         ----------
         theta : `numpy.ndarray`_
             Vector with the full set of parameters.  The number of parameters is
-            :math :math:`N_{\rm raw} + 3` where :math:`N_{\rm raw}` is
-            :attr:`n_raw_par`, which is the number of parameters needed to
-            sample the "raw" model (see, e.g.,
+            :math:`N_{\rm base} + 3` where :math:`N_{\rm base}` is
+            :attr:`base_npar`, which is the number of parameters needed to
+            sample the "base" model (see, e.g.,
             :func:`~pypeit.telluric.model.PCATelluricModel.base_sample`).  The
             three remaining parameters are (**in this order**) the spectral
             resolution, spectral shift, and pixel stretch.
         start : :obj:`int`, optional
-            The index (inclusive) of the first pixel to include in the model. 
+            The index (inclusive) of the first spectral pixel to include in the
+            model. 
         end : :obj:`int`, optional
-            The index (exclusive) of the last pixel to include in the model.
+            The index (exclusive) of the last spectral pixel to include in the
+            model.
 
         Returns
         -------
@@ -296,9 +348,9 @@ class TelluricModel:
         tspec : `numpy.ndarray`_
             Transmission spectrum.
         """
-        if len(theta) != self.npar + 3:
+        if len(theta) != self.npar:
             raise PypeItError(
-                f'Incorrect number of parameters provided.  Expected {self.npar + 3}, got '
+                f'Incorrect number of parameters provided.  Expected {self.npar}, got '
                 f'{len(theta)}.'
             )
         _start = start
@@ -312,7 +364,7 @@ class TelluricModel:
 #        ind_upper_final = ind_upper_pad if ind_upper_pad == ind_upper else ind_upper - ind_upper_pad
 
         # Get the raw transmission spectrum
-        tspec = self.base_sample(theta[:self.npar], start=start_pad, end=end_pad)
+        tspec = self.base_sample(theta[:self.base_npar], start=start_pad, end=end_pad)
         # Convolve it to the provided resolution
 
         # TODO: Match resolution
@@ -326,11 +378,53 @@ class TelluricModel:
 
 class PCATelluricModel(TelluricModel):
     """
-    Telluric model based on the PCA of a large grid of atmospheric models
+    Telluric model based on the PCA of a large grid of atmospheric models.
+
+    The attributes provided below are specific to this class; see the
+    description of the base class for additional attributes.
+
+    .. note::
+        
+        When selecting the number of PCA components to use in the model, the
+        number may be larger than the number PCA components available; if so,
+        the class will automatically just use all available components.  Be
+        aware of warnings that are issued if you don't see different results as
+        you increase the number of components.
+
+        The number of coefficients required to construct the base-level telluric
+        model (excluding the resolution, shift, and stretch parameters) is
+        :attr:`npca` - 1; the coefficient for the first PCA component is
+        *always* set to 1.0.
+
+    Parameters
+    ----------
+    filename : :obj:`str`
+        File with the telluric model data
+    npca : :obj:`int`, optional
+        Number of PCA components to use in the model.  If None, all available
+        components are used.  Must be 2 or more because, otherwise, the
+        base-level telluric model will have *no* free parameters; see the note
+        above.
+    kwargs : :obj:`dict`, optional
+        Passed directly to :class:`~pypeit.telluric.model.TelluricModel` base
+        class.
+
+    Attributes
+    ----------
+    npca : :obj:`int`
+        Number of PCA components available in the telluric model.
+    coeff_bounds : :list
+        List of two-tuples with the lower and upper bounds for each of the PCA
+        coefficients; length is :attr:`npca` - 1.
     """
-    def __init__(self, filename, wave_min=None, wave_max=None, pad_frac=0.1, npca=None):
-        self.npar = npca
-        super().__init__(filename, wave_min=wave_min, wave_max=wave_max, pad_frac=pad_frac)
+    def __init__(self, filename, npca=None, **kwargs):
+        # NOTE: These must come *before* instantiating the base class because
+        # the instantiation method calls the load() function.
+        if npca is not None and npca < 2:
+            raise PypeItError('Number of PCA components must be 2 or more!')
+        self.npca = npca
+        self.coeff_bounds = None
+        super().__init__(filename, **kwargs)
 
     def load(self):
         """
@@ -341,36 +435,53 @@ class PCATelluricModel(TelluricModel):
         hdu = io.fits_open(self.file)
 
         # Make sure the file type is correct
-        self.npca = hdu[0].header.get('NCOMP')
+        _npca = hdu[0].header.get('NCOMP')
         # check that the telgrid file is the correct one for this method
-        if self.npca is None:
+        if _npca is None:
             raise PypeItError(
                 'Could NOT read the number of PCA components of the telluric model.  This error '
                 'can occur if you have set teltype=pca and have instead used a grid-based '
                 'telluric file.  Make sure you are using a TellPCA_* file or set teltype=grid.'
              )
+        # Include the 0th component in the total count of the available PCA
+        # components
+        _npca += 1
+
+        # Set the number of PCA components
+        if self.npca is None:
+            # Default to using all components
+            self.npca = _npca
+        if self.npca > _npca:
+            log.warning(
+                f'Requested {self.npca} PCA components, which is more than the maximum '
+                f'available.  Using all {_npca} PCA components.'
+            )
+            self.npca = _npca
 
         # Get the relevant data
         wave_grid_full = hdu[1].data
-        pca_comp_full = hdu[0].data
-        self.bounds = hdu[2].data
-#        self.model_coefs = hdu[3].data
+        pca_comp_full = hdu[0].data[:self.npca]         # Only keep the first npca components
+
+        # Coefficient bounds are provided by the data file.  Keep those relevant
+        # to the model parameters and convert the object into a list of
+        # two-tuples.
+        self.coeff_bounds = [tuple(bnd) for bnd in hdu[2].data.T[1:self.npca]]
+
+        # The file also includs a set of model coefficient values.  These can be
+        # used as a prior for future refactors, but they are currently not
+        # saved.
+#        self.model_coeffs = hdu[3].data
 
         # Close the fits file
         hdu.close()
 
+        # Number of parameters
+        self.base_npar = self.npca - 1
+        self.npar = self.base_npar + 3
+
         # Finalize
         self.wave_grid, self.tell_grid, self.dloglam, self.tell_pad_pix \
             = self._finalize_wave_grid(wave_grid_full, pca_comp_full)
-        
-        if self.npar is None:
-            self.npar = self.npca
-        if self.npar > self.npca:
-            log.warning(
-                f'Requested {self.npar} PCA components, which is more than the maximum '
-                f'available.  Using all {self.npca} PCA components.'
-            )
-            self.npar = self.npca
 
     def base_par_guess(self):
         """
@@ -381,7 +492,7 @@ class PCATelluricModel(TelluricModel):
         `numpy.ndarray`
             Guess model parameters.
         """
-        return np.append([1.], np.zeros(self.npar-1, dtype=float))
+        return np.zeros(self.base_npar, dtype=float)
 
     def base_par_bounds(self):
         """
@@ -393,7 +504,8 @@ class PCATelluricModel(TelluricModel):
             List of tuples with the lower and upper bounds of the parameters for
             the base-level model.
         """
-        return self.bounds.T[1:self.npar].tolist()
+        # TODO: Return a copy?
+        return self.coeff_bounds
 
     def base_sample(self, theta, start=0, end=None):
         """
@@ -402,7 +514,8 @@ class PCATelluricModel(TelluricModel):
         Parameters
         ----------
         theta : `numpy.ndarray`_
-            Weights for the first :attr:`npar` components.
+            PCA coefficients for the (:attr:`npca` - 1) components.  Length must
+            be :attr:`base_npar`.
         start : :obj:`int`, optional
             Starting pixel at which to return the model.
         end : :obj:`int`, optional
@@ -415,14 +528,15 @@ class PCATelluricModel(TelluricModel):
             Telluric model based on the provided weights.  Pixels outside the
             range of ``start:end`` are set to 0.
         """
-        if len(theta) != self.npar:
+        if len(theta) != self.base_npar:
             raise PypeItError(
-                f'Incorrect number of coefficients.  Expected {self.npar}, got {len(theta)}'
+                f'Incorrect number of coefficients.  Expected {self.base_npar}, got {len(theta)}'
             )
         # Evaluate PCA model after truncating the wavelength range
         tellmodel_hires = np.zeros_like(self.wave_grid)
         tellmodel_hires[start:end] = np.dot(
-            np.append(1,theta), self.tell_grid[:self.npar+1][:,start:end])
+            np.append(1,theta), self.tell_grid[:,start:end]
+        )
                                  
         # PCA model is inverse sinh of the optical depth, convert to transmission here
         tellmodel_hires[start:end] = np.sinh(tellmodel_hires[start:end])
@@ -435,11 +549,38 @@ class PCATelluricModel(TelluricModel):
 
 class AtmGridTelluricModel(TelluricModel):
     """
-    Telluric model based on the PCA of a large grid of atmospheric models
+    Telluric model based on a large grid of atmospheric models.
+
+    The attributes provided below are specific to this class; see the
+    description of the base class for additional attributes.
+
+    Parameters
+    ----------
+    filename : :obj:`str`
+        File with the telluric model data
+    kwargs : :obj:`dict`, optional
+        Passed directly to :class:`~pypeit.telluric.model.TelluricModel` base
+        class.
+
+    Attributes
+    ----------
+    pressure_grid : `numpy.ndarray`_
+        Grid of pressures sampled by the telluric grid.
+    temp_grid : `numpy.ndarray`_
+        Grid of temperatures sampled by the telluric grid.
+    h2o_grid : `numpy.ndarray`_
+        Grid of humidity levels sampled by the telluric grid.
+    airmass_grid : `numpy.ndarray`_
+        Grid of airmass values sampled by the telluric grid.
     """
-    def __init__(self, filename, wave_min=None, wave_max=None, pad_frac=0.1):
-        self.npar = 4
-        super().__init__(filename, wave_min=wave_min, wave_max=wave_max, pad_frac=pad_frac)
+    def __init__(self, filename, **kwargs):
+        # NOTE: These must come *before* instantiating the base class because
+        # the instantiation method calls the load() function.
+        self.pressure_grid = None
+        self.temp_grid = None
+        self.h2o_grid = None
+        self.airmass_grid = None
+        super().__init__(filename, **kwargs)
 
     def load(self):
         """
@@ -454,7 +595,8 @@ class AtmGridTelluricModel(TelluricModel):
             raise PypeItError(
                 'Could NOT read the atmospheric information from the telluric model.  This error '
                 'can occur if you have set teltype=grid and have instead used a pca-based '
-                'telluric file.  Make sure you are using a TelFit_* file or set teltype=pca.'
+                'telluric file.  Make sure you are using a TelFit_* file (to continue using a '
+                'grid-based model) or set teltype=pca (to use the PCA-based model).'
              )
 
         # Get the relevant data
@@ -463,19 +605,23 @@ class AtmGridTelluricModel(TelluricModel):
 
         # Construct the parameter grid
         self.pressure_grid = hdu[0].header['PRES0'] \
-            + hdu[0].header['DPRES'] * np.arange(0,hdu[0].header['NPRES'])
+            + hdu[0].header['DPRES'] * np.arange(hdu[0].header['NPRES'])
         self.temp_grid = hdu[0].header['TEMP0'] \
-            + hdu[0].header['DTEMP'] * np.arange(0,hdu[0].header['NTEMP'])
+            + hdu[0].header['DTEMP'] * np.arange(hdu[0].header['NTEMP'])
         self.h2o_grid = hdu[0].header['HUM0'] \
-            + hdu[0].header['DHUM'] * np.arange(0,hdu[0].header['NHUM'])
+            + hdu[0].header['DHUM'] * np.arange(hdu[0].header['NHUM'])
         if hdu[0].header['NAM'] > 1:
             self.airmass_grid = hdu[0].header['AM0'] \
-                + hdu[0].header['DAM'] * np.arange(0,hdu[0].header['NAM'])
+                + hdu[0].header['DAM'] * np.arange(hdu[0].header['NAM'])
         else:
             self.airmass_grid = np.array([hdu[0].header['AM0']])
 
         # Close the fits file
         hdu.close()
+
+        # Set the number of parameters
+        self.base_npar = 4
+        self.npar = self.base_npar + 3
 
         # Finalize
         self.wave_grid, self.tell_grid, self.dloglam, self.tell_pad_pix \
@@ -494,7 +640,7 @@ class AtmGridTelluricModel(TelluricModel):
             np.median(self.pressure_grid),
             np.median(self.temp_grid),
             np.median(self.h2o_grid),
-            np.median(self.airmass_grid)
+            np.median(self.airmass_grid),
         ])
 
     def base_par_bounds(self):
@@ -542,12 +688,16 @@ class AtmGridTelluricModel(TelluricModel):
             Telluric model evaluated at the provided 4D position in parameter
             space.  Pixels outside the range of ``start:end`` are set to 0.
         """
-        if len(theta) != 4:
-            raise PypeItError('Input parameter vector must have 4 and only 4 values.')
+        if len(theta) != self.base_npar:
+            raise PypeItError(
+                f'Incorrect number of grid parameters. Expected {self.base_npar}, got {len(theta)}'
+            )
+        # TODO: Use np.digitize?
         indx = [
-            int(np.round((p - g[0])/(g[1]-g[0]))) if len(g) > 1 else 0 for p, g in zip(theta, [
-                self.pressure_grid, self.temp_grid, self.h2o_grid, self.airmass_grid
-                ])
+            int(np.round((p - g[0])/(g[1]-g[0]))) if len(g) > 1 else 0 
+            for p, g in zip(
+                theta, [self.pressure_grid, self.temp_grid, self.h2o_grid, self.airmass_grid]
+            )
         ]
         tellmodel_hires = np.zeros_like(self.wave_grid)
         tellmodel_hires[start:end] = self.tell_grid[*indx][start:end]
