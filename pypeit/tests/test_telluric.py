@@ -457,7 +457,7 @@ def test_fitter():
     # Random number generator
     rng = np.random.default_rng(99)
 
-    # Make a fake spectrum, and make sure it is always positive
+    # Make a fake spectrum
     wave = np.linspace(7000, 18000, 10000)
     resolution = wvutils.get_sampling(wave)[2]
     order = 5
@@ -467,9 +467,6 @@ def test_fitter():
     flux = coadd.poly_model_eval(poly_coeffs, func, model, wave, wave[0], wave[-1])
     err = 0.1
     flux += rng.normal(scale=err, size=flux.size)
-    obs_spec = spectrum.Spectrum(
-        wave=wave, flux=flux, ivar=np.full(flux.size, 1/err**2), gpm=np.ones(flux.size, dtype=bool)
-    )
 
     # Create a simple model with the right order and function
     obj = telluric.object.AdjustedSpectrumModel(
@@ -480,11 +477,15 @@ def test_fitter():
     tellmod = telluric.model.PCATelluricModel('TellPCA_3000_26000_R15000.fits')
     pca_coeffs = rng.uniform(size=tellmod.base_npar)
     # Add the resolution, shift, and stretch
-    tellmod_par = np.append(pca_coeffs, [resolution, 0.0, 1.00])
+    tellmod_par = np.append(pca_coeffs, [2000., 0.0, 1.00])
 
     embed()
     exit()
 
+
+    obs_spec = spectrum.Spectrum(
+        wave=wave, flux=flux, ivar=np.full(flux.size, 1/err**2), gpm=np.ones(flux.size, dtype=bool)
+    )
     # Instantiate the fitter
     fitter = telluric.fitter.TelluricFit(obj, tellmod)
 

@@ -18,7 +18,7 @@ from pypeit.core.wavecal import wvutils
 
 
 class TelluricModel:
-    """
+    r"""
     Base class for all telluric models.
 
     The subclasses must provide the following functions:
@@ -46,15 +46,22 @@ class TelluricModel:
         ``wave_max`` are input; ignored otherwise. The resulting grid will
         extend from ``(1.0 - pad_frac)*wave_min`` to ``(1.0 +
         pad_frac)*wave_max``.
+    model_res : :obj:`float`, optional
+        Spectral resolution (:math:`R = \lambda / \Delta\lambda`) of the model
+        spectra.  The resolution is expected to be constant as a function of
+        wavelength.
     load : :obj:`bool`, optional
         Flag to load the data upon instantiation.
     """
-    def __init__(self, filename, wave_min=None, wave_max=None, pad_frac=0.1, load=True):
+    def __init__(
+        self, filename, wave_min=None, wave_max=None, pad_frac=0.1, model_res=None, load=True
+    ):
         to_pkg = 'move' if ".dev" in __version__ else None
         self.file = dataPaths.telgrid.get_file_path(filename, to_pkg=to_pkg)
         self.wave_min = wave_min
         self.wave_max = wave_max
         self.pad_frac = pad_frac
+        self.model_res = model_res
 
         # Defined by the subclass load functions
         self.wave_grid = None

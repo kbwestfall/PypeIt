@@ -1981,7 +1981,7 @@ class EchelleCoAdd2D(CoAdd2D):
 
     def snr_report(self, snr_bar):
         """
-        Printo out a SNR report for echelle 2D coadds.
+        Print out a SNR report for echelle 2D coadds.
 
         Args:
             snr_bar (:obj:`numpy.ndarray`):
