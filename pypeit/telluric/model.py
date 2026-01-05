@@ -172,24 +172,31 @@ class TelluricModel:
         if res <= 0.0:
             raise PypeItError('Resolution must be positive.')
 
-        # number of dloglam pixels per 1 sigma dispersion
-        pix_per_sigma = 1.0/res/(self.dloglam*np.log(10.0))/(2.0 * np.sqrt(2.0 * np.log(2)))
-        # number of sigma per 1 pix
-        sig2pix = 1.0/pix_per_sigma
-        if sig2pix > 2.0:
-            # TODO: This feels more catastrophic than this warning implies.
+        # Factor converting sigma to FWHM (~2.35)
+        sig2fwhm = np.sqrt(8. * np.log(2.))
+
+        # Compute the sigma of the Gaussian kernel in pixels
+        dres = 1./res if self.model_res is None else np.sqrt(1.0/res**2 - 1.0/self.model_res**2)
+        sigma = dres / sig2fwhm / self.dloglam / np.log(10.)
+
+        # Require the sigma to be at least 1 pixel (previous version used 0.5 pix)
+        # TODO: We can make this significantly smaller if we use the analytic
+        # FFT of a Gaussian to perform the convolution.  I'm inclined to add a
+        # dependency on ppxf.
+        if sigma < 1.0:
             log.warning(
-                'The telluric model grid is not sampled finely enough to properly convolve to '
-                'the desired resolution.  Skipping resolution convolution for now. Create a '
-                'higher resolution telluric model grid.'
+                'Gaussian sigma to change resolution of telluric model is less than 1 pixel.  '
+                'Skipping resolution matching.  We recommend using/creating higher resolution '
+                'telluric models!'
             )
             return tspec
-
+        
         # x = loglam/sigma on the wavelength grid from -4 to 4, symmetric, centered about zero.
-        x = np.hstack([-np.flip(np.arange(sig2pix,4,sig2pix)), np.arange(0,4,sig2pix)])
         # g = Gaussian evaluated over x
-        g = np.exp(-0.5*x**2)
+        samp = np.arange(0,4,1.0 / sigma)
+        g = np.exp(-0.5*np.append(-samp[:0:-1], samp)**2)
         # Convolve with a normalized Gaussian kernel
+        # TODO: Aim to make this faster
         return signal.convolve(tspec, g/g.sum(), mode='same')
 
     # TODO: Shift is not independent of scale, and we should be using resampling
@@ -482,6 +489,21 @@ class PCATelluricModel(TelluricModel):
         # Close the fits file
         hdu.close()
 
+        # Try to get the resolution
+        if self.model_res is None:
+            # NOTE: This expects the filename to be of the form:
+            #   *_{lambda start}_{lambda end}_R{resolution}.fits
+            try:
+                self.model_res = int(self.file.name.split('_')[-1][1:])
+            except Exception as e:
+                log.warning(
+                    'Could not determine the spectral resolution of the telluric model from the '
+                    'filename and it was not provided directly to the telluric model code.  '
+                    'Continuing by assuming that the telluric model spectral resolution is '
+                    'effectively infinite compared to your observed data.  '
+                    f'File name is {self.file.name};  Exception raised: {e}'
+                )
+
         # Number of parameters
         self.base_npar = self.npca - 1
         self.npar = self.base_npar + 3
@@ -625,6 +647,21 @@ class AtmGridTelluricModel(TelluricModel):
 
         # Close the fits file
         hdu.close()
+
+        # Try to get the resolution
+        if self.model_res is None:
+            # NOTE: This expects the filename to be of the form:
+            #   *_{lambda start}_{lambda end}_R{resolution}.fits
+            try:
+                self.model_res = int(self.file.name.split('_')[-1][1:])
+            except Exception as e:
+                log.warning(
+                    'Could not determine the spectral resolution of the telluric model from the '
+                    'filename and it was not provided directly to the telluric model code.  '
+                    'Continuing by assuming that the telluric model spectral resolution is '
+                    'effectively infinite compared to your observed data.  '
+                    f'File name is {self.file.name};  Exception raised: {e}'
+                )
 
         # Set the number of parameters
         self.base_npar = 4
