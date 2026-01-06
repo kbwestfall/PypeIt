@@ -1,10 +1,9 @@
 .. code-block:: console
 
     $ pypeit_sensfunc -h
-    usage: pypeit_sensfunc [-h] [-v VERBOSITY] [--log_file LOG_FILE]
-                           [--log_level LOG_LEVEL] [--extr {OPT,BOX}]
-                           [--algorithm {UVIS,IR}] [--multi MULTI] [-o OUTFILE]
-                           [-s SENS_FILE] [-f] [--debug] [--par_outfile PAR_OUTFILE]
+    usage: pypeit_sensfunc [-h] [--extr {OPT,BOX}] [--algorithm {UVIS,IR}]
+                           [--multi MULTI] [-o OUTFILE] [-s SENS_FILE] [-f]
+                           [--debug] [--par_outfile PAR_OUTFILE] [-v VERBOSITY]
                            spec1dfiles [spec1dfiles ...]
     
     Compute a sensitivity function
