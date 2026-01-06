@@ -8,6 +8,7 @@ Submodules
    :maxdepth: 4
 
    pypeit.display.display
+   pypeit.display.pypeit_modes
    pypeit.display.slitwavelength
    pypeit.display.spec1dview
 

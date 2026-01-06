@@ -383,6 +383,8 @@ Key                          Type              Options                          
 ``maskdesign_maxsep``        int, float        ..                                           50              Maximum allowed offset in pixels between the slit edges defined by the slit-mask design and the traced edges.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
 ``maskdesign_sigrej``        int, float        ..                                           3               Number of sigma for sigma-clipping rejection during slit-mask design matching.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
 ``maskdesign_step``          int, float        ..                                           1               Step in pixels used to generate a list of possible offsets (within +/- `maskdesign_maxsep`) between the slit edges defined by the mask design and the traced edges.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+``maskdesign_trim``          bool              ..                                           False           If True, the mask design information is used to trim each slit in the spectral direction. This functionality is only used for spectrographs with slit-mask designs that have information on the spectral extent of each slit (currently, only Gemini GMOS N/S).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+``maskdesign_trim_shift``    int, float        ..                                           0               Shift in pixels to apply to the mask design information when trimming the slits in the spectral direction.  This is useful for cases where the mask design information is not perfectly aligned with the detector.  This functionality is only used for spectrographs with slit-mask designs that have information on the spectral extent of each slit (currently, only Gemini GMOS N/S).                                                                                                                                                                                                                                                                                                                                                                                  
 ``match_tol``                int, float        ..                                           3.0             Same-side slit edges below this separation in pixels are considered part of the same edge.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
 ``max_nudge``                int, float        ..                                           ..              If parts of any (predicted) trace fall off the detector edge, allow them to be nudged away from the detector edge up to and including this maximum number of pixels.  If None, no limit is set; otherwise should be 0 or larger.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
 ``max_overlap``              float             ..                                           ..              When adding missing echelle orders based on where existing orders are found, the prediction can yield overlapping orders.  The edges of these orders are adjusted to eliminate the overlap, and orders can be added up over the spatial range of the detector set by ``order_spate_range``.  If this value is None, orders are added regardless of how much they overlap.  If not None, this defines the maximum fraction of an order spatial width that can overlap with other orders.  For example, if ``max_overlap=0.5``, any order that overlaps its neighboring orders by more than 50% will not be added as a missing order.                                                                                                                                        
@@ -1803,6 +1805,7 @@ Alterations to the default parameters are:
           edge_thresh = 100.0
           follow_span = 80
           fit_order = 3
+          minimum_slit_length = 1.8
       [[tilts]]
           tracethresh = 10.0
   [scienceframe]
@@ -1811,6 +1814,10 @@ Alterations to the default parameters are:
           noise_floor = 0.01
   [flexure]
       spec_method = boxcar
+  [sensfunc]
+      extrap_blu = 0.05
+      extrap_red = 0.05
+      trim_std_pixs = 20, 20,
 
 .. _instr_par-gemini_gmos_north_ham:
 
@@ -1898,6 +1905,7 @@ Alterations to the default parameters are:
           edge_thresh = 100.0
           follow_span = 80
           fit_order = 3
+          minimum_slit_length = 1.8
       [[tilts]]
           tracethresh = 10.0
   [scienceframe]
@@ -1906,6 +1914,10 @@ Alterations to the default parameters are:
           noise_floor = 0.01
   [flexure]
       spec_method = boxcar
+  [sensfunc]
+      extrap_blu = 0.05
+      extrap_red = 0.05
+      trim_std_pixs = 20, 20,
 
 .. _instr_par-gemini_gmos_north_ham_ns:
 
@@ -1993,6 +2005,7 @@ Alterations to the default parameters are:
           edge_thresh = 100.0
           follow_span = 80
           fit_order = 3
+          minimum_slit_length = 1.8
       [[tilts]]
           tracethresh = 10.0
   [scienceframe]
@@ -2001,6 +2014,10 @@ Alterations to the default parameters are:
           noise_floor = 0.01
   [flexure]
       spec_method = boxcar
+  [sensfunc]
+      extrap_blu = 0.05
+      extrap_red = 0.05
+      trim_std_pixs = 20, 20,
 
 .. _instr_par-gemini_gmos_south_ham:
 
@@ -2089,6 +2106,7 @@ Alterations to the default parameters are:
           follow_span = 80
           fit_order = 3
           bound_detector = True
+          minimum_slit_length = 1.8
       [[tilts]]
           tracethresh = 10.0
   [scienceframe]
@@ -2098,6 +2116,9 @@ Alterations to the default parameters are:
   [flexure]
       spec_method = boxcar
   [sensfunc]
+      extrap_blu = 0.05
+      extrap_red = 0.05
+      trim_std_pixs = 20, 20,
       algorithm = IR
       [[IR]]
           telgridfile = TellPCA_3000_26000_R10000.fits

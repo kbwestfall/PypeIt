@@ -21,7 +21,8 @@ import qtpy
 from configobj import ConfigObj
 from datetime import datetime, timezone
 
-from pypeit import log, spectrographs
+from pypeit import log
+from pypeit import spectrographs
 from pypeit.spectrographs import available_spectrographs
 from pypeit.pypeitsetup import PypeItSetup
 from pypeit.metadata import PypeItMetaData
@@ -1236,10 +1237,8 @@ class PypeItSetupGUIModel(QObject):
         else:
             logfile = None
 
-        # TODO: Need help from Dusty to update this
-        self.log_buffer = LogBuffer(logfile,verbosity)
-        log.init(level=log.level, log_file=self.log_buffer)
-#        log.reset(verbosity=verbosity, log=self.log_buffer, log_to_stderr=False)
+        self.log_buffer = LogBuffer(logfile, verbosity)
+        log.init(level=log.convert_verbosity_to_logging_level(verbosity), stream=self.log_buffer)
         log.info(f"QT Version: {qtpy.QT_VERSION}")
         log.info(f"PySide version: {qtpy.PYSIDE_VERSION}")
         log.info(f"PyQt version: {qtpy.PYQT_VERSION}")

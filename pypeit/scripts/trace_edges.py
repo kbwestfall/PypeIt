@@ -74,10 +74,6 @@ class TraceEdges(scriptbase.ScriptBase):
         # Initialize the log
         cls.init_log(args)
 
-        if args.show:
-            log.warning('"show" option is deprecated.  Setting debug = 1.')
-            args.debug = 1
-
         if args.pypeit_file is not None:
             pypeit_file = Path(args.pypeit_file).absolute()
             if not pypeit_file.exists():
