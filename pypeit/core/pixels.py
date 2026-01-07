@@ -128,3 +128,29 @@ def ximg_and_edgemask(lord_in, rord_in, slitpix, trim_edg=(3,3), xshift=0.):
     return ximg, edgemask
 
 
+def convert_to_pixel_range(x, x_min=None, x_max=None):
+    """
+    Given a monotonically increasing coordinate vector, return the pixel values
+    that cover the minimum and maximum coordinate range.
+
+    The function *assumes* the coordinate vector is monotonically increasing.
+
+    Parameters
+    ----------
+    x : `numpy.ndarray`_
+        1D coordinate vector.
+    x_min : :obj:`float`, optional
+        Minimum coordinate value.  If None, the starting pixel is 0.
+    x_max : :obj:`float`, optional
+        Maximum coordinate value.  If None, the ending pixel is the size of ``x``.
+
+    Returns
+    -------
+    s : :obj:`int`
+        Starting pixel value (inclusive).
+    e : :obj:`int`
+        Ending pixel value (exclusive).
+    """
+    s = 0 if x_min is None else np.where(x > x_min)[0][0]
+    e = x.size if x_max is None else np.where(x < x_max)[0][-1] + 1
+    return s, e

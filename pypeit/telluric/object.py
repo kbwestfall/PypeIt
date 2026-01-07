@@ -12,7 +12,6 @@ from pypeit.core import standard
 from pypeit.core import spectrum
 
 
-# TODO: Do I need to allow order to be a vector (listing the orders to include)?
 class AdjustedSpectrumModel:
     """
     A model consisting of an underlying spectrum multiplied by a polynomial.
@@ -23,9 +22,11 @@ class AdjustedSpectrumModel:
 
         - :func:`~pypeit.telluric.object.AdjustedSpectrumModel.spectrum_par_guess`:
           Generate guess parameters for the underlying object spectrum.
+
         - :func:`~pypeit.telluric.object.AdjustedSpectrumModel.spectrum_par_bounds`:
           Generate lower and upper parameter boundaries for the underlying object
           spectrum.
+
         - :func:`~pypeit.telluric.object.AdjustedSpectrumModel.spectrum_sample`:
           Sample the underlying object spectrum given a set of parameters.
 
@@ -74,6 +75,7 @@ class AdjustedSpectrumModel:
     spec_npar : int
         Number of parameters required to generate the underlying spectrum.
     """
+    # TODO: Do I need to allow order to be a vector (listing the orders to include)?
     def __init__(self, spec, wave=None, func='legendre', model='exp', order=None):
         # TODO: Add parameters that can be passed to resample?
         self.spec = spec if wave is None else spec.resample(wave)

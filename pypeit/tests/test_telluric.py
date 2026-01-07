@@ -60,9 +60,7 @@ def test_pca_model():
 
     wave_min = 9000.
     wave_max = 1.8e4
-    _tellmod = telluric.model.PCATelluricModel(
-        pca_file, wave_min=wave_min, wave_max=wave_max, pad_frac=0.
-    )
+    _tellmod = telluric.model.PCATelluricModel(pca_file, wave_min=wave_min, wave_max=wave_max)
     assert tellmod.wave_grid.size > _tellmod.wave_grid.size, 'Should limit wavelength range'
     assert np.all(_tellmod.wave_grid > wave_min) and np.all(_tellmod.wave_grid < wave_max), \
         'Wavelength limits should be exact because padding is 0.'
@@ -70,28 +68,34 @@ def test_pca_model():
     # Test sampling the full model
     rng = np.random.default_rng(99)
     theta = rng.uniform(size=tellmod.base_npar)
-    t = tellmod.base_sample(theta)
+    t = tellmod.base_sample(theta)[1]
     assert np.median(t) > 0.95, 'Model changed'
 
     # Do the same with the wavelength-limited model
-    _t = _tellmod.base_sample(theta)
+    _w, _t, _gpm = _tellmod.base_sample(theta)
 
     # Sample a subsection
-    start = np.where(tellmod.wave_grid == _tellmod.wave_grid[0])[0][0]
-    end = start+_t.size
-    t = tellmod.base_sample(theta, start=start, end=end)
-    assert np.allclose(t[start:end], _t), 'Spectra should be identical'
+    tellmod.restrict_wave_range(wave_min=wave_min, wave_max=wave_max, pad_frac=0.0)
+    assert (tellmod.wave_grid[tellmod.s_wave] > wave_min 
+        and tellmod.wave_grid[tellmod.s_wave-1] < wave_min
+    ), 'Minimum wavelength restriction failed'
+    assert (tellmod.wave_grid[tellmod.e_wave-1] < wave_max
+        and tellmod.wave_grid[tellmod.e_wave] > wave_max
+    ), 'Maximum wavelength restriction failed'
+    w, t, gpm = tellmod.base_sample(theta)
+    assert np.allclose(t[gpm], _t), 'Spectra should be identical'
+    tellmod.restrict_wave_range()
 
     # Fault if the size of the parameter vector is incorrect
     with pytest.raises(PypeItError):
-        t = tellmod.base_sample(theta[:4])
+        t = tellmod.base_sample(theta[:4])[1]
 
     # Instantiate while setting the number of components
     npca = 4
     tellmod = telluric.model.PCATelluricModel(pca_file, npca=npca)
     assert tellmod.base_npar == npca-1, 'Mismatch between number of model parameters and the number of PCA components requested'
     # Test getting the model
-    t = tellmod.base_sample(theta[:npca-1])
+    t = tellmod.base_sample(theta[:npca-1])[1]
     # To many coefficients
     with pytest.raises(PypeItError):
         t = tellmod.base_sample(theta)
@@ -108,7 +112,7 @@ def test_pca_model():
     t = tellmod.base_sample(theta[:tellmod.base_npar])
 
 
-def test_grid():
+def test_grid_model():
 
     grid_file = 'TelFit_Paranal_VIS_4900_11100_R25000.fits'
 
@@ -130,9 +134,7 @@ def test_grid():
 
     wave_min = 6000.
     wave_max = 9000.
-    _tellmod = telluric.model.AtmGridTelluricModel(
-        grid_file, wave_min=wave_min, wave_max=wave_max, pad_frac=0.
-    )
+    _tellmod = telluric.model.AtmGridTelluricModel(grid_file, wave_min=wave_min, wave_max=wave_max)
     assert tellmod.wave_grid.size > _tellmod.wave_grid.size, 'Should limit wavelength range'
     assert np.all(_tellmod.wave_grid > wave_min) and np.all(_tellmod.wave_grid < wave_max), \
         'Wavelength limits should be exact because padding is 0.'
@@ -149,18 +151,24 @@ def test_grid():
             tellmod.pressure_grid, tellmod.temp_grid, tellmod.h2o_grid, tellmod.airmass_grid
         ])
     ])
-    t = tellmod.base_sample(theta)
+    t = tellmod.base_sample(theta)[1]
     assert np.array_equal(t, tellmod.tell_grid[*indx]), 'Grid point selection failed'
     assert np.median(t) > 0.95, 'Model changed'
 
     # Do the same with the wavelength-limited model
-    _t = _tellmod.base_sample(theta)
+    _w, _t, _gpm = _tellmod.base_sample(theta)
 
     # Sample a subsection
-    start = np.where(tellmod.wave_grid == _tellmod.wave_grid[0])[0][0]
-    end = start+_t.size
-    t = tellmod.base_sample(theta, start=start, end=end)
-    assert np.allclose(t[start:end], _t), 'Spectra should be identical'
+    tellmod.restrict_wave_range(wave_min=wave_min, wave_max=wave_max, pad_frac=0.0)
+    assert (tellmod.wave_grid[tellmod.s_wave] > wave_min 
+        and tellmod.wave_grid[tellmod.s_wave-1] < wave_min
+    ), 'Minimum wavelength restriction failed'
+    assert (tellmod.wave_grid[tellmod.e_wave-1] < wave_max
+        and tellmod.wave_grid[tellmod.e_wave] > wave_max
+    ), 'Maximum wavelength restriction failed'
+    w, t, gpm = tellmod.base_sample(theta)
+    assert np.allclose(t[gpm], _t), 'Spectra should be identical'
+    tellmod.restrict_wave_range()
 
     # Fault if the size of the parameter vector is incorrect
     with pytest.raises(PypeItError):
@@ -173,7 +181,7 @@ def test_shift_stretch():
     tellmod = telluric.model.PCATelluricModel('TellPCA_3000_26000_R15000.fits')
     rng = np.random.default_rng(99)
     theta = rng.uniform(size=tellmod.base_npar)
-    t = tellmod.base_sample(theta)
+    t = tellmod.base_sample(theta)[1]
 
     _t = tellmod._shift_and_stretch(np.log10(tellmod.wave_grid), t, 0.0, 1.00)
 
@@ -194,7 +202,7 @@ def test_convolve():
     tellmod = telluric.model.PCATelluricModel('TellPCA_3000_26000_R15000.fits')
     rng = np.random.default_rng(99)
     theta = rng.uniform(size=tellmod.base_npar)
-    t = tellmod.base_sample(theta)
+    t = tellmod.base_sample(theta)[1]
 
     _t = tellmod._convolve(t, 5000)
     assert np.median(t - _t) < 1e-4, 'Median offset should be small'
@@ -213,7 +221,7 @@ def test_sample():
     theta = np.append(theta, [5000., 10.0, 1.02])
 
     # Sample the full model
-    wave, tspec = tellmod.sample(theta)
+    wave, tspec, gpm = tellmod.sample(theta)
     assert np.median(tspec) > 0.95, 'Transmission spectrum changed'
 
     # TODO: Add tests with start and end and with padding
@@ -452,44 +460,44 @@ def test_poly_model():
     assert np.isclose(np.median(flux), 0.95063), 'Median flux changed'
 
 
-def test_fitter():
+#def test_fitter():
+#
+#    # Random number generator
+#    rng = np.random.default_rng(99)
+#
+#    # Make a fake spectrum
+#    wave = np.linspace(7000, 18000, 10000)
+#    resolution = wvutils.get_sampling(wave)[2]
+#    order = 5
+#    func = 'legendre'
+#    model = 'poly'
+#    poly_coeffs = np.append([10.], rng.uniform(size=order))
+#    flux = coadd.poly_model_eval(poly_coeffs, func, model, wave, wave[0], wave[-1])
+#    err = 0.1
+#    flux += rng.normal(scale=err, size=flux.size)
+#
+#    # Create a simple model with the right order and function
+#    obj = telluric.object.AdjustedSpectrumModel(
+#        standard.PseudoStandard(wave=wave), order=order, func=func, model=model
+#    )
+#
+#    # Create a telluric model
+#    tellmod = telluric.model.PCATelluricModel('TellPCA_3000_26000_R15000.fits')
+#    pca_coeffs = rng.uniform(size=tellmod.base_npar)
+#    # Add the resolution, shift, and stretch
+#    tellmod_par = np.append(pca_coeffs, [2000., 0.0, 1.00])
+#
+#    embed()
+#    exit()
+#
+#
+#    obs_spec = spectrum.Spectrum(
+#        wave=wave, flux=flux, ivar=np.full(flux.size, 1/err**2), gpm=np.ones(flux.size, dtype=bool)
+#    )
+#    # Instantiate the fitter
+#    fitter = telluric.fitter.TelluricFit(obj, tellmod)
+#
+#    gp = fitter.par_guess(obs_spec)
+#
 
-    # Random number generator
-    rng = np.random.default_rng(99)
-
-    # Make a fake spectrum
-    wave = np.linspace(7000, 18000, 10000)
-    resolution = wvutils.get_sampling(wave)[2]
-    order = 5
-    func = 'legendre'
-    model = 'poly'
-    poly_coeffs = np.append([10.], rng.uniform(size=order))
-    flux = coadd.poly_model_eval(poly_coeffs, func, model, wave, wave[0], wave[-1])
-    err = 0.1
-    flux += rng.normal(scale=err, size=flux.size)
-
-    # Create a simple model with the right order and function
-    obj = telluric.object.AdjustedSpectrumModel(
-        standard.PseudoStandard(wave=wave), order=order, func=func, model=model
-    )
-
-    # Create a telluric model
-    tellmod = telluric.model.PCATelluricModel('TellPCA_3000_26000_R15000.fits')
-    pca_coeffs = rng.uniform(size=tellmod.base_npar)
-    # Add the resolution, shift, and stretch
-    tellmod_par = np.append(pca_coeffs, [2000., 0.0, 1.00])
-
-    embed()
-    exit()
-
-
-    obs_spec = spectrum.Spectrum(
-        wave=wave, flux=flux, ivar=np.full(flux.size, 1/err**2), gpm=np.ones(flux.size, dtype=bool)
-    )
-    # Instantiate the fitter
-    fitter = telluric.fitter.TelluricFit(obj, tellmod)
-
-    gp = fitter.par_guess(obs_spec)
-
-
-test_fitter()
+#test_fitter()
