@@ -18,22 +18,28 @@ class AdjustedSpectrumModel:
 
     This is the base model where the spectrum must be provided directly.  Other
     subclasses below build the spectrum as part of the instantiation of the
-    model.  The subclasses must provide the following functions:
+    model.
+
+    The underlying spectrum can optionally depend on a set of parameters.  If it
+    does, the subclasses must provide the following functions:
 
         - :func:`~pypeit.telluric.object.AdjustedSpectrumModel.spectrum_par_guess`:
-          Generate guess parameters for the underlying object spectrum.
+          Generate guess parameters for the underlying object spectrum.  Note
+          that this does *not* take any arguments; i.e., the guess parameters
+          are always the same!
 
         - :func:`~pypeit.telluric.object.AdjustedSpectrumModel.spectrum_par_bounds`:
-          Generate lower and upper parameter boundaries for the underlying object
-          spectrum.
+          Generate lower and upper parameter boundaries for the underlying
+          object spectrum.  Note that this does *not* take any arguments; i.e.,
+          the parameter bounds are always the same!
 
         - :func:`~pypeit.telluric.object.AdjustedSpectrumModel.spectrum_sample`:
           Sample the underlying object spectrum given a set of parameters.
 
-    The order of the polynomial must be defined at instantiation.  If ``order is
-    None``, no polynomial is included in the model.  Note that ``order == 0``
-    includes a constant normalization of the model spectrum, which will *not* be
-    included if ``order is None``.
+    The order of the multiplicative polynomial must be defined at instantiation.
+    If ``order is None``, no polynomial is included in the model.  Note that
+    ``order == 0`` includes a constant normalization of the model spectrum,
+    which will *not* be included if ``order is None``.
 
     .. warning::
 
@@ -96,7 +102,7 @@ class AdjustedSpectrumModel:
         """
         The total number of parameters in the model.
         """
-        return self.spec_npar + self.order + 1
+        return self.spec_npar if self.order is None else self.spec_npar + self.order + 1
 
     def spectrum_par_guess(self):
         """
@@ -167,7 +173,7 @@ class AdjustedSpectrumModel:
         _, fit_tuple, _, _, _ = coadd.solve_poly_ratio(
             obs_spec.wave, spec_flux, spec_ivar, obs_spec.flux, obs_spec.ivar, self.order,
             mask=spec_gpm, mask_ref=obs_spec.gpm, func=self.func, model=self.model,
-            scale_max=1e5, debug=True
+            scale_max=1e5, #debug=True
         )
 
         return np.asarray(fit_tuple[0]) if gsp is None else np.append(gsp, fit_tuple[0])
@@ -250,9 +256,6 @@ class AdjustedSpectrumModel:
         """
         Return the model spectrum before any modifications by the polynomial.
 
-        Generally speaking, this is the function that should be overridden by
-        subclasses.
-
         .. note::
 
             - This function should *not* affect the overall normalization of the
@@ -283,7 +286,8 @@ class AdjustedSpectrumModel:
 
     def sample(self, theta):
         """
-        Sample the full model spectrum.
+        Sample the full model spectrum, including the underlying spectrum and
+        the multiplicative polynomial.
 
         Parameters
         ----------
@@ -301,7 +305,12 @@ class AdjustedSpectrumModel:
         gpm : `numpy.ndarray`
             Good pixel mask of the model spectrum.
         """
-        if theta.size != self.npar:
+        if theta is None and self.npar > 0:
+            raise PypeItError(
+                f'Parameter vector cannot be None for {self.__class__.__name__} since the model '
+                f'requires {self.npar} parameters.'
+            )
+        if theta is not None and theta.size != self.npar:
             raise PypeItError(
                 f'Incorrect number of parameters for {self.__class__.__name__}:  Got '
                 f'{theta.size}, expected {self.npar}.'
@@ -311,6 +320,8 @@ class AdjustedSpectrumModel:
             model_flux, model_gpm = self.spectrum_sample(None)
         elif self.spec_npar > 0:
             model_flux, model_gpm = self.spectrum_sample(theta[:self.spec_npar])
+        else:
+            raise PypeItError('Unable to compute underlying spectrum.')
 
         # Add the polynomial
         # TODO: Force the polynomial to always be positive?
@@ -330,7 +341,8 @@ class QSOPCAModel(AdjustedSpectrumModel):
 
     The model parameters for the base level QSO spectrum are the redshift and
     the :math:`N_{\rm PCA}-1` coefficients; the coefficient for the first PCA
-    component is always set to 1.
+    component is always set to 1.  For an overall normalization of the model,
+    set ``order`` to 0 or larger.
 
     The attributes provided below are specific to this class; see the
     description of the base class for additional attributes.
@@ -342,11 +354,10 @@ class QSOPCAModel(AdjustedSpectrumModel):
     z : float
         The fiducial redshift of the QSO model.  The model parameters include
         the redshift, as well.  This should be a redshift used to approximately
-        match the observed wavelength range of the observed spectrum to be
-        modeled.
+        match the observed wavelength range of the spectrum being modeled.
     dz : float, optional
         The :math:`\pm` range relative to the provided redshift (`z`) that is
-        used to set the bounds during the fitting process.
+        used to set the bounds during the modeling process.
     npca : int, optional
         The number of PCA components to use in constructing the model.  A
         warning will be issued if this is larger than the number of components
@@ -477,8 +488,8 @@ class QSOPCAModel(AdjustedSpectrumModel):
         # TODO:
         #   - Allow for subpixel shifts
         #   - Mask regions unobserved and wrapped spectral regions
-        #   - Construct the linear combination of components first, then shift.
-        # NOTE: this raises a ValueError when the number of parameters is incorrect
+        # NOTE: this dot product raises a ValueError when the number of
+        # parameters is incorrect
         _flux = np.dot(self.spec.flux, np.append(1.0,theta[1:]))
         dshift = int(np.round(np.log10((1.0 + theta[0])/(1.0 + self.z))/self.dloglam))
         gpm = np.roll(self.spec_gpm, dshift)

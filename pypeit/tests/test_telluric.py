@@ -209,7 +209,7 @@ def test_convolve():
     assert np.std(t - _t) < 0.1, 'Standard deviation should be smaller'
 
 
-def test_sample():
+def test_sample_model():
     # Build a test model
     tellmod = telluric.model.PCATelluricModel('TellPCA_3000_26000_R15000.fits')
 
@@ -325,7 +325,7 @@ def test_qso_pca_model():
     # parameters beyond the first npca are considered coefficients of the
     # polynomial.
     theta = np.append([7.0], rng.uniform(size=4))
-    with pytest.raises(ValueError):
+    with pytest.raises(PypeItError):
         flux, gpm = obj.sample(theta)
 
     # This should be successful
@@ -337,12 +337,14 @@ def test_qso_pca_model():
 
     # Add a normalization
     theta = np.append(theta, [2.0])
+    obj = telluric.object.QSOPCAModel(pcafile, 7.0, wave=obswave, npca=7, order=0)
     flux, gpm = obj.sample(theta)
     # NOTE: This divides by np.exp(2.0) because the default "model" parameter is "exp"
     assert np.isclose(np.median(flux)/np.exp(2.0), 0.32486), 'Normalization not working correctly'
 
     # Add a 4th order polynomial
     theta = np.append(theta, rng.uniform(size=3))
+    obj = telluric.object.QSOPCAModel(pcafile, 7.0, wave=obswave, npca=7, order=3)
     flux, gpm = obj.sample(theta)
     assert np.isclose(np.median(flux), 2.19489), 'Normalization not working correctly'
 
@@ -354,6 +356,7 @@ def test_qso_pca_model():
     # of the test.
     assert np.array_equal(obswave < z0_redshift_wave_range[1]*8., _obj.spec_gpm), \
         'Pixels beyond wavelength range of PCA components should be masked'
+
 
 def test_qso_pca_model_sim():
     pcafile = 'qso_pca_1200_3100.fits'
@@ -369,7 +372,7 @@ def test_qso_pca_model_sim():
 
     spec_flux, spec_gpm = obj.spectrum_sample(spec_theta)
     with pytest.raises(PypeItError):
-        # Should faile because the number of parameters is wrong
+        # Should fail because the number of parameters is wrong
         f, g = obj.sample(spec_theta)
 
     # Add the polynomial coefficients
@@ -425,17 +428,19 @@ def test_star_model():
     assert flux.size == obswave.size, 'Spectrum was not resampled'
 
     # Renormalize
+    obj = telluric.object.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave, order=0)
     _flux, gpm = obj.sample(np.array([2.0]))
     assert np.allclose(_flux / flux, np.exp(2.)), 'Should be renormalized'
 
     # Change the normalization model
-    obj = telluric.object.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave, model='poly')
+    obj = telluric.object.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave, order=0, model='poly')
     _flux, gpm = obj.sample(np.array([2.0]))
     assert np.allclose(_flux / flux, 2.), 'Should be renormalized'
 
     # Normalize by a polynomial
     rng = np.random.default_rng(99)
     theta = np.append([1.1], rng.uniform(size=3))
+    obj = telluric.object.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave, order=3, model='poly')
     flux, gpm = obj.sample(theta)
     assert np.isclose(np.median(flux), 606.096), 'Median flux changed'
 
@@ -456,6 +461,7 @@ def test_poly_model():
     # Normalize by a polynomial
     rng = np.random.default_rng(99)
     theta = np.append([1.1], rng.uniform(size=3))
+    obj = telluric.object.PolynomialModel(wave=obswave, order=3, model='poly')
     flux, gpm = obj.sample(theta)
     assert np.isclose(np.median(flux), 0.95063), 'Median flux changed'
 

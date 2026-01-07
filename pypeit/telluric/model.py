@@ -71,6 +71,34 @@ class TelluricModel:
     wave_max : :obj:`float`, optional
         Maximum wavelength accessible to the model.  If None, an upper limit is
         not set.
+
+    Attributes
+    ----------
+    file : :class:`pathlib.Path`
+        Path to the telluric model data file.
+    model_res : :obj:`float`
+        Spectral resolution (:math:`R = \lambda / \Delta\lambda`) of the model
+        spectra.
+    wave_grid : `numpy.ndarray`_
+        Wavelength grid of the telluric model.
+    tell_grid : `numpy.ndarray`_
+        Data used to construct the telluric model.
+    dloglam : :obj:`float`
+        Delta log10(lambda) between pixels in the telluric model wavelength vector.
+    npad : :obj:`int`
+        Number of pixels to pad the telluric model when performing convolutions
+        to avoid edge effects.
+    base_npar : :obj:`int`
+        Number of parameters needed to generate the underlying telluric model
+        (everything except the resolution, shift, and stretch).
+    npar : :obj:`int`
+        Total number of parameters for the model.  This is always the number of
+        base parameters plus 3 (for the resolution, shift, and stretch).
+    s_wave : :obj:`int`
+        Starting pixel in the wavelength grid to use when evaluating the model.
+    e_wave : :obj:`int`
+        Ending pixel (exclusive) in the wavelength grid to use when evaluating
+        the model.
     """
     def __init__(self, filename, model_res=None, load=True, wave_min=None, wave_max=None):
         to_pkg = 'move' if ".dev" in __version__ else None
@@ -81,7 +109,7 @@ class TelluricModel:
         self.wave_grid = None
         self.tell_grid = None
         self.dloglam = None
-        self.tell_pad_pix = None
+        self.npad = None
 
         # The number of parameters needed to generate the underlying telluric
         # model (everything except the resolution, shift, and stretch)
@@ -188,7 +216,7 @@ class TelluricModel:
             Raised if the wavelength grid and/or padding have not been defined
             yet.
         """
-        if self.wave_grid is None or self.tell_pad_pix is None:
+        if self.wave_grid is None or self.npad is None:
             raise PypeItError(
                 'Telluric model wavelength grid and/or padding have not been defined yet!'
             )
@@ -197,15 +225,15 @@ class TelluricModel:
         _start = 0 if self.s_wave is None else self.s_wave
         _end = self.wave_grid.size if self.e_wave is None else self.e_wave
         # Include padding to deal with inaccurate convolutions from edge effects
-        start_pad = np.fmax(_start - self.tell_pad_pix, 0)
-        end_pad = np.fmin(_end + self.tell_pad_pix, self.wave_grid.size)
+        start_pad = np.fmax(_start - self.npad, 0)
+        end_pad = np.fmin(_end + self.npad, self.wave_grid.size)
         # The truncating the wavelength range
         wave = self.wave_grid[start_pad:end_pad]
-        # The good-pixel mask, which always masks at least tell_pad_pix on
+        # The good-pixel mask, which always masks at least npad on
         # either end of the model spectrum
         gpm = np.ones_like(wave, dtype=bool)
-        gpm[:max(_start - start_pad, self.tell_pad_pix)] = False
-        gpm[-max(_end - end_pad, self.tell_pad_pix):] = False
+        gpm[:max(_start - start_pad, self.npad)] = False
+        gpm[-max(_end - end_pad, self.npad):] = False
         # Return the results
         return start_pad, end_pad, wave, gpm
 
@@ -557,7 +585,7 @@ class PCATelluricModel(TelluricModel):
         self.wave_grid = hdu[1].data[s_wave:e_wave]
         self.tell_grid = hdu[0].data[:self.npca,s_wave:e_wave]
         _, self.dloglam, _, pix_per_sigma = wvutils.get_sampling(self.wave_grid)
-        self.tell_pad_pix = int(np.ceil(10.0 * pix_per_sigma))
+        self.npad = int(np.ceil(10.0 * pix_per_sigma))
 
         # Coefficient bounds are provided by the data file.  Keep those relevant
         # to the model parameters and convert the object into a list of
@@ -730,7 +758,7 @@ class AtmGridTelluricModel(TelluricModel):
         self.wave_grid = 10.0 * hdu[1].data[s_wave:e_wave]
         self.tell_grid = hdu[0].data[...,s_wave:e_wave]
         _, self.dloglam, _, pix_per_sigma = wvutils.get_sampling(self.wave_grid)
-        self.tell_pad_pix = int(np.ceil(10.0 * pix_per_sigma))
+        self.npad = int(np.ceil(10.0 * pix_per_sigma))
 
         # Construct the parameter grid
         self.pressure_grid = hdu[0].header['PRES0'] \
