@@ -79,7 +79,7 @@ class TelluricModel:
     model_res : :obj:`float`
         Spectral resolution (:math:`R = \lambda / \Delta\lambda`) of the model
         spectra.
-    wave_grid : `numpy.ndarray`_
+    wave : `numpy.ndarray`_
         Wavelength grid of the telluric model.
     tell_grid : `numpy.ndarray`_
         Data used to construct the telluric model.
@@ -106,7 +106,7 @@ class TelluricModel:
         self.model_res = model_res
 
         # Defined by the subclass load functions
-        self.wave_grid = None
+        self.wave = None
         self.tell_grid = None
         self.dloglam = None
         self.npad = None
@@ -148,7 +148,7 @@ class TelluricModel:
         Restrict the wavelength range of the evaluated model.
 
         This function sets the starting (:attr:`s_wave`) and ending
-        (:attr:`e_wave`) pixel values in the wavelength grid (:attr:`wave_grid`)
+        (:attr:`e_wave`) pixel values in the wavelength grid (:attr:`wave`)
         to be used when evaluating the telluric model.  If both ``wave_min`` and
         ``wave_max`` are None, the full wavelength is used.  This function can
         also be used to reset the object to use the full wavelength range, by
@@ -168,8 +168,8 @@ class TelluricModel:
             resulting grid will extend from ``(1.0 - pad_frac)*wave_min`` to
             ``(1.0 + pad_frac)*wave_max``.
         """
-        if self.wave_grid is None:
-            raise PypeItError('Telluric model wavelength grid has not been defined yet!')
+        if self.wave is None:
+            raise PypeItError('Telluric model wavelength vector has not been defined yet!')
 
         if wave_min is None:
             _wave_min = None
@@ -182,7 +182,7 @@ class TelluricModel:
             _wave_max = wave_max if pad_frac is None else (1.0 + pad_frac) * wave_max
 
         self.s_wave, self.e_wave = pixels.convert_to_pixel_range(
-            self.wave_grid, x_min=_wave_min, x_max=_wave_max
+            self.wave, x_min=_wave_min, x_max=_wave_max
         )
 
     @property
@@ -216,26 +216,26 @@ class TelluricModel:
             Raised if the wavelength grid and/or padding have not been defined
             yet.
         """
-        if self.wave_grid is None or self.npad is None:
+        if self.wave is None or self.npad is None:
             raise PypeItError(
-                'Telluric model wavelength grid and/or padding have not been defined yet!'
+                'Telluric model wavelength vector and/or padding have not been defined yet!'
             )
 
         # Restrict the wavelength range
         _start = 0 if self.s_wave is None else self.s_wave
-        _end = self.wave_grid.size if self.e_wave is None else self.e_wave
+        _end = self.wave.size if self.e_wave is None else self.e_wave
         # Include padding to deal with inaccurate convolutions from edge effects
         start_pad = np.fmax(_start - self.npad, 0)
-        end_pad = np.fmin(_end + self.npad, self.wave_grid.size)
+        end_pad = np.fmin(_end + self.npad, self.wave.size)
         # The truncating the wavelength range
-        wave = self.wave_grid[start_pad:end_pad]
+        _wave = self.wave[start_pad:end_pad]
         # The good-pixel mask, which always masks at least npad on
         # either end of the model spectrum
-        gpm = np.ones_like(wave, dtype=bool)
+        gpm = np.ones_like(_wave, dtype=bool)
         gpm[:max(_start - start_pad, self.npad)] = False
         gpm[-max(_end - end_pad, self.npad):] = False
         # Return the results
-        return start_pad, end_pad, wave, gpm
+        return start_pad, end_pad, _wave, gpm
 
     def _convolve(self, tspec, res):
         """
@@ -359,8 +359,8 @@ class TelluricModel:
         Returns
         -------
         list
-            List of tuples with the lower and upper bounds of the parameters for
-            the base-level model.
+            List of two-tuples with the lower and upper bounds of the parameters
+            for the base-level model.
         """
         raise PypeItError(f'{self.__class__.__name__} has not defined a base_par_bounds function!')
     
@@ -388,8 +388,8 @@ class TelluricModel:
         Returns
         -------
         list
-            A list of tuples that provide the lower and upper bounds for each
-            model parameter.
+            A list of two-tuples that provide the lower and upper bounds for
+            each model parameter.
         """
         # guess_par[-3] is the guess resolution.
         return self.base_par_bounds() + [
@@ -400,7 +400,7 @@ class TelluricModel:
 
     def base_sample(self, theta):
         """
-        Sample the telluric model at its native resolution and wavelength grid.
+        Sample the telluric model at its native resolution and wavelength vector.
         **Must be implemented by each subclass.**
 
         This function should account for any restricted wavelength range and
@@ -582,9 +582,9 @@ class PCATelluricModel(TelluricModel):
         s_wave, e_wave = pixels.convert_to_pixel_range(hdu[1].data, x_min=wave_min, x_max=wave_max)
 
         # Get the relevant data
-        self.wave_grid = hdu[1].data[s_wave:e_wave]
+        self.wave = hdu[1].data[s_wave:e_wave]
         self.tell_grid = hdu[0].data[:self.npca,s_wave:e_wave]
-        _, self.dloglam, _, pix_per_sigma = wvutils.get_sampling(self.wave_grid)
+        _, self.dloglam, _, pix_per_sigma = wvutils.get_sampling(self.wave)
         self.npad = int(np.ceil(10.0 * pix_per_sigma))
 
         # Coefficient bounds are provided by the data file.  Keep those relevant
@@ -638,8 +638,8 @@ class PCATelluricModel(TelluricModel):
         Returns
         -------
         list
-            List of tuples with the lower and upper bounds of the parameters for
-            the base-level model.
+            List of two-tuples with the lower and upper bounds of the parameters
+            for the base-level model.
         """
         # TODO: Return a copy?
         return self.coeff_bounds
@@ -755,9 +755,9 @@ class AtmGridTelluricModel(TelluricModel):
         )
 
         # Get the relevant data
-        self.wave_grid = 10.0 * hdu[1].data[s_wave:e_wave]
+        self.wave = 10.0 * hdu[1].data[s_wave:e_wave]
         self.tell_grid = hdu[0].data[...,s_wave:e_wave]
-        _, self.dloglam, _, pix_per_sigma = wvutils.get_sampling(self.wave_grid)
+        _, self.dloglam, _, pix_per_sigma = wvutils.get_sampling(self.wave)
         self.npad = int(np.ceil(10.0 * pix_per_sigma))
 
         # Construct the parameter grid
@@ -818,8 +818,8 @@ class AtmGridTelluricModel(TelluricModel):
         Returns
         -------
         list
-            List of tuples with the lower and upper bounds of the parameters for
-            the base-level model.
+            List of two-tuples with the lower and upper bounds of the parameters
+            for the base-level model.
         """
         return [
             (np.min(self.pressure_grid), np.max(self.pressure_grid)),
@@ -876,10 +876,4 @@ class AtmGridTelluricModel(TelluricModel):
                 theta, [self.pressure_grid, self.temp_grid, self.h2o_grid, self.airmass_grid]
             )
         ]
-
-        try:
-            return wave, self.tell_grid[*indx][start_pad:end_pad], gpm
-        except:
-            embed()
-            exit()
-
+        return wave, self.tell_grid[*indx][start_pad:end_pad], gpm

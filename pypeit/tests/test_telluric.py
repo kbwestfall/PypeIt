@@ -46,23 +46,23 @@ def test_pca_model():
     tellmod = telluric.model.PCATelluricModel(pca_file)
 
     # Check some basics
-    assert tellmod.wave_grid.size == 82398, 'Number of wavelengths changed'
+    assert tellmod.wave.size == 82398, 'Number of wavelengths changed'
     assert tellmod.tell_grid.shape[0] == 11, 'Number of components changed'
 
     # Test a restricted wavelength range
     _tellmod = telluric.model.PCATelluricModel(pca_file, wave_min=5000)
-    assert tellmod.wave_grid.size > _tellmod.wave_grid.size, 'Should limit wavelength range'
-    assert tellmod.wave_grid[-1] == _tellmod.wave_grid[-1], 'Should only limit the blue end'
+    assert tellmod.wave.size > _tellmod.wave.size, 'Should limit wavelength range'
+    assert tellmod.wave[-1] == _tellmod.wave[-1], 'Should only limit the blue end'
 
     _tellmod = telluric.model.PCATelluricModel(pca_file, wave_max=5000)
-    assert tellmod.wave_grid.size > _tellmod.wave_grid.size, 'Should limit wavelength range'
-    assert tellmod.wave_grid[0] == _tellmod.wave_grid[0], 'Should only limit the red end'
+    assert tellmod.wave.size > _tellmod.wave.size, 'Should limit wavelength range'
+    assert tellmod.wave[0] == _tellmod.wave[0], 'Should only limit the red end'
 
     wave_min = 9000.
     wave_max = 1.8e4
     _tellmod = telluric.model.PCATelluricModel(pca_file, wave_min=wave_min, wave_max=wave_max)
-    assert tellmod.wave_grid.size > _tellmod.wave_grid.size, 'Should limit wavelength range'
-    assert np.all(_tellmod.wave_grid > wave_min) and np.all(_tellmod.wave_grid < wave_max), \
+    assert tellmod.wave.size > _tellmod.wave.size, 'Should limit wavelength range'
+    assert np.all(_tellmod.wave > wave_min) and np.all(_tellmod.wave < wave_max), \
         'Wavelength limits should be exact because padding is 0.'
 
     # Test sampling the full model
@@ -76,11 +76,11 @@ def test_pca_model():
 
     # Sample a subsection
     tellmod.restrict_wave_range(wave_min=wave_min, wave_max=wave_max, pad_frac=0.0)
-    assert (tellmod.wave_grid[tellmod.s_wave] > wave_min 
-        and tellmod.wave_grid[tellmod.s_wave-1] < wave_min
+    assert (tellmod.wave[tellmod.s_wave] > wave_min 
+        and tellmod.wave[tellmod.s_wave-1] < wave_min
     ), 'Minimum wavelength restriction failed'
-    assert (tellmod.wave_grid[tellmod.e_wave-1] < wave_max
-        and tellmod.wave_grid[tellmod.e_wave] > wave_max
+    assert (tellmod.wave[tellmod.e_wave-1] < wave_max
+        and tellmod.wave[tellmod.e_wave] > wave_max
     ), 'Maximum wavelength restriction failed'
     w, t, gpm = tellmod.base_sample(theta)
     assert np.allclose(t[gpm], _t), 'Spectra should be identical'
@@ -120,23 +120,23 @@ def test_grid_model():
     tellmod = telluric.model.AtmGridTelluricModel(grid_file)
 
     # Check some basics
-    assert tellmod.wave_grid.size == 32709, 'Number of wavelengths changed'
+    assert tellmod.wave.size == 32709, 'Number of wavelengths changed'
     assert tellmod.tell_grid.shape[:-1] == (7, 9, 11, 21), 'Shape of atmospheric grid changed'
 
     # Test a restricted wavelength range
     _tellmod = telluric.model.AtmGridTelluricModel(grid_file, wave_min=7500)
-    assert tellmod.wave_grid.size > _tellmod.wave_grid.size, 'Should limit wavelength range'
-    assert tellmod.wave_grid[-1] == _tellmod.wave_grid[-1], 'Should only limit the blue end'
+    assert tellmod.wave.size > _tellmod.wave.size, 'Should limit wavelength range'
+    assert tellmod.wave[-1] == _tellmod.wave[-1], 'Should only limit the blue end'
 
     _tellmod = telluric.model.AtmGridTelluricModel(grid_file, wave_max=7500)
-    assert tellmod.wave_grid.size > _tellmod.wave_grid.size, 'Should limit wavelength range'
-    assert tellmod.wave_grid[0] == _tellmod.wave_grid[0], 'Should only limit the red end'
+    assert tellmod.wave.size > _tellmod.wave.size, 'Should limit wavelength range'
+    assert tellmod.wave[0] == _tellmod.wave[0], 'Should only limit the red end'
 
     wave_min = 6000.
     wave_max = 9000.
     _tellmod = telluric.model.AtmGridTelluricModel(grid_file, wave_min=wave_min, wave_max=wave_max)
-    assert tellmod.wave_grid.size > _tellmod.wave_grid.size, 'Should limit wavelength range'
-    assert np.all(_tellmod.wave_grid > wave_min) and np.all(_tellmod.wave_grid < wave_max), \
+    assert tellmod.wave.size > _tellmod.wave.size, 'Should limit wavelength range'
+    assert np.all(_tellmod.wave > wave_min) and np.all(_tellmod.wave < wave_max), \
         'Wavelength limits should be exact because padding is 0.'
 
     # Test sampling the full model
@@ -160,11 +160,11 @@ def test_grid_model():
 
     # Sample a subsection
     tellmod.restrict_wave_range(wave_min=wave_min, wave_max=wave_max, pad_frac=0.0)
-    assert (tellmod.wave_grid[tellmod.s_wave] > wave_min 
-        and tellmod.wave_grid[tellmod.s_wave-1] < wave_min
+    assert (tellmod.wave[tellmod.s_wave] > wave_min
+        and tellmod.wave[tellmod.s_wave-1] < wave_min
     ), 'Minimum wavelength restriction failed'
-    assert (tellmod.wave_grid[tellmod.e_wave-1] < wave_max
-        and tellmod.wave_grid[tellmod.e_wave] > wave_max
+    assert (tellmod.wave[tellmod.e_wave-1] < wave_max
+        and tellmod.wave[tellmod.e_wave] > wave_max
     ), 'Maximum wavelength restriction failed'
     w, t, gpm = tellmod.base_sample(theta)
     assert np.allclose(t[gpm], _t), 'Spectra should be identical'
@@ -183,17 +183,17 @@ def test_shift_stretch():
     theta = rng.uniform(size=tellmod.base_npar)
     t = tellmod.base_sample(theta)[1]
 
-    _t = tellmod._shift_and_stretch(np.log10(tellmod.wave_grid), t, 0.0, 1.00)
+    _t = tellmod._shift_and_stretch(np.log10(tellmod.wave), t, 0.0, 1.00)
 
     # TODO: I don't understand why this isn't a better match
     assert np.allclose(t, _t, atol=1e-6), 'Shift and stretch failure'
 
-    _t = tellmod._shift_and_stretch(np.log10(tellmod.wave_grid), t, 10.0, 1.00)
+    _t = tellmod._shift_and_stretch(np.log10(tellmod.wave), t, 10.0, 1.00)
     assert np.allclose(t[10:], _t[:-10], atol=1e-6), 'Integer shift should be better'
 
     # Just test basic functionality for stretch
     # TODO: Shift and stretch are not independent...
-    _t = tellmod._shift_and_stretch(np.log10(tellmod.wave_grid), t, 0.0, 1.05)
+    _t = tellmod._shift_and_stretch(np.log10(tellmod.wave), t, 0.0, 1.05)
 
 
 def test_convolve():
@@ -466,44 +466,56 @@ def test_poly_model():
     assert np.isclose(np.median(flux), 0.95063), 'Median flux changed'
 
 
-#def test_fitter():
-#
-#    # Random number generator
-#    rng = np.random.default_rng(99)
-#
-#    # Make a fake spectrum
-#    wave = np.linspace(7000, 18000, 10000)
-#    resolution = wvutils.get_sampling(wave)[2]
-#    order = 5
-#    func = 'legendre'
-#    model = 'poly'
-#    poly_coeffs = np.append([10.], rng.uniform(size=order))
-#    flux = coadd.poly_model_eval(poly_coeffs, func, model, wave, wave[0], wave[-1])
-#    err = 0.1
-#    flux += rng.normal(scale=err, size=flux.size)
-#
-#    # Create a simple model with the right order and function
-#    obj = telluric.object.AdjustedSpectrumModel(
-#        standard.PseudoStandard(wave=wave), order=order, func=func, model=model
-#    )
-#
-#    # Create a telluric model
-#    tellmod = telluric.model.PCATelluricModel('TellPCA_3000_26000_R15000.fits')
-#    pca_coeffs = rng.uniform(size=tellmod.base_npar)
-#    # Add the resolution, shift, and stretch
-#    tellmod_par = np.append(pca_coeffs, [2000., 0.0, 1.00])
-#
-#    embed()
-#    exit()
-#
-#
-#    obs_spec = spectrum.Spectrum(
-#        wave=wave, flux=flux, ivar=np.full(flux.size, 1/err**2), gpm=np.ones(flux.size, dtype=bool)
-#    )
-#    # Instantiate the fitter
-#    fitter = telluric.fitter.TelluricFit(obj, tellmod)
-#
-#    gp = fitter.par_guess(obs_spec)
-#
+def test_fitter():
 
-#test_fitter()
+    # Random number generator
+    rng = np.random.default_rng(99)
+
+    # Make a fake spectrum
+    wave = np.linspace(7000, 18000, 10000)
+    resolution = wvutils.get_sampling(wave)[2]
+    order = 5
+    func = 'legendre'
+    model = 'poly'
+    poly_coeffs = np.append([10.], rng.uniform(size=order))
+    flux = coadd.poly_model_eval(poly_coeffs, func, model, wave, wave[0], wave[-1])
+
+    # Create a telluric model
+    tellmod = telluric.model.PCATelluricModel(
+        'TellPCA_3000_26000_R15000.fits', wave_min=0.9*wave[0], wave_max=1.1*wave[-1]
+    )
+    # Generate some test parameters
+    tellmod_par = np.append(rng.uniform(size=tellmod.base_npar), [2000., 0.0, 1.00])
+
+    # Add the telluric absorption to the fake spectrum
+    twave, tspec, tgpm = tellmod.sample(tellmod_par)
+    tell_spec = spectrum.Spectrum(wave=twave, flux=tspec, gpm=tgpm).resample(wave)
+    flux *= tell_spec.flux
+
+    # Add noise
+    err = 0.1
+    flux += rng.normal(scale=err, size=flux.size)
+
+    # Construct the synthetic spectrum object
+    obs_spec = spectrum.Spectrum(
+        wave=wave, flux=flux, ivar=np.full(flux.size, 1/err**2), gpm=np.ones(flux.size, dtype=bool)
+    )
+
+    # Create a simple model with the right order and function.
+    # NOTE: Importantly, this uses the same wavelength vector as the telluric
+    # model.
+    obj = telluric.object.AdjustedSpectrumModel(
+        standard.PseudoStandard(wave=tellmod.wave), order=order, func=func, model=model
+    )
+
+    # Instantiate the fitter
+    fitter = telluric.fitter.ObservedSourceModel(obj, tellmod)
+
+    # Get the parameter guesses
+    gp = fitter.par_guess(obs_spec)
+    bp = fitter.par_bounds(gp)
+
+    embed()
+    exit()
+
+test_fitter()

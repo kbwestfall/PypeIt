@@ -1958,6 +1958,10 @@ def poly_telluric(spec1dfile, telgridfile, telloutfile, outfile, z_obj=0.0, func
 
 
 
+# TODO: (note about ``seed`` argument) (JFH) Note that differential evolution
+# seems to have some other source of stochasticity that I have not yet figured
+# out.
+# TODO: Clarify sensfunc argmument.
 class Telluric(datamodel.DataContainer):
     r"""
     Simultaneously fit model object and telluric spectra to an observed
@@ -2177,9 +2181,7 @@ class Telluric(datamodel.DataContainer):
             be used to seed a `numpy.random.Generator`_ object. A specific
             seed is used because otherwise the random number generator will
             use the time for the seed and the results will not be
-            reproducible. TODO: (JFH) Note that differential evolution seems
-            to have some other source of stochasticity that I have not yet
-            figured out.
+            reproducible. 
         ballsize (:obj:`float`, optional):
             This parameter governs how the differential evolution random
             population is initialized for the object model and for subsequent
@@ -2228,7 +2230,6 @@ class Telluric(datamodel.DataContainer):
             fitting and sensitivity function computation. If True, the input
             flux is in counts and then converted to counts per angstrom,
             since the sensfunc is obtained by fitting counts per angstrom.
-            TODO: This explanation is unclear.
         debug (:obj:`bool`, optional):
             If True, QA plots will be shown to the screen indicating the
             quality of the fits. Specifically, the residual distributions
