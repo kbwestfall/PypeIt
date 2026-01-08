@@ -23,18 +23,18 @@ class AdjustedSpectrumModel:
     The underlying spectrum can optionally depend on a set of parameters.  If it
     does, the subclasses must provide the following functions:
 
-        - :func:`~pypeit.telluric.object.AdjustedSpectrumModel.spectrum_par_guess`:
-          Generate guess parameters for the underlying object spectrum.  Note
+        - :func:`~pypeit.telluric.source.AdjustedSpectrumModel.spectrum_par_guess`:
+          Generate guess parameters for the underlying source spectrum.  Note
           that this does *not* take any arguments; i.e., the guess parameters
           are always the same!
 
-        - :func:`~pypeit.telluric.object.AdjustedSpectrumModel.spectrum_par_bounds`:
+        - :func:`~pypeit.telluric.source.AdjustedSpectrumModel.spectrum_par_bounds`:
           Generate lower and upper parameter boundaries for the underlying
-          object spectrum.  Note that this does *not* take any arguments; i.e.,
+          source spectrum.  Note that this does *not* take any arguments; i.e.,
           the parameter bounds are always the same!
 
-        - :func:`~pypeit.telluric.object.AdjustedSpectrumModel.spectrum_sample`:
-          Sample the underlying object spectrum given a set of parameters.
+        - :func:`~pypeit.telluric.source.AdjustedSpectrumModel.spectrum_sample`:
+          Sample the underlying source spectrum given a set of parameters.
 
     The order of the multiplicative polynomial must be defined at instantiation.
     If ``order is None``, no polynomial is included in the model.  Note that
@@ -192,7 +192,7 @@ class AdjustedSpectrumModel:
 
     def par_bounds(self, guess_par, rel_coeff_bounds, abs_coeff_bounds):
         """
-        Provide the bounds for all object model parameters.
+        Provide the bounds for all source spectrum model parameters.
 
         The bounds are calculated in an absolute sense (using
         ``abs_coeff_bounds``) and relative to the guess parameters (using

@@ -1,5 +1,5 @@
 """
-Module for fitting a telluric + object model to an observed spectrum.
+Module for fitting a source + telluric model to an observed spectrum.
 """
 
 from IPython import embed
@@ -20,27 +20,27 @@ from pypeit.core import spectrum
 
 class ObservedSourceModel:
 
-    def __init__(self, obj_model, tell_model):
+    def __init__(self, src_model, tell_model):
         """
-        Class to perform the object + telluric model fit to an observed spectrum.
+        Class to perform the source + telluric model fit to an observed spectrum.
 
         Parameters
         ----------
-        obj_model : :class`~pypeit.telluric.object.AdjustedSpectrumModel`
-            The class to use when modeling the object spectrum.  The object
+        src_model : :class`~pypeit.telluric.source.AdjustedSpectrumModel`
+            The class to use when modeling the source spectrum.  The object
             cannot be ``None`` and the model must be fully initialized (i.e.,
-            ``obj_model.sample()`` should not fail).
+            ``src_model.sample()`` should not fail).
         tell_model : :class:`~pypeit.telluric.model.TelluricModel`
             The class to use when modeling the telluric spectrum.  The object
             cannot be ``None``, the model must be fully initialized (i.e.,
             ``tell_model.sample()`` should not fail), and the wavelength array
-            of the model must match the object model.
+            of the model must match the source spectrum model.
         """
-        self.obj_model = obj_model
+        self.src_model = src_model
         self.tell_model = tell_model
 
-        if not np.allclose(self.obj_model.wave, self.tell_model.wave):
-            raise PypeItError('Object and telluric model wavelength arrays do not match.')
+        if not np.allclose(self.src_model.wave, self.tell_model.wave):
+            raise PypeItError('Source and telluric model wavelength arrays do not match.')
 
         # Kept during fitting
         self._reset_fit()
@@ -54,9 +54,9 @@ class ObservedSourceModel:
     @property
     def npar(self):
         """
-        Total number of parameters in the object + telluric model.
+        Total number of parameters in the source + telluric model.
         """
-        return self.obj_model.npar + self.tell_model.npar
+        return self.src_model.npar + self.tell_model.npar
 
     def par_guess(self, obs_spec):
         """
@@ -72,7 +72,7 @@ class ObservedSourceModel:
         `numpy.ndarray`_
             Guess parameters
         """
-        # Guess the telluric parameters first.  The object spectrum is passed to
+        # Guess the telluric parameters first.  The source spectrum is passed to
         # the guess function, but the current models don't actually use the flux
         # vector.  They only use the wavelength vector to guess the spectral
         # resolution.
@@ -86,31 +86,31 @@ class ObservedSourceModel:
         corr_spec = obs_spec.resample(tell_wave)
         corr_spec.multiply(tell_spec_inv)
 
-        # The object spectrum parameters can be None, although they should
+        # The source spectrum parameters can be None, although they should
         # effectively never be none because that means there's no overall
         # normalization.  I.e., in general, the order of the polynomial included
-        # in the object model should always be >= 0.
-        obj_par = self.obj_model.par_guess(corr_spec)
+        # in the source model should always be >= 0.
+        src_par = self.src_model.par_guess(corr_spec)
 
-        return tell_par if obj_par is None else np.append(obj_par, tell_par)
+        return tell_par if src_par is None else np.append(src_par, tell_par)
 
     def par_bounds(self,
         guess_par, rel_coeff_bounds=(-20.0, 20.0), abs_coeff_bounds=(-5.0, 5.0),
         resolution_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0,5.0),
         pix_stretch_bounds=(0.98,1.02)
     ):
-        obj_bounds = self.obj_model.par_bounds(
-            guess_par[:self.obj_model.npar], rel_coeff_bounds, abs_coeff_bounds
+        src_bounds = self.src_model.par_bounds(
+            guess_par[:self.src_model.npar], rel_coeff_bounds, abs_coeff_bounds
         )
         tell_bounds = self.tell_model.par_bounds(
-            guess_par[self.obj_model.npar:], resolution_frac_bounds=resolution_frac_bounds,
+            guess_par[self.src_model.npar:], resolution_frac_bounds=resolution_frac_bounds,
             pix_shift_bounds=pix_shift_bounds, pix_stretch_bounds=pix_stretch_bounds
         )
-        return tell_bounds if obj_bounds is None else obj_bounds + tell_bounds
+        return tell_bounds if src_bounds is None else src_bounds + tell_bounds
     
     def sample(self, theta):
         """
-        Sample the combined object + telluric model.
+        Sample the combined source + telluric model.
 
         Parameters
         ----------
@@ -126,10 +126,10 @@ class ObservedSourceModel:
         gpm : `numpy.ndarray`_, boolean
             Good pixel mask.
         """
-        src_spec, src_gpm = self.obj_model.sample(
-            theta[:self.obj_model.npar] if self.obj_model.npar > 0 else None
+        src_spec, src_gpm = self.src_model.sample(
+            theta[:self.src_model.npar] if self.src_model.npar > 0 else None
         )
-        tell_wave, tell_spec, tell_gpm = self.tell_model.sample(theta[self.obj_model.npar:])
+        tell_wave, tell_spec, tell_gpm = self.tell_model.sample(theta[self.src_model.npar:])
         return tell_wave, src_spec * tell_spec, src_gpm & tell_gpm
     
     def fit_metric(self, theta):
@@ -143,7 +143,7 @@ class ObservedSourceModel:
 
         The observed spectrum should be available via :attr:`obs_spec` *before*
         calling this function, and it must have the same wavelength grid as
-        :attr:`obj_model` and :attr:`tell_model`.
+        :attr:`src_model` and :attr:`tell_model`.
 
         Parameters
         ----------
@@ -157,7 +157,7 @@ class ObservedSourceModel:
         """
         if self.obs_spec is None:
             raise PypeItError('Observed spectrum not set.  Cannot compute fit metric.')
-        if not np.allclose(self.obs_spec.wave, self.obj_model.wave):
+        if not np.allclose(self.obs_spec.wave, self.src_model.wave):
             raise PypeItError('Observed spectrum wavelength array does not match model spectra.')
 
         # Get the model spectrum
@@ -198,7 +198,7 @@ class ObservedSourceModel:
             model requires it (e.g., for grid models).
         ballsize : float, optional
             This parameter governs how the differential evolution random
-            population is initialized for the object model and for subsequent
+            population is initialized for the model and for subsequent
             iterations.  See the `scipy.optimize.differential_evolution`
             documentation for details.
         diff_evol_maxiter : int, optional
