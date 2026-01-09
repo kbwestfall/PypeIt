@@ -173,7 +173,7 @@ class AdjustedSpectrumModel:
         _, fit_tuple, _, _, _ = coadd.solve_poly_ratio(
             obs_spec.wave, spec_flux, spec_ivar, obs_spec.flux, obs_spec.ivar, self.order,
             mask=spec_gpm, mask_ref=obs_spec.gpm, func=self.func, model=self.model,
-            scale_max=1e5, debug=True
+            scale_max=1e5, #debug=True
         )
 
         return np.asarray(fit_tuple[0]) if gsp is None else np.append(gsp, fit_tuple[0])

@@ -231,11 +231,11 @@ def test_adj_spectrum_model():
     wave = np.linspace(3000, 10000, 1000)
     spec = standard.PseudoStandard(wave=wave)
 
-    obj = telluric.object.AdjustedSpectrumModel(spec, order=0, model='poly')
-    assert np.array_equal(obj.wave, wave), 'Wavelength array changed'
-    assert obj.npar == 1, 'Number of parameters incorrect for order 0 polynomial'
+    src = telluric.source.AdjustedSpectrumModel(spec, order=0, model='poly')
+    assert np.array_equal(src.wave, wave), 'Wavelength array changed'
+    assert src.npar == 1, 'Number of parameters incorrect for order 0 polynomial'
 
-    flux, gpm = obj.sample(np.array([2.0]))
+    flux, gpm = src.sample(np.array([2.0]))
     assert np.allclose(flux, spec.flux * 2.0), 'Sampled model is wrong'
     assert np.all(gpm), 'Good pixel mask is wrong'
 
@@ -255,31 +255,31 @@ def test_adj_spectrum_model_sim():
     )
 
     # Create a simple model with the right order and function
-    obj = telluric.object.AdjustedSpectrumModel(
+    src = telluric.source.AdjustedSpectrumModel(
         standard.PseudoStandard(wave=wave), order=5, func='legendre', model='poly'
     )
 
     # Test the guess parameters
-    assert obj.spectrum_par_guess() is None, 'Underlying spectrum should have no parameters'
-    gp = obj.par_guess(obs_spec)
+    assert src.spectrum_par_guess() is None, 'Underlying spectrum should have no parameters'
+    gp = src.par_guess(obs_spec)
     assert gp.size == coeffs.size, 'Bad number of parameter guesses'
     assert np.all(np.absolute(coeffs - gp) < 0.01), 'Bad parameter guess values'
 
     # Sample the underlying spectrum
-    spec_flux, spec_gpm = obj.spectrum_sample(None)
-    assert np.array_equal(spec_flux, obj.spec.flux), 'Should return the spectrum unmodified'
-    assert np.array_equal(spec_gpm, obj.spec.gpm), 'Should return the spectrum gpm unmodified'
+    spec_flux, spec_gpm = src.spectrum_sample(None)
+    assert np.array_equal(spec_flux, src.spec.flux), 'Should return the spectrum unmodified'
+    assert np.array_equal(spec_gpm, src.spec.gpm), 'Should return the spectrum gpm unmodified'
 
     # Sample the model and compare to the fake spectrum
-    flux_model, gpm = obj.sample(gp)
+    flux_model, gpm = src.sample(gp)
     assert np.std(flux - flux_model) < 1.2*err, 'Guess model should be a better match to the data'
 
     # Test the parameter boundaries
-    assert obj.spectrum_par_bounds() is None, \
+    assert src.spectrum_par_bounds() is None, \
         'Underlying spectrum should have no parameter boundaries'
     rel_coeff_bounds = (-20., 20.)
     abs_coeff_bounds = (-5., 5.)
-    bounds = obj.par_bounds(gp, rel_coeff_bounds, abs_coeff_bounds)
+    bounds = src.par_bounds(gp, rel_coeff_bounds, abs_coeff_bounds)
     _bnds = np.asarray(bounds).T
 
     assert len(bounds) == coeffs.size, 'Bad number of parameter bounds'
@@ -294,28 +294,28 @@ def test_qso_pca_model():
     pcafile = 'qso_pca_1200_3100.fits'
 
     # Default
-    obj = telluric.object.QSOPCAModel(pcafile, 0.0)
-    z0_redshift_wave_range = obj.wave_min, obj.wave_max
-    assert obj.npca == 10, 'Wrong number of PCA components'
-    assert obj.z == 0.0, 'Wrong redshift'
+    src = telluric.source.QSOPCAModel(pcafile, 0.0)
+    z0_redshift_wave_range = src.wave_min, src.wave_max
+    assert src.npca == 10, 'Wrong number of PCA components'
+    assert src.z == 0.0, 'Wrong redshift'
     # Set the redshift
-    _obj = telluric.object.QSOPCAModel(pcafile, 7.0)
-    assert _obj.z == 7.0, 'Wrong redshift'
-    assert np.isclose(_obj.wave[0] / obj.wave[0], 8.), 'Wavelength array not redshifted correctly'
+    _src = telluric.source.QSOPCAModel(pcafile, 7.0)
+    assert _src.z == 7.0, 'Wrong redshift'
+    assert np.isclose(_src.wave[0] / src.wave[0], 8.), 'Wavelength array not redshifted correctly'
     # Give an observed wavelength array
     obswave = np.linspace(20000, 24000, 512)
-    obj = telluric.object.QSOPCAModel(pcafile, 7.0, wave=obswave)
-    assert obj.z == 7.0, 'Wrong redshift'
-    assert obj.wave.size == obswave.size, 'Wrong wavelength array size'
+    src = telluric.source.QSOPCAModel(pcafile, 7.0, wave=obswave)
+    assert src.z == 7.0, 'Wrong redshift'
+    assert src.wave.size == obswave.size, 'Wrong wavelength array size'
     # Limit the number of PCA components
-    obj = telluric.object.QSOPCAModel(pcafile, 7.0, wave=obswave, npca=7)
-    assert obj.z == 7.0, 'Wrong redshift'
-    assert obj.npca == 7, 'Wrong number of PCA components'
-    assert obj.wave.size == obswave.size, 'Wrong wavelength array size'
+    src = telluric.source.QSOPCAModel(pcafile, 7.0, wave=obswave, npca=7)
+    assert src.z == 7.0, 'Wrong redshift'
+    assert src.npca == 7, 'Wrong number of PCA components'
+    assert src.wave.size == obswave.size, 'Wrong wavelength array size'
 
     # The parameter vector cannot be None for QSOPCAModel
     with pytest.raises(PypeItError):
-        flux, gpm = obj.sample(None)
+        flux, gpm = src.sample(None)
 
     rng = np.random.default_rng(99)
 
@@ -326,35 +326,35 @@ def test_qso_pca_model():
     # polynomial.
     theta = np.append([7.0], rng.uniform(size=4))
     with pytest.raises(PypeItError):
-        flux, gpm = obj.sample(theta)
+        flux, gpm = src.sample(theta)
 
     # This should be successful
-    theta = np.append([7.0], rng.uniform(size=obj.npca-1))
-    flux, gpm = obj.sample(theta)
+    theta = np.append([7.0], rng.uniform(size=src.npca-1))
+    flux, gpm = src.sample(theta)
     # NOTE: This may fault if the number of random draws changes earlier in the
     # test; i.e., the coefficients will have changed.
     assert np.isclose(np.median(flux), 0.32486), 'QSO model changed'
 
     # Add a normalization
     theta = np.append(theta, [2.0])
-    obj = telluric.object.QSOPCAModel(pcafile, 7.0, wave=obswave, npca=7, order=0)
-    flux, gpm = obj.sample(theta)
+    src = telluric.source.QSOPCAModel(pcafile, 7.0, wave=obswave, npca=7, order=0)
+    flux, gpm = src.sample(theta)
     # NOTE: This divides by np.exp(2.0) because the default "model" parameter is "exp"
     assert np.isclose(np.median(flux)/np.exp(2.0), 0.32486), 'Normalization not working correctly'
 
     # Add a 4th order polynomial
     theta = np.append(theta, rng.uniform(size=3))
-    obj = telluric.object.QSOPCAModel(pcafile, 7.0, wave=obswave, npca=7, order=3)
-    flux, gpm = obj.sample(theta)
+    src = telluric.source.QSOPCAModel(pcafile, 7.0, wave=obswave, npca=7, order=3)
+    flux, gpm = src.sample(theta)
     assert np.isclose(np.median(flux), 2.19489), 'Normalization not working correctly'
 
     # Check that regions outside the wavelength range of PCA components are masked
     obswave = np.linspace(20000, 26000, 512)
-    _obj = telluric.object.QSOPCAModel(pcafile, 7.0, wave=obswave)
+    _src = telluric.source.QSOPCAModel(pcafile, 7.0, wave=obswave)
     # NOTE: This test works, but there may be a +/- 1 pixel difference for other
     # wavelength ranges...  z0_redshift_wave_range is defined at the beginning
     # of the test.
-    assert np.array_equal(obswave < z0_redshift_wave_range[1]*8., _obj.spec_gpm), \
+    assert np.array_equal(obswave < z0_redshift_wave_range[1]*8., _src.spec_gpm), \
         'Pixels beyond wavelength range of PCA components should be masked'
 
 
@@ -362,22 +362,22 @@ def test_qso_pca_model_sim():
     pcafile = 'qso_pca_1200_3100.fits'
     obswave = np.linspace(20000, 24000, 512)
     order = 3
-    obj = telluric.object.QSOPCAModel(
+    src = telluric.source.QSOPCAModel(
         pcafile, 7.0, wave=obswave, order=order, func='legendre', model='poly'
     )
 
     # Create a synthetic spectrum
     rng = np.random.default_rng(99)
-    spec_theta = np.append([6.98], rng.uniform(size=obj.npca-1))
+    spec_theta = np.append([6.98], rng.uniform(size=src.npca-1))
 
-    spec_flux, spec_gpm = obj.spectrum_sample(spec_theta)
+    spec_flux, spec_gpm = src.spectrum_sample(spec_theta)
     with pytest.raises(PypeItError):
         # Should fail because the number of parameters is wrong
-        f, g = obj.sample(spec_theta)
+        f, g = src.sample(spec_theta)
 
     # Add the polynomial coefficients
     theta = np.concatenate((spec_theta, [3.0], rng.uniform(size=order)))
-    flux, gpm = obj.sample(theta)
+    flux, gpm = src.sample(theta)
 
     err = 0.03
     flux += rng.normal(scale=err, size=flux.size)
@@ -385,22 +385,22 @@ def test_qso_pca_model_sim():
         wave=obswave, flux=flux, ivar=np.full(flux.size, 1/err**2), gpm=gpm
     )
 
-    gp = obj.par_guess(obs_spec)
-    assert gp.size == obj.npar, 'Bad number of parameter guesses'
+    gp = src.par_guess(obs_spec)
+    assert gp.size == src.npar, 'Bad number of parameter guesses'
     # Test the polynomial coefficients
     # NOTE: The guess redshift (7.0) is different enough from the known value
     # (6.98) that the polynomial coefficients are affected.
     assert np.all(gp[-order-1:] - theta[-order-1:] < 0.1), 'Bad parameter guess values'
 
     # Sample the model and compare to the fake spectrum
-    flux_model, gpm_model = obj.sample(gp)
+    flux_model, gpm_model = src.sample(gp)
     # The difference is dominated by the difference in redshift
     assert np.std((obs_spec.flux - flux_model)[obs_spec.gpm & gpm_model]) < 3 * err, \
         'Guess model should be a better match to the data'
 
     rel_coeff_bounds = (-20., 20.)
     abs_coeff_bounds = (-5., 5.)
-    bounds = obj.par_bounds(gp, rel_coeff_bounds, abs_coeff_bounds)
+    bounds = src.par_bounds(gp, rel_coeff_bounds, abs_coeff_bounds)
     _bnds = np.asarray(bounds).T
     assert len(bounds) == theta.size, 'Bad number of parameter bounds'
     assert np.all(_bnds[0] < _bnds[1]), 'Lower bound is not always less than upper bound'
@@ -412,57 +412,57 @@ def test_star_model():
 
     # Default
     ra, dec = '12:57:02.34', '+22:01:52.7'
-    obj = telluric.object.StellarSpectrumModel(ra=ra, dec=dec)
+    src = telluric.source.StellarSpectrumModel(ra=ra, dec=dec)
 
     # This is exactly what is done internally for StellarSpectrumModel
     spec = standard.get_standard_spectrum(ra=ra, dec=dec)
 
     # Just return the spectrum
-    flux, gpm = obj.sample(None)
+    flux, gpm = src.sample(None)
     assert np.array_equal(spec.flux, flux), 'Stellar spectrum should be identical to standard'
 
     # Change the wavelength range
     obswave = np.linspace(3100, 10400, 2048)
-    obj = telluric.object.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave)
-    flux, gpm = obj.sample(None)
+    src = telluric.source.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave)
+    flux, gpm = src.sample(None)
     assert flux.size == obswave.size, 'Spectrum was not resampled'
 
     # Renormalize
-    obj = telluric.object.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave, order=0)
-    _flux, gpm = obj.sample(np.array([2.0]))
+    src = telluric.source.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave, order=0)
+    _flux, gpm = src.sample(np.array([2.0]))
     assert np.allclose(_flux / flux, np.exp(2.)), 'Should be renormalized'
 
     # Change the normalization model
-    obj = telluric.object.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave, order=0, model='poly')
-    _flux, gpm = obj.sample(np.array([2.0]))
+    src = telluric.source.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave, order=0, model='poly')
+    _flux, gpm = src.sample(np.array([2.0]))
     assert np.allclose(_flux / flux, 2.), 'Should be renormalized'
 
     # Normalize by a polynomial
     rng = np.random.default_rng(99)
     theta = np.append([1.1], rng.uniform(size=3))
-    obj = telluric.object.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave, order=3, model='poly')
-    flux, gpm = obj.sample(theta)
+    src = telluric.source.StellarSpectrumModel(ra=ra, dec=dec, wave=obswave, order=3, model='poly')
+    flux, gpm = src.sample(theta)
     assert np.isclose(np.median(flux), 606.096), 'Median flux changed'
 
 
 def test_poly_model():
 
     # Default wavelengths
-    obj = telluric.object.PolynomialModel(model='poly')
-    assert obj.wave.size == 48000, 'Default wavelength array size changed'
+    src = telluric.source.PolynomialModel(model='poly')
+    assert src.wave.size == 48000, 'Default wavelength array size changed'
 
     # Bespoke wavelengths
     obswave = np.linspace(3100, 10400, 2048)
-    obj = telluric.object.PolynomialModel(wave=obswave, model='poly')
-    flux, gpm = obj.sample(None)
+    src = telluric.source.PolynomialModel(wave=obswave, model='poly')
+    flux, gpm = src.sample(None)
     assert flux.size == obswave.size, 'Spectrum shape incorrect'
     assert np.array_equal(flux, np.ones(flux.size, dtype=float)), 'Default flux should be unity.'
 
     # Normalize by a polynomial
     rng = np.random.default_rng(99)
     theta = np.append([1.1], rng.uniform(size=3))
-    obj = telluric.object.PolynomialModel(wave=obswave, order=3, model='poly')
-    flux, gpm = obj.sample(theta)
+    src = telluric.source.PolynomialModel(wave=obswave, order=3, model='poly')
+    flux, gpm = src.sample(theta)
     assert np.isclose(np.median(flux), 0.95063), 'Median flux changed'
 
 
@@ -471,51 +471,107 @@ def test_fitter():
     # Random number generator
     rng = np.random.default_rng(99)
 
-    # Make a fake spectrum
-    wave = np.linspace(7000, 18000, 10000)
-    resolution = wvutils.get_sampling(wave)[2]
-    order = 5
-    func = 'legendre'
-    model = 'poly'
-    poly_coeffs = np.append([10.], rng.uniform(size=order))
-    flux = coadd.poly_model_eval(poly_coeffs, func, model, wave, wave[0], wave[-1])
+    # Create the wavelength array
+    wave = np.linspace(9000, 18000, 4000)
 
     # Create a telluric model
     tellmod = telluric.model.PCATelluricModel(
-        'TellPCA_3000_26000_R15000.fits', wave_min=0.9*wave[0], wave_max=1.1*wave[-1]
+        'TellPCA_3000_26000_R15000.fits', wave_min=wave[0]/1.1, wave_max=wave[-1]*1.1
     )
     # Generate some test parameters
     tellmod_par = np.append(rng.uniform(size=tellmod.base_npar), [2000., 0.0, 1.00])
 
-    # Add the telluric absorption to the fake spectrum
-    twave, tspec, tgpm = tellmod.sample(tellmod_par)
-    tell_spec = spectrum.Spectrum(wave=twave, flux=tspec, gpm=tgpm).resample(wave)
-    flux *= tell_spec.flux
-
-    # Add noise
-    err = 0.1
-    flux += rng.normal(scale=err, size=flux.size)
-
-    # Construct the synthetic spectrum object
-    obs_spec = spectrum.Spectrum(
-        wave=wave, flux=flux, ivar=np.full(flux.size, 1/err**2), gpm=np.ones(flux.size, dtype=bool)
-    )
-
-    # Create a simple model with the right order and function.
+    # Create a simple source model with the right order and function.
     # NOTE: Importantly, this uses the same wavelength vector as the telluric
     # model.
-    obj = telluric.object.AdjustedSpectrumModel(
-        standard.PseudoStandard(wave=tellmod.wave), order=order, func=func, model=model
+    order = 5
+    src = telluric.source.AdjustedSpectrumModel(
+        standard.PseudoStandard(wave=tellmod.wave), order=order, func='legendre', model='poly'
     )
+    # Generate some test parameters
+    src_par = np.append([10.], rng.uniform(size=order))
 
     # Instantiate the fitter
-    fitter = telluric.fitter.ObservedSourceModel(obj, tellmod)
+    fitter = telluric.fitter.ObservedSourceModel(src, tellmod)
+    # And set the true model parameters
+    tp = np.concatenate((src_par, tellmod_par))
 
-    # Get the parameter guesses
+    # Use the model to generate a fake spectrum
+    src_flux, src_gpm = src.sample(src_par)
+    tell_wave, tell_flux, tell_gpm = tellmod.sample(tellmod_par)
+    fit_wave, fit_flux, fit_gpm = fitter.sample(tp)
+
+    # Test the construction of the observed model spectrum
+    assert np.array_equal(fit_flux, src_flux*tell_flux), 'Observed spectrum sampling failed'
+
+    # Create a synthetic spectrum and resample it to the original wavelength array
+    obs_spec = spectrum.Spectrum(
+        wave=fit_wave, flux=fit_flux, ivar=np.ones(fit_flux.size), gpm=fit_gpm
+    ).resample(wave)
+    # Add noise and re-init
+    err = 0.1
+    obs_spec = spectrum.Spectrum(
+        wave=wave, flux=obs_spec.flux + rng.normal(scale=err, size=wave.size),
+        ivar=np.full(wave.size, 1/err**2), gpm=obs_spec.gpm
+    )
+
+    # Get the parameter guesses and bounds
     gp = fitter.par_guess(obs_spec)
+    # NOTE: A difference of 1 is arbitrary here, but it works in practice
+    assert np.all(np.absolute(gp - tp) < 1), 'Parameter guesses should be better'
     bp = fitter.par_bounds(gp)
 
-    embed()
-    exit()
+    # Test the figure-of-merit at the guess parameters
+    with pytest.raises(PypeItError):
+        # Should fail because the observed spectrum hasn't been set
+        fom = fitter.fit_fom(gp)
 
-test_fitter()
+    fitter.obs_spec = obs_spec
+    with pytest.raises(PypeItError):
+        # Should fail because the observed spectrum doesn't have the same
+        # wavelength array as the model
+        fom = fitter.fit_fom(gp)
+
+    fitter.obs_spec = obs_spec.resample(fitter.wave)
+    fom = fitter.fit_fom(gp)
+    assert fom / np.sum(fitter.obs_spec.gpm) > 0.9, 'Fit FOM at guess parameters changed'
+
+    popsize = 30
+    ballsize = 5e-4
+
+    # All guess parameters are set
+    init = fitter._init_fit_pop(bp, gp, popsize, ballsize, 99)
+    lb, ub = np.asarray(bp).T
+    assert init.shape == (popsize * fitter.npar, fitter.npar), 'Initial population shape incorrect'
+    assert np.all(init >= lb) and np.all(init <= ub), 'Initial population out of bounds'
+
+    # Set all the telluric model parameters to None so that they're defined
+    # using the latin hypercube
+    _gp = np.asarray(gp, dtype=object)
+    _gp[src.npar:] = None
+
+    _init = fitter._init_fit_pop(bp, _gp, popsize, ballsize, 99) 
+    assert _init.shape == (popsize * fitter.npar, fitter.npar), 'Initial population shape incorrect'
+    assert np.all(_init >= lb) and np.all(_init <= ub), 'Initial population out of bounds'
+
+#    # TODO: This takes a long time to complete but it should be successful.  Add
+#    # it to the dev-suite unit tests!
+#    best_fit_par = fitter.fit(obs_spec, bp)
+#    bf_wave, bf_flux, bf_gpm = fitter.sample(best_fit_par)
+#    bf_spec = spectrum.Spectrum(wave=bf_wave, flux=bf_flux, gpm=bf_gpm).resample(obs_spec.wave)
+#    assert np.std((obs_spec.flux - bf_spec.flux)[obs_spec.gpm & bf_spec.gpm]) < 1.2 * err, \
+#        'Best-fit model should be a better match to the data'
+
+    # Test the fitting when starting near the guess parameters
+    best_fit_par = fitter.fit(
+        obs_spec, bp, guess_par=gp, popsize=popsize, ballsize=ballsize, rng=rng
+    )
+    # NOTE: A difference of 1 is arbitrary here, but it works in practice.  The
+    # median is used basically so it ignores the difference in the resolution,
+    # which show a small relative differnce but a large absolute difference.
+    assert np.median(np.absolute(best_fit_par - tp)) < 1, \
+        'Best-fit parameters should be closer to the true parameters'
+    bf_wave, bf_flux, bf_gpm = fitter.sample(best_fit_par)
+    bf_spec = spectrum.Spectrum(wave=bf_wave, flux=bf_flux, gpm=bf_gpm).resample(obs_spec.wave)
+    assert np.std((obs_spec.flux - bf_spec.flux)[obs_spec.gpm & bf_spec.gpm]) < 1.2 * err, \
+        'Best-fit model should be a better match to the data'

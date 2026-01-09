@@ -7,16 +7,13 @@ from IPython import embed
 import numpy as np
 from scipy import optimize
 from scipy import special
+from scipy.stats import qmc
 
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import utils
 from pypeit.core import spectrum
 
-#result = scipy.optimize.differential_evolution(tellfit_chi2, bounds, args=(flux, thismask, arg_dict,), seed=rng,
-#                                                   init = init, updating='immediate', popsize=popsize,
-#                                                   recombination=arg_dict['recombination'], maxiter=arg_dict['diff_evol_maxiter'],
-#                                                   polish=arg_dict['polish'], disp=arg_dict['disp'])
 
 class ObservedSourceModel:
 
@@ -43,13 +40,14 @@ class ObservedSourceModel:
             raise PypeItError('Source and telluric model wavelength arrays do not match.')
 
         # Kept during fitting
-        self._reset_fit()
-
-    def _reset_fit(self):
-        """
-        Reset the attributes used during fitting.
-        """
         self.obs_spec = None
+
+    @property
+    def wave(self):
+        """
+        Wavelength array of the source + telluric model.
+        """
+        return self.src_model.wave
 
     @property
     def npar(self):
@@ -72,11 +70,10 @@ class ObservedSourceModel:
         `numpy.ndarray`_
             Guess parameters
         """
-        # Guess the telluric parameters first.  The source spectrum is passed to
-        # the guess function, but the current models don't actually use the flux
-        # vector.  They only use the wavelength vector to guess the spectral
-        # resolution.
-        tell_par = self.tell_model.par_guess(obs_spec)
+        # Guess the telluric parameters first.  Note that the current telluric
+        # model classes do not use the flux vector of the observed spectrum.
+        # They only use the wavelength vector to guess the spectral resolution.
+        tell_par = self.tell_model.par_guess(obs_spec.wave)
 
         # Use the guess parameters to generate an initial telluric model
         tell_wave, tell_spec, tell_gpm = self.tell_model.sample(tell_par)
@@ -99,6 +96,36 @@ class ObservedSourceModel:
         resolution_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0,5.0),
         pix_stretch_bounds=(0.98,1.02)
     ):
+        """
+        Provide the bounds for all model parameters.
+
+        Parameters
+        ----------
+        guess_par : list, `numpy.ndarray`_
+            Initial guess for the model parameters.  Length must be :attr:`npar`.
+        rel_coeff_bounds : tuple, optional
+            The lower and upper boundary of each coefficient relative to the
+            value of the guess value.  For example, (0.5, 2,0) means that every
+            coefficient must be within a factor of 2 of the guess value.   These
+            limits are used for *all* polynomial coefficients.  See description above.
+        abs_coeff_bounds : tuple, optional
+            The absolute lower and upper boundaries for the coefficients; i.e.,
+            this is *not* relative to the guess value.  These limits are used
+            for *all* polynomial coefficients.  See description above.
+        resolution_frac_bounds : :obj:`tuple`, optional
+            Lower and upper bounds for the spectral resolution expressed as a
+            fraction of the guess resolution.
+        pix_shift_bounds : :obj:`tuple`, optional
+            Lower and upper bounds for the pixel shift.
+        pix_stretch_bounds : :obj:`tuple`, optional
+            Lower and upper bounds for the pixel stretch.
+
+        Returns
+        -------
+        list
+            A list of two-tuples providing the lower and upper bounds for each
+            model parameter.  Length is :attr:`npar`.
+        """
         src_bounds = self.src_model.par_bounds(
             guess_par[:self.src_model.npar], rel_coeff_bounds, abs_coeff_bounds
         )
@@ -130,12 +157,31 @@ class ObservedSourceModel:
             theta[:self.src_model.npar] if self.src_model.npar > 0 else None
         )
         tell_wave, tell_spec, tell_gpm = self.tell_model.sample(theta[self.src_model.npar:])
+        # TODO: Have this return a Spectrum object so that it can be easily
+        # resampled.
         return tell_wave, src_spec * tell_spec, src_gpm & tell_gpm
     
-    def fit_metric(self, theta):
+    def _waves_match(self, obs_spec):
         """
-        Compute the fit metric that is minimized when fitting the observed
-        spectrum.
+        Confirm that the wavelength arrays of the observed spectrum to fit and
+        the model spectra are the same.
+
+        Parameters
+        ----------
+        obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
+            Spectrum to be fit.
+
+        Returns
+        -------
+        bool
+            True if the wavelength arrays match, False otherwise.
+        """
+        return obs_spec.wave.size == self.wave.size and np.allclose(obs_spec.wave, self.wave)
+
+    def fit_fom(self, theta):
+        """
+        Compute the fit figure-of-merit (FOM) that is minimized when fitting the
+        observed spectrum.
 
         This function uses a Huber loss function with a transition from squared
         to absolute loss at an error-weighted (if errors are available) residual
@@ -153,20 +199,26 @@ class ObservedSourceModel:
         Returns
         -------
         float
-            Value of the fit metric.
+            Value of the fit figure-of-merit.
         """
         if self.obs_spec is None:
             raise PypeItError('Observed spectrum not set.  Cannot compute fit metric.')
-        if not np.allclose(self.obs_spec.wave, self.src_model.wave):
+        if not self._waves_match(self.obs_spec):
             raise PypeItError('Observed spectrum wavelength array does not match model spectra.')
 
         # Get the model spectrum
-        model_wave, model_flux, model_gpm = self.sample(theta)
+        _, model_flux, model_gpm = self.sample(theta)
 
         # Check if everything will be masked, and return infinity if so.
         resid_gpm = self.obs_spec.gpm & model_gpm
         if not np.any(resid_gpm):
             return np.inf
+        
+        # Impose a penalty if the model is masked anywhere that the data is not
+        penalty_gpm = self.obs_spec.gpm & np.logical_not(model_gpm)
+        if np.any(penalty_gpm):
+            model_flux[penalty_gpm] = 0.0
+            resid_gpm[penalty_gpm] = True   # This effectively makes resid_gpm equal to self.obs_spec.gpm
 
         # Compute the vector of error-normalized residuals and the fit metric
         resid = self.obs_spec.flux - model_flux
@@ -174,188 +226,170 @@ class ObservedSourceModel:
             resid *= np.sqrt(self.obs_spec.ivar)
         # TODO: Consider using pseudo_huber for a smooth derivative
         return np.sum(special.huber(2.0, resid[resid_gpm]))
+#        fom = np.sum(special.huber(2.0, resid[resid_gpm]))
+#        print(f'npix: {np.sum(resid_gpm)}; fom: {fom:0.4e}')
+#        return fom
+    
+    def _init_fit_pop(self, bounds, guess_par, popsize, ballsize, rng):
+        """
+        Helper function used to initialize the population for the differential
+        evolution optimizer.
 
+        This function should only be called if at least one of the parameters
+        have a provided guess value.  The ``guess_par`` object can have ``None``
+        elements, indicating that there is no guess.  For these parameters, the
+        population follows a latin hypercube distribution over the space defined
+        by the parameter boundaries.  The population distribution for all the
+        remaining parameters is a multivariate Normal distribution centered on
+        the guess value and with a sigma set by the ``ballsize`` and the
+        parameter bounds.
+
+        Parameters
+        ----------
+        bounds : list
+            A list of two-tuples providing the lower and upper bounds for each
+            model parameter.  Length must be :attr:`npar`.  Cannot be ``None``.
+        guess_par : list, `numpy.ndarray`_, optional
+            Initial guess for the model parameters.  Length must be
+            :attr:`npar`.  Cannot be ``None``, but individual elements in the
+            vector can be.  See description above for treatment of ``None``
+            elements.
+        popsize : int, optional
+            The population size, where the number of samples is always ``popsize
+            * npar``.
+        ballsize : float, optional
+            When constructing the population as a multivariate Gaussian
+            distribution centered on the guess parameters, this is the scale
+            (1-sigma) of the distribution as a fraction of the separation
+            between the parameter bounds.
+        rng : int, `numpy.random.Generator`, optional
+            Random-number generator object or seed used for drawing samples for
+            the population.
+
+        Returns
+        -------
+        `numpy.ndarray`_
+            Initial population for the differential evolution optimizer.  Shape
+            is (``popsize * npar``, ``npar``).
+
+        """
+        if guess_par is None or all(use_lhs:=[p is None for p in guess_par]):
+            raise PypeItError('Must provide at least one guess parameter!')
+        if len(guess_par) != self.npar:
+            raise PypeItError('Length of guess_par does not match number of model parameters!')
+
+        # Number of samples for the population
+        npop = popsize * self.npar
+
+        # Cast to array for slicing
+        _guess_par = np.asarray(guess_par)
+
+        # Isolate the lower and upper bounds
+        lb, ub = np.asarray(bounds).T
+        db = ub - lb
+
+        # Setup the generator.  If rng is already a Generator, default_rng just
+        # returns it.
+        _rng = np.random.default_rng(rng)
+
+        # Initialize the array to hold the random samples
+        init = np.empty((npop, self.npar), dtype=float)
+
+        # Get the latin hypercube samples
+        nlhs = np.sum(use_lhs)
+        if nlhs > 0:
+            init[:,use_lhs] = (
+                qmc.LatinHypercube(d=nlhs, seed=_rng).random(npop) * db[None,use_lhs]
+                + lb[None,use_lhs]
+            )
+
+        # Get the (uncorrelated) multivariate Normal samples, and clip the
+        # distribution to ensure the samples are within the bounds.
+        use_mvn = np.logical_not(use_lhs)
+        nmvn = np.sum(use_mvn)
+        init[:,use_mvn] = np.clip(
+            _rng.normal(size=(npop, nmvn)) * ballsize * db[None,use_mvn] + _guess_par[None,use_mvn],
+            a_min=lb[use_mvn], a_max=ub[use_mvn]
+        )
+
+        # Done
+        return init
+
+    # TODO: Does this need the airmass?
+    #   airmass : float, optional
+    #       Airmass of the observation.  This is only needed if the telluric
+    #       model requires it (e.g., for grid models).
     def fit(
-        self, obs_spec, guess_par, bounds, airmass=None, ballsize=5e-4, diff_evol_maxiter=1000,
-        seed=None, init=None, updating='immediate', popsize=30, recombination=0.7, maxiter=1,
-        polish=True, disp=False, 
+        self, obs_spec, bounds, guess_par=None, popsize=30, ballsize=5e-4, rng=None,
+        init='latinhypercube', **kwargs
     ):
         """
         Fit an observed spectrum using a parameterized source spectrum and a
         telluric transmission spectrum.
 
+        The optimization algorithm used is
+        `scipy.optimize.differential_evolution`.
+
         Parameters
         ----------
         obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
-            Spectrum to be fit.
-        guess_par : `numpy.ndarray`_
-            Initial guess for the model parameters.  Length must be :attr:`npar`.
+            Spectrum to be fit.  If the wavelength array does *not* match the
+            wavelength arrays of the source and telluric model objects, the
+            spectrum will be resampled such that it does.
         bounds : list
             A list of two-tuples providing the lower and upper bounds for each
             model parameter.  Length must be :attr:`npar`.
-        airmass : float, optional
-            Airmass of the observation.  This is only needed if the telluric
-            model requires it (e.g., for grid models).
-        ballsize : float, optional
-            This parameter governs how the differential evolution random
-            population is initialized for the model and for subsequent
-            iterations.  See the `scipy.optimize.differential_evolution`
-            documentation for details.
-        diff_evol_maxiter : int, optional
-            Maximum number of iterations for the differential evolution
-            optimizer.
-        seed : int, optional
-            Seed to be used to initialize the random number generator for the
-            differential evolution optimizer.  A specific seed is used because
-            otherwise the random number generator will use the time for the seed
-            and the results will not be reproducible.
-        init : str or `numpy.ndarray`_, optional
-            Specify the population initialization for the differential evolution
-            optimizer. See the `scipy.optimize.differential_evolution`
-            documentation for details.
-        updating : str, optional
-            Specify the updating strategy for the differential evolution
-            optimizer. See the `scipy.optimize.differential_evolution`
-            documentation for details.
+        guess_par : list, `numpy.ndarray`_, optional
+            Initial guess for the model parameters.  If ``None``, ``init`` must
+            provide the mode used to construct the initial sample population
+            used by `scipy.optimize.differential_evolution`.  If not ``None``,
+            the length must be :attr:`npar`.  Values in the vector that are
+            ``None`` indicate that there is no guess value and the population
+            samples are determined using a latin hypercube distribution.
         popsize : int, optional
             Specify the population size for the differential evolution
-            optimizer. See the `scipy.optimize.differential_evolution`
-            documentation for details.
-        recombination : float, optional
-            Specify the recombination constant for the differential evolution
-            optimizer. See the `scipy.optimize.differential_evolution`
-            documentation for details.
-        maxiter : int, optional
-            Specify the maximum number of iterations for the differential
-            evolution optimizer. See the `scipy.optimize.differential_evolution`
-            documentation for details.
-        polish : bool, optional
-            Specify whether to polish the best solution at the end of the
-            differential evolution optimization. See the
+            optimizer.  Note that ``popsize`` is *ignored* if ``init`` provides
+            the initial population directly. See the
             `scipy.optimize.differential_evolution` documentation for details.
-        disp : bool, optional
-            Specify whether to display the progress of the differential
-            evolution optimization. See the `scipy.optimize.differential_evolution`
-            documentation for details.
-
+        ballsize : float, optional
+            When constructing the population as a multivariate Gaussian
+            distribution about the the guess parameters, this is the scale of
+            the distribution as a fraction of the separation between the
+            parameter bounds.
+        rng : int, `numpy.random.Generator`, optional
+            Random-number generator object or seed used for drawing samples for
+            the population.  This is provided to allow the algorithm to be
+            reproducible.
+        init : str, `numpy.ndarray`_, optional
+            The method of initializing the sample population for the
+            differential evolution optimizer, or the sample population itself.
+            See the `scipy.optimize.differential_evolution` documentation for
+            details.
+        **kwargs : dict, optional
+            Keywords passed directly to `scipy.optimize.differential_evolution`.
         """
-        pass
+        # Setup the generator.  If rng is already a Generator, default_rng just
+        # returns it.
+        _rng = np.random.default_rng(rng)
 
+        # Get the sample population if the guess parameters are provided
+        _init = (
+            init if guess_par is None
+            else self._init_fit_pop(bounds, guess_par, popsize, ballsize, _rng)
+        )
 
+        # If the wavelength arrays do not match, resample the observed spectrum
+        # TODO: We should resample the *model*, not the data
+        self.obs_spec = (
+            obs_spec if self._waves_match(obs_spec)
+            else obs_spec.resample(self.src_model.wave)
+        )
 
-def tellfit(flux, thismask, arg_dict, init_from_last=None):
-    """
-    Routine to perform the object + telluric model fitting for telluric
-    corrections. This is a general abstracted routine that performs the
-    fits for any object model that the user provides.
-
-    Args:
-        flux (`numpy.ndarray`_):
-            The flux of the object being fit
-        thismask (`numpy.ndarray`_, boolean):
-            A mask indicating which values are to be fit. This is a good
-            pixel mask, i.e. True=Good
-        arg_dict (dict):
-            A dictionary containing the parameters needed to evaluate
-            the telluric model and the object model.  The required keys
-            are:
-
-                - ``arg_dict['flux_ivar']``:  Inverse variance for the
-                  flux array
-                - ``arg_dict['tell_dict']``: Dictionary containing the
-                  telluric model and its parameters read in by
-                  read_telluric_pca or read_telluric_grid
-                - ``arg_dict['ind_lower']``: Lower index into the
-                  telluric model wave_grid to trim down the telluric
-                  model.
-                - ``arg_dict['ind_upper']``: Upper index into the
-                  telluric model wave_grid to trim down the telluric
-                  model.
-                - ``arg_dict['obj_model_func']``: User provided function
-                  for evaluating the object model
-                - ``arg_dict['obj_dict']``:  Dictionary containing the
-                  object model arguments which is passed to the
-                  obj_model_func
-
-        init_from_last (object, optional):
-             Optional. Result object returned by the differential
-             evolution optimizer for the last iteration. If this is passed the code
-             will initialize from the previous best-fit for faster convergence.
-
-
-    Returns:
-        tuple:  Returns three objects:
-
-            - result (obj): Result object returned by the differential
-              evolution optimizer
-            - modelfit (`numpy.ndarray`_): Modelfit to the input flux.
-              This has the same size as the flux
-            - ivartot (`numpy.ndarray`_): Corrected inverse variances
-              for the flux. This has the same size as the flux. The
-              errors are renormalized using the renormalize_errors
-              function by a correction factor, i.e. ivartot =
-              flux_ivar/sigma_corr**2
-
-    """
-
-    # Unpack arguments
-    obj_model_func = arg_dict['obj_model_func'] # Evaluation function
-    flux_ivar = arg_dict['ivar'] # Inverse variance of flux or counts
-    bounds = arg_dict['bounds']  # bounds for differential evolution optimization
-    rng = arg_dict['rng']      # Seed for differential evolution optimizaton
-    maxiter = arg_dict['diff_evol_maxiter'] # Maximum number of iterations
-    ballsize = arg_dict['ballsize'] # Ballsize for initialization from a previous optimum
-    nparams = len(bounds) # Number of parameters in the model
-    popsize = arg_dict['popsize'] # Note this does nothing if the init is done from a previous iteration or optimum
-    nsamples = arg_dict['popsize']*nparams
-    teltype = arg_dict['tell_dict']['teltype']
-    # FD: Assumes shift and stretch are turned on.
-    if teltype == 'pca':
-        ntheta_tell = arg_dict['tell_npca']+3 # Total number of telluric model parameters in PCA mode
-    elif teltype == 'grid':
-        ntheta_tell = 4+3 # Total number of telluric model parameters in grid mode
-
-    # Decide how to initialize
-    if init_from_last is not None:
-        # Use a Gaussian ball about the optimum from a previous iteration
-        init = np.array([[np.clip(param + ballsize*(bounds[i][1] - bounds[i][0]) * rng.standard_normal(1)[0],
-                                  bounds[i][0], bounds[i][1])
-                                  for i, param in enumerate(init_from_last.x)] for jsamp in range(nsamples)])
-    elif 'init_obj_opt_theta' in arg_dict['obj_dict']:
-        # Initialize from  the object parameters. Use a Gaussian ball about the best object model, and latin hypercube
-        # for the telluric parameters
-        bounds_obj = arg_dict['obj_dict']['bounds_obj']
-        init_obj = np.array([[np.clip(param + ballsize*(bounds_obj[i][1] - bounds_obj[i][0]) * rng.standard_normal(1)[0],
-                                      bounds_obj[i][0], bounds_obj[i][1]) for i, param in enumerate(arg_dict['obj_dict']['init_obj_opt_theta'])]
-                             for jsamp in range(nsamples)])
-        tell_lhs = utils.lhs(ntheta_tell, samples=nsamples)
-        init_tell = np.array([[bounds[-idim][0] + tell_lhs[isamp, idim] * (bounds[-idim][1] - bounds[-idim][0])
-                               for idim in range(ntheta_tell)] for isamp in range(nsamples)])
-        init = np.hstack((init_obj, init_tell))
-    else:
-        # If this is the first iteration and no object model optimum is presented, use a latin hypercube which is the default
-        init = 'latinhypercube'
-
-    result = scipy.optimize.differential_evolution(tellfit_chi2, bounds, args=(flux, thismask, arg_dict,), seed=rng,
-                                                   init = init, updating='immediate', popsize=popsize,
-                                                   recombination=arg_dict['recombination'], maxiter=arg_dict['diff_evol_maxiter'],
-                                                   polish=arg_dict['polish'], disp=arg_dict['disp'])
-                                        
-    theta_obj  = result.x[:-ntheta_tell]
-    theta_tell = result.x[-ntheta_tell:]
-    tell_model = eval_telluric(theta_tell, arg_dict['tell_dict'],
-                                 ind_lower=arg_dict['ind_lower'], ind_upper=arg_dict['ind_upper'])
-    obj_model, modelmask = obj_model_func(theta_obj, arg_dict['obj_dict'])
-    totalmask = thismask & modelmask
-    chi_vec = totalmask*(flux - tell_model*obj_model)*np.sqrt(flux_ivar)
-
-    debug = arg_dict['debug'] if 'debug' in arg_dict else False
-
-    # Name of function for title in case QA requested
-    obj_model_func_name = getattr(obj_model_func, '__name__', repr(obj_model_func))
-    sigma_corr, maskchi = coadd.renormalize_errors(chi_vec, mask=totalmask, title = obj_model_func_name,
-                                                   debug=debug)
-    ivartot = flux_ivar/sigma_corr**2
-
-    return result, tell_model*obj_model, ivartot
+        # Perform the fit
+        result = optimize.differential_evolution(
+            self.fit_fom, bounds, rng=_rng, init=_init, popsize=popsize, **kwargs
+        )
+        
+        # Return the best fit parameters
+        return result.x
 

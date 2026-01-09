@@ -328,15 +328,15 @@ class TelluricModel:
         """
         raise PypeItError(f'{self.__class__.__name__} has not defined a base_par_guess function!')
     
-    def par_guess(self, obs_spec):
+    def par_guess(self, obs_wave):
         """
         Generate a first-guess for the model parameters.
 
         Parameters
         ----------
-        obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
-            Observed spectrum to be fit.  The wavelength vector is used to
-            estimate the resolution; see
+        obs_wave : `numpy.ndarray`_
+            Wavelength vector of the observed spectrum to be fit.  This is used
+            to estimate the resolution; see
             :func:`~pypeit.core.wavecal.wvutils.get_sampling`.
 
         Returns
@@ -348,7 +348,7 @@ class TelluricModel:
         """
         # TODO: Need to check that obs_spec.wave is the right thing to pass
         # here...
-        resolution_guess = wvutils.get_sampling(obs_spec.wave)[2]
+        resolution_guess = wvutils.get_sampling(obs_wave)[2]
         return np.append(self.base_par_guess(), [resolution_guess, 0.0, 1.0])
 
     def base_par_bounds(self):

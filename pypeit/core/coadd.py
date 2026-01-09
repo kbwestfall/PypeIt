@@ -219,11 +219,18 @@ def poly_ratio_fitfunc_chi2(theta, gpm, arg_dict):
 
     # The errors are rescaled at every function evaluation, but we only allow the errors to get smaller by up to a
     # factor of 1e4, and we only allow them to get larger slowly (as the square root).  This should very strongly
-    # constrain the flux-corrrection vectors from going too small (or negative), or too large.
+    # constrain the flux-correction vectors from going too small (or negative), or too large.
     ## Schlegel's version here
-    vmult = np.fmax(ymult,1e-4)*(ymult <= 1.0) + np.sqrt(ymult)*(ymult > 1.0)
+    # TODO: In my opinion (KBW), we need to stop treating boolean arrays as 1/0
+    # arrays.  I'm not sure if this is true in IDL, but NaN * 0 = NaN in Python,
+    # and we don't want NaNs anywhere.
+#    vmult = np.fmax(ymult,1e-4)*(ymult <= 1.0) + np.sqrt(ymult)*(ymult > 1.0)
+    vmult = np.fmax(ymult,1e-4)
+    indx = ymult > 1.
+    vmult[indx] = np.sqrt(ymult[indx])
     ivarfit = mask_both/(1.0/(ivar_med + np.logical_not(mask_both)) + np.square(vmult)/(ivar_ref_med + np.logical_not(mask_both)))
     chi_vec = mask_both * (flux_ref_med - flux_scale) * np.sqrt(ivarfit)
+
     # Changing the Huber loss parameter from step to step results in instability during optimization --MSR.
     # Robustly characterize the dispersion of this distribution
     #chi_mean, chi_median, chi_std = stats.sigma_clipped_stats(
@@ -444,7 +451,7 @@ def solve_poly_ratio(wave, flux, ivar, flux_ref, ivar_ref, norder, mask=None, ma
     # Now compute median filtered versions of the spectra which we will actually
     # operate on for the fitting. Note that rejection will however work on the
     # non-filtered spectra.
-    med_width = (2.0*np.ceil(median_frac/2.0*nspec) + 1).astype(int)
+    med_width = int(2.0*np.ceil(median_frac/2.0*nspec) + 1)
     flux_med, ivar_med = median_filt_spec(flux, ivar, mask, med_width)
     flux_ref_med, ivar_ref_med = median_filt_spec(flux_ref, ivar_ref, mask_ref, med_width)
 
@@ -457,7 +464,7 @@ def solve_poly_ratio(wave, flux, ivar, flux_ref, ivar_ref, norder, mask=None, ma
             guess = np.append(np.log(ratio), np.zeros(norder))
         case _:
             raise PypeItError('Unrecognized model type')
-        
+
     arg_dict = dict(flux=flux, ivar=ivar, mask=mask, flux_med=flux_med, ivar_med=ivar_med,
                     flux_ref_med=flux_ref_med, ivar_ref_med=ivar_ref_med, ivar_ref=ivar_ref,
                     wave=wave, wave_min=wave_min, wave_max=wave_max, func=func, model=model,
@@ -467,6 +474,7 @@ def solve_poly_ratio(wave, flux, ivar, flux_ref, ivar_ref, norder, mask=None, ma
         flux_ref, poly_ratio_fitfunc, arg_dict, inmask=mask_ref, maxiter=maxiter, lower=lower,
         upper=upper, sticky=sticky
     )
+        
     ymult1 = poly_model_eval(result.x, func, model, wave, wave_min, wave_max)
     ymult = np.fmin(np.fmax(ymult1, scale_min), scale_max)
     flux_rescale = ymult*flux
