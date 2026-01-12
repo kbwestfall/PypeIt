@@ -217,8 +217,11 @@ class ObservedSourceModel:
         # Impose a penalty if the model is masked anywhere that the data is not
         penalty_gpm = self.obs_spec.gpm & np.logical_not(model_gpm)
         if np.any(penalty_gpm):
+            # This will set the value of the residual to the observed spectrum
             model_flux[penalty_gpm] = 0.0
-            resid_gpm[penalty_gpm] = True   # This effectively makes resid_gpm equal to self.obs_spec.gpm
+            # This makes resid_gpm equal to self.obs_spec.gpm
+            # TODO: Remove this and just use self.obs_spec.gpm directly below?
+            resid_gpm[penalty_gpm] = True
 
         # Compute the vector of error-normalized residuals and the fit metric
         resid = self.obs_spec.flux - model_flux
@@ -230,7 +233,7 @@ class ObservedSourceModel:
 #        print(f'npix: {np.sum(resid_gpm)}; fom: {fom:0.4e}')
 #        return fom
     
-    def _init_fit_pop(self, bounds, guess_par, popsize, ballsize, rng):
+    def init_fit_pop(self, bounds, guess_par, popsize, ballsize, rng):
         """
         Helper function used to initialize the population for the differential
         evolution optimizer.
@@ -319,10 +322,23 @@ class ObservedSourceModel:
     #   airmass : float, optional
     #       Airmass of the observation.  This is only needed if the telluric
     #       model requires it (e.g., for grid models).
-    def fit(
-        self, obs_spec, bounds, guess_par=None, popsize=30, ballsize=5e-4, rng=None,
-        init='latinhypercube', **kwargs
-    ):
+#        popsize=30, rng=None,
+#        init='latinhypercube', 
+#        popsize : int, optional
+#            Specify the population size for the differential evolution
+#            optimizer.  Note that ``popsize`` is *ignored* if ``init`` provides
+#            the initial population directly. See the
+#            `scipy.optimize.differential_evolution` documentation for details.
+#        rng : int, `numpy.random.Generator`, optional
+#            Random-number generator object or seed used for drawing samples for
+#            the population.  This is provided to allow the algorithm to be
+#            reproducible.
+#        init : str, `numpy.ndarray`_, optional
+#            The method of initializing the sample population for the
+#            differential evolution optimizer, or the sample population itself.
+#            See the `scipy.optimize.differential_evolution` documentation for
+#            details.
+    def fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, **kwargs):
         """
         Fit an observed spectrum using a parameterized source spectrum and a
         telluric transmission spectrum.
@@ -345,38 +361,32 @@ class ObservedSourceModel:
             used by `scipy.optimize.differential_evolution`.  If not ``None``,
             the length must be :attr:`npar`.  Values in the vector that are
             ``None`` indicate that there is no guess value and the population
-            samples are determined using a latin hypercube distribution.
-        popsize : int, optional
-            Specify the population size for the differential evolution
-            optimizer.  Note that ``popsize`` is *ignored* if ``init`` provides
-            the initial population directly. See the
-            `scipy.optimize.differential_evolution` documentation for details.
+            samples are determined using a latin hypercube distribution; see
+            :func:`init_fit_pop`.
         ballsize : float, optional
             When constructing the population as a multivariate Gaussian
             distribution about the the guess parameters, this is the scale of
             the distribution as a fraction of the separation between the
             parameter bounds.
-        rng : int, `numpy.random.Generator`, optional
-            Random-number generator object or seed used for drawing samples for
-            the population.  This is provided to allow the algorithm to be
-            reproducible.
-        init : str, `numpy.ndarray`_, optional
-            The method of initializing the sample population for the
-            differential evolution optimizer, or the sample population itself.
-            See the `scipy.optimize.differential_evolution` documentation for
-            details.
         **kwargs : dict, optional
             Keywords passed directly to `scipy.optimize.differential_evolution`.
         """
-        # Setup the generator.  If rng is already a Generator, default_rng just
-        # returns it.
-        _rng = np.random.default_rng(rng)
+        # If the guess parameters are provided, use them to construct the
+        # initial population used by differential evolution
+        if guess_par is not None:
+            # Get the default values from the differential_evolution signature
+            default_popsize \
+                = optimize.differential_evolution.__signature__.parameters['popsize'].default
+            default_rng = optimize.differential_evolution.__signature__.parameters['rng'].default
 
-        # Get the sample population if the guess parameters are provided
-        _init = (
-            init if guess_par is None
-            else self._init_fit_pop(bounds, guess_par, popsize, ballsize, _rng)
-        )
+            # Setup the generator and add it to the optimizer kwargs.  If rng is
+            # already a Generator, default_rng just returns it.
+            kwargs['rng'] = np.random.default_rng(kwargs.pop('rng', default_rng))
+
+            # Get the initial population and add it to the optimizer kwargs
+            kwargs['init'] = self.init_fit_pop(
+                bounds, guess_par, kwargs.pop('popsize', default_popsize), ballsize, kwargs['rng']
+            )
 
         # If the wavelength arrays do not match, resample the observed spectrum
         # TODO: We should resample the *model*, not the data
@@ -386,10 +396,26 @@ class ObservedSourceModel:
         )
 
         # Perform the fit
-        result = optimize.differential_evolution(
-            self.fit_fom, bounds, rng=_rng, init=_init, popsize=popsize, **kwargs
-        )
+        result = optimize.differential_evolution(self.fit_fom, bounds, **kwargs)
         
         # Return the best fit parameters
         return result.x
+    
+    def iter_fit(self, obs_spec, bounds=None, guess_par=None, **kwargs):
+        """
+        Fit an observed spectrum using a parameterized source spectrum and a
+        telluric transmission spectrum with rejection iterations.
+        Iteratively fit an observed spectrum
+        """
+
+        
+        if bounds is None:
+            _guess_par = self.par_guess(obs_spec) if guess_par is None else guess_par
+            _bounds = self.par_bounds(_guess_par)
+        else:
+            _bounds = bounds
+
+
+
+
 

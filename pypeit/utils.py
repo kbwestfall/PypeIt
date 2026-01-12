@@ -1846,3 +1846,40 @@ def get_line_list_names():
     names = [os.path.splitext(os.path.basename(fname))[0]
              for fname in line_list_files]
     return names
+
+
+def extract_func_kwargs(kwargs, func, keys=None, pop=True):
+    """
+    Given a set of kwargs, create a new dictionary with any kwargs that are in
+    the signature of the provided function.
+
+    Parameters
+    ----------
+    kwargs : dict
+        Dictionary of keyword arguments.
+    func : callable
+        Function whose signature is used to select kwargs.
+    keys : list, optional
+        If provided, only these keys will be extracted.
+    pop : bool, optional
+        If True, the extracted keys are removed from the input ``kwargs``
+        dictionary.
+
+    Returns
+    -------
+    dict
+        Dictionary of extracted keyword arguments.
+    """
+    sig = inspect.signature(func)
+    # Get the list of keyword parameters
+    func_keys = [
+        sig.parameters[p].name for p in sig.parameters
+        if sig.parameters[p].default is not inspect.Parameter.empty
+    ]
+    if keys is not None and any(key not in func_keys for key in keys):
+        raise PypeItError('One or more requested keys are not in the function signature!')
+    _keys = func_keys if keys is None else keys
+
+    # NOTE: The use of list() around kwargs.keys() is necessary to avoid the
+    # size of kwargs changing when pop is True
+    return {k:(kwargs.pop(k) if pop else kwargs[k]) for k in list(kwargs.keys()) if k in _keys}

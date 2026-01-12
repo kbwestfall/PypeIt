@@ -540,7 +540,7 @@ def test_fitter():
     ballsize = 5e-4
 
     # All guess parameters are set
-    init = fitter._init_fit_pop(bp, gp, popsize, ballsize, 99)
+    init = fitter.init_fit_pop(bp, gp, popsize, ballsize, 99)
     lb, ub = np.asarray(bp).T
     assert init.shape == (popsize * fitter.npar, fitter.npar), 'Initial population shape incorrect'
     assert np.all(init >= lb) and np.all(init <= ub), 'Initial population out of bounds'
@@ -550,7 +550,7 @@ def test_fitter():
     _gp = np.asarray(gp, dtype=object)
     _gp[src.npar:] = None
 
-    _init = fitter._init_fit_pop(bp, _gp, popsize, ballsize, 99) 
+    _init = fitter.init_fit_pop(bp, _gp, popsize, ballsize, 99) 
     assert _init.shape == (popsize * fitter.npar, fitter.npar), 'Initial population shape incorrect'
     assert np.all(_init >= lb) and np.all(_init <= ub), 'Initial population out of bounds'
 
@@ -575,3 +575,4 @@ def test_fitter():
     bf_spec = spectrum.Spectrum(wave=bf_wave, flux=bf_flux, gpm=bf_gpm).resample(obs_spec.wave)
     assert np.std((obs_spec.flux - bf_spec.flux)[obs_spec.gpm & bf_spec.gpm]) < 1.2 * err, \
         'Best-fit model should be a better match to the data'
+

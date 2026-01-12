@@ -5,12 +5,13 @@ import os
 
 from IPython import embed
 
-import yaml
-
 import numpy as np
+import pytest
+import yaml
 
 from pypeit import utils
 from pypeit import log
+from pypeit import PypeItError
 from pypeit.tests.tstutils import data_output_path
 from pypeit import io
 
@@ -144,3 +145,37 @@ def test_occurrences():
     tstarr = np.array([2, 2, 1,  1, 3, 1, 3, 3, 1, 1])
     outarr = utils.occurrences(inparr)
     assert np.array_equal(outarr, tstarr), 'Occurrences has failed'
+
+
+def test_extract_func_kwargs():
+    def func(a, b=2, c=3):
+        return a + b + c
+
+    # Extract a value, and make sure d is ignored
+    kwargs = dict(b=20, d=40)
+    assert utils.extract_func_kwargs(kwargs, func) == dict(b=20), 'Should extract b value'
+    assert 'b' not in kwargs, 'b should have been popped'
+    assert kwargs == dict(d=40), 'd should remain'
+
+    # Extract a selected value
+    kwargs = dict(b=20, c=30, d=40)
+    assert utils.extract_func_kwargs(kwargs, func, keys=['c']) == dict(c=30), \
+        'Should only extract c'
+    assert 'c' not in kwargs, 'c should have been popped'
+    assert kwargs == dict(b=20, d=40), 'b and d should remain'
+
+    # No values are found
+    kwargs = dict(d=40)
+    assert utils.extract_func_kwargs(kwargs, func) == {}, 'Should not extract anything'
+    assert kwargs == dict(d=40), 'Should not alter kwargs'
+
+    # Fail if requesting a key that is not part of the function call
+    kwargs = dict(b=20, c=30, d=40)
+    with pytest.raises(PypeItError):
+        utils.extract_func_kwargs(kwargs, func, keys=['b', 'c', 'd'])
+
+    # Extract some keys without popping them from the original dictionary
+    kwargs = dict(b=20, c=30, d=40)
+    assert utils.extract_func_kwargs(kwargs, func, pop=False) == dict(b=20, c=30), \
+        'Should extract b and c'
+    assert kwargs == dict(b=20, c=30, d=40), 'kwargs should remain unchanged'
