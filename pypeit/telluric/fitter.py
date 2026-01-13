@@ -13,6 +13,7 @@ from scipy.stats import qmc
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import utils
+from pypeit.core import coadd
 from pypeit.core import pydl
 from pypeit.core import spectrum
 
@@ -434,60 +435,57 @@ class ObservedSourceModel:
         )
 
         # Rejection iteration setup
-        start_gpm = self.obs_spec.gpm.copy()
-        ivar = (
-            np.ones_like(self.obs_spec.flux, dtype=float) if self.obs_spec.ivar is None
-            else self.obs_spec.ivar 
-        )
+        orig_gpm = self.obs_spec.gpm.copy()
         qdone = False
         i = 0
-        guess_par = None
-        rej_gpm = start_gpm.copy()
+        _guess_par = None if guess_par is None else np.asarray(guess_par).copy()
 
+        # Iteration loop
         while not qdone and i < max_rej_iter:
-            # Get the best-fit parameters
-            best_fit_par = self.fit(self.obs_spec, bounds, guess_par, **diff_evol_kwargs)
+
+            # Get the best-fit parameters.  Note the fit uses:
+            # - the inverse variances provided by self.obs_spec.  These are
+            #   *not* rescaled between iterations.
+            # - the current rejection mask
+
+            best_fit_par = self.fit(
+                self.obs_spec, bounds, guess_par=_guess_par, ballsize=ballsize, **diff_evol_kwargs
+            )
 
             if i == max_rej_iter - 1:
                 # No more fits will be done, so skip the rejection
                 break
 
+            # Get the best-fit model
             _, bf_model, bf_gpm = self.sample(best_fit_par)
+            self.obs_spec.gpm &= bf_gpm
 
+            # Get the error renormalization factor
+            chi = (self.obs_spec.flux - bf_model) * np.sqrt(self.obs_spec.ivar)
+            err_corr, _ = coadd.renormalize_errors(chi, gpm=self.obs_spec.gpm)
 
+            # Perform the rejection using the rescaled inverse variance data
             rej_gpm, qdone = pydl.djs_reject(
-                self.obs_spec.flux, self.sample(best_fit_par)[1]
+                self.obs_spec.flux, bf_model, outmask=self.obs_spec.gpm, inmask=orig_gpm,
+                invvar = ivar / err_corr**2, **rej_kwargs 
             )
+            if not np.any(rej_gpm):
+                log.warning('All pixels have been rejected during the telluric fit iterations.  '
+                            'Returning the fit before the most recent rejection iteration.')
+                break
+
+            # Prep for the next iteration
+            self.obs_spec.gpm = rej_gpm
+            _guess_par = best_fit_par
+            i += 1
+
+        log.info(
+            f'Telluric fit completed after {i+1} iterations; '
+            f'{np.sum(np.logical_not(self.obs_spec.gpm) & orig_gpm)} of {np.sum(orig_gpm)} pixels '
+            'rejected during the fit.'
+        )
 
         return best_fit_par, rej_gpm
-
-
-            # Update the
-            init_from_last = result
-            thismask_iter = thismask.copy()
-            thismask, qdone = pydl.djs_reject(ydata, ymodel, outmask=thismask, inmask=inmask, invvar=invvar_use,
-                                            lower=lower, upper=upper, maxdev=maxdev, maxrej=maxrej,
-                                            groupdim=groupdim, groupsize=groupsize, groupbadpix=groupbadpix, grow=grow,
-                                            use_mad=use_mad, sticky=sticky)
-            nrej = np.sum(thismask_iter & np.logical_not(thismask))
-            nrej_tot = np.sum(inmask & np.logical_not(thismask))
-            if verbose:
-                log.info(
-                    'Iteration #{:d}: nrej={:d} new rejections, nrej_tot={:d} total rejections out of ntot={:d} '
-                    'total pixels'.format(iter, nrej, nrej_tot, nin_good))
-            iIter += 1
-
-        if (iIter == maxiter) & (maxiter != 0):
-            log.warning('Maximum number of iterations maxiter={:}'.format(maxiter) + ' reached in robust_optimize')
-        outmask = np.copy(thismask)
-        if np.sum(outmask) == 0:
-            log.warning('All points were rejected!!! The fits will be zero everywhere.')
-
-        # Perform a final fit using the final outmask if new pixels were rejected on the last iteration
-        if qdone is False:
-            ret_tuple = fitfunc(ydata, outmask, arg_dict, init_from_last=init_from_last, **kwargs_optimizer)
-
-        return ret_tuple + (outmask,)
 
         
 
