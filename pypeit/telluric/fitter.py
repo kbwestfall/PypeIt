@@ -2,6 +2,7 @@
 Module for fitting a source + telluric model to an observed spectrum.
 """
 
+import inspect
 from IPython import embed
 
 import numpy as np
@@ -12,6 +13,7 @@ from scipy.stats import qmc
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import utils
+from pypeit.core import pydl
 from pypeit.core import spectrum
 
 
@@ -401,19 +403,103 @@ class ObservedSourceModel:
         # Return the best fit parameters
         return result.x
     
-    def iter_fit(self, obs_spec, bounds=None, guess_par=None, **kwargs):
+    def iter_fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, max_rej_iter=1, **kwargs):
         """
         Fit an observed spectrum using a parameterized source spectrum and a
         telluric transmission spectrum with rejection iterations.
         Iteratively fit an observed spectrum
         """
 
+        # Extract the kwargs used for the optimizer; this removes the dictionary
+        # elements from kwargs
+        diff_evol_kwargs = utils.extract_func_kwargs(kwargs, optimize.differential_evolution)
+
+        # Extract the kwargs used for the rejection iterations; this removes the
+        # dictionary elements from kwargs
+        rej_kwargs = utils.extract_func_kwargs(kwargs, pydl.djs_reject)
+
+        # The kwargs should now be empty.  If any dictionary items remain, a
+        # keyword was passed that is undefined.
+        if len(kwargs) > 0:
+            raise PypeItError(
+                'One or more undefined keyword arguments were passed: '
+                f'{", ".join(list(kwargs.keys()))}'
+            )
+
+        # If the wavelength arrays do not match, resample the observed spectrum
+        # TODO: We should resample the *model*, not the data
+        self.obs_spec = (
+            obs_spec if self._waves_match(obs_spec)
+            else obs_spec.resample(self.src_model.wave)
+        )
+
+        # Rejection iteration setup
+        start_gpm = self.obs_spec.gpm.copy()
+        ivar = (
+            np.ones_like(self.obs_spec.flux, dtype=float) if self.obs_spec.ivar is None
+            else self.obs_spec.ivar 
+        )
+        qdone = False
+        i = 0
+        guess_par = None
+        rej_gpm = start_gpm.copy()
+
+        while not qdone and i < max_rej_iter:
+            # Get the best-fit parameters
+            best_fit_par = self.fit(self.obs_spec, bounds, guess_par, **diff_evol_kwargs)
+
+            if i == max_rej_iter - 1:
+                # No more fits will be done, so skip the rejection
+                break
+
+            _, bf_model, bf_gpm = self.sample(best_fit_par)
+
+
+            rej_gpm, qdone = pydl.djs_reject(
+                self.obs_spec.flux, self.sample(best_fit_par)[1]
+            )
+
+        return best_fit_par, rej_gpm
+
+
+            # Update the
+            init_from_last = result
+            thismask_iter = thismask.copy()
+            thismask, qdone = pydl.djs_reject(ydata, ymodel, outmask=thismask, inmask=inmask, invvar=invvar_use,
+                                            lower=lower, upper=upper, maxdev=maxdev, maxrej=maxrej,
+                                            groupdim=groupdim, groupsize=groupsize, groupbadpix=groupbadpix, grow=grow,
+                                            use_mad=use_mad, sticky=sticky)
+            nrej = np.sum(thismask_iter & np.logical_not(thismask))
+            nrej_tot = np.sum(inmask & np.logical_not(thismask))
+            if verbose:
+                log.info(
+                    'Iteration #{:d}: nrej={:d} new rejections, nrej_tot={:d} total rejections out of ntot={:d} '
+                    'total pixels'.format(iter, nrej, nrej_tot, nin_good))
+            iIter += 1
+
+        if (iIter == maxiter) & (maxiter != 0):
+            log.warning('Maximum number of iterations maxiter={:}'.format(maxiter) + ' reached in robust_optimize')
+        outmask = np.copy(thismask)
+        if np.sum(outmask) == 0:
+            log.warning('All points were rejected!!! The fits will be zero everywhere.')
+
+        # Perform a final fit using the final outmask if new pixels were rejected on the last iteration
+        if qdone is False:
+            ret_tuple = fitfunc(ydata, outmask, arg_dict, init_from_last=init_from_last, **kwargs_optimizer)
+
+        return ret_tuple + (outmask,)
+
         
-        if bounds is None:
-            _guess_par = self.par_guess(obs_spec) if guess_par is None else guess_par
-            _bounds = self.par_bounds(_guess_par)
-        else:
-            _bounds = bounds
+
+
+
+
+
+
+
+
+
+
 
 
 

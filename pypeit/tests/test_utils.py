@@ -147,6 +147,14 @@ def test_occurrences():
     assert np.array_equal(outarr, tstarr), 'Occurrences has failed'
 
 
+def test_get_func_kwargs():
+    def func(a, b=2, c=3):
+        return a + b + c
+
+    kwargs = utils.get_func_kwargs(func)
+    assert sorted(kwargs) == ['b', 'c'], 'Did not get expected keywords'
+
+
 def test_extract_func_kwargs():
     def func(a, b=2, c=3):
         return a + b + c

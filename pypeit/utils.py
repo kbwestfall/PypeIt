@@ -1848,6 +1848,29 @@ def get_line_list_names():
     return names
 
 
+def get_func_kwargs(func):
+    """
+    Return the list of keyword arguments for the provided function.  Keyword
+    arguments must have a defined default value.
+
+    Parameters
+    ----------
+    func : callable
+        Function whose signature is used to select kwargs.
+
+    Returns
+    -------
+    list
+        List of keyword argument names.
+    """
+    sig = inspect.signature(func)
+    # Get the list of keyword parameters
+    return [
+        sig.parameters[p].name for p in sig.parameters
+        if sig.parameters[p].default is not inspect.Parameter.empty
+    ]
+
+
 def extract_func_kwargs(kwargs, func, keys=None, pop=True):
     """
     Given a set of kwargs, create a new dictionary with any kwargs that are in
@@ -1870,12 +1893,8 @@ def extract_func_kwargs(kwargs, func, keys=None, pop=True):
     dict
         Dictionary of extracted keyword arguments.
     """
-    sig = inspect.signature(func)
     # Get the list of keyword parameters
-    func_keys = [
-        sig.parameters[p].name for p in sig.parameters
-        if sig.parameters[p].default is not inspect.Parameter.empty
-    ]
+    func_keys = get_func_kwargs(func)
     if keys is not None and any(key not in func_keys for key in keys):
         raise PypeItError('One or more requested keys are not in the function signature!')
     _keys = func_keys if keys is None else keys

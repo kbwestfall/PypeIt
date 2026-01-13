@@ -4,10 +4,13 @@ from IPython import embed
 
 import numpy as np
 import pytest
+from scipy import optimize
 
 from pypeit import telluric
 from pypeit import PypeItError
+from pypeit import utils
 from pypeit.core import coadd
+from pypeit.core import pydl
 from pypeit.core import spectrum
 from pypeit.core import standard
 from pypeit.core.wavecal import wvutils
@@ -575,4 +578,22 @@ def test_fitter():
     bf_spec = spectrum.Spectrum(wave=bf_wave, flux=bf_flux, gpm=bf_gpm).resample(obs_spec.wave)
     assert np.std((obs_spec.flux - bf_spec.flux)[obs_spec.gpm & bf_spec.gpm]) < 1.2 * err, \
         'Best-fit model should be a better match to the data'
+
+
+def test_iter_fit_kwargs():
+
+    # One collection of kwargs are passed to
+    # telluric.fitter.ObservedSourceModel.iter_fit(); make sure that there is no
+    # overlap between the kwargs used by differential evolution and djs_reject
+    diff_evol_kwargs = utils.get_func_kwargs(optimize.differential_evolution)
+    djs_rej_kwargs = utils.get_func_kwargs(pydl.djs_reject)
+    overlap = set(diff_evol_kwargs).intersection(set(djs_rej_kwargs))
+    assert len(overlap) == 0, (
+        'scipy.optimize.differential_evolution and pypeit.core.pydl.djs_reject cannot have the '
+        'same keyword arguments'
+    )
+
+
+def test_iter_fit():
+
 
