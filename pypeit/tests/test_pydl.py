@@ -197,6 +197,60 @@ def test_inmask_propagation():
         'Expected inmask=False to propagate into outmask and mark pixel rejected'
 
 
+def test_djs_laxisnum_numpy_matches_original():
+    # Compare 1D, 2D, 3D outputs between original and numpy implementations
+    cases = {
+        1: (5,),
+        2: (4, 3),
+        3: (3, 4, 2),
+    }
+    for nd, dims in cases.items():
+        for iaxis in range(nd):
+            a1 = pydl.djs_laxisnum(list(dims), iaxis=iaxis)
+            a2 = pydl.djs_laxisnum_numpy(list(dims), axis=iaxis)
+            assert a1.shape == a2.shape, (
+                f'Shape mismatch for dims={dims} iaxis={iaxis}'
+            )
+            assert np.array_equal(a1, a2), (
+                f'djs_laxisnum and djs_laxisnum_numpy differ for dims={dims} '
+                f'iaxis={iaxis}'
+            )
+
+
+def test_laxisnum():
+    n = 4
+    arr = pydl.djs_laxisnum_numpy(n)
+    assert np.array_equal(arr, np.arange(n, dtype=int)), '1D output should be the same as arange'
+    dims = (4,)
+    _arr = pydl.djs_laxisnum_numpy(dims)
+    assert np.array_equal(arr, _arr), 'Output for an int and a 1-tuple should be the same'
+
+    dims = (4,3,2)
+    arr = pydl.djs_laxisnum_numpy(dims, axis=2)
+
+    embed()
+    exit()
+
+
+
+    # Verify djs_laxisnum_numpy produces expected index-grid for 4 dimensions
+    dims = (2, 3, 4, 5)
+    nd = 4
+    for iaxis in range(nd):
+        arr = pydl.djs_laxisnum_numpy(list(dims), iaxis=iaxis)
+        assert arr.shape == dims, 'Unexpected shape for 4-D output'
+        assert arr.dtype == np.dtype('i4'), 'Expected dtype i4'
+        # Each slice along iaxis should equal the slice index
+        for k in range(dims[iaxis]):
+            slicer = [slice(None)] * nd
+            slicer[iaxis] = k
+            sl = arr[tuple(slicer)]
+            assert np.all(sl == k), (
+                f'Elements along axis {iaxis} at index {k} are not equal to {k}'
+            )
+
+test_laxisnum()
+
 def test_maxdev_lower_upper_interplay():
     # Use a small array for clarity
     data, invvar, mask = make_test_arrays(n=20, seed=99)

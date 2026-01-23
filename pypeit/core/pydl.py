@@ -692,78 +692,78 @@ def djs_reject(data, model, outmask=None, inmask=None,
     ValueError
         If dimensions of various inputs do not match.
     """
-    #from .misc import djs_laxisnum
-    #
-
-    # ToDO It would be nice to come up with a way to use MAD but also use the errors in the rejection, i.e. compute the rejection threhsold using the mad.
+    # TODO: It would be nice to come up with a way to use MAD but also use the
+    # errors in the rejection, i.e. compute the rejection threhsold using the
+    # mad.
 
     if upper is None and lower is None and maxdev is None:
-        log.warning('upper, lower, and maxdev are all set to None. No rejection performed since no rejection criteria were specified.')
+        log.warning(
+            'upper, lower, and maxdev are all set to None.  No rejection performed since no '
+            'rejection criteria were specified.'
+        )
+        # TODO: Should the function return here?
 
-    if (use_mad and (invvar is not None)):
-        raise ValueError('use_mad can only be set to True innvar = None. This code only computes a mad'
-                         ' if errors are not input')
+    if use_mad and invvar is not None:
+        raise ValueError(
+            'use_mad can only be set to True if invvar is None.  Median absolute deviation is '
+            'only computered if no errors are provided.'
+        )
+
+    # TODO: (JFH) I think it would actually make more sense for outmask be a
+    # required input parameter (named lastmask or something like that).
 
     # Create outmask setting = True for good data.
-    #
-    # ToDo JFH: I think it would actually make more sense for outmask be a required input parameter (named lastmask or something like that).
     if outmask is None:
         outmask = np.ones(data.shape, dtype='bool')
-        log.warning('outmask was not specified as an input parameter. Cannot asess convergence of rejection -- qdone is automatically True')
+        log.warning(
+            'outmask was not specified as an input parameter.  Cannot assess convergence of '
+            'rejection -- qdone is automatically True'
+        )
+
+    # Check input shapes
+    if data.shape != model.shape:
+        raise ValueError('Dimensions of data and model do not agree.')
+    if data.shape != outmask.shape:
+        raise ValueError('Dimensions of data and outmask do not agree.')
+    if inmask is not None and data.shape != inmask.shape:
+        raise ValueError('Dimensions of data and inmask do not agree.')
+
+    if maxrej is None:
+        maxrej1 = None
+        groupsize1 = None
     else:
-        if data.shape != outmask.shape:
-            raise ValueError('Dimensions of data and outmask do not agree.')
-    #
-    # Check other inputs.
-    #
-    if model is None:
-        if inmask is not None:
-            outmask = inmask
-        return (outmask, False)
-    else:
-        if data.shape != model.shape:
-            raise ValueError('Dimensions of data and model do not agree.')
-    if inmask is not None:
-        if data.shape != inmask.shape:
-            raise ValueError('Dimensions of data and inmask do not agree.')
-    if maxrej is not None:
-        if groupdim is not None:
+        maxrej1 = np.atleast_1d(maxrej)
+
+        if groupdim is None:
+            groupdim = []
+        else:
             if len(maxrej) != len(groupdim):
                 raise ValueError('maxrej and groupdim must have the same number of elements.')
-        else:
-            groupdim = []
-        if groupsize is not None:
-            if isinstance(maxrej, (int,float)) | isinstance(groupsize, (int,float)):
-                groupsize1=np.asarray([groupsize])
-            else:
-                if len(maxrej) != len(groupsize):
-                    raise ValueError('maxrej and groupsize must have the same number of elements.')
-                groupsize1=groupsize
-        else:
+
+        if groupsize is None:
             groupsize1 = np.asarray([len(data)])
-        if isinstance(maxrej,(int,float)):
-            maxrej1 = np.asarray([maxrej])
         else:
-            maxrej1 = maxrej
+            groupsize1 = np.atleast_1d(groupsize)
+            if len(maxrej1) != len(groupsize1):
+                raise ValueError('maxrej and groupsize must have the same number of elements.')
+
+    # Get the residuals
+    diff = data - model
+
+    # Approximate the error if not provided
     if invvar is None:
+        igood = outmask
         if inmask is not None:
-            igood = (inmask & outmask)
-        else:
-            igood = outmask
-        if (np.sum(igood) > 1):
-            if use_mad is True:
-                sigma = 1.4826*np.median(np.abs(data[igood] - model[igood]))
-            else:
-                sigma = np.std(data[igood] - model[igood])
+            igood &= inmask
+        if np.sum(igood) > 1:
+            sigma = 1.4826*np.median(np.abs(diff[igood])) if use_mad else np.std(diff[igood])
             invvar = utils.inverse(sigma**2)
         else:
+            # TODO: Why is this set to zero?
             invvar = 0.0
 
-
-    diff = data - model
     chi = diff * np.sqrt(invvar)
 
-    #
     # The working array is badness, which is set to zero for good points
     # (or points already rejected), and positive values for bad points.
     # The values determine just how bad a point is, either corresponding
@@ -773,60 +773,39 @@ def djs_reject(data, model, outmask=None, inmask=None,
     badness = np.zeros(outmask.shape, dtype=data.dtype)
 
     if percentile:
+        igood = outmask
         if inmask is not None:
-            igood = (inmask & outmask)
-        else:
-            igood = outmask
-        if (np.sum(igood)> 1):
-            if lower is not None:
-                lower_chi = np.percentile(chi[igood],lower)
-            else:
-                lower_chi = -np.inf
-            if upper is not None:
-                upper_chi = np.percentile(chi[igood], upper)
-            else:
-                upper_chi = np.inf
-    #
+            igood &= inmask
+        if np.sum(igood)> 1:
+            lower_chi = -np.inf if lower is None else np.percentile(chi[igood],lower)
+            upper_chi = np.inf if upper is None else np.percentile(chi[igood], upper)
+
     # Decide how bad a point is according to lower.
-    #
     if lower is not None:
-        if percentile:
-            qbad = chi < lower_chi
-        else:
-            qbad = chi < -lower
-        badness += np.fmax(-chi,0.0)*qbad
-    #
+        qbad = chi < lower_chi if percentile else chi < -lower
+        badness += np.fmax(-chi,0.0) * qbad
+
     # Decide how bad a point is according to upper.
-    #
     if upper is not None:
-        if percentile:
-            qbad = chi > upper_chi
-        else:
-            qbad = chi > upper
-        badness += np.fmax(chi,0.0)*qbad
-    #
+        qbad = chi > upper_chi if percentile else chi > upper
+        badness += np.fmax(chi,0.0) * qbad
+
     # Decide how bad a point is according to maxdev.
-    #
     if maxdev is not None:
         qbad = np.absolute(diff) > maxdev
         badness += np.absolute(diff) / maxdev * qbad
-    #
-    # Do not consider rejecting points that are already rejected by inmask.
-    # Do not consider rejecting points that are already rejected by outmask,
-    # if sticky is set.
-    #
+
+    # Do not consider rejecting points that are already rejected by inmask, or
+    # by outmask if sticky is set.
     if inmask is not None:
         badness *= inmask
     if sticky:
         badness *= outmask
 
-
-    #
     # Reject a maximum of maxrej (additional) points in all the data, or
     # in each group as specified by groupsize, and optionally along each
     # dimension specified by groupdim.
-    #
-    if maxrej is not None:
+    if maxrej1 is not None:
         #
         # Loop over each dimension of groupdim or loop once if not set.
         #
@@ -997,6 +976,47 @@ def djs_laxisnum(dims, iaxis=0):
         raise ValueError("{0:d} dimensions not supported.".format(ndimen))
     return result
 
+
+def arange_ndim(dims, axis=0):
+    """
+    Create an array where the values of the array are the index of the element
+    along a given axis.
+
+    Parameters
+    ----------
+    dims : int, tuple, list
+        Shape of the array to return along each dimension.  The length of the
+        tuple or list sets the number of dimensions in the returned array.  If
+        ``dims`` is an integer, this function is identical to `numpy.arange`.
+    axis : int, optional
+        Axis along which to assign the index numbers.
+
+    Returns
+    -------
+    numpy.ndarray
+        Integer array with the same shape as ``dims`` where each element
+        equals its index number along ``axis``.
+
+    Raises
+    ------
+    ValueError
+        Raised if ``axis`` is out of range for the provided ``dims``.
+    """
+    _dims = tuple(np.atleast_1d(dims).tolist())
+    ndim = len(_dims)
+    if axis < 0 or axis >= ndim:
+        raise ValueError(f'Axis {axis} not valid for dimensions {_dims}.')
+
+    # Build the index array
+    indx = np.arange(_dims[axis], dtype=int)
+    if ndim == 1:
+        # Done for 1D
+        return indx
+
+    # Expand the index array to include the needed dimensions
+    base = np.expand_dims(base, tuple(range(axis)) + tuple(range(axis+1,ndim)))
+    # Return the tiled index array
+    return np.tile(base, _dims[:axis] + (1,) + _dims[axis+1:])
 
 
 def djs_laxisgen(dims, iaxis=0):
