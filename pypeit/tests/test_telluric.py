@@ -14,6 +14,7 @@ from pypeit.core import pydl
 from pypeit.core import spectrum
 from pypeit.core import standard
 from pypeit.core.wavecal import wvutils
+from pypeit.par import funcpar
 
 
 def test_init_model():
@@ -566,9 +567,14 @@ def test_fitter():
 #        'Best-fit model should be a better match to the data'
 
     # Test the fitting when starting near the guess parameters
+    de_opt = funcpar.DifferentialEvolutionPar(popsize=popsize, rng=rng)
     best_fit_par = fitter.fit(
-        obs_spec, bp, guess_par=gp, popsize=popsize, ballsize=ballsize, rng=rng
+        obs_spec, bp, guess_par=gp, ballsize=ballsize, de_opt=de_opt
     )
+
+    embed()
+    exit()
+
     # NOTE: A difference of 1 is arbitrary here, but it works in practice.  The
     # median is used basically so it ignores the difference in the resolution,
     # which show a small relative differnce but a large absolute difference.
@@ -578,6 +584,9 @@ def test_fitter():
     bf_spec = spectrum.Spectrum(wave=bf_wave, flux=bf_flux, gpm=bf_gpm).resample(obs_spec.wave)
     assert np.std((obs_spec.flux - bf_spec.flux)[obs_spec.gpm & bf_spec.gpm]) < 1.2 * err, \
         'Best-fit model should be a better match to the data'
+    
+
+test_fitter()
 
 
 def test_iter_fit_kwargs():
@@ -594,6 +603,6 @@ def test_iter_fit_kwargs():
     )
 
 
-def test_iter_fit():
+#def test_iter_fit():
 
 

@@ -8,9 +8,12 @@ keyword arguments of a function.
 import inspect
 
 import numpy as np
+from scipy import optimize
 
 from pypeit import PypeItError
+from pypeit.core.pydl import djs_reject
 from pypeit.par.parset import ParSet
+
 
 class FuncPar(ParSet):
     """
@@ -98,3 +101,32 @@ class FuncPar(ParSet):
         mod = inspect.getmodule(func)
         self.module = mod.__name__ if mod else None
         self.name = func.__name__
+
+
+class DifferentialEvolutionPar(FuncPar):
+    """
+    Parameters used by :func:`scipy.optimize.differential_evolution`.
+
+    .. warning::
+
+        The ``seed`` parameter is being deprecated by
+        :func:`scipy.optimize.differential_evolution`.  Use ``rng`` instead.
+        This class will raise an exception if ``seed`` is provided as a
+        ``kwarg``.
+    """
+    def __init__(self, **kwargs):
+        if 'seed' in kwargs:
+            raise PypeItError(
+                'The seed parameter is being deprecated by differential_evolution.  Use rng '
+                'instead.'
+            )
+        super().__init__(optimize.differential_evolution, **kwargs)
+
+
+class DJSReject(FuncPar):
+    """
+    Parameters used by :func:`~pypeit.core.pydl.djs_reject`.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(djs_reject, **kwargs)
+

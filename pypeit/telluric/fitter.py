@@ -2,6 +2,7 @@
 Module for fitting a source + telluric model to an observed spectrum.
 """
 
+import copy
 import inspect
 from IPython import embed
 
@@ -16,6 +17,7 @@ from pypeit import utils
 from pypeit.core import coadd
 from pypeit.core import pydl
 from pypeit.core import spectrum
+from pypeit.par.funcpar import FuncPar
 
 
 class ObservedSourceModel:
@@ -341,7 +343,7 @@ class ObservedSourceModel:
 #            differential evolution optimizer, or the sample population itself.
 #            See the `scipy.optimize.differential_evolution` documentation for
 #            details.
-    def fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, **kwargs):
+    def fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, de_opt=None):
         """
         Fit an observed spectrum using a parameterized source spectrum and a
         telluric transmission spectrum.
@@ -371,24 +373,38 @@ class ObservedSourceModel:
             distribution about the the guess parameters, this is the scale of
             the distribution as a fraction of the separation between the
             parameter bounds.
-        **kwargs : dict, optional
-            Keywords passed directly to `scipy.optimize.differential_evolution`.
+        de_opt : :class:`~pypeit.par.funcpar.FuncPar`, optional
+            The optional parameters to use for the
+            `scipy.optimize.differential_evolution` optimizer.  If ``None``, the
+            default values are used.  See the
+            `scipy.optimize.differential_evolution` documentation for details.
         """
+        # Get the differential_evolution parameters
+        _de_opt = FuncPar(optimize.differential_evolution) if de_opt is None else de_opt
+        if (
+            f'{_de_opt.module}.{_de_opt.name}'
+            != 'scipy.optimize._differentialevolution.differential_evolution'
+        ):
+            raise PypeItError(
+                'de_opt must be a FuncPar object for scipy.optimize.differential_evolution!'
+            )
+
+        # TODO: I don't like this deepcopy, but I'm not sure there's a way
+        # around it.
+        de_kwargs = copy.deepcopy(_de_opt.data)
+
         # If the guess parameters are provided, use them to construct the
         # initial population used by differential evolution
         if guess_par is not None:
-            # Get the default values from the differential_evolution signature
-            default_popsize \
-                = optimize.differential_evolution.__signature__.parameters['popsize'].default
-            default_rng = optimize.differential_evolution.__signature__.parameters['rng'].default
-
             # Setup the generator and add it to the optimizer kwargs.  If rng is
             # already a Generator, default_rng just returns it.
-            kwargs['rng'] = np.random.default_rng(kwargs.pop('rng', default_rng))
+            rng = np.random.default_rng(de_kwargs.pop('rng', _de_opt.default['rng']))
 
             # Get the initial population and add it to the optimizer kwargs
-            kwargs['init'] = self.init_fit_pop(
-                bounds, guess_par, kwargs.pop('popsize', default_popsize), ballsize, kwargs['rng']
+            de_kwargs.pop('init', None)  # Remove any existing 'init' entry
+            init = self.init_fit_pop(
+                bounds, guess_par, de_kwargs.pop('popsize', _de_opt.default['popsize']),
+                ballsize, rng
             )
 
         # If the wavelength arrays do not match, resample the observed spectrum
@@ -399,7 +415,9 @@ class ObservedSourceModel:
         )
 
         # Perform the fit
-        result = optimize.differential_evolution(self.fit_fom, bounds, **kwargs)
+        result = optimize.differential_evolution(
+            self.fit_fom, bounds, rng=rng, init=init, **de_kwargs
+        )
         
         # Return the best fit parameters
         return result.x
