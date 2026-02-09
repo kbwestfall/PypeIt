@@ -6,9 +6,12 @@ import os
 from IPython import embed
 
 import pytest
+from scipy.optimize import differential_evolution
 
-from pypeit.par import pypeitpar
+from pypeit import PypeItError
+from pypeit.par import funcpar
 from pypeit.par import parset
+from pypeit.par import pypeitpar
 from pypeit.par import util
 from pypeit.spectrographs.util import load_spectrograph
 
@@ -282,3 +285,36 @@ def test_lists():
     with pytest.raises(TypeError):
         p['calibrations']['alignment']['locations'] = 0.0
         _p = pypeitpar.PypeItPar.from_cfg_lines(cfg_lines=p.to_config())  # Once as tuple
+
+
+def test_func_par():
+    # Basic functionality, uses scipy.optimize.differential_evolution as a test
+    # case
+    p = funcpar.FuncPar(differential_evolution)
+
+    assert p.name == 'differential_evolution', 'Function name is incorrect!'
+    assert p.module == 'scipy.optimize._differentialevolution', 'Module name is incorrect!'
+    assert p.npar == 20, 'The number of parameters changed.'
+
+    # Check for failure when restricting to an invalid parameter
+    with pytest.raises(PypeItError):
+        p = funcpar.FuncPar(differential_evolution, restrict_to=['invalid'])
+    
+    # Check for failure when providing a value for an invalid parameter
+    with pytest.raises(PypeItError):
+        p = funcpar.FuncPar(differential_evolution, invalid='test')
+
+    # Check for success when restricting the parameter list
+    p = funcpar.FuncPar(differential_evolution, restrict_to=['maxiter', 'popsize', 'init', 'tol'])
+
+    assert p.name == 'differential_evolution', 'Function name is incorrect!'
+    assert p.module == 'scipy.optimize._differentialevolution', 'Module name is incorrect!'
+    assert p.npar == 4, 'The number of parameters changed.'
+    assert 'recombination' not in p.keys(), 'recombination should not be in the parameter list!'
+
+    # Check that both the default value and provided value are currectly set
+    tol_input = 0.1
+    p = funcpar.FuncPar(differential_evolution, restrict_to=['maxiter', 'popsize', 'init', 'tol'],
+                        tol=tol_input)
+    assert p.default['tol'] == 0.01, 'Default value for tol changed.'
+    assert p['tol'] == tol_input, 'Provided value for tol not set correctly!'
