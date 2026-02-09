@@ -359,13 +359,13 @@ class ObservedSourceModel:
             A list of two-tuples providing the lower and upper bounds for each
             model parameter.  Length must be :attr:`npar`.
         guess_par : list, `numpy.ndarray`_, optional
-            Initial guess for the model parameters.  If ``None``, ``init`` must
-            provide the mode used to construct the initial sample population
-            used by `scipy.optimize.differential_evolution`.  If not ``None``,
-            the length must be :attr:`npar`.  Values in the vector that are
-            ``None`` indicate that there is no guess value and the population
-            samples are determined using a latin hypercube distribution; see
-            :func:`init_fit_pop`.
+            Initial guess for the model parameters.  If ``None``, the ``init``
+            parameter used by `scipy.optimize.differential_evolution` (passed as
+            a kwarg) must provide the mode used to construct the initial sample
+            population.  If not ``None``, the length must be :attr:`npar`.
+            Values in the vector that are ``None`` indicate that there is no
+            guess value and the population samples are determined using a latin
+            hypercube distribution; see :func:`init_fit_pop`.
         ballsize : float, optional
             When constructing the population as a multivariate Gaussian
             distribution about the the guess parameters, this is the scale of
@@ -408,8 +408,35 @@ class ObservedSourceModel:
         """
         Fit an observed spectrum using a parameterized source spectrum and a
         telluric transmission spectrum with rejection iterations.
-        Iteratively fit an observed spectrum
+
+        Parameters
+        ----------
+        obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
+            Spectrum to be fit.  If the wavelength array does *not* match the
+            wavelength arrays of the source and telluric model objects, the
+            spectrum will be resampled such that it does.
+        bounds : list
+            A list of two-tuples providing the lower and upper bounds for each
+            model parameter.  Length must be :attr:`npar`.
+        guess_par : list, `numpy.ndarray`_, optional
+            Initial guess for the model parameters.  If ``None``, the ``init``
+            parameter used by `scipy.optimize.differential_evolution` (passed as
+            a kwarg) must provide the mode used to construct the initial sample
+            population.  If not ``None``, the length must be :attr:`npar`.
+            Values in the vector that are ``None`` indicate that there is no
+            guess value and the population samples are determined using a latin
+            hypercube distribution; see :func:`init_fit_pop`.
+        ballsize : float, optional
+            When constructing the population as a multivariate Gaussian
+            distribution about the the guess parameters, this is the scale of
+            the distribution as a fraction of the separation between the
+            parameter bounds.
+        max_rej_iter : int, optional
+            Maximum number of rejection iterations to perform.  Must be >= 1.
+
         """
+        if max_rej_iter < 1:
+            raise PypeItError('When fitting observed source model, max_rej_iter must be >= 1!')
 
         # Extract the kwargs used for the optimizer; this removes the dictionary
         # elements from kwargs
