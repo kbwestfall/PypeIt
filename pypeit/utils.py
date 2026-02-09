@@ -1906,7 +1906,7 @@ def get_line_list_names():
 
 def get_func_kwargs(func):
     """
-    Return the list of keyword arguments for the provided function.  Keyword
+    Return the keyword arguments for the provided function.  The keyword
     arguments must have a defined default value.
 
     Parameters
@@ -1916,15 +1916,18 @@ def get_func_kwargs(func):
 
     Returns
     -------
-    list
-        List of keyword argument names.
+    dict
+        Dictionary with the list of keyword argument names and their default values.
     """
+    # Get the signature of the function
     sig = inspect.signature(func)
-    # Get the list of keyword parameters
-    return [
-        sig.parameters[p].name for p in sig.parameters
-        if sig.parameters[p].default is not inspect.Parameter.empty
-    ]
+
+    # Extract all the keyword arguments and their default values
+    return {
+        k: v.default
+        for k, v in sig.parameters.items()
+        if v.default is not inspect.Parameter.empty
+    }
 
 
 def extract_func_kwargs(kwargs, func, keys=None, pop=True):
@@ -1946,10 +1949,10 @@ def extract_func_kwargs(kwargs, func, keys=None, pop=True):
         Dictionary of extracted keyword arguments.
     """
     # Get the list of keyword parameters
-    func_keys = get_func_kwargs(func)
-    if keys is not None and any(key not in func_keys for key in keys):
+    func_kwargs = get_func_kwargs(func)
+    if keys is not None and any(key not in func_kwargs.keys() for key in keys):
         raise PypeItError('One or more requested keys are not in the function signature!')
-    _keys = func_keys if keys is None else keys
+    _keys = list(func_kwargs.keys()) if keys is None else keys
 
     # NOTE: The use of list() around kwargs.keys() is necessary to avoid the
     # size of kwargs changing when pop is True
