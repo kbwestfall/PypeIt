@@ -11,6 +11,7 @@ import numpy as np
 from scipy import optimize
 
 from pypeit import PypeItError
+from pypeit import utils
 from pypeit.core.pydl import djs_reject
 from pypeit.par.parset import ParSet
 
@@ -59,15 +60,8 @@ class FuncPar(ParSet):
     """
     def __init__(self, func, restrict_to=None, **kwargs):
 
-        # Get the signature of the function
-        sig = inspect.signature(func)
-
         # Extract all the keyword arguments and their default values
-        func_kwargs = {
-            k: v.default
-            for k, v in sig.parameters.items()
-            if v.default is not inspect.Parameter.empty
-        }
+        func_kwargs = utils.get_func_kwargs(func)
 
         # Apply the restricted list of keyword arguments    
         if restrict_to is not None:
