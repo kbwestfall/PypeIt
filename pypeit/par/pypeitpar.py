@@ -2393,7 +2393,7 @@ class TelluricPar(ParSet):
                  bal_wv_min_max=None, bounds_norm=None, tell_norm_thresh=None, only_orders=None,
                  pca_lower=None, pca_upper=None, star_type=None, star_mag=None, star_ra=None,
                  star_dec=None, func=None, model=None, polyorder=None, fit_wv_min_max=None,
-                 mask_lyman_a=None):
+                 mask_lyman_a=None, spec_mask_files=None):
 
         # Grab the parameter names and values from the function
         # arguments
@@ -2681,6 +2681,13 @@ class TelluricPar(ParSet):
                                   'is the same with ``bal_wv_min_max``, but this mask is good pixel ' \
                                   'masks.'
 
+        defaults['spec_mask_files'] = ['atm.toml', 'hydrogen.toml']
+        dtypes['spec_mask_files'] = [str, list]
+        descr['spec_mask_files'] = (
+            'One or more TOML files with masks to apply to the spectra when fitting the telluric '
+            'model.  These can be local files or files provided by the pypeit package.'
+        )
+
         # Instantiate the parameter set
         super(TelluricPar, self).__init__(list(pars.keys()),
                                           values=list(pars.values()),
@@ -2698,7 +2705,8 @@ class TelluricPar(ParSet):
                    'recombination', 'polish', 'disp', 'objmodel','redshift', 'delta_redshift',
                    'pca_file', 'npca', 'bal_wv_min_max', 'bounds_norm', 'tell_norm_thresh',
                    'only_orders', 'pca_lower', 'pca_upper', 'star_type', 'star_mag', 'star_ra',
-                   'star_dec', 'func', 'model', 'polyorder', 'fit_wv_min_max', 'mask_lyman_a']
+                   'star_dec', 'func', 'model', 'polyorder', 'fit_wv_min_max', 'mask_lyman_a',
+                   'spec_mask_files']
 
         badkeys = np.array([pk not in parkeys for pk in k])
         if np.any(badkeys):
