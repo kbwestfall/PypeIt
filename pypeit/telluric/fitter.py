@@ -17,7 +17,7 @@ from pypeit import utils
 from pypeit.core import coadd
 from pypeit.core import pydl
 from pypeit.core import spectrum
-from pypeit.par.funcpar import FuncPar
+from pypeit.par import funcpar
 
 
 class ObservedSourceModel:
@@ -343,7 +343,7 @@ class ObservedSourceModel:
 #            differential evolution optimizer, or the sample population itself.
 #            See the `scipy.optimize.differential_evolution` documentation for
 #            details.
-    def fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, de_opt=None):
+    def fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, de_par=None):
         """
         Fit an observed spectrum using a parameterized source spectrum and a
         telluric transmission spectrum.
@@ -373,37 +373,34 @@ class ObservedSourceModel:
             distribution about the the guess parameters, this is the scale of
             the distribution as a fraction of the separation between the
             parameter bounds.
-        de_opt : :class:`~pypeit.par.funcpar.FuncPar`, optional
-            The optional parameters to use for the
+        de_par : :class:`~pypeit.par.funcpar.DifferentialEvolutionPar`, optional
+            The keyword arguments to use for the
             `scipy.optimize.differential_evolution` optimizer.  If ``None``, the
             default values are used.  See the
             `scipy.optimize.differential_evolution` documentation for details.
         """
         # Get the differential_evolution parameters
-        _de_opt = FuncPar(optimize.differential_evolution) if de_opt is None else de_opt
-        if (
-            f'{_de_opt.module}.{_de_opt.name}'
-            != 'scipy.optimize._differentialevolution.differential_evolution'
-        ):
+        _de_par = funcpar.DifferentialEvolutionPar() if de_par is None else de_par
+        if not isinstance(_de_par, funcpar.DifferentialEvolutionPar):
             raise PypeItError(
-                'de_opt must be a FuncPar object for scipy.optimize.differential_evolution!'
+                'de_par must be an instance of pypeit.par.funcpar.DifferentialEvolutionPar!'
             )
 
         # TODO: I don't like this deepcopy, but I'm not sure there's a way
         # around it.
-        de_kwargs = copy.deepcopy(_de_opt.data)
+        de_kwargs = copy.deepcopy(_de_par.data)
 
         # If the guess parameters are provided, use them to construct the
         # initial population used by differential evolution
         if guess_par is not None:
             # Setup the generator and add it to the optimizer kwargs.  If rng is
             # already a Generator, default_rng just returns it.
-            rng = np.random.default_rng(de_kwargs.pop('rng', _de_opt.default['rng']))
+            rng = np.random.default_rng(de_kwargs.pop('rng', _de_par.default['rng']))
 
             # Get the initial population and add it to the optimizer kwargs
             de_kwargs.pop('init', None)  # Remove any existing 'init' entry
             init = self.init_fit_pop(
-                bounds, guess_par, de_kwargs.pop('popsize', _de_opt.default['popsize']),
+                bounds, guess_par, de_kwargs.pop('popsize', _de_par.default['popsize']),
                 ballsize, rng
             )
 
@@ -422,7 +419,8 @@ class ObservedSourceModel:
         # Return the best fit parameters
         return result.x
     
-    def iter_fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, max_rej_iter=1, **kwargs):
+    def iter_fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, max_rej_iter=1,
+                 de_par=None, rej_par=None):
         """
         Fit an observed spectrum using a parameterized source spectrum and a
         telluric transmission spectrum with rejection iterations.
@@ -451,25 +449,31 @@ class ObservedSourceModel:
             parameter bounds.
         max_rej_iter : int, optional
             Maximum number of rejection iterations to perform.  Must be >= 1.
-
+            If you do not want to perform any rejection iterations, use
+            :func:`fit`.  The maximum number of *fitting* iterations is
+            ``max_rej_iter+1``.
+        de_par : :class:`~pypeit.par.funcpar.DifferentialEvolutionPar`, optional
+            The keyword arguments to use for the
+            `scipy.optimize.differential_evolution` optimizer.  If ``None``, the
+            default values are used.  See the
+            `scipy.optimize.differential_evolution` documentation for details.
+        rej_par : :class:`~pypeit.par.funcpar.DJSRejectPar`, optional
+            The keyword arguments to use for the `pypeit.core.pydl.djs_reject`
+            function used during the rejection iterations.  If ``None``, the
+            default values are used.  See the
+            :func:`~pypeit.core.pydl.djs_reject` documentation for details.
         """
         if max_rej_iter < 1:
-            raise PypeItError('When fitting observed source model, max_rej_iter must be >= 1!')
-
-        # Extract the kwargs used for the optimizer; this removes the dictionary
-        # elements from kwargs
-        diff_evol_kwargs = utils.extract_func_kwargs(kwargs, optimize.differential_evolution)
-
-        # Extract the kwargs used for the rejection iterations; this removes the
-        # dictionary elements from kwargs
-        rej_kwargs = utils.extract_func_kwargs(kwargs, pydl.djs_reject)
-
-        # The kwargs should now be empty.  If any dictionary items remain, a
-        # keyword was passed that is undefined.
-        if len(kwargs) > 0:
             raise PypeItError(
-                'One or more undefined keyword arguments were passed: '
-                f'{", ".join(list(kwargs.keys()))}'
+                'When fitting observed source model, max_rej_iter must be >= 1!  For a fit '
+                'without rejections, use the fit() method.'
+            )
+
+        # Get the rejection parameters
+        _rej_par = funcpar.DJSRejectPar() if rej_par is None else rej_par
+        if not isinstance(_rej_par, funcpar.DJSRejectPar):
+            raise PypeItError(
+                'rej_par must be an instance of pypeit.par.funcpar.DJSRejectPar!'
             )
 
         # If the wavelength arrays do not match, resample the observed spectrum
@@ -486,18 +490,20 @@ class ObservedSourceModel:
         _guess_par = None if guess_par is None else np.asarray(guess_par).copy()
 
         # Iteration loop
-        while not qdone and i < max_rej_iter:
+        while not qdone and i < max_rej_iter+1:
 
             # Get the best-fit parameters.  Note the fit uses:
             # - the inverse variances provided by self.obs_spec.  These are
             #   *not* rescaled between iterations.
             # - the current rejection mask
 
+            print(f'Fitting iteration {i+1} of {max_rej_iter+1}...')
             best_fit_par = self.fit(
-                self.obs_spec, bounds, guess_par=_guess_par, ballsize=ballsize, **diff_evol_kwargs
+                self.obs_spec, bounds, guess_par=_guess_par, ballsize=ballsize, de_par=de_par
             )
+            print(f'Best fit par: {best_fit_par}')
 
-            if i == max_rej_iter - 1:
+            if i == max_rej_iter:
                 # No more fits will be done, so skip the rejection
                 break
 
@@ -512,8 +518,10 @@ class ObservedSourceModel:
             # Perform the rejection using the rescaled inverse variance data
             rej_gpm, qdone = pydl.djs_reject(
                 self.obs_spec.flux, bf_model, outmask=self.obs_spec.gpm, inmask=orig_gpm,
-                invvar = ivar / err_corr**2, **rej_kwargs 
+                invvar=self.obs_spec.ivar / err_corr**2, **_rej_par.data 
             )
+            print(f'Number of pixels rejected in iteration {i+1}: '
+                  f'{np.sum(orig_gpm) - np.sum(rej_gpm)}')
             if not np.any(rej_gpm):
                 log.warning('All pixels have been rejected during the telluric fit iterations.  '
                             'Returning the fit before the most recent rejection iteration.')

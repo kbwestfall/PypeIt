@@ -4,16 +4,12 @@ from IPython import embed
 
 import numpy as np
 import pytest
-from scipy import optimize
 
 from pypeit import telluric
 from pypeit import PypeItError
-from pypeit import utils
 from pypeit.core import coadd
-from pypeit.core import pydl
 from pypeit.core import spectrum
 from pypeit.core import standard
-from pypeit.core.wavecal import wvutils
 from pypeit.par import funcpar
 
 
@@ -412,6 +408,7 @@ def test_qso_pca_model_sim():
     assert np.all(theta > _bnds[0]) and np.all(theta < _bnds[1]), \
         'True parameters not within bounds'
 
+
 def test_star_model():
 
     # Default
@@ -470,7 +467,7 @@ def test_poly_model():
     assert np.isclose(np.median(flux), 0.95063), 'Median flux changed'
 
 
-def test_fitter():
+def synthetic_obs_spec():
 
     # Random number generator
     rng = np.random.default_rng(99)
@@ -495,6 +492,30 @@ def test_fitter():
     # Generate some test parameters
     src_par = np.append([10.], rng.uniform(size=order))
 
+    # Use the models to generate a fake spectrum
+    src_flux, src_gpm = src.sample(src_par)
+    tell_wave, tell_flux, tell_gpm = tellmod.sample(tellmod_par)
+
+    # Create a synthetic spectrum and resample it to the original wavelength array
+    obs_spec = spectrum.Spectrum(
+        wave=tell_wave, flux=src_flux*tell_flux, ivar=np.ones(tell_wave.size),
+        gpm=src_gpm & tell_gpm
+    ).resample(wave)
+
+    # Add noise and re-init
+    err = 0.1
+    obs_spec = spectrum.Spectrum(
+        wave=wave, flux=obs_spec.flux + rng.normal(scale=err, size=wave.size),
+        ivar=np.full(wave.size, 1/err**2), gpm=obs_spec.gpm
+    )
+
+    return rng, src, src_par, tellmod, tellmod_par, err, obs_spec
+
+
+def test_fitter():
+
+    rng, src, src_par, tellmod, tellmod_par, err, obs_spec = synthetic_obs_spec()
+
     # Instantiate the fitter
     fitter = telluric.fitter.ObservedSourceModel(src, tellmod)
     # And set the true model parameters
@@ -507,17 +528,6 @@ def test_fitter():
 
     # Test the construction of the observed model spectrum
     assert np.array_equal(fit_flux, src_flux*tell_flux), 'Observed spectrum sampling failed'
-
-    # Create a synthetic spectrum and resample it to the original wavelength array
-    obs_spec = spectrum.Spectrum(
-        wave=fit_wave, flux=fit_flux, ivar=np.ones(fit_flux.size), gpm=fit_gpm
-    ).resample(wave)
-    # Add noise and re-init
-    err = 0.1
-    obs_spec = spectrum.Spectrum(
-        wave=wave, flux=obs_spec.flux + rng.normal(scale=err, size=wave.size),
-        ivar=np.full(wave.size, 1/err**2), gpm=obs_spec.gpm
-    )
 
     # Get the parameter guesses and bounds
     gp = fitter.par_guess(obs_spec)
@@ -567,13 +577,10 @@ def test_fitter():
 #        'Best-fit model should be a better match to the data'
 
     # Test the fitting when starting near the guess parameters
-    de_opt = funcpar.DifferentialEvolutionPar(popsize=popsize, rng=rng)
+    de_par = funcpar.DifferentialEvolutionPar(popsize=popsize, rng=rng)
     best_fit_par = fitter.fit(
-        obs_spec, bp, guess_par=gp, ballsize=ballsize, de_opt=de_opt
+        obs_spec, bp, guess_par=gp, ballsize=ballsize, de_par=de_par
     )
-
-    embed()
-    exit()
 
     # NOTE: A difference of 1 is arbitrary here, but it works in practice.  The
     # median is used basically so it ignores the difference in the resolution,
@@ -584,25 +591,43 @@ def test_fitter():
     bf_spec = spectrum.Spectrum(wave=bf_wave, flux=bf_flux, gpm=bf_gpm).resample(obs_spec.wave)
     assert np.std((obs_spec.flux - bf_spec.flux)[obs_spec.gpm & bf_spec.gpm]) < 1.2 * err, \
         'Best-fit model should be a better match to the data'
-    
-
-test_fitter()
 
 
-def test_iter_fit_kwargs():
+def test_iter_fit():
 
-    # One collection of kwargs are passed to
-    # telluric.fitter.ObservedSourceModel.iter_fit(); make sure that there is no
-    # overlap between the kwargs used by differential evolution and djs_reject
-    diff_evol_kwargs = utils.get_func_kwargs(optimize.differential_evolution)
-    djs_rej_kwargs = utils.get_func_kwargs(pydl.djs_reject)
-    overlap = set(diff_evol_kwargs).intersection(set(djs_rej_kwargs))
-    assert len(overlap) == 0, (
-        'scipy.optimize.differential_evolution and pypeit.core.pydl.djs_reject cannot have the '
-        'same keyword arguments'
+    rng, src, src_par, tellmod, tellmod_par, err, obs_spec = synthetic_obs_spec()
+
+    # Instantiate the fitter
+    fitter = telluric.fitter.ObservedSourceModel(src, tellmod)
+    # And set the true model parameters
+    tp = np.concatenate((src_par, tellmod_par))
+
+    # Get the parameter guesses and bounds
+    gp = fitter.par_guess(obs_spec)
+    # NOTE: A difference of 1 is arbitrary here, but it works in practice
+    assert np.all(np.absolute(gp - tp) < 1), 'Parameter guesses should be better'
+    bp = fitter.par_bounds(gp)
+
+    popsize = 30
+    ballsize = 5e-4
+
+    # Differential evolution parameters
+    de_par = funcpar.DifferentialEvolutionPar(popsize=popsize, rng=rng)
+    rej_par = funcpar.DJSRejectPar(lower=3., upper=3., sticky=True)
+
+    best_fit_par, best_fit_gpm = fitter.iter_fit(
+        obs_spec, bp, guess_par=gp, ballsize=ballsize, max_rej_iter=1, de_par=de_par,
+        rej_par=rej_par
     )
 
-
-#def test_iter_fit():
+    # NOTE: A difference of 1 is arbitrary here, but it works in practice.  The
+    # median is used basically so it ignores the difference in the resolution,
+    # which show a small relative differnce but a large absolute difference.
+    assert np.median(np.absolute(best_fit_par - tp)) < 1, \
+        'Best-fit parameters should be closer to the true parameters'
+    bf_wave, bf_flux, bf_gpm = fitter.sample(best_fit_par)
+    bf_spec = spectrum.Spectrum(wave=bf_wave, flux=bf_flux, gpm=best_fit_gpm).resample(obs_spec.wave)
+    assert np.std((obs_spec.flux - bf_spec.flux)[obs_spec.gpm & bf_spec.gpm]) < 1.2 * err, \
+        'Best-fit model should be a better match to the data'
 
 

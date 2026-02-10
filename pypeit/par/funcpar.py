@@ -114,13 +114,31 @@ class DifferentialEvolutionPar(FuncPar):
                 'The seed parameter is being deprecated by differential_evolution.  Use rng '
                 'instead.'
             )
-        super().__init__(optimize.differential_evolution, **kwargs)
+        func_kwargs = utils.get_func_kwargs(optimize.differential_evolution)
+        func_kwargs.pop('seed', None)   # Remove seed from the possible keywords
+        super().__init__(
+            optimize.differential_evolution, restrict_to=list(func_kwargs.keys()), **kwargs
+        )
 
 
-class DJSReject(FuncPar):
+class DJSRejectPar(FuncPar):
     """
     Parameters used by :func:`~pypeit.core.pydl.djs_reject`.
+
+    .. warning::
+
+        This does *not* include the ``outmask``, ``inmask``, or ``invvar``
+        parameters.
+
     """
     def __init__(self, **kwargs):
-        super().__init__(djs_reject, **kwargs)
-
+        keys_to_omit = ['outmask', 'inmask', 'invvar']
+        found_keys = [key for key in keys_to_omit if key in kwargs]
+        if len(found_keys) > 0:
+            raise PypeItError(
+                f'Keywords {found_keys} are not allowed in the DJSRejectPar class.'
+            )
+        func_kwargs = utils.get_func_kwargs(djs_reject)
+        for key in keys_to_omit:
+            func_kwargs.pop(key, None)   
+        super().__init__(djs_reject, restrict_to=list(func_kwargs.keys()), **kwargs)

@@ -318,3 +318,34 @@ def test_func_par():
                         tol=tol_input)
     assert p.default['tol'] == 0.01, 'Default value for tol changed.'
     assert p['tol'] == tol_input, 'Provided value for tol not set correctly!'
+
+
+def test_de_par():
+    # Basic functionality
+    p = funcpar.DifferentialEvolutionPar()
+
+    assert p.name == 'differential_evolution', 'Function name is incorrect!'
+    assert p.module == 'scipy.optimize._differentialevolution', 'Module name is incorrect!'
+    assert p.npar == 19, 'The number of parameters changed.'
+
+    # Check that providing a value for the deprecated seed parameter raises an error
+    with pytest.raises(PypeItError):
+        p = funcpar.DifferentialEvolutionPar(seed=12345)
+
+
+def test_djsreject_par():
+    # Basic functionality
+    p = funcpar.DJSRejectPar()
+
+    assert p.name == 'djs_reject', 'Function name is incorrect!'
+    assert p.module == 'pypeit.core.pydl', 'Module name is incorrect!'
+    assert p.npar == 11, 'The number of parameters changed.'
+
+    # Check that providing a value for the outmask, inmask, or invvar parameters raises an error
+    with pytest.raises(PypeItError):
+        p = funcpar.DJSRejectPar(outmask='test')
+    with pytest.raises(PypeItError):
+        p = funcpar.DJSRejectPar(inmask='test')
+    with pytest.raises(PypeItError):
+        p = funcpar.DJSRejectPar(invvar='test')
+
