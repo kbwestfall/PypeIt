@@ -1929,7 +1929,8 @@ def get_func_kwargs(func):
         if v.default is not inspect.Parameter.empty
     }
 
-
+# NOTE: This function isn't actually used yet, but I'd like to keep it around
+# for now.
 def extract_func_kwargs(kwargs, func, keys=None, pop=True):
     """
     Given a set of kwargs, create a new dictionary with any kwargs that are in
