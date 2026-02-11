@@ -777,6 +777,7 @@ class PypeItFile(InputFile):
         """
         return {row['filename']:row['frametype'] for row in self.data}
 
+    # TODO: This should have the same calling sequence as the base class!
     def get_pypeitpar(self):
         """
         Override the base class function to use files with specific frametypes
