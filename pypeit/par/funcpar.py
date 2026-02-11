@@ -58,36 +58,53 @@ class FuncPar(ParSet):
         Raised if any of the keywords in the ``restrict_to`` or ``kwargs`` list
         are not part of the function argument list.
     """
+
+    omitted_keys = None
+    """
+    Keyword arguments that are omitted from the parameter set.
+    """
+
     def __init__(self, func, restrict_to=None, **kwargs):
 
         # Extract all the keyword arguments and their default values
         func_kwargs = utils.get_func_kwargs(func)
 
-        # Apply the restricted list of keyword arguments    
+        # Next apply the restricted list of keyword arguments    
         if restrict_to is not None:
             _rt = np.asarray(restrict_to)
             indx = [k not in func_kwargs for k in _rt]
             if any(indx):
+                # TODO: Use a warning instead?
                 raise PypeItError(f'{_rt[indx]} are not keyword arguments for {func.__name__}!')
             func_kwargs = {k: v for k, v in func_kwargs.items() if k in restrict_to}
 
-        # Check that the provided kwargs are valid
-        if len(kwargs) > 0:
-            bad_kwargs = [k for k in kwargs if k not in func_kwargs]
-            if len(bad_kwargs) > 0:
-                raise PypeItError(f'{bad_kwargs} are not keyword arguments for {func.__name__}!')
+        # Next remove any keys that should generally be omitted for this
+        # function
+        if self.omitted_keys is not None:
+            for key in self.omitted_keys:
+                func_kwargs.pop(key, None)
 
-        # Overwrite the defaults
-        user_values = {k: v for k, v in func_kwargs.items()}
+        # Finally, check that the provided kwargs are valid
+        if len(kwargs) > 0:
+            bad_keys = [key for key in kwargs.keys() if key not in func_kwargs.keys()]
+            if len(bad_keys) > 0:
+                # TODO: Use a warning instead?
+                raise PypeItError(
+                    f'{bad_keys} are valid keyword arguments this instance of '
+                    f'{self.__class__.__name__} for function {func.__name__}.'
+                )
+
+        # Overwrite the defaults with the provided values
+        user_kwargs = {k: v for k, v in func_kwargs.items()}
         for k, v in kwargs.items():
-            user_values[k] = v
+            user_kwargs[k] = v
 
         # Instantiate the base class.  There are no options, dtypes, or
         # descriptions.  TODO: We could potentially pull those from the
         # docstrings...
         super().__init__(
             list(func_kwargs.keys()),               # Restricted list of possible keywords
-            values=list(user_values.values()),      # Values provided by instantiation
+            values=list(user_kwargs.values()),      # Values provided by instantiation
             defaults=list(func_kwargs.values()),    # Default values from the function signature
         )
 
