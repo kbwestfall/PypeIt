@@ -94,7 +94,8 @@ class TellFit(scriptbase.ScriptBase):
             else:
                 with fits.open(_spec1dfile) as hdu:
                     par = ifile.get_pypeitpar(
-                        config_specific_file=hdu, pypeit_fits=hdu[0].header['PYP_SPEC']
+                        config_specific_file=hdu, spectrograph_name=hdu[0].header['PYP_SPEC'],
+                        pypeit_fits=True
                     )[1]
                 par = par['telluric']
 
