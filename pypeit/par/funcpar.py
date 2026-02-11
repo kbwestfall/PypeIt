@@ -117,45 +117,28 @@ class FuncPar(ParSet):
 class DifferentialEvolutionPar(FuncPar):
     """
     Parameters used by :func:`scipy.optimize.differential_evolution`.
-
-    .. warning::
-
-        The ``seed`` parameter is being deprecated by
-        :func:`scipy.optimize.differential_evolution`.  Use ``rng`` instead.
-        This class will raise an exception if ``seed`` is provided as a
-        ``kwarg``.
     """
-    def __init__(self, **kwargs):
-        if 'seed' in kwargs:
-            raise PypeItError(
-                'The seed parameter is being deprecated by differential_evolution.  Use rng '
-                'instead.'
-            )
-        func_kwargs = utils.get_func_kwargs(optimize.differential_evolution)
-        func_kwargs.pop('seed', None)   # Remove seed from the possible keywords
-        super().__init__(
-            optimize.differential_evolution, restrict_to=list(func_kwargs.keys()), **kwargs
-        )
+
+    omitted_keys = ['args', 'seed']
+    """
+    Differential evolution parameters omit the arguments for the fitting
+    function.  Also, the seed parameter is being deprecated by scipy; use rng
+    instead.
+    """
+
+    def __init__(self, restrict_to=None, **kwargs):
+        super().__init__(optimize.differential_evolution, restrict_to=restrict_to, **kwargs)
 
 
 class DJSRejectPar(FuncPar):
     """
     Parameters used by :func:`~pypeit.core.pydl.djs_reject`.
-
-    .. warning::
-
-        This does *not* include the ``outmask``, ``inmask``, or ``invvar``
-        parameters.
-
     """
-    def __init__(self, **kwargs):
-        keys_to_omit = ['outmask', 'inmask', 'invvar']
-        found_keys = [key for key in keys_to_omit if key in kwargs]
-        if len(found_keys) > 0:
-            raise PypeItError(
-                f'Keywords {found_keys} are not allowed in the DJSRejectPar class.'
-            )
-        func_kwargs = utils.get_func_kwargs(djs_reject)
-        for key in keys_to_omit:
-            func_kwargs.pop(key, None)   
-        super().__init__(djs_reject, restrict_to=list(func_kwargs.keys()), **kwargs)
+
+    omitted_keys = ['outmask', 'inmask', 'invvar']
+    """
+    Omit the data-specific parameters for :func:`~pypeit.core.pydl.djs_reject`.
+    """
+
+    def __init__(self, restrict_to=None, **kwargs):
+        super().__init__(djs_reject, restrict_to=restrict_to, **kwargs)

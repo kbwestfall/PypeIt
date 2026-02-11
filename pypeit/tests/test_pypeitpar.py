@@ -343,7 +343,7 @@ def test_de_par():
 
     assert p.name == 'differential_evolution', 'Function name is incorrect!'
     assert p.module == 'scipy.optimize._differentialevolution', 'Module name is incorrect!'
-    assert p.npar == 19, 'The number of parameters changed.'
+    assert p.npar == 18, 'The number of parameters changed.'
 
     # Check that providing a value for the deprecated seed parameter raises an error
     with pytest.raises(PypeItError):
