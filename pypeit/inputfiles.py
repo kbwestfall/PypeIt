@@ -638,56 +638,92 @@ class InputFile:
 
         log.info(f'{self.flavor} input file written to: {input_file}')
 
-    def get_spectrograph(self, pypeit_fits:bool=False):
+    # TODO: Should we add the spectrograph instance as an attribute?
+    def get_spectrograph(self, spectrograph_name:str=None, pypeit_fits:bool=False):
         """
         Use the configuration lines to instantiate the relevant
         :class:`~pypeit.spectrographs.spectrograph.Spectrograph` subclass.
 
-        Args:
-            pypeit_fits (:obj:`bool`, optional):
-                The spectrograph loader is being called from a post-processing
-                script where the expected input files are PypeIt-written FITS files
-                only.  This has the effect of overriding the :attr:`allowed_extensions`
-                attribute to be ``[".fits"]``.
+        Parameters
+        ----------
+        spectrograph_name : str, optional
+            The name of the spectrograph to load.  If None, the spectrograph
+            name is pulled from the configuration.  If the configuration is None
+            or the ``['rdx']['spectrograph']`` configuration entry is not
+            available, an exception is raised.
+        pypeit_fits : :obj:`bool`, optional
+            The spectrograph loader is being called from a post-processing
+            script where the expected input files are PypeIt-written FITS files
+            only.  This has the effect of overriding the :attr:`allowed_extensions`
+            attribute to be ``[".fits"]``.
 
-        Returns:
-            :class:`~pypeit.spectrographs.spectrograph.Spectrograph`:
+        Returns
+        -------
+        :class:`~pypeit.spectrographs.spectrograph.Spectrograph`
             Spectrograph subclass instance using the relevant configuration
             parameter.
 
-        Raises:
-            :class:`~pypeit.exceptions.PypeItError`:
-                Raised if the relevant configuration parameter is not available.
+        Raises
+        ------
+        :class:`~pypeit.exceptions.PypeItError`
+            Raised if the configuration or the relevant parameter is not available.
         """
-        if 'rdx' not in self.config.keys() or 'spectrograph' not in self.config['rdx'].keys():
-            raise PypeItError('Cannot define spectrograph.  Configuration file missing \n'
-                       '    [rdx]\n    spectrograph=\n entry.')
-        return load_spectrograph(self.config['rdx']['spectrograph'], pypeit_fits=pypeit_fits)
+        if spectrograph_name is None:
+            if (
+                self.config is None
+                or 'rdx' not in self.config.keys()
+                or 'spectrograph' not in self.config['rdx'].keys()
+            ):
+                raise PypeItError(
+                    'Cannot define spectrograph.  Configuration block is missing or does not '
+                    'include the spectrograph definition (in the rdx parameter block).'
+                )
+            _spec = self.config['rdx']['spectrograph']
+        else:
+            _spec = spectrograph_name
 
-    def get_pypeitpar(self, config_specific_file=None, pypeit_fits:bool=False):
+        return load_spectrograph(_spec, pypeit_fits=pypeit_fits)
+
+    def get_pypeitpar(
+        self, config_specific_file=None, spectrograph_name:str=None, pypeit_fits:bool=False
+    ):
         """
         Use the configuration lines and a configuration-specific example file to
         build the full parameter set.
 
-        Args:
-            config_specific_file (:obj:`str`, `Path`_, optional):
-                The file to use to generate the default, configuration-specific
-                parameters.  If None and instance contains filenames, use the
-                first file.  If None and instance provides no filenames,
-                configuration-specific parameters are not set.
-            pypeit_fits (:obj:`bool`, optional):
-                The spectrograph loader is being called from a post-processing
-                script where the expected input files are PypeIt-written FITS files
-                only.  This has the effect of overriding the :attr:`allowed_extensions`
-                attribute to be ``[".fits"]``.
+        Parameters
+        ----------
+        config_specific_file : :obj:`str`, :obj:`list`, `Path`_, `astropy.io.fits.Header`_, `astropy.table.Table`_, optional
+            The object used to generate the default, configuration-specific
+            parameters using
+            :func:`~pypeit.spectrographs.spectrograph.Spectrograph.config_specific_par`.
+            If None and :attr:`filenames` are available, use the first file.  If
+            None and :attr:`filenames` are *not* available, use
+            :func:`~pypeit.spectrographs.spectrograph.Spectrograph.default_pypeit_par`
+            to generate the parameters instead.
+        spectrograph_name : str, optional
+            The name of the spectrograph to load.  If None, the spectrograph
+            name is pulled from the configuration.  If the configuration is None
+            or the ``['rdx']['spectrograph']`` configuration entry is not
+            available, an exception is raised.
+        pypeit_fits (:obj:`bool`, optional):
+            The spectrograph loader is being called from a post-processing
+            script where the expected input files are PypeIt-written FITS files
+            only.  This has the effect of overriding the :attr:`allowed_extensions`
+            attribute to be ``[".fits"]``.
 
-        Returns:
-            :obj:`tuple`: A tuple with the spectrograph instance, the
-            parameters, and the file name used to generate the
-            configuration-specific parameters.  That latter will be None if the
-            no example file was available.
+        Returns
+        -------
+        spec : :class:`~pypeit.spectrographs.spectrograph.Spectrograph`
+            Spectrograph subclass instance.
+        par : :class:`~pypeit.par.pypeitpar.PypeItPar`
+            Parameter set generated by merging the configuration-specific parameters
+            with the configuration parameters.
+        config_specific_file : :obj:`str`, :obj:`list`, `Path`_, `astropy.io.fits.Header`_, `astropy.table.Table`_
+            The object used to generate the configuration-specific parameters,
+            which can be None.
         """
-        spec = self.get_spectrograph(pypeit_fits=pypeit_fits)
+        spec = self.get_spectrograph(spectrograph_name=spectrograph_name, pypeit_fits=pypeit_fits)
 
         if config_specific_file is None:
             _files = self.filenames
@@ -791,9 +827,6 @@ class PypeItFile(InputFile):
         # Send the Row of the metadata table corresponding to the file
         csf_idx = self.data['filename'] == Path(config_specific_file).name
         data_row = self.data[csf_idx].copy()
-        embed()
-        exit()
-
         # Use the full path to the ``config_specific_file`` for insurance
         data_row['filename'] = config_specific_file
         spec_par = spec.default_pypeit_par() if config_specific_file is None \
