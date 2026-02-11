@@ -6,6 +6,18 @@
 Telluric Correction
 ===================
 
+
+Outline:
+
+- Purpose of telluric correction
+- Algorithm overview
+- Input file options, .pypeit or .tell
+    - Use the telluric parameter set to describe the fitting options
+- QA plots
+- Output file datamodel(s)
+- Inspection
+
+
 Overview
 ========
 

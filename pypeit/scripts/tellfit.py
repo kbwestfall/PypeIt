@@ -4,16 +4,12 @@ Fit telluric absorption to observed spectra
 .. include common links, assuming primary doc root is up one directory
 .. include:: ../include/links.rst
 """
-from IPython import embed
-
 from pypeit.scripts import scriptbase
-from pypeit.par.pypeitpar import TelluricPar
 
 class TellFit(scriptbase.ScriptBase):
 
     @classmethod
     def get_parser(cls, width=None):
-        par = TelluricPar()
         parser = super().get_parser(
             description='Telluric correct a spectrum', width=width,
             formatter=scriptbase.SmartFormatter, default_log_file=True
@@ -49,10 +45,10 @@ class TellFit(scriptbase.ScriptBase):
         Executes telluric correction.
         """
 
-        import os
         from pathlib import Path
 
         from astropy.io import fits
+        from IPython import embed
 
         from pypeit import log
         from pypeit import PypeItError
@@ -73,7 +69,7 @@ class TellFit(scriptbase.ScriptBase):
         # Load the parameters.  First try to read the input file as a .pypeit
         # file.
         try:
-            ifile = inputfiles.PypeitFile.from_file(args.tell_file)
+            ifile = inputfiles.PypeItFile.from_file(args.tell_file)
         except PypeItError as e:
             log.warning(
                 f'Could not read {args.tell_file} as a .pypeit file.  Attempting to read as a '
@@ -120,6 +116,9 @@ class TellFit(scriptbase.ScriptBase):
 
         modelfile = _spec1dfile.name.replace('.fits','_tellmodel.fits')
         log.info(f'Best-fit telluric model will be saved to: {modelfile}.')
+
+        embed()
+        exit()
 
         # Run the telluric fitting procedure.
         if par['telluric']['objmodel']=='qso':

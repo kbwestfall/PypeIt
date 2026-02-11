@@ -21,23 +21,32 @@ from pypeit.par import funcpar
 
 
 class ObservedSourceModel:
+    """
+    Class to perform the source + telluric model fit to an observed spectrum.
 
+    Parameters
+    ----------
+    src_model : :class`~pypeit.telluric.source.AdjustedSpectrumModel`
+
+        The class to use when modeling the source spectrum.  The object cannot
+        be ``None`` and the model must be fully initialized (i.e.,
+        ``src_model.sample()`` should not fail).
+    tell_model : :class:`~pypeit.telluric.model.TelluricModel`
+        The class to use when modeling the telluric spectrum.  The object cannot
+        be ``None``, the model must be fully initialized (i.e.,
+        ``tell_model.sample()`` should not fail), and the wavelength array of
+        the model must match the source spectrum model.
+
+    Attributes
+    ----------
+    src_model : :class`~pypeit.telluric.source.AdjustedSpectrumModel`
+        Source model spectrum
+    tell_model : :class`~pypeit.telluric.model.TelluricModel`
+        Telluric model spectrum
+    obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
+        The observed spectrum to be fit.
+    """
     def __init__(self, src_model, tell_model):
-        """
-        Class to perform the source + telluric model fit to an observed spectrum.
-
-        Parameters
-        ----------
-        src_model : :class`~pypeit.telluric.source.AdjustedSpectrumModel`
-            The class to use when modeling the source spectrum.  The object
-            cannot be ``None`` and the model must be fully initialized (i.e.,
-            ``src_model.sample()`` should not fail).
-        tell_model : :class:`~pypeit.telluric.model.TelluricModel`
-            The class to use when modeling the telluric spectrum.  The object
-            cannot be ``None``, the model must be fully initialized (i.e.,
-            ``tell_model.sample()`` should not fail), and the wavelength array
-            of the model must match the source spectrum model.
-        """
         self.src_model = src_model
         self.tell_model = tell_model
 
@@ -418,7 +427,7 @@ class ObservedSourceModel:
         
         # Return the best fit parameters
         return result.x
-    
+
     def iter_fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, max_rej_iter=1,
                  de_par=None, rej_par=None):
         """
