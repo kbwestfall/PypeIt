@@ -14,45 +14,29 @@ class TellFit(scriptbase.ScriptBase):
     @classmethod
     def get_parser(cls, width=None):
         par = TelluricPar()
-        parser = super().get_parser(description='Telluric correct a spectrum',
-                                    width=width, formatter=scriptbase.SmartFormatter,
-                                    default_log_file=True)
-        parser.add_argument("spec1dfile", type=str,
-                            help="spec1d or coadd file that will be used for telluric correction.")
-        parser.add_argument("--objmodel", type=str, default=None,
-                            choices=['qso', 'star', 'poly'], help=par.descr['objmodel'])
-        parser.add_argument("-r", "--redshift", type=float, default=None,
-                            help=par.descr['redshift'])
-        parser.add_argument("-g", "--tell_grid", type=str, default=None,
-                            help=par.descr['telgridfile'])
-        parser.add_argument("-p", "--pca_file", type=str, default=None,
-                            help=par.default['pca_file'])
-        parser.add_argument("-t", "--tell_file", type=str,
-                            help='R|Configuration file to change default telluric parameters.  '
-                                 'The format is identical to any telluric parameters in your '
-                                 'pypeit file.  See the PypeIt parameter documentation.  For '
-                                 'example, the ".tell" file could have the following:\n\n'
-                                 'F|    [telluric]\n'
-                                 'F|         objmodel = qso\n'
-                                 'F|         redshift = 7.6\n'
-                                 'F|         bal_wv_min_max = 10825,12060\n'
-                                 'OR\n'
-                                 'F|    [telluric]\n'
-                                 'F|         objmodel = star\n'
-                                 'F|         star_type = A0\n'
-                                 'F|         star_mag = 8.\n'
-                                 'OR\n'
-                                 'F|    [telluric]\n'
-                                 'F|         objmodel = poly\n'
-                                 'F|         polyorder = 3\n'
-                                 'F|         fit_wv_min_max = 9000.,9500.\n'
-                                 '\n')
+        parser = super().get_parser(
+            description='Telluric correct a spectrum', width=width,
+            formatter=scriptbase.SmartFormatter, default_log_file=True
+        )
+        parser.add_argument(
+            'spec1dfile', type=str,
+            help="spec1d or coadd file that will be used for telluric correction."
+        )
+        parser.add_argument(
+            'tell_file', type=str,
+            help='Configuration file used to set the telluric.  This can be a ".pypeit" file '
+                 'that includes the desired telluric parameters or a ".tell" file with a set '
+                 'of parameters specific to the provided 1D spectrum.'
+        )
+        parser.add_argument(
+            '--par_outfile', default=None,
+            help='File name for parameters used by the fit.  No file is written if no name is '
+                 'given.'
+        )
         parser.add_argument("--debug", default=False, action="store_true",
                             help="show debug plots?")
         parser.add_argument("--plot", default=False, action="store_true",
                             help="Show the telluric corrected spectrum")
-        parser.add_argument("--par_outfile", default='telluric.par',
-                            help="Name of output file to save the parameters used by the fit")
         parser.add_argument('--chk_version', default=False, action='store_true',
                             help='Ensure the datamodels are from the current PypeIt version. '
                                  'By default (consistent with previous functionality) this is '
@@ -66,6 +50,7 @@ class TellFit(scriptbase.ScriptBase):
         """
 
         import os
+        from pathlib import Path
 
         from astropy.io import fits
 
@@ -80,58 +65,59 @@ class TellFit(scriptbase.ScriptBase):
         # Initialize the log
         cls.init_log(args)
 
-        # Determine the spectrograph
-        header = fits.getheader(args.spec1dfile)
-        spectrograph = load_spectrograph(header['PYP_SPEC'], pypeit_fits=True)
-        spectrograph_def_par = spectrograph.default_pypeit_par()
+        # Check the input spec1d file
+        _spec1dfile = Path(args.spec1dfile).absolute()
+        if not _spec1dfile.is_file():
+            raise FileNotFoundError(f'Spec1d file not found: {_spec1dfile}')
 
-        # Load tell file if provided
-        if args.tell_file is not None:
-            tellFile = inputfiles.TelluricFile.from_file(args.tell_file)
-            tcfg_lines = tellFile.cfg_lines
+        # Load the parameters.  First try to read the input file as a .pypeit
+        # file.
+        try:
+            ifile = inputfiles.PypeitFile.from_file(args.tell_file)
+        except PypeItError as e:
+            log.warning(
+                f'Could not read {args.tell_file} as a .pypeit file.  Attempting to read as a '
+                f'.tell file.  Error was: {e}'
+            )
+            par = None
         else:
-            tcfg_lines = []
+            par = ifile.get_pypeitpar()[1]['telluric']
 
-        # If the .tell file was passed in read it and overwrite default parameters
-        par = spectrograph_def_par if args.tell_file is None else \
-                pypeitpar.PypeItPar.from_cfg_lines(
-                    cfg_lines=spectrograph_def_par.to_config(),
-                    merge_with=(tcfg_lines,))
-
-        # If args was provided override defaults. Note this does undo .tell file
-        if args.objmodel is not None:
-            par['telluric']['objmodel'] = args.objmodel
-        if args.pca_file is not None:
-            par['telluric']['pca_file'] = args.pca_file
-        if args.redshift is not None:
-            par['telluric']['redshift'] = args.redshift
-        if args.tell_grid is not None:
-            par['telluric']['telgridfile'] = args.tell_grid
-
-        if par['telluric']['telgridfile'] is None:
-            if par['sensfunc']['IR']['telgridfile'] is not None:
-                par['telluric']['telgridfile'] = par['sensfunc']['IR']['telgridfile']
+        if par is None:
+            # That failed, so now attempt a .tell file.
+            try:
+                ifile = inputfiles.TelluricFile.from_file(args.tell_file)
+            except PypeItError as e:
+                raise PypeItError(
+                    f'Unable to parse {args.tell_file} as a .pypeit file or a .tell file!'
+                )
             else:
-                par['telluric']['telgridfile'] = 'TellPCA_3000_26000_R10000.fits'
-                log.warning(f"No telluric file given. Using PCA method with {par['telluric']['telgridfile']}.")
+                with fits.open(_spec1dfile) as hdu:
+                    par = ifile.get_pypeitpar(
+                        config_specific_file=hdu, pypeit_fits=hdu[0].header['PYP_SPEC']
+                    )[1]
+                par = par['telluric']
 
-        # Checks
-        if par['telluric']['telgridfile'] is None:
-            raise PypeItError('A file with the telluric grid must be provided.')
-        elif not os.path.isfile(dataPaths.telgrid.get_file_path(par['telluric']['telgridfile'])):
-            raise PypeItError(f"{par['telluric']['telgridfile']} does not exist.  Either the file was not"
-                       "downloaded successfully or the file name is incorrect.")
+        # NOTE: Code should not be able to get here with par = None.
+
+        if par['telgridfile'] is None:
+            raise PypeItError(
+                'No telluric grid file is specified.  This means it has not been specific in '
+                'your input file and there is no default for your spectrograph.  You must set '
+                'the telgridfile parameter; see the pypeit documentation for options.'
+            )
 
         # Write the par to disk
-        # TODO: Make it optional to write this file?  Is the relevant metadata
-        # saved to the main output file?
-        log.info(f'Writing the telluric fitting parameters to {args.par_outfile}')
-        par['telluric'].to_config(args.par_outfile, section_name='telluric', include_descr=False)
+        if args.par_outfile is not None:
+            log.info(f'Writing the telluric fitting parameters to {args.par_outfile}')
+            par.to_config(args.par_outfile, section_name='telluric', include_descr=False)
 
-        # Parse the output filename
-        outfile = (os.path.basename(args.spec1dfile)).replace('.fits','_tellcorr.fits')
-        modelfile = (os.path.basename(args.spec1dfile)).replace('.fits','_tellmodel.fits')
+        # Set the output files
+        # TODO: Make one output file
+        outfile = _spec1dfile.name.replace('.fits','_tellcorr.fits')
         log.info(f'Telluric-corrected spectrum will be saved to: {outfile}.')
+
+        modelfile = _spec1dfile.name.replace('.fits','_tellmodel.fits')
         log.info(f'Best-fit telluric model will be saved to: {modelfile}.')
 
         # Run the telluric fitting procedure.
