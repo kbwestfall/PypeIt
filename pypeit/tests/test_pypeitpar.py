@@ -287,26 +287,44 @@ def test_lists():
         _p = pypeitpar.PypeItPar.from_cfg_lines(cfg_lines=p.to_config())  # Once as tuple
 
 
+class UnlimitedDEPar(funcpar.FuncPar):
+    func = differential_evolution
+
+
+class DESubsetPar(funcpar.FuncPar):
+    func = differential_evolution
+    kw_subset = ['maxiter', 'popsize', 'init', 'tol']
+
+
+class BadKeywordDESubsetPar(funcpar.FuncPar):
+    func = differential_evolution
+    kw_subset = ['invalid']
+
+
 def test_func_par():
     # Basic functionality, uses scipy.optimize.differential_evolution as a test
     # case
-    p = funcpar.FuncPar(differential_evolution)
 
+    # The base class cannot be instantiated directly
+    with pytest.raises(NotImplementedError):
+        p = funcpar.FuncPar()
+
+    # Test the unrestricted set of keywords
+    p = UnlimitedDEPar()
     assert p.name == 'differential_evolution', 'Function name is incorrect!'
     assert p.module == 'scipy.optimize._differentialevolution', 'Module name is incorrect!'
     assert p.npar == 20, 'The number of parameters changed.'
 
     # Check for failure when restricting to an invalid parameter
     with pytest.raises(PypeItError):
-        p = funcpar.FuncPar(differential_evolution, restrict_to=['invalid'])
+        p = BadKeywordDESubsetPar()
     
     # Check for failure when providing a value for an invalid parameter
     with pytest.raises(PypeItError):
-        p = funcpar.FuncPar(differential_evolution, invalid='test')
+        p = UnlimitedDEPar(invalid='test')
 
     # Check for success when restricting the parameter list
-    p = funcpar.FuncPar(differential_evolution, restrict_to=['maxiter', 'popsize', 'init', 'tol'])
-
+    p = DESubsetPar()
     assert p.name == 'differential_evolution', 'Function name is incorrect!'
     assert p.module == 'scipy.optimize._differentialevolution', 'Module name is incorrect!'
     assert p.npar == 4, 'The number of parameters changed.'
@@ -314,16 +332,14 @@ def test_func_par():
 
     # Check that both the default value and provided value are currectly set
     tol_input = 0.1
-    p = funcpar.FuncPar(differential_evolution, restrict_to=['maxiter', 'popsize', 'init', 'tol'],
-                        tol=tol_input)
+    p = DESubsetPar(tol=tol_input)
     assert p.default['tol'] == 0.01, 'Default value for tol changed.'
     assert p['tol'] == tol_input, 'Provided value for tol not set correctly!'
 
 
 class DEPar(funcpar.FuncPar):
-    omitted_keys = ['args']
-    def __init__(self, restrict_to=None, **kwargs):
-        super().__init__(differential_evolution, restrict_to=restrict_to, **kwargs)
+    func = differential_evolution
+    omitted_keys = ['args', 'seed']
 
 
 def test_func_par_subclass():
@@ -333,8 +349,9 @@ def test_func_par_subclass():
 
     assert p.default['popsize'] == 15, 'Default value for popsize changed.'
     assert p['popsize'] == 10, 'Provided value for popsize not set correctly!'
-    assert p.npar == 19, 'The number of parameters changed.'
+    assert p.npar == 18, 'The number of parameters changed.'
     assert 'args' not in p.keys(), 'args should have been omitted from the parameter list!'
+    assert 'seed' not in p.keys(), 'seed should have been omitted from the parameter list!'
 
 
 def test_de_par():

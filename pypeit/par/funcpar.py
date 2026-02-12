@@ -18,8 +18,10 @@ from pypeit.par.parset import ParSet
 
 class FuncPar(ParSet):
     """
-    A :class:`~pypeit.par.parset.ParSet` subclass that collects the keyword
-    arguments of a function.
+    A abstract :class:`~pypeit.par.parset.ParSet` subclass that collects the
+    keyword arguments of a function.
+
+    This class cannot be instantiated directly.
 
     .. note::
     
@@ -32,13 +34,6 @@ class FuncPar(ParSet):
 
     Parameters
     ----------
-    func : callable
-        The function whose keyword arguments are to be collected.
-    restrict_to : array-like, optional
-        A restricted list of keywords to include.  If None, all keywords are
-        included.  If provided, only the keywords provided will be included; an
-        exception is raised if any of the provided keywords that are *not* part
-        of the function argument list.
     **kwargs:
         The initial values for the keyword arguments.  If not provided, the
         default values from the function signature will be used.  An exception
@@ -59,24 +54,47 @@ class FuncPar(ParSet):
         are not part of the function argument list.
     """
 
+    func = None
+    """
+    The callable function whose keyword arguments are to be collected.
+    """
+
     omitted_keys = None
     """
-    Keyword arguments that are omitted from the parameter set.
+    Keyword arguments (provided as a list of strings) that should be omitted
+    from the parameter set.  Any keyword in this list that is *not* part of the
+    function signature is ignored.
     """
 
-    def __init__(self, func, restrict_to=None, **kwargs):
+    kw_subset = None
+    """
+    A subset of keyword arguments (provided as a list of strings) for this
+    parameter set.  If None, all keywords are included.  Any keyword that is
+    *not* part of the function argument list will lead to an exception, which
+    must be fixed at the coding level (i.e., this would not be user error).
+    """
+
+    def __init__(self, **kwargs):
+
+        if self.func is None:
+            raise NotImplementedError(
+                f'CODING ERROR: The {self.__class__.__name__} does not define the function '
+                'from which to pull the keyword arguments!'
+            )
 
         # Extract all the keyword arguments and their default values
-        func_kwargs = utils.get_func_kwargs(func)
+        func_kwargs = utils.get_func_kwargs(self.func)
 
         # Next apply the restricted list of keyword arguments    
-        if restrict_to is not None:
-            _rt = np.asarray(restrict_to)
-            indx = [k not in func_kwargs for k in _rt]
+        if self.kw_subset is not None:
+            indx = [k not in func_kwargs for k in self.kw_subset]
             if any(indx):
                 # TODO: Use a warning instead?
-                raise PypeItError(f'{_rt[indx]} are not keyword arguments for {func.__name__}!')
-            func_kwargs = {k: v for k, v in func_kwargs.items() if k in restrict_to}
+                raise PypeItError(
+                    f'CODING ERROR: {np.asarray(self.kw_subset)[indx]} are not keyword arguments '
+                    f'for {self.func.__name__}!'
+                )
+            func_kwargs = {k: v for k, v in func_kwargs.items() if k in self.kw_subset}
 
         # Next remove any keys that should generally be omitted for this
         # function
@@ -91,7 +109,7 @@ class FuncPar(ParSet):
                 # TODO: Use a warning instead?
                 raise PypeItError(
                     f'{bad_keys} are not valid keyword arguments for this instance of '
-                    f'{self.__class__.__name__} for function {func.__name__}.'
+                    f'{self.__class__.__name__} for function {self.func.__name__}.'
                 )
 
         # Overwrite the defaults with the provided values
@@ -99,9 +117,9 @@ class FuncPar(ParSet):
         for k, v in kwargs.items():
             user_kwargs[k] = v
 
-        mod = inspect.getmodule(func)
+        mod = inspect.getmodule(self.func)
         module_name = mod.__name__ if mod else None
-        descr = [f'Parameter for {func.__name__} in {module_name}.']*len(func_kwargs)
+        descr = [f'Parameter for {self.func.__name__} in {module_name}.']*len(func_kwargs)
 
         # Instantiate the base class.  There are no options, dtypes, or
         # descriptions.  TODO: We could potentially pull those from the
