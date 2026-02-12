@@ -73,8 +73,10 @@ class TelluricCorrection(datamodel.DataContainer):
         self.wave_max = np.max([np.max(s.wave) for s in self.spectra])
 
         # Initialize the telluric model components
-        self._init_source_model()
+        self.tel_model = None
         self._init_telluric_model()
+        self.src_model = None
+        self._init_source_model()
 
         # Initialize the fitter
         self.fitter = telluric.fitter.ObservedSourceModelFitter(self.src_model, self.tel_model)
@@ -101,25 +103,29 @@ class TelluricCorrection(datamodel.DataContainer):
         """
         Initialize the source model.
         """
+        if self.tel_model is None:
+            raise PypeItError('The telluric model must be initialized before the source model!')
+
         match self.par['src_model']:
             case 'qso':
                 self.src_model = telluric.source.QSOPCAModel(
                     self.par['qso_pca_file'], self.par['qso_z'], dz=self.par['qso_dz'],
-                    npca=self.par['qso_npca'], func=self.par['poly_func'],
-                    model=self.par['poly_model'], order=self.par['poly_order']
+                    npca=self.par['qso_npca'], wave=self.tel_model.wave,
+                    func=self.par['poly_func'], model=self.par['poly_model'],
+                    order=self.par['poly_order']
                 )
             case 'star':
                 self.src_model = telluric.source.StellarSpectrumModel(
                     spectral_type=self.par['star_type'], V_mag=self.par['star_mag'],
                     ra=self.par['star_ra'], dec=self.par['star_dec'], 
 #                    tol=20., archives='default',
-                    func=self.par['poly_func'], model=self.par['poly_model'],
-                    order=self.par['poly_order']
+                    wave=self.tel_model.wave, func=self.par['poly_func'],
+                    model=self.par['poly_model'], order=self.par['poly_order']
                 )
             case 'poly':
                 self.src_model = telluric.source.PolynomialModel(
-                    func=self.par['poly_func'], model=self.par['poly_model'],
-                    order=self.par['poly_order']
+                    wave=self.tel_model.wave, func=self.par['poly_func'],
+                    model=self.par['poly_model'], order=self.par['poly_order']
                 )
             case _:
                 raise PypeItError(
