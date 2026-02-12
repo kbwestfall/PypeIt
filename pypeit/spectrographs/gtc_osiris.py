@@ -142,8 +142,8 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
         par['fluxcalib']['extrap_sens'] = True
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 13
-        par['sensfunc']['IR']['maxiter'] = 2
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R10000.fits'
+        par['sensfunc']['IR']['max_rej_iter'] = 2
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R10000.fits'
         return par
 
     def init_meta(self):
@@ -423,7 +423,7 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
                 par['calibrations']['wavelengths']['lamps'] = ['ArI','XeI','NeI']
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'gtc_osiris_R2500I.fits'
                 par['sensfunc']['algorithm'] = 'IR'
-                par['sensfunc']['IR']['telgridfile'] = "TellPCA_3000_26000_R10000.fits"
+                par['sensfunc']['IR']['tel_file'] = "TellPCA_3000_26000_R10000.fits"
             case _:
                 log.warning('gtc_osiris.py: template arc missing for this grism! Trying holy-grail...')
                 par['calibrations']['wavelengths']['method'] = 'holy-grail'
@@ -907,8 +907,8 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
         par['fluxcalib']['extrap_sens'] = True
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 13
-        par['sensfunc']['IR']['maxiter'] = 2
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R10000.fits'
+        par['sensfunc']['IR']['max_rej_iter'] = 2
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R10000.fits'
         return par
 
     def init_meta(self):
@@ -1137,7 +1137,7 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
                 par['calibrations']['wavelengths']['lamps'] = ['ArI','XeI','NeI']
                 par['calibrations']['wavelengths']['reid_arxiv'] = 'gtc_osiris_R2500I.fits'
                 par['sensfunc']['algorithm'] = 'IR'
-                par['sensfunc']['IR']['telgridfile'] = "TellPCA_3000_26000_R10000.fits"
+                par['sensfunc']['IR']['tel_file'] = "TellPCA_3000_26000_R10000.fits"
             case _:
                 log.warning('gtc_osiris.py: template arc missing for this grism! Trying holy-grail...')
                 par['calibrations']['wavelengths']['method'] = 'holy-grail'

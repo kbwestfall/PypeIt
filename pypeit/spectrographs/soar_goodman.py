@@ -344,7 +344,7 @@ class SOARGoodmanRedSpectrograph(SOARGoodmanSpectrograph):
         par['scienceframe']['exprng'] = [90, None]
 
         #par['sensfunc']['algorithm'] = 'IR'
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R15000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R15000.fits'
 
         # TODO: Temporary fix for failure mode.  Remove once Ryan provides a
         # fix.
@@ -549,7 +549,7 @@ class SOARGoodmanBlueSpectrograph(SOARGoodmanSpectrograph):
         par['scienceframe']['exprng'] = [90, None]
 
         # par['sensfunc']['algorithm'] = 'IR'
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R15000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R15000.fits'
 
         return par
 

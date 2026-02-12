@@ -216,8 +216,12 @@ Current PypeItPar Parameter Hierarchy
 |     ``[coadd2d]``: :ref:`coadd2dpar`
 |     ``[sensfunc]``: :ref:`sensfuncpar`
 |         ``[[UVIS]]``: :ref:`sensfuncuvispar`
-|         ``[[IR]]``: :ref:`telluricpar`
-|     ``[telluric]``: :ref:`telluricpar`
+|         ``[[IR]]``: :ref:`newtelluricpar`
+|             ``[[[diff_evol]]]``: :ref:`differentialevolutionpar`
+|             ``[[[reject]]]``: :ref:`djsrejectpar`
+|     ``[telluric]``: :ref:`newtelluricpar`
+|         ``[[diff_evol]]``: :ref:`differentialevolutionpar`
+|         ``[[reject]]``: :ref:`djsrejectpar`
 |     ``[collate1d]``: :ref:`collate1dpar`
 
 ----
@@ -242,7 +246,7 @@ Key               Type                                             Options  Defa
 ``reduce``        :class:`~pypeit.par.pypeitpar.ReducePar`         ..       `ReducePar Keywords`_         Parameters determining sky-subtraction, object finding, and extraction                                                                                                                                                                                                                
 ``scienceframe``  :class:`~pypeit.par.pypeitpar.FrameGroupPar`     ..       `FrameGroupPar Keywords`_     The frames and combination rules for the science observations                                                                                                                                                                                                                         
 ``sensfunc``      :class:`~pypeit.par.pypeitpar.SensFuncPar`       ..       `SensFuncPar Keywords`_       Par set to control sensitivity function computation.  Only used in the after-burner script.                                                                                                                                                                                           
-``telluric``      :class:`~pypeit.par.pypeitpar.TelluricPar`       ..       `TelluricPar Keywords`_       Par set to control telluric fitting.  Only used in the pypeit_sensfunc and pypeit_telluric after-burner scripts.                                                                                                                                                                      
+``telluric``      :class:`~pypeit.par.pypeitpar.NewTelluricPar`    ..       `NewTelluricPar Keywords`_    Par set to control telluric fitting.  Only used in the pypeit_sensfunc and pypeit_telluric after-burner scripts.                                                                                                                                                                      
 ================  ===============================================  =======  ============================  ======================================================================================================================================================================================================================================================================================
 
 
@@ -533,7 +537,7 @@ Key                   Type        Options  Default     Description
 ``dv``                int, float  ..       ..          Dispersion in units of km/s in case you want to specify it in the get_wave_grid  (for the 'velocity' option), otherwise a median value is computed from the data.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
 ``dwave``             int, float  ..       ..          Dispersion in Angstroms in case you want to specify it in the get_wave_grid  (for the 'linear' option), otherwise a median value is computed from the data.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
 ``ex_value``          str         ..       ``OPT``     The extraction to coadd, i.e. optimal or boxcar. Must be either 'OPT' or 'BOX'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-``filter``            str         ..       ``none``    Filter for scaling.  See flux_calib.load_fitler_file() for naming.  Ignore if none                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+``filter``            str         ..       ``none``    Filter for scaling.  See :func:`~pypeit.core.flux_calib.load_filter_file` for naming.  Ignore if none                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
 ``filter_mag``        float       ..       ..          Magnitude of the source in the given filter                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
 ``filter_mask``       str, list   ..       ..          List of wavelength regions to mask when doing the scaling (`i.e.`, occasional junk pixels). Colon and comma separateed, e.g.   5552:5559,6010:6030                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
 ``flux_value``        bool        ..       True        If True (default), the code will coadd the fluxed spectra (i.e. the FLAM) in the spec1d files. If False, it will coadd the counts.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
@@ -596,21 +600,21 @@ Collate1DPar Keywords
 
 Class Instantiation: :class:`~pypeit.par.pypeitpar.Collate1DPar`
 
-=========================  ===============  =======  ============================================  ==================================================================================================================================================================================================================================================================================================================================================================================================================
-Key                        Type             Options  Default                                       Description                                                                                                                                                                                                                                                                                                                                                                                                       
-=========================  ===============  =======  ============================================  ==================================================================================================================================================================================================================================================================================================================================================================================================================
-``dry_run``                bool             ..       False                                         If set, the script will display the matching File and Object Ids but will not flux, coadd or archive.                                                                                                                                                                                                                                                                                                             
-``exclude_serendip``       bool             ..       False                                         Whether to exclude SERENDIP objects from collating.                                                                                                                                                                                                                                                                                                                                                               
-``exclude_slit_trace_bm``  list, str        ..                                                     A list of slit trace bitmask bits that should be excluded.                                                                                                                                                                                                                                                                                                                                                        
-``flux``                   bool             ..       False                                         If set, the script will flux calibrate using archived sensfuncs before coadding.                                                                                                                                                                                                                                                                                                                                  
-``ignore_flux``            bool             ..       False                                         If set, the script will only coadd non-fluxed spectra even if flux data is present. Otherwise fluxed spectra are coadded if all spec1ds have been fluxed calibrated.                                                                                                                                                                                                                                              
-``match_using``            str              ..       ``ra/dec``                                    Determines how 1D spectra are matched as being the same object. Must be either 'pixel' or 'ra/dec'.                                                                                                                                                                                                                                                                                                               
-``outdir``                 str              ..       ``/Users/westfall/Work/packages/pypeit/doc``  The path where all coadded output files and report files will be placed.                                                                                                                                                                                                                                                                                                                                          
-``refframe``               str              ..       ..                                            Perform reference frame correction prior to coadding. Options are: observed, heliocentric, barycentric                                                                                                                                                                                                                                                                                                            
-``spec1d_outdir``          str              ..       ..                                            The path where all modified spec1d files are placed. These are only created if flux calibration or refframe correction are asked for.                                                                                                                                                                                                                                                                             
-``tolerance``              str, float, int  ..       1.0                                           The tolerance used when comparing the coordinates of objects. If two objects are within this distance from each other, they are considered the same object. If match_using is 'ra/dec' (the default) this is an angular distance. The defaults units are arcseconds but other units supported by astropy.coordinates.Angle can be used (`e.g.`, '0.003d' or '0h1m30s'). If match_using is 'pixel' this is a float.
-``wv_rms_thresh``          float            ..       ..                                            If set, any objects with a wavelength RMS > this value are skipped, else all wavelength RMS values are accepted.                                                                                                                                                                                                                                                                                                  
-=========================  ===============  =======  ============================================  ==================================================================================================================================================================================================================================================================================================================================================================================================================
+=========================  ===============  =======  ==========  ==================================================================================================================================================================================================================================================================================================================================================================================================================
+Key                        Type             Options  Default     Description                                                                                                                                                                                                                                                                                                                                                                                                       
+=========================  ===============  =======  ==========  ==================================================================================================================================================================================================================================================================================================================================================================================================================
+``dry_run``                bool             ..       False       If set, the script will display the matching File and Object Ids but will not flux, coadd or archive.                                                                                                                                                                                                                                                                                                             
+``exclude_serendip``       bool             ..       False       Whether to exclude SERENDIP objects from collating.                                                                                                                                                                                                                                                                                                                                                               
+``exclude_slit_trace_bm``  list, str        ..                   A list of slit trace bitmask bits that should be excluded.                                                                                                                                                                                                                                                                                                                                                        
+``flux``                   bool             ..       False       If set, the script will flux calibrate using archived sensfuncs before coadding.                                                                                                                                                                                                                                                                                                                                  
+``ignore_flux``            bool             ..       False       If set, the script will only coadd non-fluxed spectra even if flux data is present. Otherwise fluxed spectra are coadded if all spec1ds have been fluxed calibrated.                                                                                                                                                                                                                                              
+``match_using``            str              ..       ``ra/dec``  Determines how 1D spectra are matched as being the same object. Must be either 'pixel' or 'ra/dec'.                                                                                                                                                                                                                                                                                                               
+``outdir``                 str              ..       ``$PWD``    The path where all coadded output files and report files will be placed.                                                                                                                                                                                                                                                                                                                                          
+``refframe``               str              ..       ..          Perform reference frame correction prior to coadding. Options are: observed, heliocentric, barycentric                                                                                                                                                                                                                                                                                                            
+``spec1d_outdir``          str              ..       ..          The path where all modified spec1d files are placed. These are only created if flux calibration or refframe correction are asked for.                                                                                                                                                                                                                                                                             
+``tolerance``              str, float, int  ..       1.0         The tolerance used when comparing the coordinates of objects. If two objects are within this distance from each other, they are considered the same object. If match_using is 'ra/dec' (the default) this is an angular distance. The defaults units are arcseconds but other units supported by astropy.coordinates.Angle can be used (`e.g.`, '0.003d' or '0h1m30s'). If match_using is 'pixel' this is a float.
+``wv_rms_thresh``          float            ..       ..          If set, any objects with a wavelength RMS > this value are skipped, else all wavelength RMS values are accepted.                                                                                                                                                                                                                                                                                                  
+=========================  ===============  =======  ==========  ==================================================================================================================================================================================================================================================================================================================================================================================================================
 
 
 ----
@@ -663,22 +667,22 @@ ReduxPar Keywords
 
 Class Instantiation: :class:`~pypeit.par.pypeitpar.ReduxPar`
 
-======================  ==============  =======  ============================================  ==========================================================================================================================================================================================================================================================================================================================================================================================================
-Key                     Type            Options  Default                                       Description                                                                                                                                                                                                                                                                                                                                                                                               
-======================  ==============  =======  ============================================  ==========================================================================================================================================================================================================================================================================================================================================================================================================
-``calwin``              int, float      ..       0                                             The window of time in hours to search for calibration frames for a science frame                                                                                                                                                                                                                                                                                                                          
-``chk_version``         bool            ..       True                                          If True enforce strict PypeIt version checking to ensure that all files were created with the current version of PypeIt.  If set to False, the code will attempt to read out-of-date files and keep going.  Beware (!!) that this can lead to unforeseen bugs that either cause the code to crash or lead to erroneous results. I.e., you really need to know what you are doing if you set this to False!
-``detnum``              int, list       ..       ..                                            Restrict reduction to a list of detector indices. In case of mosaic reduction (currently only available for Gemini/GMOS and Keck/DEIMOS) ``detnum`` should be a list of tuples of the detector indices that are mosaiced together. E.g., for Gemini/GMOS ``detnum`` would be ``[(1,2,3)]`` and for Keck/DEIMOS it would be ``[(1, 5), (2, 6), (3, 7), (4, 8)]``                                           
-``ignore_bad_headers``  bool            ..       False                                         Ignore bad headers (NOT recommended unless you know it is safe).                                                                                                                                                                                                                                                                                                                                          
-``maskIDs``             str, int, list  ..       ..                                            Restrict reduction to a set of slitmask IDs Example syntax -- ``maskIDs = 818006,818015`` This must be used with detnum (for now).                                                                                                                                                                                                                                                                        
-``qadir``               str             ..       ``QA``                                        Directory relative to calling directory to write quality assessment files.                                                                                                                                                                                                                                                                                                                                
-``quicklook``           bool            ..       False                                         Run a quick look reduction? This is usually good if you want to quickly reduce the data (usually at the telescope in real time) to get an initial estimate of the data quality.                                                                                                                                                                                                                           
-``redux_path``          str             ..       ``/Users/westfall/Work/packages/pypeit/doc``  Path to folder for performing reductions.  Default is the current working directory.                                                                                                                                                                                                                                                                                                                      
-``scidir``              str             ..       ``Science``                                   Directory relative to calling directory to write science files.                                                                                                                                                                                                                                                                                                                                           
-``slitspatnum``         str, list       ..       ..                                            Restrict reduction to a set of slit DET:SPAT values (closest slit is used). Example syntax -- slitspatnum = DET01:175,DET01:205 or MSC02:2234  If you are re-running the code, (i.e. modifying one slit) you *must* have the precise SPAT_ID index.                                                                                                                                                       
-``sortroot``            str             ..       ..                                            A filename given to output the details of the sorted files.  If None, the default is the root name of the pypeit file.  If off, no output is produced.                                                                                                                                                                                                                                                    
-``spectrograph``        str             ..       ..                                            Spectrograph that provided the data to be reduced.  See :ref:`instruments` for valid options.                                                                                                                                                                                                                                                                                                             
-======================  ==============  =======  ============================================  ==========================================================================================================================================================================================================================================================================================================================================================================================================
+======================  ==============  =======  ===========  ==========================================================================================================================================================================================================================================================================================================================================================================================================
+Key                     Type            Options  Default      Description                                                                                                                                                                                                                                                                                                                                                                                               
+======================  ==============  =======  ===========  ==========================================================================================================================================================================================================================================================================================================================================================================================================
+``calwin``              int, float      ..       0            The window of time in hours to search for calibration frames for a science frame                                                                                                                                                                                                                                                                                                                          
+``chk_version``         bool            ..       True         If True enforce strict PypeIt version checking to ensure that all files were created with the current version of PypeIt.  If set to False, the code will attempt to read out-of-date files and keep going.  Beware (!!) that this can lead to unforeseen bugs that either cause the code to crash or lead to erroneous results. I.e., you really need to know what you are doing if you set this to False!
+``detnum``              int, list       ..       ..           Restrict reduction to a list of detector indices. In case of mosaic reduction (currently only available for Gemini/GMOS and Keck/DEIMOS) ``detnum`` should be a list of tuples of the detector indices that are mosaiced together. E.g., for Gemini/GMOS ``detnum`` would be ``[(1,2,3)]`` and for Keck/DEIMOS it would be ``[(1, 5), (2, 6), (3, 7), (4, 8)]``                                           
+``ignore_bad_headers``  bool            ..       False        Ignore bad headers (NOT recommended unless you know it is safe).                                                                                                                                                                                                                                                                                                                                          
+``maskIDs``             str, int, list  ..       ..           Restrict reduction to a set of slitmask IDs Example syntax -- ``maskIDs = 818006,818015`` This must be used with detnum (for now).                                                                                                                                                                                                                                                                        
+``qadir``               str             ..       ``QA``       Directory relative to calling directory to write quality assessment files.                                                                                                                                                                                                                                                                                                                                
+``quicklook``           bool            ..       False        Run a quick look reduction? This is usually good if you want to quickly reduce the data (usually at the telescope in real time) to get an initial estimate of the data quality.                                                                                                                                                                                                                           
+``redux_path``          str             ..       ``$PWD``     Path to folder for performing reductions.  Default is the current working directory.                                                                                                                                                                                                                                                                                                                      
+``scidir``              str             ..       ``Science``  Directory relative to calling directory to write science files.                                                                                                                                                                                                                                                                                                                                           
+``slitspatnum``         str, list       ..       ..           Restrict reduction to a set of slit DET:SPAT values (closest slit is used). Example syntax -- slitspatnum = DET01:175,DET01:205 or MSC02:2234  If you are re-running the code, (i.e. modifying one slit) you *must* have the precise SPAT_ID index.                                                                                                                                                       
+``sortroot``            str             ..       ..           A filename given to output the details of the sorted files.  If None, the default is the root name of the pypeit file.  If off, no output is produced.                                                                                                                                                                                                                                                    
+``spectrograph``        str             ..       ..           Spectrograph that provided the data to be reduced.  See :ref:`instruments` for valid options.                                                                                                                                                                                                                                                                                                             
+======================  ==============  =======  ===========  ==========================================================================================================================================================================================================================================================================================================================================================================================================
 
 
 ----
@@ -955,28 +959,26 @@ SensFuncPar Keywords
 
 Class Instantiation: :class:`~pypeit.par.pypeitpar.SensFuncPar`
 
-=======================  ==============================================  ================  ===========================  ============================================================================================================================================================================================================================================================================================================================================================================================
-Key                      Type                                            Options           Default                      Description                                                                                                                                                                                                                                                                                                                                                                                 
-=======================  ==============================================  ================  ===========================  ============================================================================================================================================================================================================================================================================================================================================================================================
-``IR``                   :class:`~pypeit.par.pypeitpar.TelluricPar`      ..                `TelluricPar Keywords`_      Parameters for the IR sensfunc algorithm                                                                                                                                                                                                                                                                                                                                                    
-``UVIS``                 :class:`~pypeit.par.pypeitpar.SensfuncUVISPar`  ..                `SensfuncUVISPar Keywords`_  Parameters for the UVIS sensfunc algorithm                                                                                                                                                                                                                                                                                                                                                  
-``algorithm``            str                                             ``UVIS``, ``IR``  ``UVIS``                     Specify the algorithm for computing the sensitivity function. The options are:  (1) UVIS = Should be used for data with :math:`\lambda < 7000` A. No detailed model of telluric absorption but corrects for atmospheric extinction.  (2) IR = Should be used for data with :math:`\lambda > 7000` A. Peforms joint fit for sensitivity function and telluric absorption using HITRAN models.
-``extr``                 str                                             ..                ``OPT``                      Extraction method to use for the sensitivity function.  Options are: 'OPT' (optimal extraction), 'BOX' (boxcar extraction). Default is 'OPT'.                                                                                                                                                                                                                                               
-``extrap_blu``           float                                           ..                0.1                          Fraction of minimum wavelength coverage to grow the wavelength coverage of the sensitivitity function in the blue direction (`i.e.`, if the standard star spectrum cuts off at ``wave_min``) the sensfunc will be extrapolated to cover down to  (1.0 - ``extrap_blu``) * ``wave_min``                                                                                                      
-``extrap_red``           float                                           ..                0.1                          Fraction of maximum wavelength coverage to grow the wavelength coverage of the sensitivitity function in the red direction (`i.e.`, if the standard star spectrumcuts off at ``wave_max``) the sensfunc will be extrapolated to cover up to  (1.0 + ``extrap_red``) * ``wave_max``                                                                                                          
-``hydrogen_mask_wid``    float                                           ..                10.0                         Mask width from line center for hydrogen recombination lines in Angstroms (total mask width is 2x this value).                                                                                                                                                                                                                                                                              
-``mask_helium_lines``    bool                                            ..                False                        Mask certain ``HeII`` recombination lines prominent in O-type stars in the sensitivity function fit A region equal to 0.5 * ``hydrogen_mask_wid`` on either side of the line center is masked.                                                                                                                                                                                              
-``mask_hydrogen_lines``  bool                                            ..                True                         Mask hydrogen Balmer, Paschen, Brackett, and Pfund recombination lines in the sensitivity function fit. A region equal to ``hydrogen_mask_wid`` on either side of the line center is masked.                                                                                                                                                                                                
-``multi_spec_det``       list                                            ..                ..                           List of detectors (identified by their string name, like DET01) to splice together for multi-detector instruments (e.g. DEIMOS). It is assumed that there is *no* overlap in wavelength across detectors (might be ok if there is).  If entered as a list of integers, they should be converted to the detector name.  **Cannot be used with detector mosaics.**                            
-``polyorder``            int, list                                       ..                5                            Polynomial order for sensitivity function fitting                                                                                                                                                                                                                                                                                                                                           
-``samp_fact``            float                                           ..                1.5                          Sampling factor to make the wavelength grid for sensitivity function finer or coarser. samp_fact > 1.0 oversamples (finer), samp_fact < 1.0 undersamples (coarser).                                                                                                                                                                                                                         
-``star_dec``             float                                           ..                ..                           DEC of the standard star. This will override values in the header (`i.e.`, if they are wrong or absent)                                                                                                                                                                                                                                                                                     
-``star_mag``             float                                           ..                ..                           Magnitude of the standard star (for near-IR mainly)                                                                                                                                                                                                                                                                                                                                         
-``star_ra``              float                                           ..                ..                           RA of the standard star. This will override values in the header (`i.e.`, if they are wrong or absent)                                                                                                                                                                                                                                                                                      
-``star_type``            str                                             ..                ..                           Spectral type of the standard star (for near-IR mainly)                                                                                                                                                                                                                                                                                                                                     
-``trim_std_pixs``        list, tuple                                     ..                ..                           List or tuple of two integers specifying the number of pixels to trimfrom the start and end of the 1D standard star spectrum. Example: [10, 5] will trim 10 pixels from the start (blue side)and 5 pixels from the end (red side) of the spectrum.                                                                                                                                          
-``use_flat``             bool                                            ..                False                        If True, the flatfield spectrum will be used when computing the sensitivity function.                                                                                                                                                                                                                                                                                                       
-=======================  ==============================================  ================  ===========================  ============================================================================================================================================================================================================================================================================================================================================================================================
+===================  ==============================================  ================  ===============================  ============================================================================================================================================================================================================================================================================================================================================================================================
+Key                  Type                                            Options           Default                          Description                                                                                                                                                                                                                                                                                                                                                                                 
+===================  ==============================================  ================  ===============================  ============================================================================================================================================================================================================================================================================================================================================================================================
+``IR``               :class:`~pypeit.par.pypeitpar.NewTelluricPar`   ..                `NewTelluricPar Keywords`_       Parameters for the IR sensfunc algorithm                                                                                                                                                                                                                                                                                                                                                    
+``UVIS``             :class:`~pypeit.par.pypeitpar.SensfuncUVISPar`  ..                `SensfuncUVISPar Keywords`_      Parameters for the UVIS sensfunc algorithm                                                                                                                                                                                                                                                                                                                                                  
+``algorithm``        str                                             ``UVIS``, ``IR``  ``UVIS``                         Specify the algorithm for computing the sensitivity function. The options are:  (1) UVIS = Should be used for data with :math:`\lambda < 7000` A. No detailed model of telluric absorption but corrects for atmospheric extinction.  (2) IR = Should be used for data with :math:`\lambda > 7000` A. Peforms joint fit for sensitivity function and telluric absorption using HITRAN models.
+``extr``             str                                             ..                ``OPT``                          Extraction method to use for the sensitivity function.  Options are: 'OPT' (optimal extraction), 'BOX' (boxcar extraction). Default is 'OPT'.                                                                                                                                                                                                                                               
+``extrap_blu``       float                                           ..                0.1                              Fraction of minimum wavelength coverage to grow the wavelength coverage of the sensitivitity function in the blue direction (`i.e.`, if the standard star spectrum cuts off at ``wave_min``) the sensfunc will be extrapolated to cover down to  (1.0 - ``extrap_blu``) * ``wave_min``                                                                                                      
+``extrap_red``       float                                           ..                0.1                              Fraction of maximum wavelength coverage to grow the wavelength coverage of the sensitivitity function in the red direction (`i.e.`, if the standard star spectrumcuts off at ``wave_max``) the sensfunc will be extrapolated to cover up to  (1.0 + ``extrap_red``) * ``wave_max``                                                                                                          
+``multi_spec_det``   list                                            ..                ..                               List of detectors (identified by their string name, like DET01) to splice together for multi-detector instruments (e.g. DEIMOS). It is assumed that there is *no* overlap in wavelength across detectors (might be ok if there is).  If entered as a list of integers, they should be converted to the detector name.  **Cannot be used with detector mosaics.**                            
+``polyorder``        int, list                                       ..                5                                Polynomial order for sensitivity function fitting                                                                                                                                                                                                                                                                                                                                           
+``samp_fact``        float                                           ..                1.5                              Sampling factor to make the wavelength grid for sensitivity function finer or coarser. samp_fact > 1.0 oversamples (finer), samp_fact < 1.0 undersamples (coarser).                                                                                                                                                                                                                         
+``spec_mask_files``  str, list                                       ..                ``atm.toml``, ``hydrogen.toml``  One or more TOML files with masks to apply to the spectra when calculating the sensitivity function.  These can be local files or files provided by the pypeit package.                                                                                                                                                                                                                     
+``star_dec``         float                                           ..                ..                               DEC of the standard star. This will override values in the header (`i.e.`, if they are wrong or absent)                                                                                                                                                                                                                                                                                     
+``star_mag``         float                                           ..                ..                               Magnitude of the standard star (for near-IR mainly)                                                                                                                                                                                                                                                                                                                                         
+``star_ra``          float                                           ..                ..                               RA of the standard star. This will override values in the header (`i.e.`, if they are wrong or absent)                                                                                                                                                                                                                                                                                      
+``star_type``        str                                             ..                ..                               Spectral type of the standard star (for near-IR mainly)                                                                                                                                                                                                                                                                                                                                     
+``trim_std_pixs``    list, tuple                                     ..                ..                               List or tuple of two integers specifying the number of pixels to trimfrom the start and end of the 1D standard star spectrum. Example: [10, 5] will trim 10 pixels from the start (blue side)and 5 pixels from the end (red side) of the spectrum.                                                                                                                                          
+``use_flat``         bool                                            ..                False                            If True, the flatfield spectrum will be used when computing the sensitivity function.                                                                                                                                                                                                                                                                                                       
+===================  ==============================================  ================  ===============================  ============================================================================================================================================================================================================================================================================================================================================================================================
 
 
 ----
@@ -1008,56 +1010,103 @@ Key                   Type        Options  Default      Description
 
 ----
 
-.. _telluricpar:
+.. _newtelluricpar:
 
-TelluricPar Keywords
---------------------
+NewTelluricPar Keywords
+-----------------------
 
-Class Instantiation: :class:`~pypeit.par.pypeitpar.TelluricPar`
+Class Instantiation: :class:`~pypeit.par.pypeitpar.NewTelluricPar`
 
-=======================  ==================  =======  ==========================  =========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-Key                      Type                Options  Default                     Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-=======================  ==================  =======  ==========================  =========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-``bal_wv_min_max``       list, ndarray       ..       ..                          Min/max wavelength of broad absorption features. If there are several BAL features, the format for this mask is ``[wave_min_bal1, wave_max_bal1, wave_min_bal2, wave_max_bal2,...]``. These masked pixels will be ignored during the fitting.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
-``bounds_norm``          tuple               ..       (0.1, 3.0)                  Normalization bounds for scaling the initial object model.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
-``delta_coeff_bounds``   tuple               ..       (-20.0, 20.0)               Parameters setting the polynomial coefficient bounds for sensfunc optimization.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
-``delta_redshift``       float               ..       0.1                         Range within the redshift can be varied for telluric fitting, i.e. the code performs a bounded optimization within the redshift +- delta_redshift.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
-``disp``                 bool                ..       False                       Argument for `scipy.optimize.differential_evolution`_ that will display status messages to the screen indicating the status of the optimization.  See documentation for :class:`~pypeit.core.telluric.Telluric` for a description of the output and how to know if things are working well.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-``fit_wv_min_max``       list                ..       ..                          Pixels within this mask will be used during the fitting. The format is the same with ``bal_wv_min_max``, but this mask is good pixel masks.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-``func``                 str                 ..       ``legendre``                Polynomial model function                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-``lower``                int, float          ..       3.0                         Lower rejection threshold in units of ``sigma_corr*sigma``, where ``sigma`` is the formal noise of the spectrum, and sigma_corr is an empirically determined correction to the formal error. The distribution of input chi (defined by ``chi = (data - model)/sigma``) values is analyzed, and a correction factor to the formal error ``sigma_corr`` is returned which is multiplied into the formal errors. In this way, a rejection threshold of e.g. 3 sigma, will always correspond to roughly the same percentile.  This renormalization is performed with :func:`~pypeit.coadd1d.renormalize_errors` function, and guarantees that rejection is not too aggressive in cases where the empirical errors determined from the chi-distribution differ significantly from the formal noise which is used to determine chi.                                                                                                            
-``mask_lyman_a``         bool                ..       True                        Mask the blueward of Lyman-alpha line during the fitting?                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-``maxiter``              int                 ..       2                           Maximum number of iterations for the telluric + object model fitting.  The code performs multiple iterations rejecting outliers at each step.  The fit is then performed anew to the remaining good pixels.  For this reason if you run with the ``disp=True`` option, you will see that the f(x) loss function gets progressively better during the iterations.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-``minmax_coeff_bounds``  tuple               ..       (-5.0, 5.0)                 Parameters setting the polynomial coefficient bounds for sensfunc optimization.  Bounds are currently determined as follows.  We compute an initial fit to the sensfunc in the :func:`~pypeit.core.telluric.init_sensfunc_model` function. That determines a set of coefficients. The bounds are then determined according to: ``[(np.fmin(np.abs(this_coeff)*obj_params['delta_coeff_bounds'][0], obj_params['minmax_coeff_bounds'][0]), np.fmax(np.abs(this_coeff)*obj_params['delta_coeff_bounds'][1], obj_params['minmax_coeff_bounds'][1]))]``.                                                                                                                                                                                                                                                                                                                                                                                     
-``model``                str                 ..       ``exp``                     Types of polynomial model. Options are ``poly``, ``square``, ``exp`` corresponding to normal polynomial, squared polynomial, or exponentiated polynomial.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-``npca``                 int                 ..       8                           Number of pca for the objmodel=qso qso PCA fit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
-``objmodel``             str                 ..       ..                          The object model to be used for telluric fitting. Currently the options are: ``qso``, ``star``, and ``poly``.  For ``qso``, you might need to set ``redshift`` and ``bal_wv_min_max``.  For ``star``, you must set ``star_type``, ``star_ra``, ``star_dec``, and ``star_mag``.  For ``poly``, you might need to set ``fit_wv_min_max`` and ``norder``.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-``only_orders``          int, list, ndarray  ..       ..                          Order number, or list of order numbers if you only want to fit specific orders.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
-``pca_file``             str                 ..       ``qso_pca_1200_3100.fits``  Fits file containing quasar PCA model. Needed for the QSO model.  If you change the default, you might need to set ``pca_lower`` and ``pca_upper``.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
-``pca_lower``            int, float          ..       1220.0                      Minimum wavelength for the qso pca model                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
-``pca_upper``            int, float          ..       3100.0                      Maximum wavelength for the qso pca model                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
-``pix_shift_bounds``     tuple               ..       (-5.0, 5.0)                 Bounds for the pixel shift optimization in the telluric model fit in units of pixels.  The atmosphere will be allowed to shift within this range during the fit.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-``polish``               bool                ..       True                        If True then differential evolution will perform an additional optimization at the end to polish the best fit at the end, which can improve the optimization slightly. See `scipy.optimize.differential_evolution`_ for details.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-``polyorder``            int                 ..       3                           Order of the polynomial model fit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-``popsize``              int                 ..       30                          A multiplier for setting the total population size for the differential evolution optimization. See `scipy.optimize.differential_evolution`_ for details.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-``recombination``        int, float          ..       0.7                         The recombination constant for the differential evolution optimization. This should be in the range between 0 and 1. See `scipy.optimize.differential_evolution`_ for details.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
-``redshift``             int, float          ..       0.0                         The redshift for the object model. This is currently only used by the QSO model.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-``resln_frac_bounds``    tuple               ..       (0.6, 1.4)                  Bounds for the resolution fit optimization which is part of the telluric model.  This range is in units of ``resln_guess``, so the default would bound the spectral resolution fit to be within the range ``bounds_resln = (0.6*resln_guess, 1.4*resln_guess)``.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-``resln_guess``          int, float          ..       ..                          A guess for the resolution of your spectrum expressed as lambda/dlambda. The resolution is fit explicitly as part of the telluric model fitting, but this guess helps determine the bounds for the optimization (see ``resln_frac_bounds``). If not provided, the wavelength sampling of your spectrum will be used and the resolution calculated using a typical sampling of 3 spectral pixels per resolution element.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-``seed``                 int                 ..       777                         An initial seed for the differential evolution optimization, which is a random process.  The default is 777, which will be used to generate a unique seed for every order.  A specific seed is used because otherwise the random number generator will use the time for the seed, and the results will not be reproducible.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-``sn_clip``              int, float          ..       30.0                        This adds an error floor to the variance, preventing too much rejection at high-S/N (i.e., standard stars, bright objects), using the function :func:`~pypeit.utils.clip_ivar`. A small erorr is added to the input variance so that the output variance will never give S/N greater than ``sn_clip``. This prevents overly aggressive rejection in high S/N ratio spectra that neverthless differ at a level greater than the formal S/N due to the fact that our telluric models are only good to about 3%.                                                                                                                                                                                                                                                                                                                                                                                                                            
-``star_dec``             float               ..       ..                          Object declination in decimal deg                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-``star_mag``             float, int          ..       ..                          AB magnitude in V band                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-``star_ra``              float               ..       ..                          Object right-ascension in decimal deg                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
-``star_type``            str                 ..       ..                          stellar type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
-``sticky``               bool                ..       True                        Sticky parameter for the :func:`~pypeit.utils.djs_reject` algorithm for iterative model fit rejection.  If set to True then points rejected from a previous iteration are kept rejected, in other words the bad pixel mask is the OR of all previous iterations and rejected pixels accumulate.  If set to False, the bad pixel mask is the mask from the previous iteration, and if the model fit changes between iterations, points can alternate from being rejected to not rejected.  At present this code only performs optimizations with differential evolution and experience shows that sticky needs to be True in order for these to converge.  This is because the outliers can be so large that they dominate the loss function, and one never iteratively converges to a good model fit.  In other words, the deformations in the model between iterations with ``sticky=False`` are too small to approach a reasonable fit.
-``telgridfile``          str                 ..       ..                          File with the telluric model spectra to use.  Generally, these do not need to be set; reasonable defaults are provided for each spectrograph.  Due to their size, the files are not included with the released pypeit package; instead the code downloads each file into your cache as needed.  If this parameter is set in your pypeit file, it can be the path to a local file (which must have the correct format), or it can be the name of the specific cache file to use (e.g., TellPCA_3000_26000_R10000.fits).                                                                                                                                                                                                                                                                                                                                                                                                                   
-``tell_norm_thresh``     int, float          ..       0.9                         Threshold of telluric absorption region                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-``tell_npca``            int                 ..       5                           Number of telluric PCA components used. Can be set to any number from 1 to 10.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
-``teltype``              str                 ..       ``pca``                     Method used to evaluate telluric models.  Options are ``pca`` or ``grid``. The ``grid`` option uses a fixed grid of pre-computed HITRAN+LBLRTM atmospheric transmission models for each observatory, whereas the ``pca`` option uses principal components of a larger model grid to compute an accurate pseudo-telluric model with a much lighter telgridfile.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
-``tol``                  float               ..       0.001                       Relative tolerance for converage of the differential evolution optimization. See `scipy.optimize.differential_evolution`_ for details.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-``upper``                int, float          ..       3.0                         Upper rejection threshold in units of ``sigma_corr*sigma``, where ``sigma`` is the formal noise of the spectrum, and ``sigma_corr`` is an empirically determined correction to the formal error. See ``lower`` for additional detail.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
-=======================  ==================  =======  ==========================  =========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+==========================  =====================================================  =======  ====================================  ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+Key                         Type                                                   Options  Default                               Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+==========================  =====================================================  =======  ====================================  ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+``abs_coeff_bounds``        tuple                                                  ..       (-5.0, 5.0)                           Absolute boundaries for the polynomial coefficencts, relative to the coefficients estimated during an initial fit.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+``diff_evol``               :class:`~pypeit.par.funcpar.DifferentialEvolutionPar`  ..       `DifferentialEvolutionPar Keywords`_  Parameters passed to `scipy.optimize.differential_evolution` during the model optimization.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+``fit_wave_range``          list                                                   ..       ..                                    Limit the model fitting to this wavelength range. The format is [wave_min, wave_max].                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+``max_rej_iter``            int                                                    ..       2                                     Maximum number of rejection iterations to perform when fitting the observed spectrum.  Set to 0 to skip all rejection iterations.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+``only_orders``             int, list, ndarray                                     ..       ..                                    For echelle spectrographs, list one or more orders to restrict those included in fit.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+``pix_shift_bounds``        tuple                                                  ..       (-5.0, 5.0)                           Bounds for the pixel shift optimization in the telluric model fit in pixels.  The telluric spectrum will be allowed to shift within this range during the fit.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+``poly_func``               str                                                    ..       ``legendre``                          Polynomial model function                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+``poly_model``              str                                                    ..       ``exp``                               Type of polynomial model to use, where the options are ``linear``, ``square``, or ``exp`` corresponding to normal polynomial, squared polynomial, or exponentiated polynomial.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+``poly_order``              int                                                    ..       3                                     Order of the polynomial model.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+``qso_dz``                  int, float                                             ..       0.1                                   The +/- redshift range of the observed QSO.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+``qso_npca``                int                                                    ..       8                                     Number of PCA components to use for the QSO source model.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+``qso_pca_file``            str                                                    ..       ``qso_pca_1200_3100.fits``            Fits file containing a PCA model for QSO spectra.  If you change the default, youmay need to alter the upper and lower limit for the wavelength range.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+``qso_z``                   int, float                                             ..       0.0                                   The redshift for the QSO model.  This needs to be accurate to within the redshift range set by ``qso_dz``.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+``reject``                  :class:`~pypeit.par.funcpar.DJSRejectPar`              ..       `DJSRejectPar Keywords`_              Parameters passed to :func:`~pypeit.utils.djs_reject` during rejecting outliers during iterative fitting.  To force no rejection iterations, set the ``max_rej_iter`` parameter to 0.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+``rel_coeff_bounds``        tuple                                                  ..       (-20.0, 20.0)                         Fractional boundaries on the polynomial coefficients, relative to the coefficients estimated during an initial fit.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+``resolution_frac_bounds``  tuple                                                  ..       (0.6, 1.4)                            Fractional bounds for the spectral resolution, relative to the provided, or estimated, resolution value (see ``resolution_guess``). For example, if the guess resolution is 1000, the default bounds on the resolution will be 600 to 1400.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+``resolution_guess``        int, float                                             ..       ..                                    An estimate of the resolution of your observed spectrum expressed as lambda/dlambda.  The spectral resolution is fit explicitly as part of the telluric model fitting, but this guess helps determine the fractional bounds on the resolution for the optimization (see ``resolution_frac_bounds``). If not provided, the wavelength sampling of your spectrum will be used to estimate the resolution assuming a typical sampling of 3 spectral pixels per resolution element.                                                                                                                                                                                                                                                                                                           
+``sn_clip``                 int, float                                             ..       30.0                                  Impose a maximum S/N limit on the observed spectrum by adding imposing a floor on the measurement error. This prevents overly aggressive rejection of high S/N data, which nevertheless differ at a level greater than the formal S/N due to the fact that our telluric models are only good to about 3%.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+``spec_mask_files``         str, list                                              ..       ``atm.toml``, ``hydrogen.toml``       One or more TOML files with masks to apply to the spectra during the fit.  These can be local files or files provided by the pypeit package.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+``src_model``               str                                                    ..       ..                                    The source model to be used for telluric fitting. Currently the options are: ``qso``, ``star``, and ``poly``.  Make sure to set all the ``qso_*`` parameters when using the QSO model, all the ``star_*`` parameters when using the star model, and all the ``poly_*`` parameters when using the polynomial model.  Importantly, all three models allow for a low-order polynomial modification to the model spectrum, as determined by the ``poly_*`` parameters.  If you do not want any polynomial modification of the QSO or star spectrum, you *must* set ``poly_order=0``.  Note that the stellar model spectrum is generated using :class:`~pypeit.core.standard.get_standard_spectrum`; see the documentation for that function for more description of the ``star_*`` parameters.
+``star_dec``                float                                                  ..       ..                                    On-sky declination coordinate of the standard star in decimal degrees; same as the ``dec`` keyword in :class:`~pypeit.core.standard.get_standard_spectrum`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+``star_mag``                float, int                                             ..       ..                                    V-band magnitude of the star; same as the ``V_mag`` keyword in :class:`~pypeit.core.standard.get_standard_spectrum`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+``star_ra``                 float                                                  ..       ..                                    On-sky right ascension coordinate of the standard star in decimal degrees; same as the ``ra`` keyword in :class:`~pypeit.core.standard.get_standard_spectrum`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+``star_type``               str                                                    ..       ..                                    Spectral type of the star; same as the ``spectral_type`` keyword in :class:`~pypeit.core.standard.get_standard_spectrum`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+``tel_file``                str                                                    ..       ..                                    File with the telluric model spectra to use.  Due to their size, the files are not included with the released pypeit package; instead the code downloads each file into your cache as needed.  This can be the name of a file provided by PypeIt, like TellPCA_3000_26000_R10000.fits, or the full path to a local file, which must have the correct format.                                                                                                                                                                                                                                                                                                                                                                                                                              
+``tel_npca``                int                                                    ..       5                                     Number of telluric PCA components used. Can be set to any number from 1 to 10.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+``tel_type``                str                                                    ..       ``pca``                               Type of telluric models used.  The options are ``pca`` or ``grid``. The ``grid`` option uses a fixed grid of pre-computed HITRAN+LBLRTM atmospheric transmission models for each observatory, whereas the ``pca`` option uses principal components of a large model grid to compute an accurate pseudo-telluric model.  The pca should be used in all new applications of PypeIt; the grid approach is only provided for comparing the pca and grid approaches.                                                                                                                                                                                                                                                                                                                           
+==========================  =====================================================  =======  ====================================  ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+
+----
+
+.. _differentialevolutionpar:
+
+DifferentialEvolutionPar Keywords
+---------------------------------
+
+Class Instantiation: :class:`~pypeit.par.funcpar.DifferentialEvolutionPar`
+
+=================  ====  =======  ==================  ==============================================================================
+Key                Type  Options  Default             Description                                                                   
+=================  ====  =======  ==================  ==============================================================================
+``atol``           ..    ..       0                   Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``callback``       ..    ..       ..                  Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``constraints``    ..    ..       ()                  Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``disp``           ..    ..       False               Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``init``           ..    ..       ``latinhypercube``  Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``integrality``    ..    ..       ..                  Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``maxiter``        ..    ..       1000                Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``mutation``       ..    ..       (0.5, 1)            Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``polish``         ..    ..       True                Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``popsize``        ..    ..       15                  Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``recombination``  ..    ..       0.7                 Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``rng``            ..    ..       ..                  Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``strategy``       ..    ..       ``best1bin``        Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``tol``            ..    ..       0.01                Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``updating``       ..    ..       ``immediate``       Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``vectorized``     ..    ..       False               Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``workers``        ..    ..       1                   Parameter for differential_evolution in scipy.optimize._differentialevolution.
+``x0``             ..    ..       ..                  Parameter for differential_evolution in scipy.optimize._differentialevolution.
+=================  ====  =======  ==================  ==============================================================================
+
+
+----
+
+.. _djsrejectpar:
+
+DJSRejectPar Keywords
+---------------------
+
+Class Instantiation: :class:`~pypeit.par.funcpar.DJSRejectPar`
+
+===============  ====  =======  =======  =============================================
+Key              Type  Options  Default  Description                                  
+===============  ====  =======  =======  =============================================
+``groupbadpix``  ..    ..       False    Parameter for djs_reject in pypeit.core.pydl.
+``groupdim``     ..    ..       ..       Parameter for djs_reject in pypeit.core.pydl.
+``groupsize``    ..    ..       ..       Parameter for djs_reject in pypeit.core.pydl.
+``grow``         ..    ..       0        Parameter for djs_reject in pypeit.core.pydl.
+``lower``        ..    ..       ..       Parameter for djs_reject in pypeit.core.pydl.
+``maxdev``       ..    ..       ..       Parameter for djs_reject in pypeit.core.pydl.
+``maxrej``       ..    ..       ..       Parameter for djs_reject in pypeit.core.pydl.
+``percentile``   ..    ..       False    Parameter for djs_reject in pypeit.core.pydl.
+``sticky``       ..    ..       False    Parameter for djs_reject in pypeit.core.pydl.
+``upper``        ..    ..       ..       Parameter for djs_reject in pypeit.core.pydl.
+``use_mad``      ..    ..       False    Parameter for djs_reject in pypeit.core.pydl.
+===============  ====  =======  =======  =============================================
 
 
 
@@ -1169,6 +1218,25 @@ Alterations to the default parameters are:
           bspline_spacing = 3.0
           no_poly = True
           user_regions = :10,75:
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-apf_levy:
 
@@ -1301,6 +1369,25 @@ Alterations to the default parameters are:
           mask_by_boxcar = True
       [[extraction]]
           boxcar_radius = 1.728
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-bok_bc:
 
@@ -1440,6 +1527,24 @@ Alterations to the default parameters are:
           no_poly = True
   [sensfunc]
       polyorder = 7
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-gemini_flamingos1:
 
@@ -1575,6 +1680,25 @@ Alterations to the default parameters are:
       [[findobj]]
           snr_thresh = 5.0
           find_trim_edge = 50, 50,
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-gemini_flamingos2:
 
@@ -1717,7 +1841,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 8
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-gemini_gmos_north_e2v:
 
@@ -1818,6 +1959,24 @@ Alterations to the default parameters are:
       extrap_blu = 0.05
       extrap_red = 0.05
       trim_std_pixs = 20, 20,
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-gemini_gmos_north_ham:
 
@@ -1918,6 +2077,24 @@ Alterations to the default parameters are:
       extrap_blu = 0.05
       extrap_red = 0.05
       trim_std_pixs = 20, 20,
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-gemini_gmos_north_ham_ns:
 
@@ -2018,6 +2195,24 @@ Alterations to the default parameters are:
       extrap_blu = 0.05
       extrap_red = 0.05
       trim_std_pixs = 20, 20,
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-gemini_gmos_south_ham:
 
@@ -2121,7 +2316,24 @@ Alterations to the default parameters are:
       trim_std_pixs = 20, 20,
       algorithm = IR
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-gemini_gnirs_echelle:
 
@@ -2258,7 +2470,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 6
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-gemini_gnirs_ifu:
 
@@ -2406,7 +2635,24 @@ Alterations to the default parameters are:
       [[UVIS]]
           extinct_correct = False
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-gtc_maat:
 
@@ -2537,7 +2783,24 @@ Alterations to the default parameters are:
       [[UVIS]]
           extinct_correct = False
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-gtc_osiris:
 
@@ -2651,7 +2914,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 13
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-gtc_osiris_plus:
 
@@ -2765,7 +3045,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 13
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-jwst_nircam:
 
@@ -2863,6 +3160,25 @@ Alterations to the default parameters are:
           sn_gauss = 6.0
           model_full_slit = True
           use_2dmodel_mask = False
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-jwst_nirspec:
 
@@ -2961,6 +3277,25 @@ Alterations to the default parameters are:
           sn_gauss = 5.0
           model_full_slit = True
           use_2dmodel_mask = False
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_deimos:
 
@@ -3079,7 +3414,24 @@ Alterations to the default parameters are:
       spec_method = boxcar
   [sensfunc]
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R15000.fits
+          tel_file = TellPCA_3000_26000_R15000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_esi:
 
@@ -3196,6 +3548,25 @@ Alterations to the default parameters are:
           maxnumber_std = 1
       [[extraction]]
           model_full_slit = True
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_hires:
 
@@ -3368,13 +3739,28 @@ Alterations to the default parameters are:
       trim_std_pixs = 4, 40,
       algorithm = IR
       polyorder = 7
-      mask_hydrogen_lines = False
       [[IR]]
-          telgridfile = TellPCA_3000_10500_R120000.fits
+          tel_file = TellPCA_3000_10500_R120000.fits
           pix_shift_bounds = (-40.0, 40.0)
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
   [telluric]
-      resln_frac_bounds = (0.25, 1.25)
+      resolution_frac_bounds = (0.25, 1.25)
       pix_shift_bounds = (-40.0, 40.0)
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_kcrm:
 
@@ -3486,7 +3872,24 @@ Alterations to the default parameters are:
       [[UVIS]]
           extinct_correct = False
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R15000.fits
+          tel_file = TellPCA_3000_26000_R15000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_kcwi:
 
@@ -3613,7 +4016,24 @@ Alterations to the default parameters are:
       [[UVIS]]
           extinct_correct = False
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R15000.fits
+          tel_file = TellPCA_3000_26000_R15000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_lris_blue:
 
@@ -3725,7 +4145,24 @@ Alterations to the default parameters are:
       spec_method = boxcar
   [sensfunc]
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_lris_blue_orig:
 
@@ -3837,7 +4274,24 @@ Alterations to the default parameters are:
       spec_method = boxcar
   [sensfunc]
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_lris_red:
 
@@ -3960,7 +4414,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 9
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_lris_red_mark4:
 
@@ -4083,7 +4554,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 9
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_lris_red_orig:
 
@@ -4206,7 +4694,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 9
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_mosfire:
 
@@ -4341,7 +4846,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 13
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_nires:
 
@@ -4494,7 +5016,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 8
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_nirspec_high:
 
@@ -4647,7 +5186,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 8
       [[IR]]
-          telgridfile = TellPCA_9300_55100_R60000.fits
+          tel_file = TellPCA_9300_55100_R60000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_nirspec_high_old:
 
@@ -4799,7 +5355,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 8
       [[IR]]
-          telgridfile = TellPCA_9300_55100_R60000.fits
+          tel_file = TellPCA_9300_55100_R60000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-keck_nirspec_low:
 
@@ -4936,10 +5509,26 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 8
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R25000.fits
+          tel_file = TellPCA_3000_26000_R25000.fits
           pix_shift_bounds = (-8.0, 8.0)
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
   [telluric]
       pix_shift_bounds = (-8.0, 8.0)
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-lbt_luci1:
 
@@ -5080,7 +5669,24 @@ Alterations to the default parameters are:
   [sensfunc]
       algorithm = IR
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-lbt_luci2:
 
@@ -5220,7 +5826,24 @@ Alterations to the default parameters are:
   [sensfunc]
       algorithm = IR
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-lbt_mods1b:
 
@@ -5355,6 +5978,25 @@ Alterations to the default parameters are:
           noise_floor = 0.01
   [flexure]
       spec_method = boxcar
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-lbt_mods1b_proc:
 
@@ -5542,6 +6184,25 @@ Alterations to the default parameters are:
           use_illumflat = False
   [flexure]
       spec_method = boxcar
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-lbt_mods1r:
 
@@ -5681,7 +6342,24 @@ Alterations to the default parameters are:
   [sensfunc]
       algorithm = IR
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-lbt_mods1r_proc:
 
@@ -5874,7 +6552,24 @@ Alterations to the default parameters are:
   [sensfunc]
       algorithm = IR
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-lbt_mods2b:
 
@@ -6009,6 +6704,25 @@ Alterations to the default parameters are:
           noise_floor = 0.01
   [flexure]
       spec_method = boxcar
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-lbt_mods2b_proc:
 
@@ -6196,6 +6910,25 @@ Alterations to the default parameters are:
           use_illumflat = False
   [flexure]
       spec_method = boxcar
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-lbt_mods2r:
 
@@ -6335,7 +7068,24 @@ Alterations to the default parameters are:
   [sensfunc]
       algorithm = IR
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-lbt_mods2r_proc:
 
@@ -6528,7 +7278,24 @@ Alterations to the default parameters are:
   [sensfunc]
       algorithm = IR
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-ldt_deveny:
 
@@ -6687,6 +7454,24 @@ Alterations to the default parameters are:
       [[UVIS]]
           polycorrect = False
           nresln = 15
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-magellan_fire:
 
@@ -6838,7 +7623,24 @@ Alterations to the default parameters are:
   [sensfunc]
       algorithm = IR
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R15000.fits
+          tel_file = TellPCA_3000_26000_R15000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-magellan_fire_long:
 
@@ -6979,7 +7781,24 @@ Alterations to the default parameters are:
           find_trim_edge = 50, 50,
   [sensfunc]
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-magellan_mage:
 
@@ -7091,6 +7910,25 @@ Alterations to the default parameters are:
           model_full_slit = True
   [coadd1d]
       wave_method = log10
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-mdm_modspec:
 
@@ -7192,6 +8030,25 @@ Alterations to the default parameters are:
       [[process]]
           mask_cr = True
           noise_floor = 0.01
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-mdm_osmos_mdm4k:
 
@@ -7285,6 +8142,25 @@ Alterations to the default parameters are:
       [[process]]
           mask_cr = True
           noise_floor = 0.01
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-mdm_osmos_r4k:
 
@@ -7409,6 +8285,25 @@ Alterations to the default parameters are:
           mask_cr = True
           use_biasimage = False
           noise_floor = 0.01
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-mmt_binospec:
 
@@ -7529,7 +8424,24 @@ Alterations to the default parameters are:
   [sensfunc]
       polyorder = 7
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-mmt_bluechannel:
 
@@ -7649,6 +8561,24 @@ Alterations to the default parameters are:
           global_sky_std = False
   [sensfunc]
       polyorder = 7
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-mmt_mmirs:
 
@@ -7793,7 +8723,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 8
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-not_alfosc:
 
@@ -7909,6 +8856,25 @@ Alterations to the default parameters are:
           mask_cr = True
           use_overscan = False
           noise_floor = 0.01
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-not_alfosc_vert:
 
@@ -8024,6 +8990,25 @@ Alterations to the default parameters are:
           mask_cr = True
           use_overscan = False
           noise_floor = 0.01
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-ntt_efosc2:
 
@@ -8122,6 +9107,25 @@ Alterations to the default parameters are:
           no_poly = True
   [flexure]
       spec_method = boxcar
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-p200_dbsp_blue:
 
@@ -8221,6 +9225,24 @@ Alterations to the default parameters are:
   [sensfunc]
       [[UVIS]]
           nresln = 5
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-p200_dbsp_red:
 
@@ -8322,7 +9344,24 @@ Alterations to the default parameters are:
       [[UVIS]]
           polycorrect = False
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-p200_ngps_i:
 
@@ -8421,6 +9460,25 @@ Alterations to the default parameters are:
           sigclip = 4.0
           objlim = 5.0
           noise_floor = 0.01
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-p200_ngps_r:
 
@@ -8520,6 +9578,25 @@ Alterations to the default parameters are:
           sigclip = 4.0
           objlim = 5.0
           noise_floor = 0.01
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-p200_tspec:
 
@@ -8673,7 +9750,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 8
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-shane_kast_blue:
 
@@ -8780,7 +9874,24 @@ Alterations to the default parameters are:
       spectrum = sky_kastb_600.fits
   [sensfunc]
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-shane_kast_red:
 
@@ -8878,7 +9989,24 @@ Alterations to the default parameters are:
       spec_method = boxcar
   [sensfunc]
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-shane_kast_red_ret:
 
@@ -8978,7 +10106,24 @@ Alterations to the default parameters are:
       spec_method = boxcar
   [sensfunc]
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-soar_goodman_blue:
 
@@ -9088,7 +10233,24 @@ Alterations to the default parameters are:
       spec_method = boxcar
   [sensfunc]
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R15000.fits
+          tel_file = TellPCA_3000_26000_R15000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-soar_goodman_red:
 
@@ -9200,7 +10362,24 @@ Alterations to the default parameters are:
       spec_method = boxcar
   [sensfunc]
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R15000.fits
+          tel_file = TellPCA_3000_26000_R15000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-subaru_focas:
 
@@ -9320,7 +10499,24 @@ Alterations to the default parameters are:
   [sensfunc]
       algorithm = IR
       [[IR]]
-          telgridfile = TellPCA_3000_10500_R120000.fits
+          tel_file = TellPCA_3000_10500_R120000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-tng_dolores:
 
@@ -9411,6 +10607,25 @@ Alterations to the default parameters are:
       [[process]]
           mask_cr = True
           noise_floor = 0.01
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-vlt_fors2:
 
@@ -9523,7 +10738,24 @@ Alterations to the default parameters are:
   [sensfunc]
       algorithm = IR
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-vlt_sinfoni:
 
@@ -9672,7 +10904,24 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 7
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R10000.fits
+          tel_file = TellPCA_3000_26000_R10000.fits
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-vlt_xshooter_nir:
 
@@ -9832,11 +11081,27 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 8
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R25000.fits
+          tel_file = TellPCA_3000_26000_R25000.fits
           pix_shift_bounds = (-10.0, 10.0)
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
   [telluric]
-      resln_frac_bounds = (0.4, 2.0)
+      resolution_frac_bounds = (0.4, 2.0)
       pix_shift_bounds = (-10.0, 10.0)
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-vlt_xshooter_uvb:
 
@@ -9986,10 +11251,26 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 8
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R25000.fits
+          tel_file = TellPCA_3000_26000_R25000.fits
           pix_shift_bounds = (-8.0, 8.0)
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
   [telluric]
       pix_shift_bounds = (-8.0, 8.0)
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-vlt_xshooter_vis:
 
@@ -10141,11 +11422,27 @@ Alterations to the default parameters are:
       algorithm = IR
       polyorder = 8
       [[IR]]
-          telgridfile = TellPCA_3000_26000_R25000.fits
+          tel_file = TellPCA_3000_26000_R25000.fits
           pix_shift_bounds = (-10.0, 10.0)
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
   [telluric]
-      resln_frac_bounds = (0.4, 2.0)
+      resolution_frac_bounds = (0.4, 2.0)
       pix_shift_bounds = (-10.0, 10.0)
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-wht_isis_blue:
 
@@ -10258,6 +11555,25 @@ Alterations to the default parameters are:
           mask_cr = True
           use_overscan = False
           noise_floor = 0.01
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 
 .. _instr_par-wht_isis_red:
 
@@ -10368,4 +11684,23 @@ Alterations to the default parameters are:
           mask_cr = True
           use_overscan = False
           noise_floor = 0.01
+  [sensfunc]
+      [[IR]]
+          [[[diff_evol]]]
+              popsize = 30
+              tol = 0.001
+              rng = 777
+          [[[reject]]]
+              lower = 3.0
+              upper = 3.0
+              sticky = True
+  [telluric]
+      [[diff_evol]]
+          popsize = 30
+          tol = 0.001
+          rng = 777
+      [[reject]]
+          lower = 3.0
+          upper = 3.0
+          sticky = True
 

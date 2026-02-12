@@ -216,7 +216,7 @@ class P200TSPECSpectrograph(spectrograph.Spectrograph):
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 8
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R10000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R10000.fits'
 
         # Coadding
         par['coadd1d']['wave_method'] = 'log10'

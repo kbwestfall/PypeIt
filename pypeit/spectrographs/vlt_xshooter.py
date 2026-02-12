@@ -321,12 +321,12 @@ class VLTXShooterNIRSpectrograph(VLTXShooterSpectrograph):
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 8
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R25000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R25000.fits'
         par['sensfunc']['IR']['pix_shift_bounds'] = (-10.0,10.0)
         
         # Telluric parameters
         par['telluric']['pix_shift_bounds'] = (-10.0,10.0)
-        par['telluric']['resln_frac_bounds'] = (0.4,2.0)
+        par['telluric']['resolution_frac_bounds'] = (0.4,2.0)
 
         # Coadding
         par['coadd1d']['wave_method'] = 'log10'
@@ -683,12 +683,12 @@ class VLTXShooterVISSpectrograph(VLTXShooterSpectrograph):
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 8 #[9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R25000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R25000.fits'
         par['sensfunc']['IR']['pix_shift_bounds'] = (-10.0,10.0)
         
         # Telluric parameters
         par['telluric']['pix_shift_bounds'] = (-10.0,10.0)
-        par['telluric']['resln_frac_bounds'] = (0.4,2.0)
+        par['telluric']['resolution_frac_bounds'] = (0.4,2.0)
 
         # Coadding
         par['coadd1d']['wave_method'] = 'log10'
@@ -977,7 +977,7 @@ class VLTXShooterUVBSpectrograph(VLTXShooterSpectrograph):
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] =  8
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R25000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R25000.fits'
         par['sensfunc']['IR']['pix_shift_bounds'] = (-8.0,8.0)
         
         # Telluric parameters

@@ -1023,7 +1023,7 @@ class IRSensFunc(SensFunc):
         self.telluric = telluric.sensfunc_telluric(self.wave_cnts, self.counts, self.counts_ivar,
                                                    self.counts_mask, self.meta_spec['EXPTIME'],
                                                    self.meta_spec['AIRMASS'], self.std_spec,
-                                                   self.par['IR']['telgridfile'],
+                                                   self.par['IR']['tel_file'],
                                                    log10_blaze_function=self.log10_blaze_function,
                                                    polyorder=self.par['polyorder'],
                                                    ech_orders=self.meta_spec['ECH_ORDERS'],

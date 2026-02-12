@@ -86,12 +86,12 @@ class TelluricCorrection(datamodel.DataContainer):
         match self.par['teltype']:
             case 'pca':
                 self.tel_model = telluric.model.PCATelluricModel(
-                    self.par['telgridfile'], npca=self.par['tell_npca'],
+                    self.par['tel_file'], npca=self.par['tell_npca'],
                     wave_min=self.wave_min/1.1, wave_max=self.wave_max*1.1
                 )
             case 'grid':
                 self.tel_model = telluric.model.AtmGridTelluricModel(
-                    self.par['telgridfile'], wave_min=self.wave_min/1.1,
+                    self.par['tel_file'], wave_min=self.wave_min/1.1,
                     wave_max=self.wave_max*1.1
                 )
             case _:

@@ -352,7 +352,7 @@ class KeckKCWIKCRMSpectrograph(spectrograph.Spectrograph):
         par['sensfunc']['UVIS']['extinct_correct'] = False  # This must be False - the extinction correction is performed when making the datacube
 
         # If telluric is triggered
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R15000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R15000.fits'
 
         return par
 

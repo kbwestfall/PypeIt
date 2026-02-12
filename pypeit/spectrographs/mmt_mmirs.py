@@ -207,7 +207,7 @@ class MMTMMIRSSpectrograph(spectrograph.Spectrograph):
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 8
         # ToDo: replace the telluric grid file for MMT site.
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R10000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R10000.fits'
 
         return par
 

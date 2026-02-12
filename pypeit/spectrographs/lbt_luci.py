@@ -412,7 +412,7 @@ class LBTLUCI1Spectrograph(LBTLUCISpectrograph):
         
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R10000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R10000.fits'
 
 
         return par
@@ -647,7 +647,7 @@ class LBTLUCI2Spectrograph(LBTLUCISpectrograph):
         
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R10000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R10000.fits'
 
         return par
 

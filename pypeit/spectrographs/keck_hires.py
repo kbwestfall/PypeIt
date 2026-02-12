@@ -170,20 +170,20 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
 
         # Sensitivity function parameters
         par['sensfunc']['trim_std_pixs'] = [4, 40]  # Trim each side of the standard star spectrum
-        par['sensfunc']['mask_hydrogen_lines'] = False
+#        par['sensfunc']['mask_hydrogen_lines'] = False
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 7
         par['sensfunc']['extrap_blu'] = 0.01
         par['sensfunc']['extrap_red'] = 0.01
         par['fluxcalib']['extrap_sens'] = True
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_10500_R120000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_10500_R120000.fits'
         par['sensfunc']['IR']['pix_shift_bounds'] = (-40.0,40.0)
         
         # Telluric parameters
         # HIRES is usually oversampled, so the helio shift can be large
         par['telluric']['pix_shift_bounds'] = (-40.0,40.0)
         # Similarly, the resolution guess is higher than it should be
-        par['telluric']['resln_frac_bounds'] = (0.25,1.25)
+        par['telluric']['resolution_frac_bounds'] = (0.25,1.25)
 
         # Coadding
         par['coadd1d']['wave_method'] = 'log10'

@@ -83,8 +83,7 @@ class SubaruFOCASSpectrograph(spectrograph.Spectrograph):
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 5
-        #par['sensfunc']['IR']['telgridfile'] = 'TelFit_MaunaKea_3100_26100_R20000.fits'
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_10500_R120000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_10500_R120000.fits'
 
         # Frame typing
         par['calibrations']['biasframe']['exprng'] = [None, 0.001]

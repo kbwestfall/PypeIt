@@ -323,7 +323,7 @@ class KeckDEIMOSSpectrograph(spectrograph.Spectrograph):
         par['scienceframe']['process']['objlim'] = 1.5
 
         # If telluric is triggered
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R15000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R15000.fits'
         return par
 
     def config_specific_par(

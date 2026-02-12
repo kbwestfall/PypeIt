@@ -110,7 +110,7 @@ class KeckLRISSpectrograph(spectrograph.Spectrograph):
 
 
         # If telluric is triggered
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R10000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R10000.fits'
 
         return par
 

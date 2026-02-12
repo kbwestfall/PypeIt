@@ -276,7 +276,7 @@ class KeckNIRSPECHighSpectrograph(KeckNIRSPECSpectrograph):
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 8
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_9300_55100_R60000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_9300_55100_R60000.fits'
 
         return par
 
@@ -697,8 +697,7 @@ class KeckNIRSPECHighSpectrographOld(KeckNIRSPECSpectrographOld):
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 8
-        #par['sensfunc']['IR']['telgridfile'] = 'TelFit_MaunaKea_3100_26100_R20000.fits'
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_9300_55100_R60000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_9300_55100_R60000.fits'
         return par
 
     def config_specific_par(
@@ -1269,7 +1268,7 @@ class KeckNIRSPECLowSpectrograph(KeckNIRSPECSpectrograph):
         # Sensitivity function parameters
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 8
-        par['sensfunc']['IR']['telgridfile'] = 'TellPCA_3000_26000_R25000.fits'
+        par['sensfunc']['IR']['tel_file'] = 'TellPCA_3000_26000_R25000.fits'
         par['sensfunc']['IR']['pix_shift_bounds'] = (-8.0,8.0)
 
         # Telluric parameters

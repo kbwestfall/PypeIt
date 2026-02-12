@@ -97,11 +97,11 @@ class TellFit(scriptbase.ScriptBase):
 
         # NOTE: Code should not be able to get here with par = None.
 
-        if par['telgridfile'] is None:
+        if par['tel_file'] is None:
             raise PypeItError(
                 'No telluric grid file is specified.  This means it has not been specific in '
                 'your input file and there is no default for your spectrograph.  You must set '
-                'the telgridfile parameter; see the pypeit documentation for options.'
+                'the tel_file parameter; see the pypeit documentation for options.'
             )
 
         # Write the par to disk
@@ -125,7 +125,7 @@ class TellFit(scriptbase.ScriptBase):
             # run telluric.qso_telluric to get the final results
             TelQSO = telluric.qso_telluric(
                 args.spec1dfile,
-                par['telluric']['telgridfile'],
+                par['telluric']['tel_file'],
                 par['telluric']['pca_file'],
                 par['telluric']['redshift'],
                 modelfile,
