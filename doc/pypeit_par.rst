@@ -216,10 +216,10 @@ Current PypeItPar Parameter Hierarchy
 |     ``[coadd2d]``: :ref:`coadd2dpar`
 |     ``[sensfunc]``: :ref:`sensfuncpar`
 |         ``[[UVIS]]``: :ref:`sensfuncuvispar`
-|         ``[[IR]]``: :ref:`newtelluricpar`
+|         ``[[IR]]``: :ref:`telluricpar`
 |             ``[[[diff_evol]]]``: :ref:`differentialevolutionpar`
 |             ``[[[reject]]]``: :ref:`djsrejectpar`
-|     ``[telluric]``: :ref:`newtelluricpar`
+|     ``[telluric]``: :ref:`telluricpar`
 |         ``[[diff_evol]]``: :ref:`differentialevolutionpar`
 |         ``[[reject]]``: :ref:`djsrejectpar`
 |     ``[collate1d]``: :ref:`collate1dpar`
@@ -246,7 +246,7 @@ Key               Type                                             Options  Defa
 ``reduce``        :class:`~pypeit.par.pypeitpar.ReducePar`         ..       `ReducePar Keywords`_         Parameters determining sky-subtraction, object finding, and extraction                                                                                                                                                                                                                
 ``scienceframe``  :class:`~pypeit.par.pypeitpar.FrameGroupPar`     ..       `FrameGroupPar Keywords`_     The frames and combination rules for the science observations                                                                                                                                                                                                                         
 ``sensfunc``      :class:`~pypeit.par.pypeitpar.SensFuncPar`       ..       `SensFuncPar Keywords`_       Par set to control sensitivity function computation.  Only used in the after-burner script.                                                                                                                                                                                           
-``telluric``      :class:`~pypeit.par.pypeitpar.NewTelluricPar`    ..       `NewTelluricPar Keywords`_    Par set to control telluric fitting.  Only used in the pypeit_sensfunc and pypeit_telluric after-burner scripts.                                                                                                                                                                      
+``telluric``      :class:`~pypeit.par.pypeitpar.TelluricPar`       ..       `TelluricPar Keywords`_       Par set to control telluric fitting.  Only used in the pypeit_sensfunc and pypeit_telluric after-burner scripts.                                                                                                                                                                      
 ================  ===============================================  =======  ============================  ======================================================================================================================================================================================================================================================================================
 
 
@@ -962,7 +962,7 @@ Class Instantiation: :class:`~pypeit.par.pypeitpar.SensFuncPar`
 ===================  ==============================================  ================  ===============================  ============================================================================================================================================================================================================================================================================================================================================================================================
 Key                  Type                                            Options           Default                          Description                                                                                                                                                                                                                                                                                                                                                                                 
 ===================  ==============================================  ================  ===============================  ============================================================================================================================================================================================================================================================================================================================================================================================
-``IR``               :class:`~pypeit.par.pypeitpar.NewTelluricPar`   ..                `NewTelluricPar Keywords`_       Parameters for the IR sensfunc algorithm                                                                                                                                                                                                                                                                                                                                                    
+``IR``               :class:`~pypeit.par.pypeitpar.TelluricPar`      ..                `TelluricPar Keywords`_          Parameters for the IR sensfunc algorithm                                                                                                                                                                                                                                                                                                                                                    
 ``UVIS``             :class:`~pypeit.par.pypeitpar.SensfuncUVISPar`  ..                `SensfuncUVISPar Keywords`_      Parameters for the UVIS sensfunc algorithm                                                                                                                                                                                                                                                                                                                                                  
 ``algorithm``        str                                             ``UVIS``, ``IR``  ``UVIS``                         Specify the algorithm for computing the sensitivity function. The options are:  (1) UVIS = Should be used for data with :math:`\lambda < 7000` A. No detailed model of telluric absorption but corrects for atmospheric extinction.  (2) IR = Should be used for data with :math:`\lambda > 7000` A. Peforms joint fit for sensitivity function and telluric absorption using HITRAN models.
 ``extr``             str                                             ..                ``OPT``                          Extraction method to use for the sensitivity function.  Options are: 'OPT' (optimal extraction), 'BOX' (boxcar extraction). Default is 'OPT'.                                                                                                                                                                                                                                               
@@ -1010,12 +1010,12 @@ Key                   Type        Options  Default      Description
 
 ----
 
-.. _newtelluricpar:
+.. _telluricpar:
 
-NewTelluricPar Keywords
------------------------
+TelluricPar Keywords
+--------------------
 
-Class Instantiation: :class:`~pypeit.par.pypeitpar.NewTelluricPar`
+Class Instantiation: :class:`~pypeit.par.pypeitpar.TelluricPar`
 
 ==========================  =====================================================  =======  ====================================  ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
 Key                         Type                                                   Options  Default                               Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
