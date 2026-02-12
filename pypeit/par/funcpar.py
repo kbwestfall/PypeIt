@@ -99,6 +99,10 @@ class FuncPar(ParSet):
         for k, v in kwargs.items():
             user_kwargs[k] = v
 
+        mod = inspect.getmodule(func)
+        module_name = mod.__name__ if mod else None
+        descr = [f'Parameter for {func.__name__} in {module_name}.']*len(func_kwargs)
+
         # Instantiate the base class.  There are no options, dtypes, or
         # descriptions.  TODO: We could potentially pull those from the
         # docstrings...
@@ -106,11 +110,11 @@ class FuncPar(ParSet):
             list(func_kwargs.keys()),               # Restricted list of possible keywords
             values=list(user_kwargs.values()),      # Values provided by instantiation
             defaults=list(func_kwargs.values()),    # Default values from the function signature
+            descr=descr,                            # Generic description
         )
 
         # Add the module and function names as attributes
-        mod = inspect.getmodule(func)
-        self.module = mod.__name__ if mod else None
+        self.module = module_name
         self.name = func.__name__
 
 
