@@ -133,13 +133,15 @@ class FuncPar(ParSet):
 
         # Add the module and function names as attributes
         self.module = module_name
-        self.name = func.__name__
+        self.name = self.func.__name__
 
 
 class DifferentialEvolutionPar(FuncPar):
     """
     Parameters used by :func:`scipy.optimize.differential_evolution`.
     """
+
+    func = optimize.differential_evolution
 
     omitted_keys = ['args', 'seed']
     """
@@ -148,19 +150,15 @@ class DifferentialEvolutionPar(FuncPar):
     instead.
     """
 
-    def __init__(self, restrict_to=None, **kwargs):
-        super().__init__(optimize.differential_evolution, restrict_to=restrict_to, **kwargs)
-
 
 class DJSRejectPar(FuncPar):
     """
     Parameters used by :func:`~pypeit.core.pydl.djs_reject`.
     """
 
+    func = djs_reject
+
     omitted_keys = ['outmask', 'inmask', 'invvar']
     """
     Omit the data-specific parameters for :func:`~pypeit.core.pydl.djs_reject`.
     """
-
-    def __init__(self, restrict_to=None, **kwargs):
-        super().__init__(djs_reject, restrict_to=restrict_to, **kwargs)
