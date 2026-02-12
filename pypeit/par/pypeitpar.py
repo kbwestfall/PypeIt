@@ -2754,8 +2754,8 @@ class TelluricPar(ParSet):
         tel_type=None, resolution_frac_bounds=None, pix_shift_bounds=None, src_model=None,
         qso_z=None, qso_dz=None, qso_pca_file=None, qso_npca=None, star_type=None, star_mag=None,
         star_ra=None, star_dec=None, poly_func=None, poly_model=None, poly_order=None,
-        rel_coeff_bounds=None, abs_coeff_bounds=None, diff_evol=None, max_rej_iter=None,
-        reject=None, fit_wave_range=None, spec_mask_files=None
+        rel_coeff_bounds=None, abs_coeff_bounds=None, ballsize=None, diff_evol=None,
+        max_rej_iter=None, reject=None, fit_wave_range=None, spec_mask_files=None
     ):
 
         # Grab the parameter names and values from the function arguments
@@ -2948,11 +2948,25 @@ class TelluricPar(ParSet):
         defaults['abs_coeff_bounds'] = (-5.0, 5.0)
         dtypes['abs_coeff_bounds'] = tuple
         descr['abs_coeff_bounds'] = (
-            'Absolute boundaries for the polynomial coefficencts, relative to the coefficients '
+            'Absolute boundaries for the polynomial coefficients, relative to the coefficients '
             'estimated during an initial fit.'
         )
 
         # Optimizer parameters
+
+        defaults['ballsize'] = 5e-4
+        dtypes['ballsize'] = float
+        descr['ballsize'] = (
+            'When initializing the population of samplers for the differential evolution '
+            'optimizer, this sets that scale of the Gaussian distribution to adopt around the '
+            'initial guess for or the most recent estimates of the parameters.  This value is '
+            'relative to the total parameter space allowed for each parameter based on their '
+            'bounds.  That is, if a parameter can range from 0 to 2, the default value of 5e-4 '
+            'means that the initial samplers will be drawn from a Gaussian with a sigma of 1e-3 '
+            'centered on the initial guess parameter or its most recent estimate.  The optimizer '
+            'will converge faster when the samplers start closer to the optimal solution.'
+        )
+
         defaults['diff_evol'] = funcpar.DifferentialEvolutionPar(
             popsize=30, tol=1e-3, recombination=0.7, polish=True, rng=777, disp=False
         )
@@ -3009,7 +3023,7 @@ class TelluricPar(ParSet):
             'resolution_frac_bounds', 'pix_shift_bounds', 'src_model', 'qso_z', 'qso_dz',
             'qso_pca_file', 'qso_npca', 'star_type', 'star_mag', 'star_ra', 'star_dec',
             'poly_func', 'poly_model', 'poly_order', 'rel_coeff_bounds', 'abs_coeff_bounds',
-            'max_rej_iter', 'fit_wave_range', 'spec_mask_files'
+            'ballsize', 'max_rej_iter', 'fit_wave_range', 'spec_mask_files'
         ]
         allkeys = parkeys + ['diff_evol', 'reject']
 

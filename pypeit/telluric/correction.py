@@ -83,10 +83,10 @@ class TelluricCorrection(datamodel.DataContainer):
         """
         Initialize the desired telluric model.
         """
-        match self.par['teltype']:
+        match self.par['tel_type']:
             case 'pca':
                 self.tel_model = telluric.model.PCATelluricModel(
-                    self.par['tel_file'], npca=self.par['tell_npca'],
+                    self.par['tel_file'], npca=self.par['tel_npca'],
                     wave_min=self.wave_min/1.1, wave_max=self.wave_max*1.1
                 )
             case 'grid':
@@ -101,28 +101,29 @@ class TelluricCorrection(datamodel.DataContainer):
         """
         Initialize the source model.
         """
-        match self.par['objmodel']:
+        match self.par['src_model']:
             case 'qso':
                 self.src_model = telluric.source.QSOPCAModel(
-                    self.par['pca_file'], self.par['redshift'], dz=self.par['delta_redshift'],
-                    npca=self.par['npca'], func=self.par['func'], model=self.par['model'],
-                    order=self.par['polyorder']
+                    self.par['qso_pca_file'], self.par['qso_z'], dz=self.par['qso_dz'],
+                    npca=self.par['qso_npca'], func=self.par['poly_func'],
+                    model=self.par['poly_model'], order=self.par['poly_order']
                 )
             case 'star':
                 self.src_model = telluric.source.StellarSpectrumModel(
                     spectral_type=self.par['star_type'], V_mag=self.par['star_mag'],
                     ra=self.par['star_ra'], dec=self.par['star_dec'], 
 #                    tol=20., archives='default',
-                    func=self.par['func'], model=self.par['model'],
-                    order=self.par['polyorder']
+                    func=self.par['poly_func'], model=self.par['poly_model'],
+                    order=self.par['poly_order']
                 )
             case 'poly':
                 self.src_model = telluric.source.PolynomialModel(
-                    func=self.par['func'], model=self.par['model'], order=self.par['polyorder']
+                    func=self.par['poly_func'], model=self.par['poly_model'],
+                    order=self.par['poly_order']
                 )
             case _:
                 raise PypeItError(
-                    f'Object model must be qso, star, or poly, not {self.par["objmodel"]}!'
+                    f'Object model must be qso, star, or poly, not {self.par["src_model"]}!'
                 )
             
     def fit(self, ispec=None, show=False, debug=False):
@@ -148,12 +149,27 @@ class TelluricCorrection(datamodel.DataContainer):
         """
         indx = np.arange(self.nspec) if ispec is None else [ispec]
 
-        # TODO: Where are the parameters saved?
+        # TODO:
+        #   - Decide how to save the best-fit parameters and models (i.e., the datamodel)
+        #   - Parse only_orders and sn_clip and apply them to the spectra being fit.
+        #   - Decide how to parse the wavelength range to fit, fit_wave_range
+        #   - Decide how to apply the masking, spec_mask_files
+        #   - Propagate show and debug to the fit methods
+
 
         for i in indx:
             # Get the parameter guesses and bounds
-            gp = self.fitter.par_guess(self.spectra[i])
-            bp = self.fitter.par_bounds(gp)
+            gp = self.fitter.par_guess(
+                self.spectra[i], resolution_guess=self.par['resolution_guess']
+            )
+            bp = self.fitter.par_bounds(
+                gp, rel_coeff_bounds=self.par['rel_coeff_bounds'], 
+                abs_coeff_bounds=self.par['abs_coeff_bounds'],
+                resolution_frac_bounds=self.par['resolution_frac_bounds'],
+                pix_shift_bounds=self.par['pix_shift_bounds'],
+                # TODO: This is not defined yet!
+#                pix_stretch_bounds=self.par['pix_stretch_bounds']
+            )
 
             if self.par['max_rej_iter'] > 0:
                 best_fit_par, best_fit_gpm = self.fitter.iter_fit(

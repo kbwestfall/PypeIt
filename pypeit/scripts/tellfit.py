@@ -29,14 +29,29 @@ class TellFit(scriptbase.ScriptBase):
             help='File name for parameters used by the fit.  No file is written if no name is '
                  'given.'
         )
-        parser.add_argument("--debug", default=False, action="store_true",
-                            help="show debug plots?")
-        parser.add_argument("--plot", default=False, action="store_true",
-                            help="Show the telluric corrected spectrum")
-        parser.add_argument('--chk_version', default=False, action='store_true',
-                            help='Ensure the datamodels are from the current PypeIt version. '
-                                 'By default (consistent with previous functionality) this is '
-                                 'not enforced and crashes may ensue ...')
+        parser.add_argument(
+            '--extract', type=str, default=None, choices=[None, 'BOX', 'OPT'],
+            help='The extraction to use.  Must be either None, BOX (for a boxcar extraction), '
+                 'or OPT (for optimal extraction).  If None, the optimal extraction will be '
+                 'used, if it exists, otherwise the boxcar extraction will be used.  This is '
+                 'only relevant if the input is a spec1d file (as opposed to a onespec/coadd '
+                 'file).'
+        )
+        parser.add_argument(
+            '--fluxed', default=False, action='store_true',
+            help='If True, use the flux-calibrated spectrum, if it exists.  If the flux '
+                 'calibration has not been performed or fluxed is False, the spectrum used is '
+                 'in counts.  This is only relevant if the input is a spec1d file (as opposed '
+                 'to a onespec/coadd file).'
+        )
+        parser.add_argument('--show', default=False, action='store_true',
+                            help='Show the telluric corrected spectrum')
+        parser.add_argument('--debug', default=False, action='store_true',
+                            help='show debug plots?')
+        parser.add_argument(
+            '--try_old', dest='chk_version', default=True, action='store_false',
+            help='Ensure the datamodels are from the current PypeIt version.'
+        )
         return parser
 
     @classmethod
@@ -50,13 +65,10 @@ class TellFit(scriptbase.ScriptBase):
         from astropy.io import fits
         from IPython import embed
 
+        from pypeit import inputfiles
         from pypeit import log
         from pypeit import PypeItError
-        from pypeit import dataPaths
-        from pypeit.par import pypeitpar
-        from pypeit.spectrographs.util import load_spectrograph
-        from pypeit.core import telluric
-        from pypeit import inputfiles
+        from pypeit import telluric
 
         # Initialize the log
         cls.init_log(args)
@@ -117,101 +129,14 @@ class TellFit(scriptbase.ScriptBase):
         modelfile = _spec1dfile.name.replace('.fits','_tellmodel.fits')
         log.info(f'Best-fit telluric model will be saved to: {modelfile}.')
 
+        tell_corr = telluric.correction.TelluricCorrection(
+            _spec1dfile, par, extract=args.extract, fluxed=args.fluxed,
+            chk_version=args.chk_version
+        )
+
         embed()
         exit()
 
-        # Run the telluric fitting procedure.
-        if par['telluric']['objmodel']=='qso':
-            # run telluric.qso_telluric to get the final results
-            TelQSO = telluric.qso_telluric(
-                args.spec1dfile,
-                par['telluric']['tel_file'],
-                par['telluric']['pca_file'],
-                par['telluric']['redshift'],
-                modelfile,
-                outfile,
-                npca=par['telluric']['npca'],
-                teltype=par['telluric']['teltype'],
-                tell_npca=par['telluric']['tell_npca'],
-                pca_lower=par['telluric']['pca_lower'],
-                pca_upper=par['telluric']['pca_upper'],
-                bounds_norm=par['telluric']['bounds_norm'],
-                tell_norm_thresh=par['telluric']['tell_norm_thresh'],
-                only_orders=par['telluric']['only_orders'],
-                bal_wv_min_max=par['telluric']['bal_wv_min_max'],
-                resln_frac_bounds=par['telluric']['resln_frac_bounds'],
-                pix_shift_bounds=par['telluric']['pix_shift_bounds'],
-                maxiter=par['telluric']['maxiter'],
-                popsize=par['telluric']['popsize'],
-                tol=par['telluric']['tol'],
-                debug_init=args.debug,
-                disp=args.debug,
-                debug=args.debug,
-                show=args.plot,
-                chk_version=args.chk_version,
-            )
-
-        elif par['telluric']['objmodel']=='star':
-            TelStar = telluric.star_telluric(
-                args.spec1dfile,
-                par['telluric']['telgridfile'],
-                modelfile,
-                outfile,
-                star_type=par['telluric']['star_type'],
-                star_mag=par['telluric']['star_mag'],
-                star_ra=par['telluric']['star_ra'],
-                star_dec=par['telluric']['star_dec'],
-                func=par['telluric']['func'],
-                model=par['telluric']['model'],
-                polyorder=par['telluric']['polyorder'],
-                only_orders=par['telluric']['only_orders'],
-                teltype=par['telluric']['teltype'],
-                tell_npca=par['telluric']['tell_npca'],
-                mask_hydrogen_lines=par['sensfunc']['mask_hydrogen_lines'],
-                mask_helium_lines=par['sensfunc']['mask_helium_lines'],
-                hydrogen_mask_wid=par['sensfunc']['hydrogen_mask_wid'],
-                delta_coeff_bounds=par['telluric']['delta_coeff_bounds'],
-                minmax_coeff_bounds=par['telluric']['minmax_coeff_bounds'],
-                resln_frac_bounds=par['telluric']['resln_frac_bounds'],
-                pix_shift_bounds=par['telluric']['pix_shift_bounds'],
-                maxiter=par['telluric']['maxiter'],
-                popsize=par['telluric']['popsize'],
-                tol=par['telluric']['tol'],
-                debug_init=args.debug,
-                disp=args.debug,
-                debug=args.debug,
-                show=args.plot,
-                chk_version=args.chk_version,
-            )
-        elif par['telluric']['objmodel']=='poly':
-            TelPoly = telluric.poly_telluric(
-                args.spec1dfile,
-                par['telluric']['telgridfile'],
-                modelfile,
-                outfile,
-                z_obj=par['telluric']['redshift'],
-                func=par['telluric']['func'],
-                model=par['telluric']['model'],
-                polyorder=par['telluric']['polyorder'],
-                teltype=par['telluric']['teltype'],
-                tell_npca=par['telluric']['tell_npca'],
-                fit_wv_min_max=par['telluric']['fit_wv_min_max'],
-                mask_lyman_a=par['telluric']['mask_lyman_a'],
-                delta_coeff_bounds=par['telluric']['delta_coeff_bounds'],
-                minmax_coeff_bounds=par['telluric']['minmax_coeff_bounds'],
-                only_orders=par['telluric']['only_orders'],
-                resln_frac_bounds=par['telluric']['resln_frac_bounds'],
-                pix_shift_bounds=par['telluric']['pix_shift_bounds'],
-                maxiter=par['telluric']['maxiter'],
-                popsize=par['telluric']['popsize'],
-                tol=par['telluric']['tol'],
-                debug_init=args.debug,
-                disp=args.debug,
-                debug=args.debug,
-                show=args.plot,
-                chk_version=args.chk_version,
-            )
-        else:
-            raise PypeItError("Object model is not supported yet. Must be 'qso', 'star', or 'poly'.")
+        tell_corr.fit(show=args.show, debug=args.debug)
 
 

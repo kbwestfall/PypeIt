@@ -337,8 +337,8 @@ class TelluricModel:
         obs_wave : `numpy.ndarray`_, optional
             Wavelength vector of the observed spectrum to be fit.  Either this
             or ``resolution_guess`` must be provided.  If this is provided,
-            :func:`~pypeit.core.wavecal.wvutils.get_sampling`.  is used to
-            estimate the resolution.  If both this and ``resolution_guess are
+            :func:`~pypeit.core.wavecal.wvutils.get_sampling` is used to
+            estimate the resolution.  If both this and ``resolution_guess`` are
             provided, ``obs_wave`` is ignored.
         resolution_guess : :obj:`float`, optional
             Guess for the resolution of the observed spectrum expressed as

@@ -70,7 +70,7 @@ class ObservedSourceModelFitter:
         """
         return self.src_model.npar + self.tell_model.npar
 
-    def par_guess(self, obs_spec):
+    def par_guess(self, obs_spec, resolution_guess=None):
         """
         Provide an initial guess for all the model parameters.
 
@@ -78,6 +78,12 @@ class ObservedSourceModelFitter:
         ----------
         obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
             Spectrum to be fit.
+        resolution_guess : float, optional
+            Initial guess for the spectral resolution (R = lambda/delta_lambda)
+            of the telluric model.  If None, 
+            :func:`~pypeit.core.wavecal.wvutils.get_sampling` is used to
+            estimate the resolution using the wavelength vector for
+            ``obs_spec``.
 
         Returns
         -------
@@ -87,7 +93,9 @@ class ObservedSourceModelFitter:
         # Guess the telluric parameters first.  Note that the current telluric
         # model classes do not use the flux vector of the observed spectrum.
         # They only use the wavelength vector to guess the spectral resolution.
-        tell_par = self.tell_model.par_guess(obs_spec.wave)
+        tell_par = self.tell_model.par_guess(
+            obs_wave=obs_spec.wave, resolution_guess=resolution_guess
+        )
 
         # Use the guess parameters to generate an initial telluric model
         tell_wave, tell_spec, tell_gpm = self.tell_model.sample(tell_par)
