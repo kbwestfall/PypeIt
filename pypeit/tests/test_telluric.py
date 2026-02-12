@@ -517,7 +517,7 @@ def test_fitter():
     rng, src, src_par, tellmod, tellmod_par, err, obs_spec = synthetic_obs_spec()
 
     # Instantiate the fitter
-    fitter = telluric.fitter.ObservedSourceModel(src, tellmod)
+    fitter = telluric.fitter.ObservedSourceModelFitter(src, tellmod)
     # And set the true model parameters
     tp = np.concatenate((src_par, tellmod_par))
 
@@ -598,7 +598,7 @@ def test_iter_fit():
     rng, src, src_par, tellmod, tellmod_par, err, obs_spec = synthetic_obs_spec()
 
     # Instantiate the fitter
-    fitter = telluric.fitter.ObservedSourceModel(src, tellmod)
+    fitter = telluric.fitter.ObservedSourceModelFitter(src, tellmod)
     # And set the true model parameters
     tp = np.concatenate((src_par, tellmod_par))
 

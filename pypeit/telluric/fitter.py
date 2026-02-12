@@ -20,7 +20,7 @@ from pypeit.core import spectrum
 from pypeit.par import funcpar
 
 
-class ObservedSourceModel:
+class ObservedSourceModelFitter:
     """
     Class to perform the source + telluric model fit to an observed spectrum.
 

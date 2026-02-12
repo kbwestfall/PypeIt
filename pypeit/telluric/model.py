@@ -328,16 +328,21 @@ class TelluricModel:
         """
         raise PypeItError(f'{self.__class__.__name__} has not defined a base_par_guess function!')
     
-    def par_guess(self, obs_wave):
+    def par_guess(self, obs_wave=None, resolution_guess=None):
         """
         Generate a first-guess for the model parameters.
 
         Parameters
         ----------
-        obs_wave : `numpy.ndarray`_
-            Wavelength vector of the observed spectrum to be fit.  This is used
-            to estimate the resolution; see
-            :func:`~pypeit.core.wavecal.wvutils.get_sampling`.
+        obs_wave : `numpy.ndarray`_, optional
+            Wavelength vector of the observed spectrum to be fit.  Either this
+            or ``resolution_guess`` must be provided.  If this is provided,
+            :func:`~pypeit.core.wavecal.wvutils.get_sampling`.  is used to
+            estimate the resolution.  If both this and ``resolution_guess are
+            provided, ``obs_wave`` is ignored.
+        resolution_guess : :obj:`float`, optional
+            Guess for the resolution of the observed spectrum expressed as
+            lambda/dlambda.  Either this or ``obs_wave`` must be provided.
 
         Returns
         -------
@@ -346,9 +351,10 @@ class TelluricModel:
             parameters.  The shift guess is always 0 pixels, and the stretch
             guess is always 1.0 (i.e., no stretch).
         """
-        # TODO: Need to check that obs_spec.wave is the right thing to pass
-        # here...
-        resolution_guess = wvutils.get_sampling(obs_wave)[2]
+        if resolution_guess is None:
+            if obs_wave is None:
+                raise PypeItError('Either obs_wave or resolution_guess must be provided!')
+            resolution_guess = wvutils.get_sampling(obs_wave)[2]
         return np.append(self.base_par_guess(), [resolution_guess, 0.0, 1.0])
 
     def base_par_bounds(self):
