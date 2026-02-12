@@ -337,6 +337,21 @@ def test_func_par():
     assert p['tol'] == tol_input, 'Provided value for tol not set correctly!'
 
 
+def test_func_par_kwargs():
+    func_kwargs = DESubsetPar.valid_default_kwargs()
+    assert len(func_kwargs) == 4, 'Number of valid kwargs should be 4!'
+
+
+def test_func_par_from_dict():
+    cfg = {'maxiter': 100, 'popsize': 20}
+    func_kwargs = DESubsetPar.valid_default_kwargs()
+    p = DESubsetPar.from_dict(cfg)
+    assert p['maxiter'] == cfg['maxiter'], 'maxiter not set correctly from dict!'
+    assert p['popsize'] == cfg['popsize'], 'popsize not set correctly from dict!'
+    assert p['tol'] == func_kwargs['tol'], 'tol should be set to default value!'
+    assert p['init'] == func_kwargs['init'], 'init should be set to default value!'
+
+
 class DEPar(funcpar.FuncPar):
     func = differential_evolution
     omitted_keys = ['args', 'seed']

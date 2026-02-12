@@ -76,31 +76,7 @@ class FuncPar(ParSet):
 
     def __init__(self, **kwargs):
 
-        if self.func is None:
-            raise NotImplementedError(
-                f'CODING ERROR: The {self.__class__.__name__} does not define the function '
-                'from which to pull the keyword arguments!'
-            )
-
-        # Extract all the keyword arguments and their default values
-        func_kwargs = utils.get_func_kwargs(self.func)
-
-        # Next apply the restricted list of keyword arguments    
-        if self.kw_subset is not None:
-            indx = [k not in func_kwargs for k in self.kw_subset]
-            if any(indx):
-                # TODO: Use a warning instead?
-                raise PypeItError(
-                    f'CODING ERROR: {np.asarray(self.kw_subset)[indx]} are not keyword arguments '
-                    f'for {self.func.__name__}!'
-                )
-            func_kwargs = {k: v for k, v in func_kwargs.items() if k in self.kw_subset}
-
-        # Next remove any keys that should generally be omitted for this
-        # function
-        if self.omitted_keys is not None:
-            for key in self.omitted_keys:
-                func_kwargs.pop(key, None)
+        func_kwargs = self.valid_default_kwargs()
 
         # Finally, check that the provided kwargs are valid
         if len(kwargs) > 0:
@@ -134,6 +110,48 @@ class FuncPar(ParSet):
         # Add the module and function names as attributes
         self.module = module_name
         self.name = self.func.__name__
+
+    @classmethod
+    def valid_default_kwargs(cls):
+
+        if cls.func is None:
+            raise NotImplementedError(
+                f'CODING ERROR: The {cls.__name__} does not define the function from which to '
+                'pull the keyword arguments!'
+            )
+
+        # Extract all the keyword arguments and their default values
+        func_kwargs = utils.get_func_kwargs(cls.func)
+
+        # Next apply the restricted list of keyword arguments    
+        if cls.kw_subset is not None:
+            indx = [k not in func_kwargs for k in cls.kw_subset]
+            if any(indx):
+                raise PypeItError(
+                    f'CODING ERROR: {np.asarray(cls.kw_subset)[indx]} are not keyword arguments '
+                    f'for {cls.func.__name__}!'
+                )
+            func_kwargs = {k: v for k, v in func_kwargs.items() if k in cls.kw_subset}
+
+        # Next remove any keys that should generally be omitted for this
+        # function
+        if cls.omitted_keys is not None:
+            for key in cls.omitted_keys:
+                func_kwargs.pop(key, None)
+
+        return func_kwargs
+    
+    @classmethod
+    def from_dict(cls, cfg):
+        k = np.array([*cfg.keys()])
+
+        func_kwargs = cls.valid_default_kwargs()
+
+        badkeys = np.array([pk not in func_kwargs.keys() for pk in cfg.keys()])
+        if np.any(badkeys):
+            raise ValueError(f'{k[badkeys]} not recognized key(s) for {cls.__name__}.')
+
+        return cls(**{pk : cfg[pk] for pk in func_kwargs.keys() if pk in cfg.keys()})
 
 
 class DifferentialEvolutionPar(FuncPar):
