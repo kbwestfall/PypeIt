@@ -5582,6 +5582,10 @@ class PypeItPar(ParSet):
         pk = 'reduce'
         kwargs[pk] = ReducePar.from_dict(cfg[pk]) if pk in k else None
 
+        # TODO: We need to revisit how to turn on different steps using all
+        # default parameters.  I.e., the cfg['rdx'] parameters below feels
+        # awkward.
+
         # Allow flexure to be turned on using cfg['rdx']
         pk = 'flexure'
         default = FlexurePar()
