@@ -90,7 +90,7 @@ class FuncPar(ParSet):
             if len(bad_keys) > 0:
                 # TODO: Use a warning instead?
                 raise PypeItError(
-                    f'{bad_keys} are valid keyword arguments this instance of '
+                    f'{bad_keys} are not valid keyword arguments for this instance of '
                     f'{self.__class__.__name__} for function {func.__name__}.'
                 )
 
