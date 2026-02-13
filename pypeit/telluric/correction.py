@@ -103,6 +103,8 @@ class TelluricCorrection(datamodel.DataContainer):
         """
         Initialize the source model.
         """
+        # NOTE: The telluric model is currently needed to set the wavelengths
+        # for the source model.
         if self.tel_model is None:
             raise PypeItError('The telluric model must be initialized before the source model!')
 
@@ -160,14 +162,15 @@ class TelluricCorrection(datamodel.DataContainer):
         #   - Parse only_orders and sn_clip and apply them to the spectra being fit.
         #   - Decide how to parse the wavelength range to fit, fit_wave_range
         #   - Decide how to apply the masking, spec_mask_files
-        #   - Propagate show and debug to the fit methods
-
+        #   - Do something with the show and debug flags in the fit methods
+        #   - Fix the ObservedSourceModelFitter tests
 
         for i in indx:
-            # Get the parameter guesses and bounds
+            # Get the parameter guesses
             gp = self.fitter.par_guess(
                 self.spectra[i], resolution_guess=self.par['resolution_guess']
             )
+            # ... and bounds
             bp = self.fitter.par_bounds(
                 gp, rel_coeff_bounds=self.par['rel_coeff_bounds'], 
                 abs_coeff_bounds=self.par['abs_coeff_bounds'],
@@ -178,12 +181,14 @@ class TelluricCorrection(datamodel.DataContainer):
             )
 
             if self.par['max_rej_iter'] > 0:
+                # Perform the fit with rejection iterations
                 best_fit_par, best_fit_gpm = self.fitter.iter_fit(
                     self.spectra[i], bp, guess_par=gp, ballsize=self.par['ballsize'],
                     max_rej_iter=self.par['max_rej_iter'], de_par=self.par['diff_evol'],
                     rej_par=self.par['reject'], show=show, debug=debug
                 )
             else:
+                # ... or without
                 best_fit_par, best_fit_gpm = self.fitter.fit(
                     self.spectra[i], bp, guess_par=gp, ballsize=self.par['ballsize'],
                     de_par=self.par['diff_evol'], show=show, debug=debug
