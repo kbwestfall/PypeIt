@@ -48,7 +48,7 @@ class TelluricCorrection(datamodel.DataContainer):
     datamodel = {}
 
     internals = [
-        'par', 'head', 'spectra', 'nspec', 'wave_min', 'wave_max', 'src_model', 'tel_model',
+        'par', 'head', 'spectra', 'nspec', 'wave_min', 'wave_max', 'src_type', 'tel_model',
         'fitter'
     ]
 
@@ -108,7 +108,7 @@ class TelluricCorrection(datamodel.DataContainer):
         if self.tel_model is None:
             raise PypeItError('The telluric model must be initialized before the source model!')
 
-        match self.par['src_model']:
+        match self.par['src_type']:
             case 'qso':
                 self.src_model = telluric.source.QSOPCAModel(
                     self.par['qso_pca_file'], self.par['qso_z'], dz=self.par['qso_dz'],
@@ -131,7 +131,7 @@ class TelluricCorrection(datamodel.DataContainer):
                 )
             case _:
                 raise PypeItError(
-                    f'Object model must be qso, star, or poly, not {self.par["src_model"]}!'
+                    f'Object model must be qso, star, or poly, not {self.par["src_type"]}!'
                 )
             
     def fit(self, ispec=None, show=False, debug=False):
@@ -158,12 +158,15 @@ class TelluricCorrection(datamodel.DataContainer):
         indx = np.arange(self.nspec) if ispec is None else [ispec]
 
         # TODO:
-        #   - Decide how to save the best-fit parameters and models (i.e., the datamodel)
         #   - Parse only_orders and sn_clip and apply them to the spectra being fit.
         #   - Decide how to parse the wavelength range to fit, fit_wave_range
         #   - Decide how to apply the masking, spec_mask_files
+
+        #   - Decide how to save the best-fit parameters and models (i.e., the datamodel)
+
         #   - Do something with the show and debug flags in the fit methods
         #   - Fix the ObservedSourceModelFitter tests
+        #   - Add a test of only_orders to the dev-suite
 
         for i in indx:
             # Get the parameter guesses

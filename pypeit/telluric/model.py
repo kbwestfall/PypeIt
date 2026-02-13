@@ -309,7 +309,7 @@ class TelluricModel:
         Returns
         -------
         `numpy.ndarray`_
-            Shifted telluric model. Shape = same size as input tell_model.
+            Shifted telluric model. Shape is the same as input spectrum (``tspec``).
         """
         loglam_shift = loglam[0] + shift * self.dloglam \
             + np.arange(len(loglam)) * self.dloglam * stretch

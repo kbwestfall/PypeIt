@@ -27,30 +27,29 @@ class ObservedSourceModelFitter:
     Parameters
     ----------
     src_model : :class`~pypeit.telluric.source.AdjustedSpectrumModel`
-
         The class to use when modeling the source spectrum.  The object cannot
         be ``None`` and the model must be fully initialized (i.e.,
         ``src_model.sample()`` should not fail).
-    tell_model : :class:`~pypeit.telluric.model.TelluricModel`
+    tel_model : :class:`~pypeit.telluric.model.TelluricModel`
         The class to use when modeling the telluric spectrum.  The object cannot
         be ``None``, the model must be fully initialized (i.e.,
-        ``tell_model.sample()`` should not fail), and the wavelength array of
+        ``tel_model.sample()`` should not fail), and the wavelength array of
         the model must match the source spectrum model.
 
     Attributes
     ----------
     src_model : :class`~pypeit.telluric.source.AdjustedSpectrumModel`
         Source model spectrum
-    tell_model : :class`~pypeit.telluric.model.TelluricModel`
+    tel_model : :class`~pypeit.telluric.model.TelluricModel`
         Telluric model spectrum
     obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
         The observed spectrum to be fit.
     """
-    def __init__(self, src_model, tell_model):
+    def __init__(self, src_model, tel_model):
         self.src_model = src_model
-        self.tell_model = tell_model
+        self.tel_model = tel_model
 
-        if not np.allclose(self.src_model.wave, self.tell_model.wave):
+        if not np.allclose(self.src_model.wave, self.tel_model.wave):
             raise PypeItError('Source and telluric model wavelength arrays do not match.')
 
         # Kept during fitting
@@ -68,7 +67,7 @@ class ObservedSourceModelFitter:
         """
         Total number of parameters in the source + telluric model.
         """
-        return self.src_model.npar + self.tell_model.npar
+        return self.src_model.npar + self.tel_model.npar
 
     def par_guess(self, obs_spec, resolution_guess=None):
         """
@@ -93,12 +92,12 @@ class ObservedSourceModelFitter:
         # Guess the telluric parameters first.  Note that the current telluric
         # model classes do not use the flux vector of the observed spectrum.
         # They only use the wavelength vector to guess the spectral resolution.
-        tell_par = self.tell_model.par_guess(
+        tell_par = self.tel_model.par_guess(
             obs_wave=obs_spec.wave, resolution_guess=resolution_guess
         )
 
         # Use the guess parameters to generate an initial telluric model
-        tell_wave, tell_spec, tell_gpm = self.tell_model.sample(tell_par)
+        tell_wave, tell_spec, tell_gpm = self.tel_model.sample(tell_par)
         tell_spec_inv = spectrum.Spectrum(tell_wave, tell_spec, gpm=tell_gpm)
         tell_spec_inv.inverse()
         # Divide the observed spectrum by the initial telluric model
@@ -151,7 +150,7 @@ class ObservedSourceModelFitter:
         src_bounds = self.src_model.par_bounds(
             guess_par[:self.src_model.npar], rel_coeff_bounds, abs_coeff_bounds
         )
-        tell_bounds = self.tell_model.par_bounds(
+        tell_bounds = self.tel_model.par_bounds(
             guess_par[self.src_model.npar:], resolution_frac_bounds=resolution_frac_bounds,
             pix_shift_bounds=pix_shift_bounds, pix_stretch_bounds=pix_stretch_bounds
         )
@@ -178,7 +177,7 @@ class ObservedSourceModelFitter:
         src_spec, src_gpm = self.src_model.sample(
             theta[:self.src_model.npar] if self.src_model.npar > 0 else None
         )
-        tell_wave, tell_spec, tell_gpm = self.tell_model.sample(theta[self.src_model.npar:])
+        tell_wave, tell_spec, tell_gpm = self.tel_model.sample(theta[self.src_model.npar:])
         # TODO: Have this return a Spectrum object so that it can be easily
         # resampled.
         return tell_wave, src_spec * tell_spec, src_gpm & tell_gpm
@@ -211,7 +210,7 @@ class ObservedSourceModelFitter:
 
         The observed spectrum should be available via :attr:`obs_spec` *before*
         calling this function, and it must have the same wavelength grid as
-        :attr:`src_model` and :attr:`tell_model`.
+        :attr:`src_model` and :attr:`tel_model`.
 
         Parameters
         ----------

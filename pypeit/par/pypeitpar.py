@@ -2751,7 +2751,7 @@ class TelluricPar(ParSet):
 
     def __init__(
         self, only_orders=None, sn_clip=None, resolution_guess=None, tel_file=None, tel_npca=None,
-        tel_type=None, resolution_frac_bounds=None, pix_shift_bounds=None, src_model=None,
+        tel_type=None, resolution_frac_bounds=None, pix_shift_bounds=None, src_type=None,
         qso_z=None, qso_dz=None, qso_pca_file=None, qso_npca=None, star_type=None, star_mag=None,
         star_ra=None, star_dec=None, poly_func=None, poly_model=None, poly_order=None,
         rel_coeff_bounds=None, abs_coeff_bounds=None, ballsize=None, diff_evol=None,
@@ -2847,10 +2847,10 @@ class TelluricPar(ParSet):
         # TODO: Add pix_stretch_bounds?
 
         # Parameters for the source model
-        defaults['src_model'] = None
-        dtypes['src_model'] = str
-        descr['src_model'] = (
-            'The source model to be used for telluric fitting. Currently the options are: '
+        defaults['src_type'] = None
+        dtypes['src_type'] = str
+        descr['src_type'] = (
+            'The model source type to be used for telluric fitting. Currently the options are: '
             '``qso``, ``star``, and ``poly``.  Make sure to set all the ``qso_*`` parameters '
             'when using the QSO model, all the ``star_*`` parameters when using the star '
             'model, and all the ``poly_*`` parameters when using the polynomial model.  '
@@ -3020,7 +3020,7 @@ class TelluricPar(ParSet):
         # Basic keywords
         parkeys = [
             'only_orders', 'sn_clip', 'resolution_guess', 'tel_file', 'tel_npca', 'tel_type',
-            'resolution_frac_bounds', 'pix_shift_bounds', 'src_model', 'qso_z', 'qso_dz',
+            'resolution_frac_bounds', 'pix_shift_bounds', 'src_type', 'qso_z', 'qso_dz',
             'qso_pca_file', 'qso_npca', 'star_type', 'star_mag', 'star_ra', 'star_dec',
             'poly_func', 'poly_model', 'poly_order', 'rel_coeff_bounds', 'abs_coeff_bounds',
             'ballsize', 'max_rej_iter', 'fit_wave_range', 'spec_mask_files'
