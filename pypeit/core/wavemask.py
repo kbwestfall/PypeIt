@@ -26,14 +26,14 @@ def read_wavelength_masks(files, tables=None):
 
     Parameters
     ----------
-    files : str, Path, list, `numpy.ndarray`_
+    files : str, Path, list, :class:`numpy.ndarray`
         One or more files to read
     tables : str, list, optional
         Restrict the masks to one or more tables in the set of files provided
 
     Returns
     -------
-    `numpy.ndarray`_
+    :class:`numpy.ndarray`
         An array with size :math:`(N_{\rm mask},2)`, where :math:`N_{\rm mask}`
         is the number of mask regions with a starting and ending wavelength.
     """
@@ -108,7 +108,7 @@ def build_wavelength_gpm(wave, regions):
 
     Parameters
     ----------
-    wave : `numpy.ndarray`_
+    wave : :class:`numpy.ndarray`
         Wavelength array.  Can have any shape.  Units must match the ``regions``
         array.
     regions : array-like
@@ -122,7 +122,7 @@ def build_wavelength_gpm(wave, regions):
 
     Returns
     -------
-    `numpy.ndarray`_
+    :class:`numpy.ndarray`
         Boolean array with the same shape as ``wave``.  Values are True for
         wavelengths that are *not* within the wavelength ranges provided by
         ``regions``.
@@ -195,7 +195,7 @@ def telluric_mask(threshold, wave=None, sres=None, file='mktrans_zm_10_10.dat', 
 
     Returns
     -------
-    `numpy.ndarray`_
+    :class:`numpy.ndarray`
         If ``wave`` was provided, this is a boolean good-pixel mask indication
         the wavelengths of regions above the provided transmission threshold.
         If ``wave`` is not provided, this is an array with shape :math:`(N_{\rm
@@ -269,11 +269,11 @@ def telluric_mask_plot(threshold, wave, tspec_tran_cnv, mask_regions, ofile=None
     ----------
     threshold : float
         Transmission threshold.  Regions below this threshold are masked.
-    wave : `numpy.ndarray`_
+    wave : :class:`numpy.ndarray`
         Wavelength vector
-    tspec_tran_cnv : `numpy.ndarray`_
+    tspec_tran_cnv : :class:`numpy.ndarray`
         The atmospheric transmission spectrum used to define the mask regions.
-    mask_region : `numpy.ndarray`_
+    mask_region : :class:`numpy.ndarray`
         Wavelength regions to mask.  Units must match the ``wave`` array.  Shape
         must be :math:`(N_{\rm mask},2)`, where :math:`N_{\rm mask}` is the
         number of mask regions with a starting and ending wavelength.  Starting

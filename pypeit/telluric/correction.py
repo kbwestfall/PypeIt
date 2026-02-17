@@ -22,7 +22,7 @@ class TelluricCorrection(datamodel.DataContainer):
 
     Parameters
     ----------
-    specfile : str, `Path`_
+    specfile : str, :class:`Path`
         PypeIt output file that contains 1D spectra to correct.
     par : :class:`~pypeit.par.pypeitpar.TelluricPar`
         The parameters used to determine the telluric correction.
@@ -150,9 +150,9 @@ class TelluricCorrection(datamodel.DataContainer):
 
         Returns
         -------
-        best_fit_par : `numpy.ndarray`
+        best_fit_par : :class:`numpy.ndarray`
             The best-fitting parameters for the source + telluric model.
-        best_fit_gpm : `numpy.ndarray`
+        best_fit_gpm : :class:`numpy.ndarray`
             A good pixel mask for the best-fitting model.
         """
         indx = np.arange(self.nspec) if ispec is None else [ispec]

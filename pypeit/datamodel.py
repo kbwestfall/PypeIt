@@ -59,7 +59,7 @@ description information for that datamodel element. For each
 datamodel element, the dictionary item must provide:
 
     - ``otype``: This is the type of the object for this datamodel item. E.g.,
-      for a float or a `numpy.ndarray`_, you would set ``otype=float`` and
+      for a float or a :class:`numpy.ndarray`, you would set ``otype=float`` and
       ``otype=np.ndarray``, respectively.  The ``otype`` can also be a tuple
       with optional types.  Beware optional types that are themselves
       DataContainers.  This works for
@@ -70,7 +70,7 @@ datamodel element, the dictionary item must provide:
       element. This is used to construct the datamodel tables in the
       pypeit documentation.
 
-If the object type is a `numpy.ndarray`_, you should also provide the
+If the object type is a :class:`numpy.ndarray`, you should also provide the
 ``atype`` keyword that sets the type of the data contained within the
 array. E.g., for a floating point array containing an image, your
 datamodel could be simply::
@@ -148,7 +148,7 @@ With this implementation:
         data.meta1 = 4.
 
     - Read/Write the data from/to a fits file. In this instantiation,
-      the data is written to a `astropy.io.fits.BinTableHDU` object;
+      the data is written to a :class:`astropy.io.fits.BinTableHDU` object;
       the table has 10 rows because the shape of the arrays match
       this. The file I/O routines look like this::
 
@@ -195,7 +195,7 @@ Mixed Object Containers
 +++++++++++++++++++++++
 
 :class:`DataContainer` objects can also contain multiple arrays
-and/or `astropy.table.Table`_ objects. However, multiple Tables or
+and/or :class:`astropy.table.Table` objects. However, multiple Tables or
 combinations of arrays and Tables cannot be bundled into individual
 extensions. Here are two implementations of a mixed container, a good
 one and a bad one::
@@ -263,7 +263,7 @@ With this implementation:
         print(data.arr1shape)
         # (3,3,3)
 
-    - Construct an `astropy.io.fits.HDUList`::
+    - Construct an :class:`astropy.io.fits.HDUList`::
 
         hdu = data.to_hdu(add_primary=True)
 
@@ -566,7 +566,7 @@ class DataContainer:
 
     one_row_table = False
     """
-    Force the full datamodel to be encapsulated into an `astropy.table.Table`_
+    Force the full datamodel to be encapsulated into an :class:`astropy.table.Table`
     with a single row when written to disk.  Beware that this requires that this
     is possible!  See, e.g.,
     :class:`~pypeit.images.detector_container.DetectorContainer`.
@@ -591,7 +591,7 @@ class DataContainer:
     item must provide:
 
         - ``otype``: This is the type of the object for this
-          datamodel item. E.g., for a float or a `numpy.ndarray`_,
+          datamodel item. E.g., for a float or a :class:`numpy.ndarray`,
           you would set ``otype=float`` and ``otype=np.ndarray``,
           respectively.
 
@@ -599,7 +599,7 @@ class DataContainer:
           datamodel element. This is used to construct the datamodel
           tables in the pypeit documentation.
 
-    If the object type is a `numpy.ndarray`_, you should also provide
+    If the object type is a :class:`numpy.ndarray`, you should also provide
     the ``atype`` keyword that sets the type of the data contained
     within the array. E.g., for a floating point array containing an
     image, your datamodel could be simply::
@@ -610,8 +610,8 @@ class DataContainer:
 
     Currently, ``datamodel`` components are restricted to have
     ``otype`` that are :obj:`tuple`, :obj:`int`, :obj:`float`,
-    ``numpy.integer``, ``numpy.floating``, `numpy.ndarray`_, or
-    `astropy.table.Table`_ objects. E.g., ``datamodel`` values for
+    ``numpy.integer``, ``numpy.floating``, :class:`numpy.ndarray`, or
+    :class:`astropy.table.Table` objects. E.g., ``datamodel`` values for
     ``otype`` *cannot* be :obj:`dict`.
     """
     # TODO: Enable multiple possible types for the datamodel elements?
@@ -738,11 +738,11 @@ class DataContainer:
               written in the provided order without any extension
               names (although see the caveat in
               :func:`~pypeit.io.dict_to_hdu` for dictionaries with
-              single array or `astropy.table.Table`_ items).
+              single array or :class:`astropy.table.Table` items).
 
         The item to be written can be a single array for an
-        `astropy.io.fits.ImageHDU`_, an `astropy.table.Table`_ for a
-        `astropy.io.fits.BinTableHDU`_, or a dictionary; see
+        :class:`astropy.io.fits.ImageHDU`, an :class:`astropy.table.Table` for a
+        :class:`astropy.io.fits.BinTableHDU`, or a dictionary; see
         :func:`~pypeit.io.write_to_hdu`.
 
         For how these objects are parsed into the HDUs, see
@@ -754,9 +754,9 @@ class DataContainer:
         this will fault if the datamodel contains:
 
             - a dictionary object
-            - more than one `astropy.table.Table`_, or
-            - the combination of an `astropy.table.Table`_ and one or more
-              array-like objects (:obj:`list` or `numpy.ndarray`_)
+            - more than one :class:`astropy.table.Table`, or
+            - the combination of a :class:`astropy.table.Table` and one or more
+              array-like objects (:obj:`list` or :class:`numpy.ndarray`)
 
         Certain **restrictions** apply to how the data can be bundled
         for the general parser implementation (:func:`_parse`) to
@@ -765,7 +765,7 @@ class DataContainer:
             - The shape and orientation of any input arrays are
               assumed to be correct.
 
-            - Datamodel keys for arrays or `astropy.table.Table`_
+            - Datamodel keys for arrays or :class:`astropy.table.Table`
               objects written to an HDU should match the HDU
               extension name. Otherwise, the set of HDU extension
               names and datamodel keys **must** be unique.
@@ -881,11 +881,11 @@ class DataContainer:
               make sure and/or test that this method doesn't meet
               your needs, and then tread carefully regardless.
 
-            - Because the `astropy.table.Table`_ methods are used
+            - Because the :class:`astropy.table.Table` methods are used
               directly, any metadata associated with the Table will
               also be included in the HDUs constructed by
               :func:`to_hdu`. However, the
-              `astropy.table.Table.read`_ method always returns the
+              :class:`astropy.table.Table.read` method always returns the
               metadata with capitalized keys. This means that,
               regardless of the capitalization of the metadata
               keywords when the data is written, **they will be
@@ -908,7 +908,7 @@ class DataContainer:
             the HDU type.
 
         Args:
-            hdu (`astropy.io.fits.HDUList`_, `astropy.io.fits.ImageHDU`_, `astropy.io.fits.BinTableHDU`_):
+            hdu (:class:`astropy.io.fits.HDUList`, :class:`astropy.io.fits.ImageHDU`, :class:`astropy.io.fits.BinTableHDU`):
                 The HDU(s) to parse into the instantiation dictionary.
             ext (:obj:`int`, :obj:`str`, :obj:`list`, optional):
                 One or more extensions with the data. If None, the
@@ -1348,9 +1348,9 @@ class DataContainer:
             add_primary (:obj:`bool`, optional):
                 If False, the returned object is a simple
                 :obj:`list`, with a list of HDU objects (either
-                `astropy.io.fits.ImageHDU`_ or
-                `astropy.io.fits.BinTableHDU`_). If true, the method
-                constructs an `astropy.io.fits.HDUList` with a
+                :class:`astropy.io.fits.ImageHDU` or
+                :class:`astropy.io.fits.BinTableHDU`). If true, the method
+                constructs an :class:`astropy.io.fits.HDUList` with a
                 primary HDU, such that this call::
 
                     hdr = io.initialize_header()
@@ -1364,8 +1364,8 @@ class DataContainer:
             primary_hdr (`astropy.io.fits.Header`, optional):
                 Header to add to the primary if add_primary=True
             force_to_bintbl (:obj:`bool`, optional):
-                Force construction of a `astropy.io.fits.BinTableHDU`_ instead
-                of an `astropy.io.fits.ImageHDU`_ when either there are no
+                Force construction of a :class:`astropy.io.fits.BinTableHDU` instead
+                of an :class:`astropy.io.fits.ImageHDU` when either there are no
                 arrays or tables to write or only a single array is provided (as
                 needed for, e.g., :class:`~pypeit.specobj.SpecObj`).  See
                 :func:`~pypeit.io.write_to_hdu`.  
@@ -1451,7 +1451,7 @@ class DataContainer:
         This is primarily a wrapper for :func:`_parse`.
 
         Args:
-            hdu (`astropy.io.fits.HDUList`_, `astropy.io.fits.ImageHDU`_, `astropy.io.fits.BinTableHDU`_):
+            hdu (:class:`astropy.io.fits.HDUList`, :class:`astropy.io.fits.ImageHDU`, :class:`astropy.io.fits.BinTableHDU`):
                 The HDU(s) with the data to use for instantiation.
             chk_version (:obj:`bool`, optional):
                 If True, raise an error if the datamodel version or

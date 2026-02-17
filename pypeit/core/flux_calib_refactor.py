@@ -410,7 +410,7 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
         The airmass of the observation used to calculate the atmospheric
         extinction correction factor; see
         :func:`~pypeit.core.atmextinction.AtmosphericExtinction.correction_factor`.
-    telluric_model : `np.ndarray`_, optional
+    telluric_model : :class:`numpy.ndarray`, optional
         A model of the telluric spectrum sampled at the same wavelengths as the
         observed spectrum.  This used to remove the telluric signatures in the
         observed spectrum.  Note that if both ``atm_extinction`` and
@@ -495,7 +495,7 @@ def calculate_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, air
         The airmass of the observation used to calculate the atmospheric
         extinction correction factor; see
         :func:`~pypeit.core.atmextinction.AtmosphericExtinction.correction_factor`.
-    telluric_model : `np.ndarray`_, optional
+    telluric_model : :class:`numpy.ndarray`, optional
         A model of the telluric spectrum sampled at the same wavelengths as the
         observed spectrum.  This used to remove the telluric signatures in the
         observed spectrum.  Note that if both ``atm_extinction`` and

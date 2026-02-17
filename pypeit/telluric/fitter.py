@@ -86,7 +86,7 @@ class ObservedSourceModelFitter:
 
         Returns
         -------
-        `numpy.ndarray`_
+        :class:`numpy.ndarray`
             Guess parameters
         """
         # Guess the telluric parameters first.  Note that the current telluric
@@ -122,7 +122,7 @@ class ObservedSourceModelFitter:
 
         Parameters
         ----------
-        guess_par : list, `numpy.ndarray`_
+        guess_par : list, :class:`numpy.ndarray`
             Initial guess for the model parameters.  Length must be :attr:`npar`.
         rel_coeff_bounds : tuple, optional
             The lower and upper boundary of each coefficient relative to the
@@ -162,16 +162,16 @@ class ObservedSourceModelFitter:
 
         Parameters
         ----------
-        theta : `numpy.ndarray`_
+        theta : :class:`numpy.ndarray`
             Model parameters.  The length mush be :attr:`npar`.
 
         Returns
         -------
-        wave : `numpy.ndarray`_
+        wave : :class:`numpy.ndarray`
             Model wavelength array.
-        flux : `numpy.ndarray`_
+        flux : :class:`numpy.ndarray`
             Model flux array.
-        gpm : `numpy.ndarray`_, boolean
+        gpm : :class:`numpy.ndarray`
             Good pixel mask.
         """
         src_spec, src_gpm = self.src_model.sample(
@@ -214,7 +214,7 @@ class ObservedSourceModelFitter:
 
         Parameters
         ----------
-        theta : `numpy.ndarray`_
+        theta : :class:`numpy.ndarray`
             Model parameters.  The length mush be :attr:`npar`.
 
         Returns
@@ -273,7 +273,7 @@ class ObservedSourceModelFitter:
         bounds : list
             A list of two-tuples providing the lower and upper bounds for each
             model parameter.  Length must be :attr:`npar`.  Cannot be ``None``.
-        guess_par : list, `numpy.ndarray`_, optional
+        guess_par : list, :class:`numpy.ndarray`, optional
             Initial guess for the model parameters.  Length must be
             :attr:`npar`.  Cannot be ``None``, but individual elements in the
             vector can be.  See description above for treatment of ``None``
@@ -286,13 +286,13 @@ class ObservedSourceModelFitter:
             distribution centered on the guess parameters, this is the scale
             (1-sigma) of the distribution as a fraction of the separation
             between the parameter bounds.
-        rng : int, `numpy.random.Generator`, optional
+        rng : int, :class:`numpy.random.Generator`, optional
             Random-number generator object or seed used for drawing samples for
             the population.
 
         Returns
         -------
-        `numpy.ndarray`_
+        :class:`numpy.ndarray`
             Initial population for the differential evolution optimizer.  Shape
             is (``popsize * npar``, ``npar``).
 
@@ -376,7 +376,7 @@ class ObservedSourceModelFitter:
         bounds : list
             A list of two-tuples providing the lower and upper bounds for each
             model parameter.  Length must be :attr:`npar`.
-        guess_par : list, `numpy.ndarray`_, optional
+        guess_par : list, :class:`numpy.ndarray`, optional
             Initial guess for the model parameters.  If ``None``, the ``init``
             parameter used by `scipy.optimize.differential_evolution` (passed as
             a kwarg) must provide the mode used to construct the initial sample
@@ -450,7 +450,7 @@ class ObservedSourceModelFitter:
         bounds : list
             A list of two-tuples providing the lower and upper bounds for each
             model parameter.  Length must be :attr:`npar`.
-        guess_par : list, `numpy.ndarray`_, optional
+        guess_par : list, :class:`numpy.ndarray`, optional
             Initial guess for the model parameters.  If ``None``, the ``init``
             parameter used by `scipy.optimize.differential_evolution` (passed as
             a kwarg) must provide the mode used to construct the initial sample

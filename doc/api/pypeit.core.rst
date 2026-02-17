@@ -30,6 +30,7 @@ Submodules
    pypeit.core.flat
    pypeit.core.flexure
    pypeit.core.flux_calib
+   pypeit.core.flux_calib_refactor
    pypeit.core.framematch
    pypeit.core.meta
    pypeit.core.moment
@@ -52,6 +53,7 @@ Submodules
    pypeit.core.tracewave
    pypeit.core.transform
    pypeit.core.wave
+   pypeit.core.wavemask
 
 Module contents
 ---------------

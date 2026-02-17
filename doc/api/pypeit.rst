@@ -17,6 +17,7 @@ Subpackages
    pypeit.setup_gui
    pypeit.spectrographs
    pypeit.specutils
+   pypeit.telluric
 
 Submodules
 ----------
@@ -44,6 +45,7 @@ Submodules
    pypeit.history
    pypeit.inputfiles
    pypeit.io
+   pypeit.loader
    pypeit.logger
    pypeit.manual_extract
    pypeit.metadata

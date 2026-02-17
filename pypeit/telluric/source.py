@@ -50,7 +50,7 @@ class AdjustedSpectrumModel:
     ----------
     spec : :class:`~pypeit.core.spectrum.Spectrum`
         Underlying spectrum for the model.
-    wave : `numpy.ndarray`, optional
+    wave : :class:`numpy.ndarray`, optional
         If provided, resample the provided spectrum to this wavelength grid.
         Unobserved regions in the spectrum will be masked.  If None, the
         wavelength grid used is the same as provided by the input spectrum.
@@ -110,7 +110,7 @@ class AdjustedSpectrumModel:
 
         Returns
         -------
-        `numpy.ndarray` or None
+        :class:`numpy.ndarray` or None
             Parameters for the underlying spectrum.  If None, the underlying
             spectrum has no parameters.
         """
@@ -135,7 +135,7 @@ class AdjustedSpectrumModel:
 
         Returns
         -------
-        `numpy.ndarray` or None
+        :class:`numpy.ndarray` or None
             Guess parameters for the model.  The first :attr:`spec_npar` entries
             are the parameters for the underlying spectrum, and the remaining
             ``order+1`` parameters are for the polynomial.
@@ -203,7 +203,7 @@ class AdjustedSpectrumModel:
 
         Parameters
         ----------
-        guess_par : `numpy.ndarray`_
+        guess_par : :class:`numpy.ndarray`
             Guess parameters for the model.
         rel_coeff_bounds : tuple
             The lower and upper boundary of each coefficient relative to the
@@ -266,15 +266,15 @@ class AdjustedSpectrumModel:
 
         Parameters
         ----------
-        theta : `numpy.ndarray`
+        theta : :class:`numpy.ndarray`
             Parameters required to generate the model spectrum.  This *should
             not* include any of the polynomial coefficients. 
 
         Returns
         -------
-        flux : `numpy.ndarray`
+        flux : :class:`numpy.ndarray`
             Flux of the model spectrum.
-        gpm : `numpy.ndarray`
+        gpm : :class:`numpy.ndarray`
             Good pixel mask of the model spectrum.
         """
         if theta is not None:
@@ -291,7 +291,7 @@ class AdjustedSpectrumModel:
 
         Parameters
         ----------
-        theta : `numpy.ndarray`
+        theta : :class:`numpy.ndarray`
             The full parameter vector required to generate the model spectrum.
             The first :attr:`spec_npar` parameters are used to generate the
             underlying spectrum, and the remainder are treated as coefficients
@@ -300,9 +300,9 @@ class AdjustedSpectrumModel:
 
         Returns
         -------
-        flux : `numpy.ndarray`
+        flux : :class:`numpy.ndarray`
             Flux of the model spectrum.
-        gpm : `numpy.ndarray`
+        gpm : :class:`numpy.ndarray`
             Good pixel mask of the model spectrum.
         """
         if theta is None and self.npar > 0:
@@ -368,7 +368,7 @@ class QSOPCAModel(AdjustedSpectrumModel):
 
     Attributes
     ----------
-    coeffs : `numpy.ndarray`_
+    coeffs : :class:`numpy.ndarray`
         Table of coefficients determined for the spectra used to build the PCA
         decomposition.  Shape is the number of spectra by the number of PCA
         components.
@@ -378,7 +378,7 @@ class QSOPCAModel(AdjustedSpectrumModel):
         The :math:`\pm` range of the redshift allowed during the model fit.
     npca : int
         Number of PCA components
-    spec_gpm : `numpy.ndarray`_
+    spec_gpm : :class:`numpy.ndarray`
         The good pixel mask for the spectrum model.
     dloglam : float
         The median change in log(wavelength) of the model spectrum.
@@ -436,7 +436,7 @@ class QSOPCAModel(AdjustedSpectrumModel):
 
         Returns
         -------
-        `numpy.ndarray`
+        :class:`numpy.ndarray`
             Parameters for the underlying spectrum.  If None, the underlying
             spectrum has no parameters.
         """
@@ -467,14 +467,14 @@ class QSOPCAModel(AdjustedSpectrumModel):
 
         Parameters
         ----------
-        theta : `numpy.ndarray`_
+        theta : :class:`numpy.ndarray`
             Parameter vector.  The parameters are the redshift and the
             :math:`N_{\rm PCA}-1` coefficients; the coefficient for the first
             PCA component is always set to 1.
 
         Returns
         -------
-        `numpy.ndarray`_
+        :class:`numpy.ndarray`
             The model QSO spectrum
         """
         if theta is None:

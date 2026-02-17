@@ -79,9 +79,9 @@ class TelluricModel:
     model_res : :obj:`float`
         Spectral resolution (:math:`R = \lambda / \Delta\lambda`) of the model
         spectra.
-    wave : `numpy.ndarray`_
+    wave : :class:`numpy.ndarray`
         Wavelength grid of the telluric model.
-    tell_grid : `numpy.ndarray`_
+    tell_grid : :class:`numpy.ndarray`
         Data used to construct the telluric model.
     dloglam : :obj:`float`
         Delta log10(lambda) between pixels in the telluric model wavelength vector.
@@ -205,9 +205,9 @@ class TelluricModel:
         end_pad : :obj:`int`
             Ending pixel (exclusive) at which to return the model, including
             padding.
-        wave : `numpy.ndarray`_
+        wave : :class:`numpy.ndarray`
             Wavelength vector over which to evaluate the model.
-        gpm : `numpy.ndarray`_
+        gpm : :class:`numpy.ndarray`
             Good-pixel mask indicating valid pixels within the wavelength vector.
 
         Raises
@@ -243,7 +243,7 @@ class TelluricModel:
 
         Parameters
         ----------
-        tspec : `numpy.ndarray`_
+        tspec : :class:`numpy.ndarray`
             1D transmission spectrum for the telluric model at its native
             resolution.
         res : :obj:`float`
@@ -252,7 +252,7 @@ class TelluricModel:
 
         Returns
         -------
-        `numpy.ndarray`_
+        :class:`numpy.ndarray`
             Convolved transmission spectrum, with a shape that matches the input
             model.
         """
@@ -297,9 +297,9 @@ class TelluricModel:
 
         Parameters
         ---------- 
-        loglam : `numpy.ndarray`_
+        loglam : :class:`numpy.ndarray`
             Base-10 log of the wavelength coordinate of each pixel.
-        tspec : `numpy.ndarray`_
+        tspec : :class:`numpy.ndarray`
             Transmission spectrum for the telluric model.
         shift : :obj:`float`
             Shift to apply in pixels (can be sub-pixel).
@@ -308,7 +308,7 @@ class TelluricModel:
 
         Returns
         -------
-        `numpy.ndarray`_
+        :class:`numpy.ndarray`
             Shifted telluric model. Shape is the same as input spectrum (``tspec``).
         """
         loglam_shift = loglam[0] + shift * self.dloglam \
@@ -323,7 +323,7 @@ class TelluricModel:
 
         Returns
         -------
-        `numpy.ndarray` 
+        :class:`numpy.ndarray` 
             Guess model parameters.
         """
         raise PypeItError(f'{self.__class__.__name__} has not defined a base_par_guess function!')
@@ -334,7 +334,7 @@ class TelluricModel:
 
         Parameters
         ----------
-        obs_wave : `numpy.ndarray`_, optional
+        obs_wave : :class:`numpy.ndarray`, optional
             Wavelength vector of the observed spectrum to be fit.  Either this
             or ``resolution_guess`` must be provided.  If this is provided,
             :func:`~pypeit.core.wavecal.wvutils.get_sampling` is used to
@@ -346,7 +346,7 @@ class TelluricModel:
 
         Returns
         -------
-        `numpy.ndarray`_
+        :class:`numpy.ndarray`
             Guess model parameters including the resolution, shift, and stretch
             parameters.  The shift guess is always 0 pixels, and the stretch
             guess is always 1.0 (i.e., no stretch).
@@ -379,7 +379,7 @@ class TelluricModel:
 
         Parameters
         ----------
-        guess_par : `numpy.ndarray`_
+        guess_par : :class:`numpy.ndarray`
             Guess model parameters including the resolution, shift, and stretch
             parameters.  The shift guess is always 0 pixels, and the stretch
             guess is always 1.0 (i.e., no stretch).
@@ -414,17 +414,17 @@ class TelluricModel:
 
         Parameters
         ----------
-        theta : `numpy.ndarray`_
+        theta : :class:`numpy.ndarray`
             Vector with the parameters needed to sample the telluric model.
             Length must be :attr:`base_npar`.
 
         Returns
         -------
-        wave : `numpy.ndarray`_
+        wave : :class:`numpy.ndarray`
             Wavelength at which the transmission spectrum has been evaluated
-        tspec : `numpy.ndarray`_
+        tspec : :class:`numpy.ndarray`
             Transmission spectrum.
-        gpm : `numpy.ndarray`_
+        gpm : :class:`numpy.ndarray`
             Good pixel mask for the transmission spectrum.
         """
         raise PypeItError(f'{self.__class__.__name__} has not defined a base_sample function!')
@@ -456,7 +456,7 @@ class TelluricModel:
 
         Parameters
         ----------
-        theta : `numpy.ndarray`_
+        theta : :class:`numpy.ndarray`
             Vector with the full set of parameters.  The number of parameters is
             :math:`N_{\rm base} + 3` where :math:`N_{\rm base}` is
             :attr:`base_npar`, which is the number of parameters needed to
@@ -467,11 +467,11 @@ class TelluricModel:
 
         Returns
         -------
-        wave : `numpy.ndarray`_
+        wave : :class:`numpy.ndarray`
             Wavelength at which the transmission spectrum has been evaluated
-        tspec : `numpy.ndarray`_
+        tspec : :class:`numpy.ndarray`
             Transmission spectrum.
-        gpm : `numpy.ndarray`_
+        gpm : :class:`numpy.ndarray`
             Good pixel mask for the transmission spectrum.
         """
         if len(theta) != self.npar:
@@ -632,7 +632,7 @@ class PCATelluricModel(TelluricModel):
 
         Returns
         -------
-        `numpy.ndarray`
+        :class:`numpy.ndarray`
             Guess model parameters.
         """
         return np.zeros(self.base_npar, dtype=float)
@@ -656,17 +656,17 @@ class PCATelluricModel(TelluricModel):
 
         Parameters
         ----------
-        theta : `numpy.ndarray`_
+        theta : :class:`numpy.ndarray`
             PCA coefficients for the (:attr:`npca` - 1) components.  Length must
             be :attr:`base_npar`.
 
         Returns
         -------
-        wave : `numpy.ndarray`_
+        wave : :class:`numpy.ndarray`
             Wavelength at which the transmission spectrum has been evaluated
-        tspec : `numpy.ndarray`_
+        tspec : :class:`numpy.ndarray`
             Transmission spectrum.
-        gpm : `numpy.ndarray`_
+        gpm : :class:`numpy.ndarray`
             Good pixel mask for the transmission spectrum.
 
         Raises
@@ -711,13 +711,13 @@ class AtmGridTelluricModel(TelluricModel):
 
     Attributes
     ----------
-    pressure_grid : `numpy.ndarray`_
+    pressure_grid : :class:`numpy.ndarray`
         Grid of pressures sampled by the telluric grid.
-    temp_grid : `numpy.ndarray`_
+    temp_grid : :class:`numpy.ndarray`
         Grid of temperatures sampled by the telluric grid.
-    h2o_grid : `numpy.ndarray`_
+    h2o_grid : :class:`numpy.ndarray`
         Grid of humidity levels sampled by the telluric grid.
-    airmass_grid : `numpy.ndarray`_
+    airmass_grid : :class:`numpy.ndarray`
         Grid of airmass values sampled by the telluric grid.
     """
     def __init__(self, filename, **kwargs):
@@ -807,7 +807,7 @@ class AtmGridTelluricModel(TelluricModel):
 
         Returns
         -------
-        `numpy.ndarray`
+        :class:`numpy.ndarray`
             Guess model parameters.
         """
         return np.array([
@@ -847,18 +847,18 @@ class AtmGridTelluricModel(TelluricModel):
 
         Parameters
         ----------
-        theta : `numpy.ndarray`_
+        theta : :class:`numpy.ndarray`
             A 4-element vector with the telluric model parameters **in the
             following order**: pressure, temperature, humidity, and airmass.
             Length must be :attr:`base_npar`.
 
         Returns
         -------
-        wave : `numpy.ndarray`_
+        wave : :class:`numpy.ndarray`
             Wavelength at which the transmission spectrum has been evaluated
-        tspec : `numpy.ndarray`_
+        tspec : :class:`numpy.ndarray`
             Transmission spectrum.
-        gpm : `numpy.ndarray`_
+        gpm : :class:`numpy.ndarray`
             Good pixel mask for the transmission spectrum.
 
         Raises
