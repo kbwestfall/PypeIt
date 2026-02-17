@@ -21,6 +21,105 @@ from pypeit.datamodel import DataContainer
 
 from IPython import embed
 
+# TODO: Possibly make this a data container
+class PypeItFitCollection:
+    """
+    """
+
+    allowed_functions = ['polynomial', 'legendre', 'chebyshev']
+    """
+    Allowed functional forms for fitting.
+    """
+
+    def __init__(
+        self, xpos, ypos, ivar=None, gpm=None, func='legendre', order=3, xmin=None, xmax=None,
+        maxdev=None, maxiter=10, lower=None, upper=None
+    ):
+
+        self.xpos = xpos
+        self.nfit = xpos.shape[0]
+
+        self.ypos = ypos
+        self.ivar = ivar 
+        if gpm is None:
+            self.gpm = (
+                np.ones(self.ypos.shape, dtype=bool)
+                if self.ivar is None
+                else self.ivar > 0.0
+            )
+        else:
+            self.gpm = gpm
+
+        self.func = func
+        self.order = order
+        self.xmin = np.min(self.xpos) if xmin is None else xmin
+        self.xmax = np.max(self.xpos) if xmax is None else xmax
+
+        self.maxdev = maxdev
+        self.maxiter = maxiter
+        self.lower = lower
+        self.upper = upper
+
+        self.coeff = np.zeros((self.nfit, self.order+1), dtype=float)
+        self.out_gpm = self.gpm.copy()
+        self.xnorm = scale_minmax(self.xpos, minx=self.xmin, maxx=self.xmax)[0]
+        self.yfit = np.zeros(self.ypos.shape, dtype=self.ypos.dtype)
+        self.pypeitFits = [None]*self.nfit
+        for i in range(self.nfit):
+
+            self.pypeitFits[i] = robust_fit(
+                self.xnorm[i], self.ypos[i], self.order,
+                function=self.func, maxiter=self.maxiter,
+                in_gpm=self.gpm[i], invvar=None if self.ivar is None else self.ivar[i],
+                lower=self.lower, upper=self.upper, minx=self.xmin, maxx=self.xmax,
+                maxdev=self.maxdev, grow=0, use_mad=False, sticky=False
+            )
+
+            self.yfit[i] = self.pypeitFits[i].eval(self.xnorm[i])
+            self.coeff[i] = self.pypeitFits[i].fitc
+            self.out_gpm[i] = self.pypeitFits[i].gpm
+
+    def eval(self, xpos=None, copy=True):
+        """
+        Evaluate the fits at the provided coordinates.
+
+        Parameters
+        ----------
+        xpos : array-like, optional
+            Positions at which to evaluate the fits.  This can be 1D or 2D.  If
+            1D, the same positions will be used for all fits.  If 2D, the length
+            of the first axis *must* be the same as :attr:`nfit`.  If None, the
+            x positions are the same as :attr:`xpos` and the fit values are
+            identically :attr:`yfit`.
+        copy : bool, optional
+            Only relevant if ``xpos`` is None.  If True, the returned x and y
+            positions are copies of the internal attributes; otherwise, the
+            attributes themselves are returned.
+
+        Returns
+        -------
+        x : :class:`numpy.ndarray`
+            Sampled x positions
+        y : :class:`numpy.ndarray`
+            Evaluated fits at the sampled x positions
+        """
+        if xpos is None:
+            return (
+                self.xpos.copy() if copy else self.xpos,
+                self.yfit.copy() if copy else self.yfit
+            )
+        if xpos.ndim == 1:
+            _xpos = np.tile(xpos, (self.nfit, 1))
+        else:
+            if xpos.shape[0] != self.nfit:
+                raise PypeItError(
+                    f'First axis of a 2D xpos array must be {self.nfit}, not {xpos.shape[0]}.'
+                )
+            _xpos = xpos
+    
+        _xnorm = scale_minmax(_xpos, minx=self.xmin, maxx=self.xmax)[0]
+        return _xpos, np.vstack([self.pypeitFits[i].eval(_xnorm[i]) for i in range(self.nfit)])
+
 
 class PypeItFit(DataContainer):
     """
