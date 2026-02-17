@@ -21,9 +21,66 @@ from pypeit.datamodel import DataContainer
 
 from IPython import embed
 
-# TODO: Possibly make this a data container
+# TODO:
+#   - Allow xpos to be 1D and ypos to be 2D?
+#   - Make this a data container?
+#   - Parallelize the fits?
 class PypeItFitCollection:
     """
+    A collection of 1D fits to a set of data.
+
+    The provided data to be fit (``xpos``, ``ypos``) can be provided as 1D or 2D
+    arrays, but their shape must match.
+
+        - If 1D, only one fit is performed, and this is effectively identical to
+          a single instance of :class:`~pypeit.core.fitting.PypeItFit`.
+
+        - If 2D, fits are performed along the 2nd axis; i.e., a model is fit to
+          ``(xpos[0],ypos[0])`` vectors, then to the ``(xpos[1],ypos[1])``
+          vectors, etc.
+
+    This class uses :func:`~pypeit.core.fitting.robust_fit` to perform all the
+    fits.
+
+    Parameters
+    ----------
+    xpos : :class:`numpy.ndarray`
+        The x positions of the data to be fit.  Can be 1D or 2D.
+    ypos : :class:`numpy.ndarray`
+        The y positions of the data to be fit.  Must have the same shape as
+        ``xpos``.
+    ivar : :class:`numpy.ndarray`, optional
+        The inverse variance in the ``ypos`` data.  Must have the same shape as
+        ``ypos``.
+    gpm : :class:`numpy.ndarray`, optional
+        Good pixel mask.  Must have the same shape as ``ypos``.  If None and
+        ``ivar`` is None, all pixels are considered good.  If None and ``ivar``
+        is provided, the data with ``ivar > 0`` are considered good.
+    func : str, optional
+        The functional form to use for the fit.  Must be one of
+        'polynomial', 'legendre', or 'chebyshev'.
+    order : int, optional
+        The order of the polynomial to be fit.
+    xmin : float, optional
+        The minimum x value to be used for the fit.  If None, this is set to the
+        minimum of ``xpos`` (i.e., the *entire* array).  Generally, you should
+        *not* provide this, and just let the code determine it from ``xpos``.
+    xmax : float, optional
+        The maximum x value to be used for the fit.  If None, this is set to the
+        maximum of ``xpos`` (i.e., the *entire* array).  Generally, you should
+        *not* provide this, and just let the code determine it from ``xpos``.
+    maxiter : :obj:`int`, optional
+        Maximum number of rejection iterations; see
+        :func:`~pypeit.core.fitting.robust_fit`.
+    maxdev : :obj:`int`, :obj:`float`, optional
+        An absolute-difference threshold for rejecting outliers; see
+        :func:`~pypeit.core.fitting.robust_fit`.
+    lower : :obj:`int`, :obj:`float`, optional
+        A sigma-rejection threshold for data with values less than the model;
+        see :func:`~pypeit.core.fitting.robust_fit`.
+    upper : :obj:`int`, :obj:`float`, optional
+        A sigma-rejection threshold for data with values greater than the model;
+        see :func:`~pypeit.core.fitting.robust_fit`.
     """
 
     allowed_functions = ['polynomial', 'legendre', 'chebyshev']
@@ -33,7 +90,7 @@ class PypeItFitCollection:
 
     def __init__(
         self, xpos, ypos, ivar=None, gpm=None, func='legendre', order=3, xmin=None, xmax=None,
-        maxdev=None, maxiter=10, lower=None, upper=None
+        maxiter=10, maxdev=None, lower=None, upper=None
     ):
 
         self.xpos = xpos
@@ -67,6 +124,12 @@ class PypeItFitCollection:
         self.pypeitFits = [None]*self.nfit
         for i in range(self.nfit):
 
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # TODO: The use of xnorm below IS A BUG!!  However, this reproduces
+            # the behavior of the old TraceSet class.  We need to fix this, but
+            # it will likely cause havoc with our tests, and the default order
+            # we use for edge tracing.
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             self.pypeitFits[i] = robust_fit(
                 self.xnorm[i], self.ypos[i], self.order,
                 function=self.func, maxiter=self.maxiter,
@@ -116,7 +179,9 @@ class PypeItFitCollection:
                     f'First axis of a 2D xpos array must be {self.nfit}, not {xpos.shape[0]}.'
                 )
             _xpos = xpos
-    
+
+        # TODO: When we fix the use of xnorm in the fit call above, we need to
+        # fix it here, as well. 
         _xnorm = scale_minmax(_xpos, minx=self.xmin, maxx=self.xmax)[0]
         return _xpos, np.vstack([self.pypeitFits[i].eval(_xnorm[i]) for i in range(self.nfit)])
 
