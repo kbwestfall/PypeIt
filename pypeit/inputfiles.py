@@ -706,7 +706,7 @@ class InputFile:
             name is pulled from the configuration.  If the configuration is None
             or the ``['rdx']['spectrograph']`` configuration entry is not
             available, an exception is raised.
-        pypeit_fits (:obj:`bool`, optional):
+        pypeit_fits : :obj:`bool`, optional
             The spectrograph loader is being called from a post-processing
             script where the expected input files are PypeIt-written FITS files
             only.  This has the effect of overriding the :attr:`allowed_extensions`
