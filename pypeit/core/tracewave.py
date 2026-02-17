@@ -353,6 +353,10 @@ def trace_tilts_work(arcimg, lines_spec, lines_spat, thismask, slit_cen, inmask=
         # line trace positions
         tilts_sub_mask_box = moment1d(sub_thismask, tilts_sub_fit_out, fwhm)[0] > 0.99 * fwhm
 
+        if gauss:
+            raise NotImplementedError(
+                'CODING ERROR: "gauss" option is not implemented correctly in trace_tilts_work.'
+            )
 #        # If gauss is set, do a Gaussian refinement to the
 #        # flux-weighted tracing
 #        if gauss:
