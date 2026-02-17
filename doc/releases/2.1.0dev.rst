@@ -29,6 +29,7 @@ Testing
 -------
 
 - Added new tests for :class:`~pypeit.inputfiles.InputFile` objects.
+- Add new tests for :mod:`~pypeit.core.pydl`
 
 
 Under-the-hood Improvements
@@ -36,6 +37,9 @@ Under-the-hood Improvements
 
 - Added a new class, :class:`~pypeit.par.funcpar.FuncPar` that ingests a
   function signature to create a parameter set
+- Adds new :class:`~pypeit.core.fitting.PypeItFitCollection` class to replace
+  the pypeit-specific uses of :class:`~pypeit.core.pydl.TraceSet`.  This was
+  primarily done to avoid a circular import.
 
 Bug Fixes
 ---------
