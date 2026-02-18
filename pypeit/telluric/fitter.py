@@ -5,6 +5,8 @@ Module for fitting a source + telluric model to an observed spectrum.
 import copy
 from IPython import embed
 
+from matplotlib import pyplot
+from matplotlib import ticker
 import numpy as np
 from scipy import optimize
 from scipy import special
@@ -12,6 +14,7 @@ from scipy.stats import qmc
 
 from pypeit import log
 from pypeit import PypeItError
+from pypeit import utils
 from pypeit.core import coadd
 from pypeit.core import pydl
 from pypeit.core import spectrum
@@ -261,6 +264,138 @@ class ObservedSourceModelFitter:
             log.debug(f'FOM is {fom:0.4e} from {np.sum(resid_gpm)} pixels')
         return fom
     
+    def show(self, theta, obs_spec=None, fit_rej=None, ofile=None):
+        """
+        Show a model with the provided set of parameters against an observed
+        spectrum.
+
+        Parameters
+        ----------
+        theta : :class:`numpy.ndarray`
+            Model parameters.  The length mush be :attr:`npar`.
+        obs_spec : :class:`~pypeit.core.spectrum.Spectrum`, optional
+            Observed spectrum to compare to the model.  If None,
+            :attr:`obs_spec` is used.  If that is also None, an exception is
+            raised.
+        fit_rej : :class:`numpy.ndarray`, optional
+            A boolean array selecting pixels that were rejected during the fit.
+            If None, assume no pixels were rejected.
+        ofile : str, optional
+            Output file name to save the figure.  If None, the figure is shown
+            interactively.
+        """
+        if obs_spec is None and self.obs_spec is None:
+            raise PypeItError('Observed spectrum attribute not set.  Must provide the spectrum.')
+        _obs_spec = self.obs_spec if obs_spec is None else obs_spec
+        if not self._waves_match(_obs_spec):
+            _obs_spec = _obs_spec.resample(self.src_model.wave)
+
+        # Get the model spectrum
+        # TODO: Also get the telluric and source spectra separately?
+        _, model_flux, model_gpm = self.sample(theta)
+        resid = _obs_spec.flux - model_flux
+
+        # Raise an exception if the model is masked everywhere
+        resid_gpm = _obs_spec.gpm & model_gpm
+        if not np.any(resid_gpm):
+            raise PypeItError('Model spectrum is masked everywhere.  Cannot show the fit.')
+        
+        # Create the figure
+        w,h = pyplot.figaspect(1)
+        fig = pyplot.figure(figsize=(2*w,h))
+
+        # Use the growth curve of the data included in the fit to define the window limits
+        flux_lim = utils.growth_lim(
+            np.concatenate([_obs_spec.flux[resid_gpm], model_flux[resid_gpm]]), 0.99, fac=1.3
+        )
+        resid_lim = utils.growth_lim(resid[resid_gpm], 0.99, fac=1.3)
+        # Cover the full wavelength range of the model
+        wave_lim = self.wave[[0,-1]]
+
+        #-----------------------------------------------------------------------
+        # Model against data
+        ax = fig.add_axes([0.08, 0.3, 0.87, 0.65])
+        ax.minorticks_on()
+        ax.tick_params(which='both', direction='in', top=True, right=True)
+        ax.grid(True, which='major', color='0.9', zorder=0, linestyle='-')
+        ax.xaxis.set_major_formatter(ticker.NullFormatter())
+        ax.set_xlim(wave_lim)
+        ax.set_ylim(flux_lim)
+        ax.text(
+            -0.06, 0.5, 'Flux (arbitrary units)', va='center', ha='center', rotation='vertical',
+            transform=ax.transAxes
+        )
+
+        ax.step(
+            _obs_spec.wave, _obs_spec.flux, where='mid', color='k', lw=1, zorder=2, label='Data'
+        )
+        ax.plot(self.wave, model_flux, color='C2', lw=1, zorder=3, label='Model')
+
+        # Show the masked data
+        obs_spec_bpm = np.logical_not(_obs_spec.gpm)
+        if np.any(obs_spec_bpm):
+            ax.scatter(
+                _obs_spec.wave[obs_spec_bpm], _obs_spec.flux[obs_spec_bpm], marker='^',
+                facecolor='none', edgecolor='C1', s=20, zorder=4, label='Masked Data'
+            )
+        model_bpm = np.logical_not(model_gpm)        
+        if np.any(model_bpm):
+            ax.scatter(
+                self.wave[model_bpm], model_flux[model_bpm], marker='s',
+                facecolor='none', edgecolor='C4', s=20, zorder=4, label='Masked Model'
+            )
+        if fit_rej is not None and np.any(fit_rej):
+            ax.scatter(
+                _obs_spec.wave[fit_rej], _obs_spec.flux[fit_rej], marker='x', color='C3',
+                s=30, zorder=4, label='Fit-Rejected Data'
+            )
+        ax.legend()
+
+        #-----------------------------------------------------------------------
+        # Residuals
+        ax = fig.add_axes([0.08, 0.1, 0.87, 0.2])
+        ax.minorticks_on()
+        ax.tick_params(which='both', direction='in', top=True, right=True)
+        ax.grid(True, which='major', color='0.9', zorder=0, linestyle='-')
+        ax.set_xlim(wave_lim)
+        ax.set_ylim(resid_lim)
+        ax.text(
+            -0.06, 0.5, 'Residuals', va='center', ha='center', rotation='vertical',
+            transform=ax.transAxes
+        )
+        ax.text(
+            0.5, -0.35, 'Wavelength (Angstroms)', va='center', ha='center',
+            transform=ax.transAxes
+        )
+
+        ax.step(_obs_spec.wave, resid, where='mid', color='k', lw=1, zorder=2)
+
+        # Show the masked data
+        if np.any(obs_spec_bpm):
+            ax.scatter(
+                _obs_spec.wave[obs_spec_bpm], resid[obs_spec_bpm], marker='^', color='C1',
+                s=30, zorder=4,
+            )
+        if np.any(model_bpm):
+            ax.scatter(
+                self.wave[model_bpm], resid[model_bpm], marker='s', color='C4',
+                s=30, zorder=4,
+            )
+        if fit_rej is not None and np.any(fit_rej):
+            ax.scatter(
+                _obs_spec.wave[fit_rej], resid[fit_rej], marker='x', color='C3',
+                s=30, zorder=4,
+            )
+
+        # TODO: Add the FOM to the plot?
+
+        if ofile is None:
+            pyplot.show()
+        else:
+            fig.canvas.print_figure(ofile, bbox_inches='tight')
+        fig.clear()
+        pyplot.close(fig)
+    
     def init_fit_pop(self, bounds, guess_par, popsize, ballsize, rng):
         """
         Helper function used to initialize the population for the differential
@@ -366,7 +501,8 @@ class ObservedSourceModelFitter:
 #            differential evolution optimizer, or the sample population itself.
 #            See the `scipy.optimize.differential_evolution` documentation for
 #            details.
-    def fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, de_par=None, debug=False):
+    def fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, de_par=None, show=False,
+            debug=False):
         """
         Fit an observed spectrum using a parameterized source spectrum and a
         telluric transmission spectrum.
@@ -401,11 +537,28 @@ class ObservedSourceModelFitter:
             `scipy.optimize.differential_evolution` optimizer.  If ``None``, the
             default values are used.  See the
             `scipy.optimize.differential_evolution` documentation for details.
+        show : bool, optional
+            Create a plot showing the result of the fit.  The window blocks
+            continuation of the code.
         debug : bool, optional
             Run in debug mode
+
+        Returns
+        -------
+        :class:`numpy.ndarray'
+            The best-fit parameters.
+        bool
+            Flag indicating that the fit was successful according to the
+            optimizer.
+
+        Raises
+        ------
+        PypeItError
+            Raised if the provided ``de_par`` object is not an instance of
+            :class:`~pypeit.par.funcpar.DifferentialEvolutionPar`.
         """
-        # Set the debugging mode, and then revert it to the original value at
-        # the end of the function.
+        # Set the debugging mode to the input value, and then revert it to the
+        # original value at the end of the function.
         orig_debug = self.debug
         self.debug = debug
 
@@ -416,6 +569,8 @@ class ObservedSourceModelFitter:
                 'de_par must be an instance of pypeit.par.funcpar.DifferentialEvolutionPar!'
             )
 
+        # Copy the parameters for the optimizer so that we can use them with the
+        # guess parameters, as needed, without altering the input de_par object.
         # TODO: I don't like this deepcopy, but I'm not sure there's a way
         # around it.
         de_kwargs = copy.deepcopy(_de_par.data)
@@ -427,8 +582,11 @@ class ObservedSourceModelFitter:
             # already a Generator, default_rng just returns it.
             rng = np.random.default_rng(de_kwargs.pop('rng', _de_par.default['rng']))
 
-            # Get the initial population and add it to the optimizer kwargs
-            de_kwargs.pop('init', None)  # Remove any existing 'init' entry
+            # Get the initial population and add it to the optimizer kwargs.
+            # Here we pop the `init` and `popsize` paraemeters, if they're
+            # provided, and use them to construct the initial population based on
+            # the guess paraeamters.
+            de_kwargs.pop('init', None)
             init = self.init_fit_pop(
                 bounds, guess_par, de_kwargs.pop('popsize', _de_par.default['popsize']),
                 ballsize, rng
@@ -460,16 +618,16 @@ class ObservedSourceModelFitter:
                 'optimizer.'
             )
 
+        if show:
+            self.show(result.x)            
+
         self.debug = orig_debug  # Reset the debug flag to its original value
 
-        embed()
-        exit()
-        
         # Return the best fit parameters
-        return result.x
+        return result.x, result.success
 
     def iter_fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, max_rej_iter=1,
-                 de_par=None, rej_par=None):
+                 de_par=None, rej_par=None, show=False, debug=False):
         """
         Fit an observed spectrum using a parameterized source spectrum and a
         telluric transmission spectrum with rejection iterations.
@@ -511,6 +669,29 @@ class ObservedSourceModelFitter:
             function used during the rejection iterations.  If ``None``, the
             default values are used.  See the
             :func:`~pypeit.core.pydl.djs_reject` documentation for details.
+        show : bool, optional
+            Create a plot showing the result of the fit.  The window blocks
+            continuation of the code.
+        debug : bool, optional
+            Run in debug mode
+
+        Returns
+        -------
+        :class:`numpy.ndarray'
+            The best-fit parameters.
+        bool
+            Flag indicating that the fit was successful according to the
+            optimizer.
+        :class:`numpy.ndarray`
+            Boolean array selecting pixels **in the model** that were rejected
+            during the fit.
+
+        Raises
+        ------
+        PypeItError
+            Raised if ``max_rej_iter`` is less than 1 or if the provided
+            ``rej_par`` object is not an instance of
+            :class:`~pypeit.par.funcpar.DJSRejectPar`.
         """
         if max_rej_iter < 1:
             raise PypeItError(
@@ -538,6 +719,13 @@ class ObservedSourceModelFitter:
         i = 0
         _guess_par = None if guess_par is None else np.asarray(guess_par).copy()
 
+        # Define the output objects
+        best_fit_par = None
+        fit_success = False
+        rejected = None
+
+        log.info('Beginning telluric fit rejection iterations.')
+
         # Iteration loop
         while not qdone and i < max_rej_iter+1:
 
@@ -546,11 +734,20 @@ class ObservedSourceModelFitter:
             #   *not* rescaled between iterations.
             # - the current rejection mask
 
-            print(f'Fitting iteration {i+1} of {max_rej_iter+1}...')
-            best_fit_par = self.fit(
-                self.obs_spec, bounds, guess_par=_guess_par, ballsize=ballsize, de_par=de_par
+            log.info(f'Fit iteration {i+1}:')
+            _best_fit_par, fit_success = self.fit(
+                self.obs_spec, bounds, guess_par=_guess_par, ballsize=ballsize, de_par=de_par,
+                debug=debug
             )
-            print(f'Best fit par: {best_fit_par}')
+            if not fit_success:
+                log.warning(
+                    f'Fit failed during iteration {i+1}.  Returning the most recently successful '
+                    'best-fit parameters, or None, if there has not yet been a successful fit.'
+                )
+                break
+            # Save the new best fit parameters
+            best_fit_par = _best_fit_par
+            log.info(f'Best fit parameters: {best_fit_par}')
 
             if i == max_rej_iter:
                 # No more fits will be done, so skip the rejection
@@ -569,8 +766,10 @@ class ObservedSourceModelFitter:
                 self.obs_spec.flux, bf_model, outmask=self.obs_spec.gpm, inmask=orig_gpm,
                 invvar=self.obs_spec.ivar / err_corr**2, **_rej_par.data 
             )
-            print(f'Number of pixels rejected in iteration {i+1}: '
-                  f'{np.sum(orig_gpm) - np.sum(rej_gpm)}')
+            log.info(
+                f'Total number of pixels rejected after iteration {i+1}: '
+                f'{np.sum(orig_gpm) - np.sum(rej_gpm)}'
+            )
             if not np.any(rej_gpm):
                 log.warning('All pixels have been rejected during the telluric fit iterations.  '
                             'Returning the fit before the most recent rejection iteration.')
@@ -581,27 +780,19 @@ class ObservedSourceModelFitter:
             _guess_par = best_fit_par
             i += 1
 
+        # Get the final rejection mask.  Note that this *selects* the data that
+        # were rejected during the fit.
+        # TODO: Should this exclude pixels that are masked because of the model?
+        rejected = np.logical_not(self.obs_spec.gpm) & orig_gpm
+        # Revert to the original mask
+        self.obs_spec.gpm = orig_gpm
+
         log.info(
-            f'Telluric fit completed after {i+1} iterations; '
-            f'{np.sum(np.logical_not(self.obs_spec.gpm) & orig_gpm)} of {np.sum(orig_gpm)} pixels '
-            'rejected during the fit.'
+            f'Telluric fit completed after {i+1} iterations; {np.sum(rejected)} of '
+            f'{np.sum(orig_gpm)} pixels rejected during the fit.'
         )
 
-        return best_fit_par, rej_gpm
+        if show:
+            self.show(best_fit_par, fit_rej=rejected)
 
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return best_fit_par, fit_success, rejected

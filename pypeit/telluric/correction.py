@@ -183,25 +183,20 @@ class TelluricCorrection(datamodel.DataContainer):
 #                pix_stretch_bounds=self.par['pix_stretch_bounds']
             )
 
-            best_fit_par = self.fitter.fit(
-                    self.spectra[i], bp, guess_par=gp, ballsize=self.par['ballsize'],
-                    de_par=self.par['diff_evol'], debug=debug, #show=show
-            )
-
-            embed()
-            exit()
-
             if self.par['max_rej_iter'] > 0:
                 # Perform the fit with rejection iterations
-                best_fit_par, best_fit_gpm = self.fitter.iter_fit(
+                best_fit_par, fit_success, best_fit_rejected = self.fitter.iter_fit(
                     self.spectra[i], bp, guess_par=gp, ballsize=self.par['ballsize'],
                     max_rej_iter=self.par['max_rej_iter'], de_par=self.par['diff_evol'],
                     rej_par=self.par['reject'], show=show, debug=debug
                 )
             else:
                 # ... or without
-                best_fit_par = self.fitter.fit(
+                best_fit_par, fit_success = self.fitter.fit(
                     self.spectra[i], bp, guess_par=gp, ballsize=self.par['ballsize'],
                     de_par=self.par['diff_evol'], show=show, debug=debug
                 )
+
+            embed()
+            exit()
 

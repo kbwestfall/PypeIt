@@ -93,9 +93,11 @@ class FuncPar(ParSet):
         # Overwrite the defaults with the provided values
         user_kwargs = {k: v for k, v in func_kwargs.items()}
         for k, v in kwargs.items():
-            # NOTE: This is a hack to deal with function arguments that are
-            # natively tuples, but are sometimes passed to this function as a
-            # list with one tuple.  This an annoyance of the configobj class.
+            # NOTE: The use of tuple_force here is a hack to deal with function
+            # arguments that are natively tuples, but are sometimes passed to
+            # this function as a list with one tuple.  This an annoyance of the
+            # configobj class.  This approach **will not work** if the default
+            # value is not a tuple (i.e., if it is None).
             user_kwargs[k] = tuple_force(v) if isinstance(func_kwargs[k], tuple) else v
 
         mod = inspect.getmodule(self.func)
