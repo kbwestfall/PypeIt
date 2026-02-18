@@ -122,21 +122,19 @@ class TellFit(scriptbase.ScriptBase):
             par.to_config(args.par_outfile, section_name='telluric', include_descr=False)
 
         # Set the output files
-        # TODO: Make one output file
+        # TODO: Make one output file!
         outfile = _spec1dfile.name.replace('.fits','_tellcorr.fits')
         log.info(f'Telluric-corrected spectrum will be saved to: {outfile}.')
 
         modelfile = _spec1dfile.name.replace('.fits','_tellmodel.fits')
         log.info(f'Best-fit telluric model will be saved to: {modelfile}.')
 
+        # Instantiate the object used to determine the telluric correction
         tell_corr = telluric.correction.TelluricCorrection(
             _spec1dfile, par, extract=args.extract, fluxed=args.fluxed,
             chk_version=args.chk_version
         )
-
-        embed()
-        exit()
-
+        # Run the fit
         tell_corr.fit(show=args.show, debug=args.debug)
 
 

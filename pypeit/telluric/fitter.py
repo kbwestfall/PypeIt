@@ -427,6 +427,9 @@ class ObservedSourceModelFitter:
             else obs_spec.resample(self.src_model.wave)
         )
 
+        embed(header='fitter')
+        exit()
+
         # Perform the fit
         result = optimize.differential_evolution(
             self.fit_fom, bounds, rng=rng, init=init, **de_kwargs

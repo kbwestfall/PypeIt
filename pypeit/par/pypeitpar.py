@@ -78,40 +78,6 @@ from pypeit.par import util
 from pypeit.par.parset import ParSet
 
 
-def tuple_force(par):
-    """
-    Cast object as tuple.
-
-    Args:
-        par (object):
-            Object to cast as a tuple.  Can be None; if so, the returned value
-            is also None (*not* an empty tuple).  If this is already a tuple,
-            this is the returned value.  If the input is a list with one tuple,
-            the returned value is just the single tuple in the list (i.e, this
-            does not convert the result to a tuple of one tuple).
-
-    Returns:
-        :obj:`tuple`: Casted result.
-    """
-    # Already has correct type
-    if par is None or isinstance(par, tuple):
-        return par
-
-    # If the value is a list of one tuple, return the tuple.
-    # TODO: This is a hack, and we should probably revisit how this is done.
-    # The issue is that pypeit.par.util.eval_tuple always returns a list of
-    # tuples, something that's required for allowing lists of detector mosaics.
-    # But elements of TelluricPar are forced to be tuples.  When constructing
-    # the parameters to use in a given run, the sequence of merging the
-    # defaults, configuration-specific, and user-provided parameters leads to
-    # converting these TelluricPar parameters into multiply nested tuples.  This
-    # hook avoids that.
-    if isinstance(par, list) and len(par) == 1 and isinstance(par[0], tuple):
-        return par[0]
-
-    return tuple(par)
-
-
 class FrameGroupPar(ParSet):
     """
     An abstracted group of parameters that defines how specific types of
@@ -2827,7 +2793,7 @@ class TelluricPar(ParSet):
 
         # - Parameters used to set the bounds for the telluric model parameters
 
-        pars['resolution_frac_bounds'] = tuple_force(pars['resolution_frac_bounds'])
+        pars['resolution_frac_bounds'] = util.tuple_force(pars['resolution_frac_bounds'])
         defaults['resolution_frac_bounds'] = (0.6,1.4)
         dtypes['resolution_frac_bounds'] = tuple
         descr['resolution_frac_bounds'] = (
@@ -2836,7 +2802,7 @@ class TelluricPar(ParSet):
             'guess resolution is 1000, the default bounds on the resolution will be 600 to 1400.'
         )
 
-        pars['pix_shift_bounds'] = tuple_force(pars['pix_shift_bounds'])
+        pars['pix_shift_bounds'] = util.tuple_force(pars['pix_shift_bounds'])
         defaults['pix_shift_bounds'] = (-5.0,5.0)
         dtypes['pix_shift_bounds'] = tuple
         descr['pix_shift_bounds'] = (
@@ -2936,7 +2902,7 @@ class TelluricPar(ParSet):
 
         # - Parameters used to set the bounds for the source model polynomial parameters
 
-        pars['rel_coeff_bounds'] = tuple_force(pars['rel_coeff_bounds'])
+        pars['rel_coeff_bounds'] = util.tuple_force(pars['rel_coeff_bounds'])
         defaults['rel_coeff_bounds'] = (-20.0, 20.0)
         dtypes['rel_coeff_bounds'] = tuple
         descr['rel_coeff_bounds'] = (
@@ -2944,7 +2910,7 @@ class TelluricPar(ParSet):
             'estimated during an initial fit.'
         )
 
-        pars['abs_coeff_bounds'] = tuple_force(pars['abs_coeff_bounds'])
+        pars['abs_coeff_bounds'] = util.tuple_force(pars['abs_coeff_bounds'])
         defaults['abs_coeff_bounds'] = (-5.0, 5.0)
         dtypes['abs_coeff_bounds'] = tuple
         descr['abs_coeff_bounds'] = (
@@ -3409,7 +3375,7 @@ class WavelengthSolutionPar(ParSet):
         descr['nsnippet'] = 'Number of spectra to chop the arc spectrum into when ``method`` is ' \
                             '\'full_template\''
 
-        pars['cc_shift_range'] = tuple_force(pars['cc_shift_range'])
+        pars['cc_shift_range'] = util.tuple_force(pars['cc_shift_range'])
         defaults['cc_shift_range'] = None
         dtypes['cc_shift_range'] = tuple
         descr['cc_shift_range'] = 'Range of pixel shifts allowed when cross-correlating the ' \
@@ -5550,6 +5516,9 @@ class PypeItPar(ParSet):
             :class:`~pypeit.par.pypeitpar.PypeItPar`: The instance of the
             parameter set.
         """
+        # TODO: If cfg_lines and merge_with are both None, just return
+        # PypeItPar()!
+
         # Get the base parameters in a ConfigObj instance
         cfg = ConfigObj(PypeItPar().to_config() if cfg_lines is None else cfg_lines)
 

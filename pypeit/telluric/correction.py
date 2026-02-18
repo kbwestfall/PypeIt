@@ -48,7 +48,7 @@ class TelluricCorrection(datamodel.DataContainer):
     datamodel = {}
 
     internals = [
-        'par', 'head', 'spectra', 'nspec', 'wave_min', 'wave_max', 'src_type', 'tel_model',
+        'par', 'head', 'spectra', 'nspec', 'wave_min', 'wave_max', 'tel_model', 'src_model',
         'fitter'
     ]
 
@@ -97,7 +97,7 @@ class TelluricCorrection(datamodel.DataContainer):
                     wave_max=self.wave_max*1.1
                 )
             case _:
-                raise PypeItError(f'Telluric type must be pca or grid, not {self.par["teltype"]}!')
+                raise PypeItError(f'Telluric type must be pca or grid, not {self.par["tel_type"]}!')
 
     def _init_source_model(self):
         """
@@ -181,6 +181,14 @@ class TelluricCorrection(datamodel.DataContainer):
                 pix_shift_bounds=self.par['pix_shift_bounds'],
                 # TODO: This is not defined yet!
 #                pix_stretch_bounds=self.par['pix_stretch_bounds']
+            )
+
+            embed()
+            exit()
+
+            best_fit_par, best_fit_gpm = self.fitter.fit(
+                    self.spectra[i], bp, guess_par=gp, ballsize=self.par['ballsize'],
+                    de_par=self.par['diff_evol'], #show=show, debug=debug
             )
 
             if self.par['max_rej_iter'] > 0:

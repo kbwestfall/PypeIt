@@ -182,6 +182,43 @@ def recursive_dict_evaluate(d):
     return d
 
 
+def tuple_force(par):
+    """
+    Cast object as tuple.
+
+    Parameters
+    ----------
+    par : object
+        Object to cast as a tuple.  Can be None; if so, the returned value is
+        also None (*not* an empty tuple).  If this is already a tuple, this is
+        the returned value.  If the input is a list with one tuple, the returned
+        value is just the single tuple in the list (i.e, this does not convert
+        the result to a tuple of one tuple).
+
+    Returns
+    -------
+    :obj:`tuple`
+        Casted result
+    """
+    # Already has correct type
+    if par is None or isinstance(par, tuple):
+        return par
+
+    # If the value is a list of one tuple, return the tuple.
+    # TODO: This is a hack, and we should probably revisit how this is done.
+    # The issue is that pypeit.par.util.eval_tuple always returns a list of
+    # tuples, something that's required for allowing lists of detector mosaics.
+    # But elements of TelluricPar are forced to be tuples.  When constructing
+    # the parameters to use in a given run, the sequence of merging the
+    # defaults, configuration-specific, and user-provided parameters leads to
+    # converting these TelluricPar parameters into multiply nested tuples.  This
+    # hook avoids that.
+    if isinstance(par, list) and len(par) == 1 and isinstance(par[0], tuple):
+        return par[0]
+
+    return tuple(par)
+
+
 def parset_to_dict(par):
     """
     Convert the provided parset into a dictionary.

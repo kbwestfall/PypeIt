@@ -3,9 +3,12 @@ A temporary module to load spectral data.
 
 This should be replaced by some I/O infrastructure for all the various spectral output data.
 """
+from IPython import embed
+import numpy as np
 
 from pypeit import io
 from pypeit import onespec
+from pypeit import PypeItError
 from pypeit import specobjs
 from pypeit.core import spectrum
 from pypeit.spectrographs.util import load_spectrograph
@@ -51,8 +54,26 @@ def load_spectra(specfile, extract=None, fluxed=False, chk_version=True):
     hdu.close()
     if is_onespec:
         spec = onespec.OneSpec.from_file(specfile, chk_version=chk_version)
+
+        # TODO: I'm not sure which wavelength vector to use, but allowing data
+        # with wave==0 wreaks havoc later on, so I deal with it here.
+        _wave = spec.wave
+        _gpm = spec.mask.astype(bool)
+        bad_wave = _wave == 0
+        if np.any(bad_wave):
+            if np.any(bad_wave & _gpm):
+                raise PypeItError(
+                    'The input spectrum has unmasked pixels with the wavelength set to zero.'
+                )
+            if spec.wave_grid_mid is None:
+                raise PypeItError(
+                    'The input spectrum has pixels with the wavelength set to zero and no '
+                    'alternative wavelength grid to use.'
+                )
+            _wave[bad_wave] = spec.wave_grid_mid[bad_wave]
+
         return spec.head0, [spectrum.Spectrum(
-            spec.wave, spec.flux, ivar=spec.ivar, gpm=spec.mask.astype(bool), meta=spec.spect_meta
+            _wave, spec.flux, ivar=spec.ivar, gpm=_gpm, meta=spec.spect_meta
         )]
 
     # Load a spec1d file
@@ -93,5 +114,6 @@ def specobjs_to_spectrum(sobjs, extract=None, fluxed=False):
         ext, cal = sobj.best_ext_match(extract=extract, fluxed=fluxed)
         func = sobj.get_box_ext if ext == 'BOX' else sobj.get_opt_ext
         wave, flux, ivar, gpm = func(fluxed=cal)
+        # TODO: Deal with wave=0 data?
         spectra += [spectrum.Spectrum(wave, flux, ivar=ivar, gpm=gpm, meta=meta_spec)]
     return spectra

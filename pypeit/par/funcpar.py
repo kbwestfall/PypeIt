@@ -7,6 +7,7 @@ keyword arguments of a function.
 
 import inspect
 
+from IPython import embed
 import numpy as np
 from scipy import optimize
 
@@ -14,6 +15,7 @@ from pypeit import PypeItError
 from pypeit import utils
 from pypeit.core.pydl import djs_reject
 from pypeit.par.parset import ParSet
+from pypeit.par.util import tuple_force
 
 
 class FuncPar(ParSet):
@@ -91,7 +93,10 @@ class FuncPar(ParSet):
         # Overwrite the defaults with the provided values
         user_kwargs = {k: v for k, v in func_kwargs.items()}
         for k, v in kwargs.items():
-            user_kwargs[k] = v
+            # NOTE: This is a hack to deal with function arguments that are
+            # natively tuples, but are sometimes passed to this function as a
+            # list with one tuple.  This an annoyance of the configobj class.
+            user_kwargs[k] = tuple_force(v) if isinstance(func_kwargs[k], tuple) else v
 
         mod = inspect.getmodule(self.func)
         module_name = mod.__name__ if mod else None
