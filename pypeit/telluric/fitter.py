@@ -3,7 +3,6 @@ Module for fitting a source + telluric model to an observed spectrum.
 """
 
 import copy
-import inspect
 from IPython import embed
 
 import numpy as np
@@ -13,7 +12,6 @@ from scipy.stats import qmc
 
 from pypeit import log
 from pypeit import PypeItError
-from pypeit import utils
 from pypeit.core import coadd
 from pypeit.core import pydl
 from pypeit.core import spectrum
@@ -44,6 +42,8 @@ class ObservedSourceModelFitter:
         Telluric model spectrum
     obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
         The observed spectrum to be fit.
+    debug : :obj:`bool`
+        Run in debug mode.    
     """
     def __init__(self, src_model, tel_model):
         self.src_model = src_model
@@ -54,6 +54,7 @@ class ObservedSourceModelFitter:
 
         # Kept during fitting
         self.obs_spec = None
+        self.debug = False
 
     @property
     def wave(self):
@@ -228,16 +229,22 @@ class ObservedSourceModelFitter:
             raise PypeItError('Observed spectrum wavelength array does not match model spectra.')
 
         # Get the model spectrum
+#        if self.debug:
+#            log.debug(f'Testing model parameters: {theta}')
         _, model_flux, model_gpm = self.sample(theta)
 
         # Check if everything will be masked, and return infinity if so.
         resid_gpm = self.obs_spec.gpm & model_gpm
         if not np.any(resid_gpm):
+            if self.debug:
+                log.debug('Entire model spectrum is masked; FOM set to infinity')
             return np.inf
         
         # Impose a penalty if the model is masked anywhere that the data is not
         penalty_gpm = self.obs_spec.gpm & np.logical_not(model_gpm)
         if np.any(penalty_gpm):
+#            if self.debug:
+#                log.debug('Model is masked where the data is not; imposing FOM penalty.')
             # This will set the value of the residual to the observed spectrum
             model_flux[penalty_gpm] = 0.0
             # This makes resid_gpm equal to self.obs_spec.gpm
@@ -249,10 +256,10 @@ class ObservedSourceModelFitter:
         if self.obs_spec.ivar is not None:
             resid *= np.sqrt(self.obs_spec.ivar)
         # TODO: Consider using pseudo_huber for a smooth derivative
-        return np.sum(special.huber(2.0, resid[resid_gpm]))
-#        fom = np.sum(special.huber(2.0, resid[resid_gpm]))
-#        print(f'npix: {np.sum(resid_gpm)}; fom: {fom:0.4e}')
-#        return fom
+        fom = np.sum(special.huber(2.0, resid[resid_gpm]))
+        if self.debug:
+            log.debug(f'FOM is {fom:0.4e} from {np.sum(resid_gpm)} pixels')
+        return fom
     
     def init_fit_pop(self, bounds, guess_par, popsize, ballsize, rng):
         """
@@ -359,7 +366,7 @@ class ObservedSourceModelFitter:
 #            differential evolution optimizer, or the sample population itself.
 #            See the `scipy.optimize.differential_evolution` documentation for
 #            details.
-    def fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, de_par=None):
+    def fit(self, obs_spec, bounds, guess_par=None, ballsize=5e-4, de_par=None, debug=False):
         """
         Fit an observed spectrum using a parameterized source spectrum and a
         telluric transmission spectrum.
@@ -394,7 +401,14 @@ class ObservedSourceModelFitter:
             `scipy.optimize.differential_evolution` optimizer.  If ``None``, the
             default values are used.  See the
             `scipy.optimize.differential_evolution` documentation for details.
+        debug : bool, optional
+            Run in debug mode
         """
+        # Set the debugging mode, and then revert it to the original value at
+        # the end of the function.
+        orig_debug = self.debug
+        self.debug = debug
+
         # Get the differential_evolution parameters
         _de_par = funcpar.DifferentialEvolutionPar() if de_par is None else de_par
         if not isinstance(_de_par, funcpar.DifferentialEvolutionPar):
@@ -427,13 +441,29 @@ class ObservedSourceModelFitter:
             else obs_spec.resample(self.src_model.wave)
         )
 
-        embed(header='fitter')
-        exit()
-
         # Perform the fit
         result = optimize.differential_evolution(
             self.fit_fom, bounds, rng=rng, init=init, **de_kwargs
         )
+
+        if self.debug:
+            log.debug('Fit complete!')
+            log.debug(f'Success: {result.success}')
+            log.debug(f'Number of iterations: {result.nit}')
+            log.debug(f'Number of function evaluations: {result.nfev}')
+            log.debug(f'Best fit parameters: {result.x}')
+
+        if not result.success:
+            log.warning(
+                'Differential evolution optimizer reports the fit FAILED for '
+                'ObservedSourceModelFitter.fit()!  Returning the solution vector reported by the '
+                'optimizer.'
+            )
+
+        self.debug = orig_debug  # Reset the debug flag to its original value
+
+        embed()
+        exit()
         
         # Return the best fit parameters
         return result.x
