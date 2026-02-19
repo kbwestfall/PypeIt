@@ -148,27 +148,38 @@ class TelluricCorrection(datamodel.DataContainer):
         debug : bool, optional
             Run in debug mode.
 
-        Returns
-        -------
-        best_fit_par : :class:`numpy.ndarray`
-            The best-fitting parameters for the source + telluric model.
-        best_fit_gpm : :class:`numpy.ndarray`
-            A good pixel mask for the best-fitting model.
+        Raises
+        ------
+        PypeItError
+            Raised if any of the indices provided by ``ispec`` are not valid.
         """
-        indx = np.arange(self.nspec) if ispec is None else [ispec]
+        indx = np.arange(self.nspec) if ispec is None else np.atleast_1d([ispec])
+
+        bad_indx = (indx < 0) | (indx >= self.nspec)
+        if any(bad_indx):
+            raise PypeItError(
+                f'There are {self.nspec} spectra available to fit.  Indices {indx[bad_indx]} are '
+                'not valid.'
+            )
 
         # TODO:
         #   - Parse only_orders and sn_clip and apply them to the spectra being fit.
         #   - Decide how to parse the wavelength range to fit, fit_wave_range
         #   - Decide how to apply the masking, spec_mask_files
 
-        #   - Decide how to save the best-fit parameters and models (i.e., the datamodel)
+        #   - Implement the datamodel
 
-        #   - Do something with the show and debug flags in the fit methods
         #   - Fix the ObservedSourceModelFitter tests
         #   - Add a test of only_orders to the dev-suite
 
-        for i in indx:
+        best_fit_par = np.empty((len(indx), self.fitter.npar), dtype=float)
+        fit_success = np.empty(len(indx), dtype=bool)
+        best_fit_rejected = (
+            np.empty((len(indx), self.fitter.wave.size), dtype=bool)
+            if self.par['max_rej_iter'] > 0 else None
+        )
+
+        for ai, i in enumerate(indx):
             # Get the parameter guesses
             gp = self.fitter.par_guess(
                 self.spectra[i], resolution_guess=self.par['resolution_guess']
@@ -185,18 +196,18 @@ class TelluricCorrection(datamodel.DataContainer):
 
             if self.par['max_rej_iter'] > 0:
                 # Perform the fit with rejection iterations
-                best_fit_par, fit_success, best_fit_rejected = self.fitter.iter_fit(
+                best_fit_par[ai], fit_success[ai], best_fit_rejected[ai] = self.fitter.iter_fit(
                     self.spectra[i], bp, guess_par=gp, ballsize=self.par['ballsize'],
                     max_rej_iter=self.par['max_rej_iter'], de_par=self.par['diff_evol'],
                     rej_par=self.par['reject'], show=show, debug=debug
                 )
             else:
                 # ... or without
-                best_fit_par, fit_success = self.fitter.fit(
+                best_fit_par[ai], fit_success[ai] = self.fitter.fit(
                     self.spectra[i], bp, guess_par=gp, ballsize=self.par['ballsize'],
                     de_par=self.par['diff_evol'], show=show, debug=debug
                 )
 
-            embed()
-            exit()
+        embed()
+        exit()
 

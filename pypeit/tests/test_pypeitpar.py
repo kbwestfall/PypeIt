@@ -388,12 +388,10 @@ def test_djsreject_par():
 
     assert p.name == 'djs_reject', 'Function name is incorrect!'
     assert p.module == 'pypeit.core.pydl', 'Module name is incorrect!'
-    assert p.npar == 11, 'The number of parameters changed.'
+    assert p.npar == 8, 'The number of parameters changed.'
 
-    # Check that providing a value for the outmask, inmask, or invvar parameters raises an error
-    with pytest.raises(PypeItError):
-        p = funcpar.DJSRejectPar(outmask='test')
-    with pytest.raises(PypeItError):
-        p = funcpar.DJSRejectPar(inmask='test')
-    with pytest.raises(PypeItError):
-        p = funcpar.DJSRejectPar(invvar='test')
+    # Check that all the omitted parameters raise an error when provided
+    for key in funcpar.DJSRejectPar.omitted_keys:
+        with pytest.raises(PypeItError):
+            kwargs = {key: 'test'}
+            p = funcpar.DJSRejectPar(**kwargs)

@@ -183,7 +183,8 @@ class DJSRejectPar(FuncPar):
 
     func = djs_reject
 
-    omitted_keys = ['outmask', 'inmask', 'invvar']
+    omitted_keys = ['outmask', 'inmask', 'invvar', 'groupdim', 'groupsize', 'groupbadpix']
     """
-    Omit the data-specific parameters for :func:`~pypeit.core.pydl.djs_reject`.
+    Omit the data-specific parameters for :func:`~pypeit.core.pydl.djs_reject`,
+    as well as all the ``group*`` parameters.
     """
