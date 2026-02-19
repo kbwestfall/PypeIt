@@ -5567,7 +5567,8 @@ class PypeItPar(ParSet):
 
         # TODO: We need to revisit how to turn on different steps using all
         # default parameters.  I.e., the cfg['rdx'] parameters below feels
-        # awkward.
+        # awkward.   And most (all?) of the parameters tested are not actually
+        # keywords in the ReduxPar parameter set!
 
         # Allow flexure to be turned on using cfg['rdx']
         pk = 'flexure'
