@@ -7,7 +7,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   pypeit.par.funcpar
    pypeit.par.parset
    pypeit.par.pypeitpar
    pypeit.par.util

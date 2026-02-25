@@ -6,12 +6,9 @@ import os
 from IPython import embed
 
 import pytest
-from scipy.optimize import differential_evolution
 
-from pypeit import PypeItError
-from pypeit.par import funcpar
-from pypeit.par import parset
 from pypeit.par import pypeitpar
+from pypeit.par import parset
 from pypeit.par import util
 from pypeit.spectrographs.util import load_spectrograph
 

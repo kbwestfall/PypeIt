@@ -28,7 +28,6 @@ from pypeit import sampling
 from pypeit.core import arc
 from pypeit.core import fitting
 from pypeit.core import moment
-#from pypeit.core import pydl
 
 # TODO: Some of these functions could probably just live in pypeit.edges
 
@@ -1044,11 +1043,6 @@ def fit_trace(flux, trace_cen, order, ivar=None, bpm=None, trace_bpm=None, weigh
 
 
         # Fit the data
-#        traceset = pydl.TraceSet(trace_coo, cen.T,
-#                                 # Removed by keck_run_july:  inmask=np.logical_not(_trace_bpm.T),
-#                                 function=function, ncoeff=order, maxdev=maxdev, maxiter=maxiter,
-#                                 invvar=trace_fit_ivar.T, xmin=xmin, xmax=xmax)
-
         fit_results = fitting.PypeItFitCollection(
             trace_coo, cen.T, ivar=trace_fit_ivar.T, func=function, order=order, xmin=xmin,
             xmax=xmax, maxdev=maxdev, maxiter=maxiter
@@ -1077,13 +1071,7 @@ def fit_trace(flux, trace_cen, order, ivar=None, bpm=None, trace_bpm=None, weigh
         # iteration, the values being fit are based on the results of
         # this fit even for the bad traces instead of the original
         # input data.
-#        trace_fit = traceset.yfit.T
         trace_fit = fit_results.yfit.T
-
-#        np.savez_compressed('trace_fit_data.npz', trace_coo=trace_coo, cen=cen.T,
-#                            trace_fit_ivar=trace_fit_ivar.T, xmin=xmin, xmax=xmax,
-#                            function=function, order=order, maxdev=maxdev, maxiter=maxiter,
-#                            trace_fit=trace_fit.T, coeff=traceset.coeff, outmask=traceset.outmask)
 
     # Plot the final fit if requested
     if debug:

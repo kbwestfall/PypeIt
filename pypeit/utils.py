@@ -1903,63 +1903,6 @@ def get_line_list_names():
              for fname in line_list_files]
     return names
 
-
-def get_func_kwargs(func):
-    """
-    Return the keyword arguments for the provided function.  The keyword
-    arguments must have a defined default value.
-
-    Parameters
-    ----------
-    func : callable
-        Function whose signature is used to select kwargs.
-
-    Returns
-    -------
-    dict
-        Dictionary with the list of keyword argument names and their default values.
-    """
-    # Get the signature of the function
-    sig = inspect.signature(func)
-
-    # Extract all the keyword arguments and their default values
-    return {
-        k: v.default
-        for k, v in sig.parameters.items()
-        if v.default is not inspect.Parameter.empty
-    }
-
-# NOTE: This function isn't actually used yet, but I'd like to keep it around
-# for now.
-def extract_func_kwargs(kwargs, func, keys=None, pop=True):
-    """
-    Given a set of kwargs, create a new dictionary with any kwargs that are in
-    the signature of the provided function.
-
-    Parameters
-    ----------
-    kwargs : dict
-        Dictionary of keyword arguments.
-    func : callable
-        Function whose signature is used to select kwargs.
-    keys : list, optional
-        If provided, only these keys will be extracted.
-    pop : bool, optional
-        If True, the extracted keys are removed from the input ``kwargs``
-        dictionary.
-        Dictionary of extracted keyword arguments.
-    """
-    # Get the list of keyword parameters
-    func_kwargs = get_func_kwargs(func)
-    if keys is not None and any(key not in func_kwargs.keys() for key in keys):
-        raise PypeItError('One or more requested keys are not in the function signature!')
-    _keys = list(func_kwargs.keys()) if keys is None else keys
-
-    # NOTE: The use of list() around kwargs.keys() is necessary to avoid the
-    # size of kwargs changing when pop is True
-    return {k:(kwargs.pop(k) if pop else kwargs[k]) for k in list(kwargs.keys()) if k in _keys}
-
-
 def radec_to_coord(radec, gal=False):
     """
     Converts one of many of Celestial Coordinates `radec` formats to an astropy

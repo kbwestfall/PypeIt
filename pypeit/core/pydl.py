@@ -9,7 +9,6 @@ from pypeit import log
 from pypeit import PypeItError
 from pypeit import utils
 from pypeit.core import basis
-#from pypeit.core import fitting
 
 """This module corresponds to the image directory in idlutils.
 """
@@ -453,18 +452,6 @@ def func_fit(x, y, ncoeff, invvar=None, function_name='legendre', ia=None,
 #                 self.yfit[iTrace, :] = ycurfit_djs
 #                 self.coeff[iTrace, :] = pypeitFit.fitc
 #                 self.outmask[iTrace, :] = pypeitFit.gpm
-# 
-#                 np.savez_compressed(
-#                     'test_pypeitfit.npz', xvec=xvec, xpos=xpos[iTrace], ypos=ypos[iTrace],
-#                     ncoeff=self.ncoeff, function=self.func, maxiter=self.maxiter,
-#                     in_gpm=inmask[iTrace], invvar=thisinvvar, lower=self.lower, upper=self.upper,
-#                     minx=self.xmin, maxx=self.xmax, maxdev=self.maxdev, grow=0, use_mad=False,
-#                     sticky=False, yfit=self.yfit[iTrace], coeff=self.coeff[iTrace],
-#                     outmask=self.outmask[iTrace]
-#                 )
-# 
-#                 embed(header='inside traceset')
-#                 exit()
 # 
 #         else:
 #             raise PypeItError('Wrong number of arguments to TraceSet!')

@@ -72,8 +72,6 @@ def test_pypeitfitcollection():
     maxdev = float(db['maxdev'])
     maxiter = int(db['maxiter'])
     trace_fit = db['trace_fit']
-#    coeff = db['coeff']
-#    outmask = db['outmask']
 
     fit = fitting.PypeItFitCollection(
         trace_coo, cen, ivar=trace_fit_ivar, func=function, order=order, xmin=xmin, xmax=xmax,

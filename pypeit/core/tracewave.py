@@ -341,7 +341,6 @@ def trace_tilts_work(arcimg, lines_spec, lines_spat, thismask, slit_cen, inmask=
         # refine these traces. This must also be done in a loop since
         # the sub image is different for every aperture, i.e. each
         # aperature has its own image.
-#        tilts_sub_fit_out, tilts_sub_out, tilts_sub_err_out, tilts_sub_bpm_out, tset_out \
         tilts_sub_fit_out, tilts_sub_out, tilts_sub_err_out, tilts_sub_bpm_out, trace_results \
             = trace.fit_trace(sub_img, tilts_guess_now, spat_order,
                               bpm=np.logical_not(sub_inmask.astype(bool)),
