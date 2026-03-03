@@ -311,6 +311,8 @@ def test_func_par():
     assert p.default['tol'] == 0.01, 'Default value for tol changed.'
     assert p['tol'] == tol_input, 'Provided value for tol not set correctly!'
 
+test_func_par()
+
 
 def test_func_par_kwargs():
     func_kwargs = DESubsetPar.valid_default_kwargs()
