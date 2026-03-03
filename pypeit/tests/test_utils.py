@@ -11,10 +11,11 @@ import numpy as np
 import pytest
 import yaml
 
-from pypeit import utils
-from pypeit import log
-from pypeit.tests.tstutils import data_output_path
 from pypeit import io
+from pypeit import log
+from pypeit import PypeItError
+from pypeit import utils
+from pypeit.tests.tstutils import data_output_path
 
 
 # Move this to tstutils?
@@ -156,6 +157,47 @@ def test_occurrences():
     assert np.array_equal(outarr, tstarr), 'Occurrences has failed'
 
 
+def test_get_func_kwargs():
+    def func(a, b=2, c=3):
+        return a + b + c
+
+    kwargs = utils.get_func_kwargs(func)
+    assert sorted(kwargs.keys()) == ['b', 'c'], 'Did not get expected keywords'
+
+
+def test_extract_func_kwargs():
+    def func(a, b=2, c=3):
+        return a + b + c
+
+    # Extract a value, and make sure d is ignored
+    kwargs = dict(b=20, d=40)
+    assert utils.extract_func_kwargs(kwargs, func) == dict(b=20), 'Should extract b value'
+    assert 'b' not in kwargs, 'b should have been popped'
+    assert kwargs == dict(d=40), 'd should remain'
+
+    # Extract a selected value
+    kwargs = dict(b=20, c=30, d=40)
+    assert utils.extract_func_kwargs(kwargs, func, keys=['c']) == dict(c=30), \
+        'Should only extract c'
+    assert 'c' not in kwargs, 'c should have been popped'
+    assert kwargs == dict(b=20, d=40), 'b and d should remain'
+
+    # No values are found
+    kwargs = dict(d=40)
+    assert utils.extract_func_kwargs(kwargs, func) == {}, 'Should not extract anything'
+    assert kwargs == dict(d=40), 'Should not alter kwargs'
+
+    # Fail if requesting a key that is not part of the function call
+    kwargs = dict(b=20, c=30, d=40)
+    with pytest.raises(PypeItError):
+        utils.extract_func_kwargs(kwargs, func, keys=['b', 'c', 'd'])
+
+    # Extract some keys without popping them from the original dictionary
+    kwargs = dict(b=20, c=30, d=40)
+    assert utils.extract_func_kwargs(kwargs, func, pop=False) == dict(b=20, c=30), \
+        'Should extract b and c'
+    assert kwargs == dict(b=20, c=30, d=40), 'kwargs should remain unchanged'
+
 
 def test_radeccoord():
     lcoord = ['J124511+144523', '124511+144523',
@@ -243,3 +285,33 @@ def test_loadjson_bad_gzip_container():
             utils.loadjson(fn)
     finally:
         _cleanup_file(fn)
+
+
+def test_eval_tuple():
+    # one tuple
+    t = ['(1', '2', '3)']
+    assert utils.eval_tuple(t) == [(1,2,3)], 'Bad tuple evaluation'
+    # two tuples
+    t = ['(1', '2)', '(3', '4)']
+    assert utils.eval_tuple(t) == [(1,2),(3,4)], 'Bad tuple evaluation'
+    # a tuple with a mix of int and float types
+    t = ['(1', '2.3)', '(3', '4)']
+    assert utils.eval_tuple(t) == [(1,2.3),(3,4)], 'Bad tuple evaluation'
+    # a tuple with a string
+    t = ['(1', '2.3)', '(test', '4)']
+    assert utils.eval_tuple(t) == [(1, 2.3), ('test', 4)], 'Bad tuple evaluation'
+
+
+def test_eval_list():
+    # one list
+    t = ['[1', '2', '3]']
+    assert utils.eval_list(t) == [[1,2,3]], 'Bad list evaluation'
+    # two lists
+    t = ['[1', '2]', '[3', '4]']
+    assert utils.eval_list(t) == [[1,2],[3,4]], 'Bad list evaluation'
+    # a list with a mix of int and float types
+    t = ['[1', '2.3]', '[3', '4]']
+    assert utils.eval_list(t) == [[1,2.3],[3,4]], 'Bad list evaluation'
+    # a list with a string
+    t = ['[1', '2.3]', '[test', '4]']
+    assert utils.eval_list(t) == [[1, 2.3], ['test', 4]], 'Bad list evaluation'

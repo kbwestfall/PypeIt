@@ -4,51 +4,26 @@ Module to run tests on PypeItPar classes
 import os
 
 from IPython import embed
-
 import pytest
+from scipy.optimize import differential_evolution
 
+from pypeit import PypeItError
 from pypeit.par import pypeitpar
 from pypeit.par import parset
-from pypeit.par import util
+from pypeit.par import funcpar
 from pypeit.spectrographs.util import load_spectrograph
 
 
-def test_eval_tuple():
-    # one tuple
-    t = ['(1', '2', '3)']
-    assert util.eval_tuple(t) == [(1,2,3)], 'Bad tuple evaluation'
-    # two tuples
-    t = ['(1', '2)', '(3', '4)']
-    assert util.eval_tuple(t) == [(1,2),(3,4)], 'Bad tuple evaluation'
-    # a tuple with a mix of int and float types
-    t = ['(1', '2.3)', '(3', '4)']
-    assert util.eval_tuple(t) == [(1,2.3),(3,4)], 'Bad tuple evaluation'
-    # a tuple with a string
-    t = ['(1', '2.3)', '(test', '4)']
-    assert util.eval_tuple(t) == [(1, 2.3), ('test', 4)], 'Bad tuple evaluation'
-
-
-def test_eval_list():
-    # one list
-    t = ['[1', '2', '3]']
-    assert util.eval_list(t) == [[1,2,3]], 'Bad list evaluation'
-    # two lists
-    t = ['[1', '2]', '[3', '4]']
-    assert util.eval_list(t) == [[1,2],[3,4]], 'Bad list evaluation'
-    # a list with a mix of int and float types
-    t = ['[1', '2.3]', '[3', '4]']
-    assert util.eval_list(t) == [[1,2.3],[3,4]], 'Bad list evaluation'
-    # a list with a string
-    t = ['[1', '2.3]', '[test', '4]']
-    assert util.eval_list(t) == [[1, 2.3], ['test', 4]], 'Bad list evaluation'
-
-
+# NOTE: FrameGroupPar is now an abstract class that faults when you try to
+# instantiate it on its own.
 def test_framegroup():
-    pypeitpar.FrameGroupPar()
+    with pytest.raises(ValueError):
+        pypeitpar.FrameGroupPar()
 
-def test_framegroup_types():
-    t = pypeitpar.FrameGroupPar.valid_frame_types()
-    assert 'bias' in t, 'Expected to find \'bias\' in list of valid frame types'
+# NOTE: frametypes are defined and checked at the class level now
+#def test_framegroup_types():
+#    t = pypeitpar.FrameGroupPar.valid_frame_types()
+#    assert 'bias' in t, 'Expected to find \'bias\' in list of valid frame types'
 
 def test_processimages():
     pypeitpar.ProcessImagesPar()
@@ -206,7 +181,7 @@ def test_mergecfg():
 
     # Make some modifications
     p['rdx']['spectrograph'] = 'keck_lris_blue'
-    p['calibrations']['biasframe']['useframe'] = 'overscan'
+    p['calibrations']['biasframe']['exprng'] = [None, 0]
 
     # Write the modified config
     p.to_config(cfg_file=user_file)
@@ -217,8 +192,8 @@ def test_mergecfg():
 
     # Check the values are correctly read in
     assert p['rdx']['spectrograph'] == 'keck_lris_blue', 'Test spectrograph is incorrect!'
-    assert p['calibrations']['biasframe']['useframe'] == 'overscan', \
-                'Test biasframe:useframe is incorrect!'
+    assert p['calibrations']['biasframe']['exprng'] == [None, 0], \
+                'Test biasframe:exprng is incorrect!'
 
     # Clean-up
     os.remove(user_file)
@@ -244,9 +219,11 @@ def test_fail_badpar():
 
     # Faults because there's no junk parameter
     cfg_lines = ['[calibrations]', '[[biasframe]]', '[[[process]]]', 'junk = True']
-    with pytest.raises(ValueError):
-        _p = pypeitpar.PypeItPar.from_cfg_lines(cfg_lines=p.to_config(), 
-                                                merge_with=cfg_lines) # Once as list
+    with pytest.raises(KeyError):
+        _p = pypeitpar.PypeItPar.from_cfg_lines(
+            cfg_lines=p.to_config(), merge_with=cfg_lines
+        ) # Once as list
+
     
 def test_fail_badlevel():
     p = load_spectrograph('gemini_gnirs_echelle').default_pypeit_par()
@@ -254,9 +231,10 @@ def test_fail_badlevel():
     # Faults because process isn't at the right level (i.e., there's no
     # process parameter for CalibrationsPar)
     cfg_lines = ['[calibrations]', '[[biasframe]]', '[[process]]', 'cr_reject = True']
-    with pytest.raises(ValueError):
-        _p = pypeitpar.PypeItPar.from_cfg_lines(cfg_lines=p.to_config(), 
-                                                merge_with=(cfg_lines,))  #Once as tuple
+    with pytest.raises(KeyError):
+        _p = pypeitpar.PypeItPar.from_cfg_lines(
+            cfg_lines=p.to_config(), merge_with=(cfg_lines,)
+        )  #Once as tuple
 
 
 def test_lists():
@@ -284,18 +262,20 @@ def test_lists():
         _p = pypeitpar.PypeItPar.from_cfg_lines(cfg_lines=p.to_config())  # Once as tuple
 
 
-class UnlimitedDEPar(funcpar.FuncPar):
+class UnlimitedDEPar(funcpar.FuncPar, metaclass=funcpar.FuncParMetaClass):
     func = differential_evolution
 
 
-class DESubsetPar(funcpar.FuncPar):
+class DESubsetPar(funcpar.FuncPar, metaclass=funcpar.FuncParMetaClass):
     func = differential_evolution
     kw_subset = ['maxiter', 'popsize', 'init', 'tol']
 
 
-class BadKeywordDESubsetPar(funcpar.FuncPar):
-    func = differential_evolution
-    kw_subset = ['invalid']
+def test_bad_key_par():
+    with pytest.raises(KeyError):
+        class BadKeywordDESubsetPar(funcpar.FuncPar, metaclass=funcpar.FuncParMetaClass):
+            func = differential_evolution
+            kw_subset = ['invalid']
 
 
 def test_func_par():
@@ -303,7 +283,7 @@ def test_func_par():
     # case
 
     # The base class cannot be instantiated directly
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(AttributeError):
         p = funcpar.FuncPar()
 
     # Test the unrestricted set of keywords
@@ -312,12 +292,8 @@ def test_func_par():
     assert p.module == 'scipy.optimize._differentialevolution', 'Module name is incorrect!'
     assert p.npar == 20, 'The number of parameters changed.'
 
-    # Check for failure when restricting to an invalid parameter
-    with pytest.raises(PypeItError):
-        p = BadKeywordDESubsetPar()
-    
     # Check for failure when providing a value for an invalid parameter
-    with pytest.raises(PypeItError):
+    with pytest.raises(KeyError):
         p = UnlimitedDEPar(invalid='test')
 
     # Check for success when restricting the parameter list
@@ -330,26 +306,27 @@ def test_func_par():
     # Check that both the default value and provided value are currectly set
     tol_input = 0.1
     p = DESubsetPar(tol=tol_input)
-    assert p.default['tol'] == 0.01, 'Default value for tol changed.'
+    assert p.parameters['tol']['default'] == 0.01, 'Default value for tol changed.'
     assert p['tol'] == tol_input, 'Provided value for tol not set correctly!'
 
 
 def test_func_par_kwargs():
-    func_kwargs = DESubsetPar.valid_default_kwargs()
-    assert len(func_kwargs) == 4, 'Number of valid kwargs should be 4!'
+    par = DESubsetPar.parameters
+    assert len(par) == 4, 'Number of valid kwargs should be 4!'
 
 
 def test_func_par_from_dict():
     cfg = {'maxiter': 100, 'popsize': 20}
-    func_kwargs = DESubsetPar.valid_default_kwargs()
     p = DESubsetPar.from_dict(cfg)
     assert p['maxiter'] == cfg['maxiter'], 'maxiter not set correctly from dict!'
     assert p['popsize'] == cfg['popsize'], 'popsize not set correctly from dict!'
-    assert p['tol'] == func_kwargs['tol'], 'tol should be set to default value!'
-    assert p['init'] == func_kwargs['init'], 'init should be set to default value!'
+    assert p['tol'] == DESubsetPar.parameters['tol']['default'], \
+        'tol should be set to default value!'
+    assert p['init'] == DESubsetPar.parameters['init']['default'], \
+        'init should be set to default value!'
 
 
-class DEPar(funcpar.FuncPar):
+class DEPar(funcpar.FuncPar, metaclass=funcpar.FuncParMetaClass):
     func = differential_evolution
     omitted_keys = ['args', 'seed']
 
@@ -359,7 +336,7 @@ def test_func_par_subclass():
     # case
     p = DEPar(popsize=10)
 
-    assert p.default['popsize'] == 15, 'Default value for popsize changed.'
+    assert p.parameters['popsize']['default'] == 15, 'Default value for popsize changed.'
     assert p['popsize'] == 10, 'Provided value for popsize not set correctly!'
     assert p.npar == 18, 'The number of parameters changed.'
     assert 'args' not in p.keys(), 'args should have been omitted from the parameter list!'

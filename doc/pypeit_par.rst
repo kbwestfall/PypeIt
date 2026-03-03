@@ -154,62 +154,62 @@ Current PypeItPar Parameter Hierarchy
 | :ref:`pypeitpar`
 |     ``[rdx]``: :ref:`reduxpar`
 |     ``[calibrations]``: :ref:`calibrationspar`
-|         ``[[biasframe]]``: :ref:`framegrouppar`
+|         ``[[biasframe]]``: :ref:`biasframepar`
 |             ``[[[process]]]``: :ref:`processimagespar`
 |                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
-|         ``[[darkframe]]``: :ref:`framegrouppar`
+|         ``[[darkframe]]``: :ref:`darkframepar`
 |             ``[[[process]]]``: :ref:`processimagespar`
 |                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
-|         ``[[arcframe]]``: :ref:`framegrouppar`
+|         ``[[scattlightframe]]``: :ref:`scatteredlightframepar`
 |             ``[[[process]]]``: :ref:`processimagespar`
 |                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
-|         ``[[tiltframe]]``: :ref:`framegrouppar`
+|         ``[[pixelflatframe]]``: :ref:`pixelflatframepar`
 |             ``[[[process]]]``: :ref:`processimagespar`
 |                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
-|         ``[[pixelflatframe]]``: :ref:`framegrouppar`
+|         ``[[illumflatframe]]``: :ref:`illumflatframepar`
 |             ``[[[process]]]``: :ref:`processimagespar`
 |                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
-|         ``[[pinholeframe]]``: :ref:`framegrouppar`
+|         ``[[lampoffflatsframe]]``: :ref:`lampoffflatsframepar`
 |             ``[[[process]]]``: :ref:`processimagespar`
 |                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
-|         ``[[alignframe]]``: :ref:`framegrouppar`
+|         ``[[slitless_pixflatframe]]``: :ref:`slitlesspixflatframepar`
+|             ``[[[process]]]``: :ref:`processimagespar`
+|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
+|         ``[[pinholeframe]]``: :ref:`pinholeframepar`
+|             ``[[[process]]]``: :ref:`processimagespar`
+|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
+|         ``[[alignframe]]``: :ref:`alignframepar`
+|             ``[[[process]]]``: :ref:`processimagespar`
+|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
+|         ``[[arcframe]]``: :ref:`arcframepar`
+|             ``[[[process]]]``: :ref:`processimagespar`
+|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
+|         ``[[tiltframe]]``: :ref:`tiltframepar`
+|             ``[[[process]]]``: :ref:`processimagespar`
+|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
+|         ``[[traceframe]]``: :ref:`traceframepar`
+|             ``[[[process]]]``: :ref:`processimagespar`
+|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
+|         ``[[standardframe]]``: :ref:`standardframepar`
+|             ``[[[process]]]``: :ref:`processimagespar`
+|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
+|         ``[[skyframe]]``: :ref:`skyframepar`
 |             ``[[[process]]]``: :ref:`processimagespar`
 |                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
 |         ``[[alignment]]``: :ref:`alignpar`
-|         ``[[traceframe]]``: :ref:`framegrouppar`
-|             ``[[[process]]]``: :ref:`processimagespar`
-|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
-|         ``[[illumflatframe]]``: :ref:`framegrouppar`
-|             ``[[[process]]]``: :ref:`processimagespar`
-|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
-|         ``[[lampoffflatsframe]]``: :ref:`framegrouppar`
-|             ``[[[process]]]``: :ref:`processimagespar`
-|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
-|         ``[[slitless_pixflatframe]]``: :ref:`framegrouppar`
-|             ``[[[process]]]``: :ref:`processimagespar`
-|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
-|         ``[[scattlightframe]]``: :ref:`framegrouppar`
-|             ``[[[process]]]``: :ref:`processimagespar`
-|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
-|         ``[[skyframe]]``: :ref:`framegrouppar`
-|             ``[[[process]]]``: :ref:`processimagespar`
-|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
-|         ``[[standardframe]]``: :ref:`framegrouppar`
-|             ``[[[process]]]``: :ref:`processimagespar`
-|                 ``[[[[scattlight]]]]``: :ref:`scatteredlightpar`
 |         ``[[flatfield]]``: :ref:`flatfieldpar`
 |         ``[[wavelengths]]``: :ref:`wavelengthsolutionpar`
 |         ``[[slitedges]]``: :ref:`edgetracepar`
 |         ``[[tilts]]``: :ref:`wavetiltspar`
-|     ``[scienceframe]``: :ref:`framegrouppar`
+|     ``[scienceframe]``: :ref:`scienceframepar`
 |         ``[[process]]``: :ref:`processimagespar`
 |             ``[[[scattlight]]]``: :ref:`scatteredlightpar`
 |     ``[reduce]``: :ref:`reducepar`
 |         ``[[findobj]]``: :ref:`findobjpar`
 |         ``[[skysub]]``: :ref:`skysubpar`
 |         ``[[extraction]]``: :ref:`extractionpar`
-|         ``[[cube]]``: :ref:`cubepar`
 |         ``[[slitmask]]``: :ref:`slitmaskpar`
+|         ``[[cube]]``: :ref:`cubepar`
 |     ``[flexure]``: :ref:`flexurepar`
 |     ``[fluxcalib]``: :ref:`fluxcalibratepar`
 |     ``[coadd1d]``: :ref:`coadd1dpar`
@@ -244,7 +244,7 @@ Key               Type                                             Options  Defa
 ``fluxcalib``     :class:`~pypeit.par.pypeitpar.FluxCalibratePar`  ..       `FluxCalibratePar Keywords`_  Parameters used by the flux-calibration procedure.  Flux calibration is not performed by default.  To turn on, either set the parameters in the 'fluxcalib' parameter group or set 'fluxcalib = True' in the 'rdx' parameter group to use the default flux-calibration parameters.    
 ``rdx``           :class:`~pypeit.par.pypeitpar.ReduxPar`          ..       `ReduxPar Keywords`_          PypeIt reduction rules.                                                                                                                                                                                                                                                               
 ``reduce``        :class:`~pypeit.par.pypeitpar.ReducePar`         ..       `ReducePar Keywords`_         Parameters determining sky-subtraction, object finding, and extraction                                                                                                                                                                                                                
-``scienceframe``  :class:`~pypeit.par.pypeitpar.FrameGroupPar`     ..       `FrameGroupPar Keywords`_     The frames and combination rules for the science observations                                                                                                                                                                                                                         
+``scienceframe``  :class:`~pypeit.par.pypeitpar.ScienceFramePar`   ..       `ScienceFramePar Keywords`_   The frames and combination rules for the science observations                                                                                                                                                                                                                         
 ``sensfunc``      :class:`~pypeit.par.pypeitpar.SensFuncPar`       ..       `SensFuncPar Keywords`_       Par set to control sensitivity function computation.  Only used in the after-burner script.                                                                                                                                                                                           
 ``telluric``      :class:`~pypeit.par.pypeitpar.TelluricPar`       ..       `TelluricPar Keywords`_       Par set to control telluric fitting.  Only used in the pypeit_sensfunc and pypeit_telluric after-burner scripts.                                                                                                                                                                      
 ================  ===============================================  =======  ============================  ======================================================================================================================================================================================================================================================================================
@@ -259,33 +259,123 @@ CalibrationsPar Keywords
 
 Class Instantiation: :class:`~pypeit.par.pypeitpar.CalibrationsPar`
 
-=========================  ====================================================  =======  =================================  =================================================================================================================================================================================================================================================
-Key                        Type                                                  Options  Default                            Description                                                                                                                                                                                                                                      
-=========================  ====================================================  =======  =================================  =================================================================================================================================================================================================================================================
-``alignframe``             :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the align frames                                                                                                                                                                                            
-``alignment``              :class:`~pypeit.par.pypeitpar.AlignPar`               ..       `AlignPar Keywords`_               Define the procedure for the alignment of traces                                                                                                                                                                                                 
-``arcframe``               :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the wavelength calibration                                                                                                                                                                                  
-``biasframe``              :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the bias correction                                                                                                                                                                                         
-``bpm_usebias``            bool                                                  ..       False                              Make a bad pixel mask from bias frames? Bias frames must be provided.                                                                                                                                                                            
-``calib_dir``              str                                                   ..       ``Calibrations``                   The name of the directory for the processed calibration frames.  The host path for the directory is set by the redux_path (see :class:`~pypeit.par.pypeitpar.ReduxPar`).  Beware that success when changing the default value is not well tested!
-``darkframe``              :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the dark-current correction                                                                                                                                                                                 
-``flatfield``              :class:`~pypeit.par.pypeitpar.FlatFieldPar`           ..       `FlatFieldPar Keywords`_           Parameters used to set the flat-field procedure                                                                                                                                                                                                  
-``illumflatframe``         :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the illumination flat                                                                                                                                                                                       
-``lampoffflatsframe``      :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the lamp off flats                                                                                                                                                                                          
-``pinholeframe``           :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the pinholes                                                                                                                                                                                                
-``pixelflatframe``         :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the pixel flat                                                                                                                                                                                              
-``raise_chk_error``        bool                                                  ..       True                               Raise an error if the calibration check fails                                                                                                                                                                                                    
-``scattlight_pad``         int                                                   ..       5                                  Number of unbinned pixels to extend the slit edges by when masking the slits.                                                                                                                                                                    
-``scattlightframe``        :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the scattered light frames                                                                                                                                                                                  
-``skyframe``               :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the sky background observations                                                                                                                                                                             
-``slitedges``              :class:`~pypeit.par.pypeitpar.EdgeTracePar`           ..       `EdgeTracePar Keywords`_           Slit-edge tracing parameters                                                                                                                                                                                                                     
-``slitless_pixflatframe``  :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the slitless pixel flat                                                                                                                                                                                     
-``standardframe``          :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the spectrophotometric standard observations                                                                                                                                                                
-``tiltframe``              :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for the wavelength tilts                                                                                                                                                                                        
-``tilts``                  :class:`~pypeit.par.pypeitpar.WaveTiltsPar`           ..       `WaveTiltsPar Keywords`_           Define how to trace the slit tilts using the trace frames                                                                                                                                                                                        
-``traceframe``             :class:`~pypeit.par.pypeitpar.FrameGroupPar`          ..       `FrameGroupPar Keywords`_          The frames and combination rules for images used for slit tracing                                                                                                                                                                                
-``wavelengths``            :class:`~pypeit.par.pypeitpar.WavelengthSolutionPar`  ..       `WavelengthSolutionPar Keywords`_  Parameters used to derive the wavelength solution                                                                                                                                                                                                
-=========================  ====================================================  =======  =================================  =================================================================================================================================================================================================================================================
+=========================  ======================================================  =======  ===================================  =================================================================================================================================================================================================================================================
+Key                        Type                                                    Options  Default                              Description                                                                                                                                                                                                                                      
+=========================  ======================================================  =======  ===================================  =================================================================================================================================================================================================================================================
+``alignframe``             :class:`~pypeit.par.pypeitpar.AlignFramePar`            ..       `AlignFramePar Keywords`_            The frames and combination rules for the align frames                                                                                                                                                                                            
+``alignment``              :class:`~pypeit.par.pypeitpar.AlignPar`                 ..       `AlignPar Keywords`_                 Define the procedure for the alignment of traces                                                                                                                                                                                                 
+``arcframe``               :class:`~pypeit.par.pypeitpar.ArcFramePar`              ..       `ArcFramePar Keywords`_              The frames and combination rules for the wavelength calibration                                                                                                                                                                                  
+``biasframe``              :class:`~pypeit.par.pypeitpar.BiasFramePar`             ..       `BiasFramePar Keywords`_             The frames and combination rules for the bias correction                                                                                                                                                                                         
+``bpm_usebias``            bool                                                    ..       False                                Make a bad pixel mask from bias frames? Bias frames must be provided.                                                                                                                                                                            
+``calib_dir``              str                                                     ..       ``Calibrations``                     The name of the directory for the processed calibration frames.  The host path for the directory is set by the redux_path (see :class:`~pypeit.par.pypeitpar.ReduxPar`).  Beware that success when changing the default value is not well tested!
+``darkframe``              :class:`~pypeit.par.pypeitpar.DarkFramePar`             ..       `DarkFramePar Keywords`_             The frames and combination rules for the dark-current correction                                                                                                                                                                                 
+``flatfield``              :class:`~pypeit.par.pypeitpar.FlatFieldPar`             ..       `FlatFieldPar Keywords`_             Parameters used to set the flat-field procedure                                                                                                                                                                                                  
+``illumflatframe``         :class:`~pypeit.par.pypeitpar.IllumFlatFramePar`        ..       `IllumFlatFramePar Keywords`_        The frames and combination rules for the illumination flat                                                                                                                                                                                       
+``lampoffflatsframe``      :class:`~pypeit.par.pypeitpar.LampOffFlatsFramePar`     ..       `LampOffFlatsFramePar Keywords`_     The frames and combination rules for the lamp off flats                                                                                                                                                                                          
+``pinholeframe``           :class:`~pypeit.par.pypeitpar.PinholeFramePar`          ..       `PinholeFramePar Keywords`_          The frames and combination rules for the pinholes                                                                                                                                                                                                
+``pixelflatframe``         :class:`~pypeit.par.pypeitpar.PixelFlatFramePar`        ..       `PixelFlatFramePar Keywords`_        The frames and combination rules for the pixel flat                                                                                                                                                                                              
+``raise_chk_error``        bool                                                    ..       True                                 Raise an error if the calibration check fails                                                                                                                                                                                                    
+``scattlight_pad``         int                                                     ..       5                                    Number of unbinned pixels to extend the slit edges by when masking the slits.                                                                                                                                                                    
+``scattlightframe``        :class:`~pypeit.par.pypeitpar.ScatteredLightFramePar`   ..       `ScatteredLightFramePar Keywords`_   The frames and combination rules for the scattered light frames                                                                                                                                                                                  
+``skyframe``               :class:`~pypeit.par.pypeitpar.SkyFramePar`              ..       `SkyFramePar Keywords`_              The frames and combination rules for the sky background observations                                                                                                                                                                             
+``slitedges``              :class:`~pypeit.par.pypeitpar.EdgeTracePar`             ..       `EdgeTracePar Keywords`_             Slit-edge tracing parameters                                                                                                                                                                                                                     
+``slitless_pixflatframe``  :class:`~pypeit.par.pypeitpar.SlitlessPixFlatFramePar`  ..       `SlitlessPixFlatFramePar Keywords`_  The frames and combination rules for the slitless pixel flat                                                                                                                                                                                     
+``standardframe``          :class:`~pypeit.par.pypeitpar.StandardFramePar`         ..       `StandardFramePar Keywords`_         The frames and combination rules for the spectrophotometric standard observations                                                                                                                                                                
+``tiltframe``              :class:`~pypeit.par.pypeitpar.TiltFramePar`             ..       `TiltFramePar Keywords`_             The frames and combination rules for the wavelength tilts                                                                                                                                                                                        
+``tilts``                  :class:`~pypeit.par.pypeitpar.WaveTiltsPar`             ..       `WaveTiltsPar Keywords`_             Define how to trace the slit tilts using the trace frames                                                                                                                                                                                        
+``traceframe``             :class:`~pypeit.par.pypeitpar.TraceFramePar`            ..       `TraceFramePar Keywords`_            The frames and combination rules for images used for slit tracing                                                                                                                                                                                
+``wavelengths``            :class:`~pypeit.par.pypeitpar.WavelengthSolutionPar`    ..       `WavelengthSolutionPar Keywords`_    Parameters used to derive the wavelength solution                                                                                                                                                                                                
+=========================  ======================================================  =======  ===================================  =================================================================================================================================================================================================================================================
+
+
+----
+
+.. _alignframepar:
+
+AlignFramePar Keywords
+----------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.AlignFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+
+
+----
+
+.. _processimagespar:
+
+ProcessImagesPar Keywords
+-------------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.ProcessImagesPar`
+
+==========================  ================================================  ===================================================================  =============================  ========================================================================================================================================================================================================================================================================================================================================================================================
+Key                         Type                                              Options                                                              Default                        Description                                                                                                                                                                                                                                                                                                                                                                             
+==========================  ================================================  ===================================================================  =============================  ========================================================================================================================================================================================================================================================================================================================================================================================
+``apply_gain``              bool                                              ..                                                                   True                           Convert the ADUs to electrons using the detector gain                                                                                                                                                                                                                                                                                                                                   
+``clip``                    bool                                              ..                                                                   True                           Perform sigma clipping when combining.  Only used with combine=mean                                                                                                                                                                                                                                                                                                                     
+``comb_sigrej``             float                                             ..                                                                   ..                             Sigma-clipping level for when clip=True; Use None for automatic limit (recommended).                                                                                                                                                                                                                                                                                                    
+``combine``                 str                                               ``median``, ``mean``                                                 ``mean``                       Method used to combine multiple frames.  Options are: median, mean                                                                                                                                                                                                                                                                                                                      
+``correct_nonlinear``       list                                              ..                                                                   ..                             Correct for non-linear response of the detector.  If None, no correction is performed. If a list, then the list should be the non-linear correction parameter (alpha), where the functional form is given by Ct = Cm (1 + alpha x Cm), with Ct and Cm the true and measured counts. This parameter is usually hard-coded for a given spectrograph, and should otherwise be left as None.
+``dark_expscale``           bool                                              ..                                                                   False                          If designated dark frames are used and have a different exposure time than the science frames, scale the counts by the by the ratio in the exposure times to adjust the dark counts for the difference in exposure time.  WARNING: You should always take dark frames that have the same exposure time as your science frames, so use this option with care!                            
+``empirical_rn``            bool                                              ..                                                                   False                          If True, use the standard deviation in the overscan region to measure an empirical readnoise to use in the noise model.                                                                                                                                                                                                                                                                 
+``grow``                    int, float                                        ..                                                                   1.5                            Factor by which to expand regions with cosmic rays detected by the LA cosmics routine.                                                                                                                                                                                                                                                                                                  
+``lamaxiter``               int                                               ..                                                                   1                              Maximum number of iterations for LA cosmics routine.                                                                                                                                                                                                                                                                                                                                    
+``mask_cr``                 bool                                              ..                                                                   False                          Identify CRs and mask them                                                                                                                                                                                                                                                                                                                                                              
+``n_lohi``                  list                                              ..                                                                   0, 0                           Number of pixels to reject at the lowest and highest ends of the distribution; i.e., n_lohi = low, high.  Use None for no limit.                                                                                                                                                                                                                                                        
+``noise_floor``             float                                             ..                                                                   0.0                            Impose a noise floor by adding the provided fraction of the bias- and dark-subtracted electron counts to the error budget.  E.g., a value of 0.01 means that the S/N of the counts in the image will never be greater than 100.                                                                                                                                                         
+``objlim``                  int, float                                        ..                                                                   3.0                            Object detection limit in LA cosmics routine                                                                                                                                                                                                                                                                                                                                            
+``orient``                  bool                                              ..                                                                   True                           Orient the raw image so that it follows the PypeIt convention                                                                                                                                                                                                                                                                                                                           
+``overscan_method``         str                                               ``chebyshev``, ``polynomial``, ``savgol``, ``median``, ``odd_even``  ``savgol``                     Method used to fit the overscan. Options are: chebyshev, polynomial, savgol, median, odd_even  Note: Method "polynomial" is identical to "chebyshev"; the former is deprecated and will be removed.                                                                                                                                                                                     
+``overscan_par``            int, list                                         ..                                                                   5, 65                          Parameters for the overscan subtraction.  For 'chebyshev' or 'polynomial', set overcan_par = order; for 'savgol', set overscan_par = order, window size ; for 'median', set overscan_par = None or omit the keyword.                                                                                                                                                                    
+``rmcompact``               bool                                              ..                                                                   True                           Remove compact detections in LA cosmics routine                                                                                                                                                                                                                                                                                                                                         
+``satpix``                  str                                               ``reject``, ``force``, ``nothing``                                   ``reject``                     Handling of saturated pixels.  Options are: reject, force, nothing                                                                                                                                                                                                                                                                                                                      
+``scale_to_mean``           bool                                              ..                                                                   False                          If True, scale the input images to have the same mean before combining.                                                                                                                                                                                                                                                                                                                 
+``scattlight``              :class:`~pypeit.par.pypeitpar.ScatteredLightPar`  ..                                                                   `ScatteredLightPar Keywords`_  Scattered light subtraction parameters.                                                                                                                                                                                                                                                                                                                                                 
+``shot_noise``              bool                                              ..                                                                   True                           Use the bias- and dark-subtracted image to calculate and include electron count shot noise in the image processing error budget                                                                                                                                                                                                                                                         
+``sigclip``                 int, float                                        ..                                                                   4.5                            Sigma level for rejection in LA cosmics routine                                                                                                                                                                                                                                                                                                                                         
+``sigfrac``                 int, float                                        ..                                                                   0.3                            Fraction for the lower clipping threshold in LA cosmics routine.                                                                                                                                                                                                                                                                                                                        
+``skip_write_2d``           bool                                              ..                                                                   False                          Skip writing the 2D spectrum for science frames.  WARNING: This option should only be considered for reducing the volume of output data when processing large numbers of frames and only after ensuring the quality of the resulting reductions.                                                                                                                                        
+``spat_flexure_correct``    bool                                              ..                                                                   False                          Correct slits, illumination flat, etc. for flexure                                                                                                                                                                                                                                                                                                                                      
+``spat_flexure_maxlag``     int                                               ..                                                                   20                             Maximum of possible spatial flexure correction, in pixels                                                                                                                                                                                                                                                                                                                               
+``spat_flexure_sigdetect``  int, float                                        ..                                                                   5.0                            Sigma threshold above fluctuations in the Sobel-filtered significance image, used for finding slit edges in the spectral image, for which the spatial flexure is computed.                                                                                                                                                                                                              
+``spat_flexure_vrange``     tuple                                             ..                                                                   ..                             This parameter is used when generating the QA plot for the spatial flexure. It sets the data range (vmin,vmax) used by the colormap when showing the spectral image. If None, the range is set automatically.                                                                                                                                                                           
+``subtract_continuum``      bool                                              ..                                                                   False                          Subtract off the continuum level from an image. This parameter should only be set to True to combine arcs with multiple different lamps. For all other cases, this parameter should probably be False.                                                                                                                                                                                  
+``subtract_scattlight``     bool                                              ..                                                                   False                          Subtract off the scattered light from an image. This parameter should only be set to True for spectrographs that have dedicated methods to subtract scattered light. For all other cases, this parameter should be False.                                                                                                                                                               
+``trim``                    bool                                              ..                                                                   True                           Trim the image, removing its overscan region                                                                                                                                                                                                                                                                                                                                            
+``use_biasimage``           bool                                              ..                                                                   True                           Use a bias image.  If True, one or more must be supplied in the PypeIt file.                                                                                                                                                                                                                                                                                                            
+``use_darkimage``           bool                                              ..                                                                   False                          Subtract off a dark image.  If True, one or more darks must be provided.                                                                                                                                                                                                                                                                                                                
+``use_illumflat``           bool                                              ..                                                                   True                           Use the illumination flat to correct for the illumination profile of each slit.                                                                                                                                                                                                                                                                                                         
+``use_overscan``            bool                                              ..                                                                   True                           Subtract off the overscan.  Detector *must* have a valid overscan region defined or the code will crash.                                                                                                                                                                                                                                                                                
+``use_pattern``             bool                                              ..                                                                   False                          Subtract off a detector pattern. This pattern is assumed to be sinusoidal along one direction, with a frequency that is constant across the detector.                                                                                                                                                                                                                                   
+``use_pixelflat``           bool                                              ..                                                                   True                           Use the pixel flat to make pixel-level corrections.  A pixelflat image must be provied.                                                                                                                                                                                                                                                                                                 
+``use_specillum``           bool                                              ..                                                                   False                          Use the relative spectral illumination profiles to correct the spectral illumination profile of each slit. This is primarily used for slicer IFUs.  To use this, you must set ``slit_illum_relative=True`` in the ``flatfield`` parameter set!                                                                                                                                          
+==========================  ================================================  ===================================================================  =============================  ========================================================================================================================================================================================================================================================================================================================================================================================
+
+
+----
+
+.. _scatteredlightpar:
+
+ScatteredLightPar Keywords
+--------------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.ScatteredLightPar`
+
+===================  =========  =================================  =========  ========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+Key                  Type       Options                            Default    Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+===================  =========  =================================  =========  ========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+``finecorr_mask``    int, list  ..                                 ..         The inter-slit regions to mask during the fine correction to the scattered light.  Each integer corresponds to an inter-slit region.  For example, "0" corresponds to all pixels left of the leftmost slit, whereas "1" corresponds to all pixels between the first and second slit (counting from the left).  Provide either a single integer value or a list of integer values. The default (None) means that no inter-slit regions will be masked.                                                                                   
+``finecorr_method``  str        ``median``, ``poly``               ..         Method used for the "fine correction" for scattered light.  This can be None to skip the correction; the other options are median, poly.  Select "median" to subtract a constant value from an entire CCD row, based on a median of the pixels that are not on slits (see also, "finecorr_pad").  Select "poly" to fit a polynomial to the scattered light in each row, based on the pixels that are not on slits (see also, "finecorr_pad").                                                                                           
+``finecorr_order``   int        ..                                 2          Polynomial order to use for the fine correction to the scattered light subtraction. It should be a low value.                                                                                                                                                                                                                                                                                                                                                                                                                           
+``finecorr_pad``     int        ..                                 4          Number of unbinned pixels by which to extend the slit edges by when masking the slits for the fine correction to the scattered light.                                                                                                                                                                                                                                                                                                                                                                                                   
+``method``           str        ``model``, ``frame``, ``archive``  ``model``  Method used to fit the overscan.  Options are model, frame, archive.  Select "model" to use the scattered light model parameters derived from a user-specified frame during the reduction (you will need to identify appropriate "scattlight" frames in your pypeit file).  Select "frame" to use each individual frame to determine the scattered light directly from that frame.  Select "archive" to use an archival model parameter solution for the scattered light (this option is not currently available for all spectrographs).
+===================  =========  =================================  =========  ========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
 
 
 ----
@@ -305,6 +395,57 @@ Key              Type           Options  Default   Description
 ``trace_npoly``  int            ..       4         Order of the polynomial to use when fitting the trace of a single bar                                                                                                                                                                                                           
 ``trim_edge``    list           ..       0, 0      Trim the slit by this number of pixels left/right before finding alignment bars                                                                                                                                                                                                 
 ===============  =============  =======  ========  ================================================================================================================================================================================================================================================================================
+
+
+----
+
+.. _arcframepar:
+
+ArcFramePar Keywords
+--------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.ArcFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+
+
+----
+
+.. _biasframepar:
+
+BiasFramePar Keywords
+---------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.BiasFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+
+
+----
+
+.. _darkframepar:
+
+DarkFramePar Keywords
+---------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.DarkFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
 
 
 ----
@@ -337,12 +478,114 @@ Key                         Type               Options                          
 ``spat_samp``               int, float         ..                                 5.0            Spatial sampling for slit illumination function. This is the width of the median filter in pixels used to determine the slit illumination function, and thus sets the minimum scale on which the illumination function will have features.                                                                                                                                                                                                                                                                                                                      
 ``spec_samp_coarse``        int, float         ..                                 50.0           bspline break point spacing in units of pixels for 2-d bspline-polynomial fit to flat field image residuals. This should be a large number unless you are trying to fit a sky flat with lots of narrow spectral features.                                                                                                                                                                                                                                                                                                                                       
 ``spec_samp_fine``          int, float         ..                                 1.2            bspline break point spacing in units of pixels for spectral fit to flat field blaze function.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-``tweak_method``            str                ``threshold``, ``gradient``        ``threshold``  Method used to tweak the slit edges (when "tweak_slits" is set to True).  Options include: threshold, gradient. The "threshold" method determines when the left and right slit edges fall below a threshold relative to the peak illumination. The "gradient" method determines where the gradient is the highest at the left and right slit edges. This method performs better when there is systematic vignetting in the spatial direction.                                                                                                                   
+``tweak_method``            str                ``threshold``, ``gradient``        ``threshold``  Method used to tweak the slit edges (when "tweak_slits" is set to True). Options include: threshold, gradient. The "threshold" method determines when the left and right slit edges fall below a threshold relative to the peak illumination. The "gradient" method determines where the gradient is the highest at the left and right slit edges. This method performs better when there is systematic vignetting in the spatial direction.                                                                                                                    
 ``tweak_slits``             bool               ..                                 True           Use the illumination flat field to tweak the slit edges. This will work even if illumflatten is set to False                                                                                                                                                                                                                                                                                                                                                                                                                                                    
 ``tweak_slits_maxfrac``     float              ..                                 0.1            If tweak_slit is True, this sets the maximum fractional amount (of a slits width) allowed for trimming each (i.e. left and right) slit boundary, i.e. the default is 10% which means slits would shrink or grow by at most 20% (10% on each side)                                                                                                                                                                                                                                                                                                               
 ``tweak_slits_thresh``      float              ..                                 0.93           If tweak_slits is True, this sets the illumination function threshold used to tweak the slit boundaries based on the illumination flat. It should be a number less than 1.0                                                                                                                                                                                                                                                                                                                                                                                     
 ``twod_fit_npoly``          int                ..                                 ..             Order of polynomial used in the 2D bspline-polynomial fit to flat-field image residuals. The code determines the order of these polynomials to each slit automatically depending on the slit width, which is why the default is None. Alter this paramter at your own risk!                                                                                                                                                                                                                                                                                     
 ==========================  =================  =================================  =============  ================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+
+----
+
+.. _illumflatframepar:
+
+IllumFlatFramePar Keywords
+--------------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.IllumFlatFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+
+
+----
+
+.. _lampoffflatsframepar:
+
+LampOffFlatsFramePar Keywords
+-----------------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.LampOffFlatsFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+
+
+----
+
+.. _pinholeframepar:
+
+PinholeFramePar Keywords
+------------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.PinholeFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+
+
+----
+
+.. _pixelflatframepar:
+
+PixelFlatFramePar Keywords
+--------------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.PixelFlatFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+
+
+----
+
+.. _scatteredlightframepar:
+
+ScatteredLightFramePar Keywords
+-------------------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.ScatteredLightFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+
+
+----
+
+.. _skyframepar:
+
+SkyFramePar Keywords
+--------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.SkyFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
 
 
 ----
@@ -436,6 +679,57 @@ Key                          Type              Options                          
 
 ----
 
+.. _slitlesspixflatframepar:
+
+SlitlessPixFlatFramePar Keywords
+--------------------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.SlitlessPixFlatFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+
+
+----
+
+.. _standardframepar:
+
+StandardFramePar Keywords
+-------------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.StandardFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+
+
+----
+
+.. _tiltframepar:
+
+TiltFramePar Keywords
+---------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.TiltFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+
+
+----
+
 .. _wavetiltspar:
 
 WaveTiltsPar Keywords
@@ -443,24 +737,41 @@ WaveTiltsPar Keywords
 
 Class Instantiation: :class:`~pypeit.par.pypeitpar.WaveTiltsPar`
 
-===================  =========================  =======  ==============  =============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-Key                  Type                       Options  Default         Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-===================  =========================  =======  ==============  =============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-``cont_rej``         int, float, list, ndarray  ..       3, 1.5          The sigma threshold for rejection.  Can be a single number or two numbers that give the low and high sigma rejection, respectively.                                                                                                                                                                                                                                                                                                                                                                                                                                          
-``func2d``           str                        ..       ``legendre2d``  Type of function for 2D fit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-``idsonly``          bool                       ..       False           Only use the arc lines that have an identified wavelength to trace tilts (CURRENTLY NOT USED!)                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
-``maxdev2d``         int, float                 ..       0.25            Maximum absolute deviation (in units of fwhm) rejection threshold used to determines which pixels in global 2d fits to arc line tilts are rejected because they deviate from the model by more than this value                                                                                                                                                                                                                                                                                                                                                               
-``maxdev_tracefit``  int, float                 ..       0.2             Maximum absolute deviation (in units of fwhm) for the legendre polynomial fits to individual arc line tilt fits during iterative trace fitting (flux weighted, then gaussian weighted)                                                                                                                                                                                                                                                                                                                                                                                       
-``minmax_extrap``    list, ndarray              ..       150.0, 1000.0   Sets how far below the last measured tilt line is extrapolated in tracewave.fit_tilts()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
-``nfwhm_neigh``      int, float                 ..       3.0             Required separation between neighboring arc lines for them to be considered for tilt tracing in units of the the spectral fwhm (see wavelength parset where fwhm is defined)                                                                                                                                                                                                                                                                                                                                                                                                 
-``rm_continuum``     bool                       ..       False           Before tracing the line center at each spatial position, remove any low-order continuum in the 2D spectra.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-``sig_neigh``        int, float                 ..       10.0            Significance threshold for arcs to be used in line identification for the purpose of identifying neighboring lines. The tracethresh parameter above determines the significance threshold of lines that will be traced, but these lines  must be at least nfwhm_neigh fwhm away from neighboring lines. This parameter determines the significance above which  a line must be to be considered a possible colliding neighbor. A low value of sig_neigh will result in an overall  larger number of lines, which will result in more lines above tracethresh getting rejected
-``sigrej2d``         int, float                 ..       3.0             Outlier rejection significance determining which pixels on a fit to an arc line tilt are rejected by the global 2D fit                                                                                                                                                                                                                                                                                                                                                                                                                                                       
-``sigrej_trace``     int, float                 ..       3.0             Outlier rejection significance to determine which traced arc lines should be included in the global fit                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
-``spat_order``       int, float, list, ndarray  ..       3               Order of the legendre polynomial to be fit to the tilt of an arc line. This parameter determines both the order of the *individual* arc line tilts, as well as the order of the spatial direction of the 2d legendre polynomial (spatial, spectral) that is fit to obtain a global solution for the tilts across the slit/order. This can be a single number or a list/array providing the value for each slit                                                                                                                                                               
-``spec_order``       int, float, list, ndarray  ..       4               Order of the spectral direction of the 2d legendre polynomial (spatial, spectral) that is fit to obtain a global solution for the tilts across the slit/order. This can be a single number or a list/array providing the value for each slit                                                                                                                                                                                                                                                                                                                                 
-``tracethresh``      int, float, list, ndarray  ..       20.0            Significance threshold for arcs to be used in tracing wavelength tilts. This can be a single number or a list/array providing the value for each slit/order.                                                                                                                                                                                                                                                                                                                                                                                                                 
-===================  =========================  =======  ==============  =============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+===================  =========================  =======  ==============  ============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+Key                  Type                       Options  Default         Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+===================  =========================  =======  ==============  ============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+``cont_rej``         int, float, list, ndarray  ..       3, 1.5          The sigma threshold for rejection.  Can be a single number or two numbers that give the low and high sigma rejection, respectively.                                                                                                                                                                                                                                                                                                                                                                                                                                         
+``func2d``           str                        ..       ``legendre2d``  Type of function for 2D fit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+``idsonly``          bool                       ..       False           Only use the arc lines that have an identified wavelength to trace tilts (CURRENTLY NOT USED!)                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+``maxdev2d``         int, float                 ..       0.25            Maximum absolute deviation (in units of fwhm) rejection threshold used to determines which pixels in global 2d fits to arc line tilts are rejected because they deviate from the model by more than this value                                                                                                                                                                                                                                                                                                                                                              
+``maxdev_tracefit``  int, float                 ..       0.2             Maximum absolute deviation (in units of fwhm) for the legendre polynomial fits to individual arc line tilt fits during iterative trace fitting (flux weighted, then gaussian weighted).                                                                                                                                                                                                                                                                                                                                                                                     
+``minmax_extrap``    list, ndarray              ..       150.0, 1000.0   Sets how far below the last measured tilt line is extrapolated in tracewave.fit_tilts()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+``nfwhm_neigh``      int, float                 ..       3.0             Required separation between neighboring arc lines for them to be considered for tilt tracing in units of the spectral fwhm (see wavelength parset where fwhm is defined).                                                                                                                                                                                                                                                                                                                                                                                                   
+``rm_continuum``     bool                       ..       False           Before tracing the line center at each spatial position, remove any low-order continuum in the 2D spectra.                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+``sig_neigh``        int, float                 ..       10.0            Significance threshold for arcs to be used in line identification for the purpose of identifying neighboring lines.  The tracethresh parameter above determines the significance threshold of lines that will be traced, but these lines must be at least nfwhm_neigh fwhm away from neighboring lines. This parameter determines the significance above which a line must be to be considered a possible colliding neighbor. A low value of sig_neigh will result in an overall larger number of lines, which will result in more lines above tracethresh getting rejected.
+``sigrej2d``         int, float                 ..       3.0             Outlier rejection significance determining which pixels on a fit to an arc line tilt are rejected by the global 2D fit                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+``sigrej_trace``     int, float                 ..       3.0             Outlier rejection significance to determine which traced arc lines should be included in the global fit                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+``spat_order``       int, float, list, ndarray  ..       3               Order of the legendre polynomial to be fit to the tilt of an arc line. This parameter determines both the order of the *individual* arc line tilts, as well as the order of the spatial direction of the 2d legendre polynomial (spatial, spectral) that is fit to obtain a global solution for the tilts across the slit/order. This can be a single number or a list/array providing the value for each slit.                                                                                                                                                             
+``spec_order``       int, float, list, ndarray  ..       4               Order of the spectral direction of the 2d legendre polynomial (spatial, spectral) that is fit to obtain a global solution for the tilts across the slit/order.  This can be a single number or a list/array providing the value for each slit.                                                                                                                                                                                                                                                                                                                              
+``tracethresh``      int, float, list, ndarray  ..       20.0            Significance threshold for arcs to be used in tracing wavelength tilts. This can be a single number or a list/array providing the value for each slit/order.                                                                                                                                                                                                                                                                                                                                                                                                                
+===================  =========================  =======  ==============  ============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+
+----
+
+.. _traceframepar:
+
+TraceFramePar Keywords
+----------------------
+
+Class Instantiation: :class:`~pypeit.par.pypeitpar.TraceFramePar`
+
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
 
 
 ----
@@ -500,11 +811,11 @@ Key                       Type                       Options                    
 ``n_final``               int, float, list, ndarray  ..                                                                            4                 Order of final fit to the wavelength solution (there are n_final+1 parameters in the fit). This can be a single number or a list/array providing the value for each slit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
 ``n_first``               int                        ..                                                                            2                 Order of first guess fit to the wavelength solution.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
 ``nfitpix``               int                        ..                                                                            5                 Number of pixels to fit when deriving the centroid of the arc lines (an odd number is best)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-``nlocal_cc``             int                        ..                                                                            11                Size of pixel window used for local cross-correlation computation for each arc line. If not an odd number one will be added to it to make it odd.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+``nlocal_cc``             int                        ..                                                                            11                Size of pixel window used for local cross-correlation computation for each arc line.  If not an odd number one will be added to it to make it odd.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
 ``nreid_min``             int                        ..                                                                            1                 Minimum number of times that a given candidate reidentified line must be properly matched with a line in the arxiv to be considered a good reidentification. If there is a lot of duplication in the arxiv of the spectra in question (i.e. multislit) set this to a number like 1-4. For echelle this depends on the number of solutions in the arxiv.  Set this to 1 for fixed format echelle spectrographs.  For an echelle with a tiltable grating, this will depend on the number of solutions in the arxiv.                                                                                                                                                                                                                                                                                            
-``nsnippet``              int                        ..                                                                            2                 Number of spectra to chop the arc spectrum into when ``method`` is 'full_template'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+``nsnippet``              int                        ..                                                                            2                 Number of spectra to chop the arc spectrum into when ``method`` is 'full_template'.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
 ``numsearch``             int                        ..                                                                            20                Number of brightest arc lines to search for in preliminary identification                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
-``qa_log``                bool                       ..                                                                            True              Governs whether the wavelength solution arc line QA plots will have log or linear scalingIf True, the scaling will be log, if False linear                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+``qa_log``                bool                       ..                                                                            True              Governs whether the wavelength solution arc line QA plots will have log or linear scaling.  If True, the scaling will be log, if False linear                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
 ``redo_slits``            int, list                  ..                                                                            ..                Redo the input slit(s) [multislit] or order(s) [echelle]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
 ``reference``             str                        ``arc``, ``sky``, ``pixel``                                                   ``arc``           Perform wavelength calibration with an arc, sky frame.  Use 'pixel' for no wavelength solution.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
 ``refframe``              str                        ``observed``, ``heliocentric``, ``barycentric``                               ``heliocentric``  Frame of reference for the wavelength calibration.  Options are: observed, heliocentric, barycentric                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
@@ -574,21 +885,21 @@ Coadd2DPar Keywords
 
 Class Instantiation: :class:`~pypeit.par.pypeitpar.Coadd2DPar`
 
-====================  =========  =======  ========  ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-Key                   Type       Options  Default   Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
-====================  =========  =======  ========  ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-``exclude_slits``     str, list  ..       ..        Exclude one or more slits from the coaddition. Example syntax -- DET01:175,DET02:205 or MSC02:2234. This and ``only_slits`` are mutually exclusive. If both are provided, ``only_slits`` takes precedence.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-``manual``            str, list  ..       ..        Manual extraction parameters for eac aperture to extract.  For a single detector, use det:spat:spec:fwhm:boxcar_radius.  For a mosiac, use ``(det1,det2,...):spat:spec:fwhm:boxcar_radius``, where ``(det1,det2,...)`` is the list of detectors in the mosaic.  Multiple manual extraction apertures are separated by semicolons; e.g., ``(1,2,3):22.4:608.1:3.; (1,2,3):82.4:608.1:3.``.  Note ``spat,spec`` are in the pixel coordinates of the pseudo-image generated by COADD2D; ``fwhm`` is in pixels, and ``boxcar_radius`` is optional and **in pixels (not arcsec!)**.                                                                                                                                                                                                            
-``offsets``           str, list  ..       ``auto``  Offsets for the images being combined (spat pixels). Options are: ``maskdef_offsets``, ``header``, ``auto``, and a list of offsets. Use ``maskdef_offsets`` to use the offsets computed during the slitmask design matching (currently available for these :ref:`slitmask_info_instruments` only). If equal to ``header``, the dither offsets recorded in the header, when available, will be used. If ``auto`` is chosen, PypeIt will try to compute the offsets using a reference object with the highest S/N, or using a list of object ids selected by the user (see ``user_obj_ids``). If a list of offsets is provided, PypeIt will use it.                                                                                                                                         
-``only_slits``        str, list  ..       ..        Restrict coaddition to one or more of slits. Example syntax -- DET01:175,DET02:205 or MSC02:2234. This and ``exclude_slits`` are mutually exclusive. If both are provided, ``only_slits`` takes precedence.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
-``spat_samp_fact``    float      ..       1.0       Make the spatial sampling finer (``spat_samp_fact`` lessthan 1.0) or coarser (``spat_samp_fact`` greather than 1.0) bythis sampling factor. This basically multiples the 'native'spatial pixel size by ``spat_samp_fact``, i.e. the units of``spat_samp_fact`` are pixels.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-``spat_toler``        int        ..       5         This parameter provides the desired tolerance in spatial pixel used to identify slits in different exposures                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-``spec_samp_fact``    float      ..       1.0       Make the wavelength grid sampling finer (``spec_samp_fact`` less than 1.0)or coarser (``spec_samp_fact`` greater than 1.0) by this sampling factor.This  multiples the 'native' spectral pixel size by ``spec_samp_fact``,i.e. the units of ``spec_samp_fact`` are pixels.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-``use_slits4wvgrid``  bool       ..       False     If True, use the slits to set the trace down the center                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-``user_obj_ids``      list       ..       ..        List of unique object identifiers that the user wants to use to compute the weights and/or the offsets for coadding images. For longslit/multislit spectroscopy, provide the ``SPAT_PIXPOS_ID`` of the object in each of the exposures. For echelle spectroscopy, provide the ``ECH_FRACPOS_ID`` of the object in each exposure. These unique object identifiers can be found in the spec1d*.txt files for each exposure. See :doc:`out_spec1D` for more info about ``SPAT_PIXPOS_ID`` and ``ECH_FRACPOS_ID``. This parameter must always be a list of the same length as the number of exposures being coadded. If this parameter is not ``None``, it will be used to compute the offsets only if ``offsets = auto``, and it will used to compute the weights only if ``weights = auto``.
-``wave_method``       str        ..       ..        Argument to :func:`~pypeit.core.wavecal.wvutils.get_wave_grid` method, which determines how the 2d coadd wavelength grid is constructed. The default is None, which will use a linear gridfor longslit/multislit coadds and a log10 grid for echelle coadds. Currently supported options with 2d coadding are:* 'iref' -- Use one of the exposures (the first) as the reference for the wavelength grid * 'velocity' -- Grid is uniform in velocity* 'log10'  -- Grid is uniform in log10(wave). This is the same as velocity.* 'linear' -- Grid is uniform in wavelength                                                                                                                                                                                                                 
-``weights``           str, list  ..       ``auto``  Mode for the weights used to coadd images. Options are: ``auto``, ``uniform``, or a list of weights. If a list of weights is provided, PypeIt will use it.if ``uniform`` is used, uniform weights will be applied.If ``auto`` is used, PypeIt will try to compute the weights using a reference object with the highest S/N, or using a list of object ids selected by the user indicating a reference object in each exposure (see ``user_obj_ids``). If the reference object is not found, the code will use uniform weights.                                                                                                                                                                                                                                                           
-====================  =========  =======  ========  ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+====================  =========  =============================================  ========  ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+Key                   Type       Options                                        Default   Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+====================  =========  =============================================  ========  ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+``exclude_slits``     str, list  ..                                             ..        Exclude one or more slits from the coaddition. Example syntax -- DET01:175,DET02:205 or MSC02:2234. This and ``only_slits`` are mutually exclusive. If both are provided, ``only_slits`` takes precedence.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+``manual``            str, list  ..                                             ..        Manual extraction parameters for eac aperture to extract.  For a single detector, use det:spat:spec:fwhm:boxcar_radius.  For a mosiac, use ``(det1,det2,...):spat:spec:fwhm:boxcar_radius``, where ``(det1,det2,...)`` is the list of detectors in the mosaic.  Multiple manual extraction apertures are separated by semicolons; e.g., ``(1,2,3):22.4:608.1:3.; (1,2,3):82.4:608.1:3.``.  Note ``spat,spec`` are in the pixel coordinates of the pseudo-image generated by COADD2D; ``fwhm`` is in pixels, and ``boxcar_radius`` is optional and **in pixels (not arcsec!)**.                                                                                                                                                                                                            
+``offsets``           str, list  ..                                             ``auto``  Offsets for the images being combined (spat pixels). Options are: ``maskdef_offsets``, ``header``, ``auto``, and a list of offsets.  Use ``maskdef_offsets`` to use the offsets computed during the slitmask design matching (currently available for these :ref:`slitmask_info_instruments` only). If equal to ``header``, the dither offsets recorded in the header, when available, will be used.  If ``auto`` is chosen, PypeIt will try to compute the offsets using a reference object with the highest S/N, or using a list of object ids selected by the user (see ``user_obj_ids``).  If a list of offsets is provided, PypeIt will use it.                                                                                                                                      
+``only_slits``        str, list  ..                                             ..        Restrict coaddition to one or more of slits. Example syntax -- DET01:175,DET02:205 or MSC02:2234. This and ``exclude_slits`` are mutually exclusive. If both are provided, ``only_slits`` takes precedence.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+``spat_samp_fact``    float      ..                                             1.0       Make the spatial sampling finer (``spat_samp_fact`` lessthan 1.0) or coarser (``spat_samp_fact`` greather than 1.0) bythis sampling factor. This basically multiples the 'native'spatial pixel size by ``spat_samp_fact``, i.e. the units of``spat_samp_fact`` are pixels.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+``spat_toler``        int        ..                                             5         This parameter provides the desired tolerance in spatial pixel used to identify slits in different exposures                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+``spec_samp_fact``    float      ..                                             1.0       Make the wavelength grid sampling finer (``spec_samp_fact`` less than 1.0)or coarser (``spec_samp_fact`` greater than 1.0) by this sampling factor.This  multiples the 'native' spectral pixel size by ``spec_samp_fact``,i.e. the units of ``spec_samp_fact`` are pixels.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+``use_slits4wvgrid``  bool       ..                                             False     If True, use the slits to set the trace down the center                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+``user_obj_ids``      list       ..                                             ..        List of unique object identifiers that the user wants to use to compute the weights and/or the offsets for coadding images. For longslit/multislit spectroscopy, provide the ``SPAT_PIXPOS_ID`` of the object in each of the exposures. For echelle spectroscopy, provide the ``ECH_FRACPOS_ID`` of the object in each exposure. These unique object identifiers can be found in the spec1d*.txt files for each exposure. See :doc:`out_spec1D` for more info about ``SPAT_PIXPOS_ID`` and ``ECH_FRACPOS_ID``. This parameter must always be a list of the same length as the number of exposures being coadded. If this parameter is not ``None``, it will be used to compute the offsets only if ``offsets = auto``, and it will used to compute the weights only if ``weights = auto``.
+``wave_method``       str        ``iref``, ``velocity``, ``log10``, ``linear``  ..        Argument to :func:`~pypeit.core.wavecal.wvutils.get_wave_grid` method, which determines how the 2d coadd wavelength grid is constructed. The default is None, which will use a linear grid for longslit/multislit coadds and a log10 grid for echelle coadds.  Currently supported options with 2d coadding are: 'iref' - Use one of the exposures (the first) as the reference for the wavelength grid; 'velocity' - Grid is uniform in velocity; 'log10' - Grid is uniform in log10(wave). This is the same as velocity; 'linear' -- Grid is uniform in wavelength.                                                                                                                                                                                                                     
+``weights``           str, list  ..                                             ``auto``  Mode for the weights used to coadd images. Options are: ``auto``, ``uniform``, or a list of weights. If a list of weights is provided, PypeIt will use it.if ``uniform`` is used, uniform weights will be applied.If ``auto`` is used, PypeIt will try to compute the weights using a reference object with the highest S/N, or using a list of object ids selected by the user indicating a reference object in each exposure (see ``user_obj_ids``). If the reference object is not found, the code will use uniform weights.                                                                                                                                                                                                                                                           
+====================  =========  =============================================  ========  ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
 
 
 ----
@@ -600,21 +911,21 @@ Collate1DPar Keywords
 
 Class Instantiation: :class:`~pypeit.par.pypeitpar.Collate1DPar`
 
-=========================  ===============  =======  ==========  ==================================================================================================================================================================================================================================================================================================================================================================================================================
-Key                        Type             Options  Default     Description                                                                                                                                                                                                                                                                                                                                                                                                       
-=========================  ===============  =======  ==========  ==================================================================================================================================================================================================================================================================================================================================================================================================================
-``dry_run``                bool             ..       False       If set, the script will display the matching File and Object Ids but will not flux, coadd or archive.                                                                                                                                                                                                                                                                                                             
-``exclude_serendip``       bool             ..       False       Whether to exclude SERENDIP objects from collating.                                                                                                                                                                                                                                                                                                                                                               
-``exclude_slit_trace_bm``  list, str        ..                   A list of slit trace bitmask bits that should be excluded.                                                                                                                                                                                                                                                                                                                                                        
-``flux``                   bool             ..       False       If set, the script will flux calibrate using archived sensfuncs before coadding.                                                                                                                                                                                                                                                                                                                                  
-``ignore_flux``            bool             ..       False       If set, the script will only coadd non-fluxed spectra even if flux data is present. Otherwise fluxed spectra are coadded if all spec1ds have been fluxed calibrated.                                                                                                                                                                                                                                              
-``match_using``            str              ..       ``ra/dec``  Determines how 1D spectra are matched as being the same object. Must be either 'pixel' or 'ra/dec'.                                                                                                                                                                                                                                                                                                               
-``outdir``                 str              ..       ``$PWD``    The path where all coadded output files and report files will be placed.                                                                                                                                                                                                                                                                                                                                          
-``refframe``               str              ..       ..          Perform reference frame correction prior to coadding. Options are: observed, heliocentric, barycentric                                                                                                                                                                                                                                                                                                            
-``spec1d_outdir``          str              ..       ..          The path where all modified spec1d files are placed. These are only created if flux calibration or refframe correction are asked for.                                                                                                                                                                                                                                                                             
-``tolerance``              str, float, int  ..       1.0         The tolerance used when comparing the coordinates of objects. If two objects are within this distance from each other, they are considered the same object. If match_using is 'ra/dec' (the default) this is an angular distance. The defaults units are arcseconds but other units supported by astropy.coordinates.Angle can be used (`e.g.`, '0.003d' or '0h1m30s'). If match_using is 'pixel' this is a float.
-``wv_rms_thresh``          float            ..       ..          If set, any objects with a wavelength RMS > this value are skipped, else all wavelength RMS values are accepted.                                                                                                                                                                                                                                                                                                  
-=========================  ===============  =======  ==========  ==================================================================================================================================================================================================================================================================================================================================================================================================================
+=========================  ===============  ===============================================  ==========  ==================================================================================================================================================================================================================================================================================================================================================================================================================
+Key                        Type             Options                                          Default     Description                                                                                                                                                                                                                                                                                                                                                                                                       
+=========================  ===============  ===============================================  ==========  ==================================================================================================================================================================================================================================================================================================================================================================================================================
+``dry_run``                bool             ..                                               False       If set, the script will display the matching File and Object Ids but will not flux, coadd or archive.                                                                                                                                                                                                                                                                                                             
+``exclude_serendip``       bool             ..                                               False       Whether to exclude SERENDIP objects from collating.                                                                                                                                                                                                                                                                                                                                                               
+``exclude_slit_trace_bm``  list, str        ..                                                           A list of slit trace bitmask bits that should be excluded.                                                                                                                                                                                                                                                                                                                                                        
+``flux``                   bool             ..                                               False       If set, the script will flux calibrate using archived sensfuncs before coadding.                                                                                                                                                                                                                                                                                                                                  
+``ignore_flux``            bool             ..                                               False       If set, the script will only coadd non-fluxed spectra even if flux data is present.  Otherwise fluxed spectra are coadded if all spec1ds have been fluxed calibrated.                                                                                                                                                                                                                                             
+``match_using``            str              ``pixel``, ``ra/dec``                            ``ra/dec``  Determines how 1D spectra are matched as being the same object. Must be either 'pixel' or 'ra/dec'.                                                                                                                                                                                                                                                                                                               
+``outdir``                 str              ..                                               ``$PWD``    The path where all coadded output files and report files will be placed.                                                                                                                                                                                                                                                                                                                                          
+``refframe``               str              ``observed``, ``heliocentric``, ``barycentric``  ..          Perform reference frame correction prior to coadding.  Options are: observed, heliocentric, barycentric                                                                                                                                                                                                                                                                                                           
+``spec1d_outdir``          str              ..                                               ..          The path where all modified spec1d files are placed. These are only created if flux calibration or refframe correction are asked for.                                                                                                                                                                                                                                                                             
+``tolerance``              str, float, int  ..                                               1.0         The tolerance used when comparing the coordinates of objects. If two objects are within this distance from each other, they are considered the same object. If match_using is 'ra/dec' (the default) this is an angular distance. The defaults units are arcseconds but other units supported by astropy.coordinates.Angle can be used (`e.g.`, '0.003d' or '0h1m30s'). If match_using is 'pixel' this is a float.
+``wv_rms_thresh``          float            ..                                               ..          If set, any objects with a wavelength RMS > this value are skipped, else all wavelength RMS values are accepted.                                                                                                                                                                                                                                                                                                  
+=========================  ===============  ===============================================  ==========  ==================================================================================================================================================================================================================================================================================================================================================================================================================
 
 
 ----
@@ -634,7 +945,7 @@ Key                  Type        Options                                        
 ``minwave``          int, float  ..                                                        ..                    Minimum wavelength to use for the correlation.  If ``None`` or less than the minimum wavelength of either the object or archive sky spectrum, this this parameter has no effect.                                                                                                                                                                                                                                                                                                                                                      
 ``multi_min_SN``     int, float  ..                                                        1                     Minimum S/N for analyzing sky spectrum for flexure                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
 ``spec_maxshift``    int         ..                                                        20                    Maximum allowed spectral flexure shift in pixels.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-``spec_method``      str         ``boxcar``, ``slitcen``, ``skip``                         ``skip``              Method used to correct for flexure. Use skip for no correction.  If slitcen is used, the flexure correction is performed before the extraction of objects (not recommended).  Options are: None, boxcar, slitcen, skip                                                                                                                                                                                                                                                                                                                
+``spec_method``      str         ``boxcar``, ``slitcen``, ``skip``                         ``skip``              Method used to correct for flexure. Use skip for no correction.  If slitcen is used, the flexure correction is performed before the extraction of objects (not recommended).  Options are: boxcar, slitcen, skip                                                                                                                                                                                                                                                                                                                      
 ``spectrum``         str         ..                                                        ``paranal_sky.fits``  Archive sky spectrum to be used for the flexure correction. See ``pypeit/data/sky_spec/`` for a list of available sky spectra. If ``model`` is used, a model sky spectrum will be generated using :func:`~pypeit.wavemodel.nearIR_modelsky` and the spectralresolution of the spectrum to be flexure corrected.                                                                                                                                                                                                                       
 ===================  ==========  ========================================================  ====================  ======================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
 
@@ -715,35 +1026,35 @@ CubePar Keywords
 
 Class Instantiation: :class:`~pypeit.par.pypeitpar.CubePar`
 
-====================  =====  ===============================================================================  ============  =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-Key                   Type   Options                                                                          Default       Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
-====================  =====  ===============================================================================  ============  =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-``align``             bool   ..                                                                               False         If set to True, the input frames will be spatially aligned by cross-correlating the whitelight images with either a reference image (see ``reference_image``) or the whitelight image that is generated using the first spec2d listed in the coadd3d file. Alternatively, the user can specify the offsets (i.e. Delta RA x cos(dec) and Delta Dec, both in arcsec) in the spec2d block of the coadd3d file. See the documentation for examples of this usage.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-``astrometric``       bool   ..                                                                               True          If true, an astrometric correction will be applied using the alignment frames.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-``combine``           bool   ..                                                                               False         If set to True, the input frames will be combined. Otherwise, a separate datacube will be generated for each input spec2d file, and will be saved as a spec3d file.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
-``correct_dar``       bool   ..                                                                               True          If True, the data will be corrected for differential atmospheric refraction (DAR).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-``dec_max``           float  ..                                                                               ..            Maximum DEC to use when generating the WCS. If None, the default is maximum DEC based on the WCS of all spaxels. Units should be degrees.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-``dec_min``           float  ..                                                                               ..            Minimum DEC to use when generating the WCS. If None, the default is minimum DEC based on the WCS of all spaxels. Units should be degrees.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-``method``            str    ``subpixel``, ``ngp``                                                            ``subpixel``  What method should be used to generate the datacube. There are currently two options: (1) "subpixel" (default) - this algorithm divides each pixel in the spec2d frames into subpixels, and assigns each subpixel to a voxel of the datacube. Flux is conserved, but voxels are correlated, and the error spectrum does not account for covariance between adjacent voxels. See also, spec_subpixel and spat_subpixel. (2) "ngp" (nearest grid point) - this algorithm is effectively a 3D histogram. Flux is conserved, voxels are not correlated, however this option suffers the same downsides as any histogram; the choice of bin sizes can change how the datacube appears. This algorithm takes each pixel on the spec2d frame and puts the flux of this pixel into one voxel in the datacube. Depending on the binning used, some voxels may be empty (zero flux) while a neighboring voxel might contain the flux from two spec2d pixels. Note that all spec2d pixels that contribute to the same voxel are inverse variance weighted (e.g. if two pixels have the same variance, the voxel would be assigned the average flux of the two pixels).                            
-``output_filename``   str    ..                                                                               ..            If combining multiple frames, this string sets the output filename of the combined datacube. If combine=False, the output filenames will be prefixed with ``spec3d_*``                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
-``ra_max``            float  ..                                                                               ..            Maximum RA to use when generating the WCS. If None, the default is maximum RA based on the WCS of all spaxels. Units should be degrees.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-``ra_min``            float  ..                                                                               ..            Minimum RA to use when generating the WCS. If None, the default is minimum RA based on the WCS of all spaxels. Units should be degrees.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-``reference_image``   str    ..                                                                               ..            White light image of a previously combined datacube. The white light image will be used as a reference when calculating the offsets of the input spec2d files. Ideally, the reference image should have the same shape as the data to be combined (i.e. set the ra_min, ra_max etc. params so they are identical to the reference image).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-``save_whitelight``   bool   ..                                                                               False         Save a white light image of the combined datacube. The output filename will be given by the "output_filename" variable with a suffix "_whitelight". Note that the white light image collapses the flux along the wavelength axis, so some spaxels in the 2D white light image may have different wavelength ranges. To set the wavelength range, use the "whitelight_range" parameter. If combine=False, the individual spec3d files will have a suffix "_whitelight".                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
-``scale_corr``        str    ..                                                                               ..            This option performs a small correction for the relative spectral illumination scale of different spec2D files. Specify the relative path+file to the spec2D file that you would like to use for the relative scaling. If you want to perform this correction, it is best to use the spec2d file with the highest S/N sky spectrum. You should choose the same frame for both the standards and science frames.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-``sensfile``          str    ..                                                                               ..            Filename of a sensitivity function to use to flux calibrate your datacube. The sensitivity function file will also be used to correct the relative scales of the slits.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-``skysub_frame``      str    ..                                                                               ``image``     Set the sky subtraction to be implemented. The default behaviour is to subtract the sky using the model that is derived from each individual image (i.e. set this parameter to "image"). To turn off sky subtraction completely, set this parameter to "none" (all lowercase). Finally, if you want to use a different frame for the sky subtraction, specify the relative path+file to the spec2D file that you would like to use for the sky subtraction. The model fit to the sky of the specified frame will be used. Note, the sky and science frames do not need to have the same exposure time; the sky model will be scaled to the science frame based on the relative exposure time.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
-``slice_subpixel``    int    ..                                                                               5             When method=subpixel, slice_subpixel sets the subpixellation scale of each IFU slice. The default option is to divide each slice into 5 sub-slices during datacube creation. See also, spec_subpixel and spat_subpixel.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-``slit_spec``         bool   ..                                                                               True          If the data use slits in one spatial direction, set this to True. If the data uses fibres for all spaxels, set this to False.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
-``spat_subpixel``     int    ..                                                                               5             When method=subpixel, spat_subpixel sets the subpixellation scale of each detector pixel in the spatial direction. The total number of subpixels in each pixel is given by spec_subpixel x spat_subpixel. The default option is to divide each spec2d pixel into 25 subpixels during datacube creation. See also, spec_subpixel and slice_subpixel.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
-``spatial_delta``     float  ..                                                                               ..            The spatial size of each spaxel to use when generating the WCS (in arcsec). If None, the default is set by the spectrograph file.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
-``spec_subpixel``     int    ..                                                                               5             When method=subpixel, spec_subpixel sets the subpixellation scale of each detector pixel in the spectral direction. The total number of subpixels in each pixel is given by spec_subpixel x spat_subpixel. The default option is to divide each spec2d pixel into 25 subpixels during datacube creation. See also, spat_subpixel and slice_subpixel.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-``wave_delta``        float  ..                                                                               ..            The wavelength step to use when generating the WCS (in Angstroms). If None, the default is set by the wavelength solution.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
-``wave_max``          float  ..                                                                               ..            Maximum wavelength to use when generating the WCS. If None, the default is maximum wavelength based on the WCS of all spaxels. Units should be Angstroms.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-``wave_min``          float  ..                                                                               ..            Minimum wavelength to use when generating the WCS. If None, the default is minimum wavelength based on the WCS of all spaxels. Units should be Angstroms.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-``weight_method``     str    ``auto``, ``constant``, ``uniform``, ``wave_dependent``, ``relative``, ``ivar``  ``auto``      Method used to weight the spectra for coadding. The options are: 'auto' -- Use constant weights if rms_sn < 3.0, otherwise use wavelength dependent.'constant' -- Constant weights based on rms_sn**2'uniform' --  Uniform weighting'wave_dependent' -- Wavelength dependent weights will be used irrespective of the rms_sn ratio. This option will not work well at low S/N ratio although it is useful for objects where only a small fraction of the spectral coverage has high S/N ratio (like high-z quasars).'relative' -- Apply relative weights implying one reference exposure will receive unit weight at all wavelengths and all others receive relatively wavelength dependent weights . Note, relative weighting will only work well when there is at least one spectrum with a reasonable S/N, and a continuum. This option may only be better when the object being used has a strong continuum + emission lines. This is particularly useful if you are dealing with highly variable spectra (e.g. emission lines) andrequire a precision better than ~1 per cent.'ivar' -- Use inverse variance weighting. This is not well tested and should probably be deprecated.
-``whitelight_range``  list   ..                                                                               None, None    A two element list specifying the wavelength range over which to generate the white light image. The first (second) element is the minimum (maximum) wavelength to use. If either of these elements are None, PypeIt will automatically use a wavelength range that ensures all spaxels have the same wavelength coverage. Note, if you are using a reference_image to align all frames, it is preferable to use the same white light wavelength range for all white light images. For example, you may wish to use an emission line map to register two frames.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
-====================  =====  ===============================================================================  ============  =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+====================  =====  ===============================================================================  ============  ================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+Key                   Type   Options                                                                          Default       Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+====================  =====  ===============================================================================  ============  ================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+``align``             bool   ..                                                                               False         If set to True, the input frames will be spatially aligned by cross-correlating the whitelight images with either a reference image (see ``reference_image``) or the whitelight image that is generated using the first spec2d listed in the coadd3d file. Alternatively, the user can specify the offsets (i.e. Delta RA x cos(dec) and Delta Dec, both in arcsec) in the spec2d block of the coadd3d file. See the documentation for examples of this usage.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+``astrometric``       bool   ..                                                                               True          If true, an astrometric correction will be applied using the alignment frames.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+``combine``           bool   ..                                                                               False         If set to True, the input frames will be combined. Otherwise, a separate datacube will be generated for each input spec2d file, and will be saved as a spec3d file.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+``correct_dar``       bool   ..                                                                               True          If True, the data will be corrected for differential atmospheric refraction (DAR).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+``dec_max``           float  ..                                                                               ..            Maximum DEC to use when generating the WCS. If None, the default is maximum DEC based on the WCS of all spaxels. Units should be degrees.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+``dec_min``           float  ..                                                                               ..            Minimum DEC to use when generating the WCS. If None, the default is minimum DEC based on the WCS of all spaxels. Units should be degrees.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+``method``            str    ``subpixel``, ``ngp``                                                            ``subpixel``  What method should be used to generate the datacube. There are currently two options: (1) "subpixel" (default) - this algorithm divides each pixel in the spec2d frames into subpixels, and assigns each subpixel to a voxel of the datacube. Flux is conserved, but voxels are correlated, and the error spectrum does not account for covariance between adjacent voxels. See also, spec_subpixel and spat_subpixel. (2) "ngp" (nearest grid point) - this algorithm is effectively a 3D histogram. Flux is conserved, voxels are not correlated, however this option suffers the same downsides as any histogram; the choice of bin sizes can change how the datacube appears. This algorithm takes each pixel on the spec2d frame and puts the flux of this pixel into one voxel in the datacube. Depending on the binning used, some voxels may be empty (zero flux) while a neighboring voxel might contain the flux from two spec2d pixels. Note that all spec2d pixels that contribute to the same voxel are inverse variance weighted (e.g. if two pixels have the same variance, the voxel would be assigned the average flux of the two pixels).                                     
+``output_filename``   str    ..                                                                               ..            If combining multiple frames, this string sets the output filename of the combined datacube. If combine=False, the output filenames will be prefixed with ``spec3d_*``                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+``ra_max``            float  ..                                                                               ..            Maximum RA to use when generating the WCS. If None, the default is maximum RA based on the WCS of all spaxels. Units should be degrees.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+``ra_min``            float  ..                                                                               ..            Minimum RA to use when generating the WCS. If None, the default is minimum RA based on the WCS of all spaxels. Units should be degrees.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+``reference_image``   str    ..                                                                               ..            White light image of a previously combined datacube. The white light image will be used as a reference when calculating the offsets of the input spec2d files. Ideally, the reference image should have the same shape as the data to be combined (i.e. set the ra_min, ra_max etc. params so they are identical to the reference image).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+``save_whitelight``   bool   ..                                                                               False         Save a white light image of the combined datacube. The output filename will be given by the "output_filename" variable with a suffix "_whitelight". Note that the white light image collapses the flux along the wavelength axis, so some spaxels in the 2D white light image may have different wavelength ranges. To set the wavelength range, use the "whitelight_range" parameter. If combine=False, the individual spec3d files will have a suffix "_whitelight".                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+``scale_corr``        str    ..                                                                               ..            This option performs a small correction for the relative spectral illumination scale of different spec2D files. Specify the relative path+file to the spec2D file that you would like to use for the relative scaling. If you want to perform this correction, it is best to use the spec2d file with the highest S/N sky spectrum. You should choose the same frame for both the standards and science frames.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+``sensfile``          str    ..                                                                               ..            Filename of a sensitivity function to use to flux calibrate your datacube. The sensitivity function file will also be used to correct the relative scales of the slits.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+``skysub_frame``      str    ..                                                                               ``image``     Set the sky subtraction to be implemented. The default behaviour is to subtract the sky using the model that is derived from each individual image (i.e. set this parameter to "image"). To turn off sky subtraction completely, set this parameter to "none" (all lowercase). Finally, if you want to use a different frame for the sky subtraction, specify the relative path+file to the spec2D file that you would like to use for the sky subtraction. The model fit to the sky of the specified frame will be used. Note, the sky and science frames do not need to have the same exposure time; the sky model will be scaled to the science frame based on the relative exposure time.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+``slice_subpixel``    int    ..                                                                               5             When method=subpixel, slice_subpixel sets the subpixellation scale of each IFU slice. The default option is to divide each slice into 5 sub-slices during datacube creation. See also, spec_subpixel and spat_subpixel.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+``slit_spec``         bool   ..                                                                               True          If the data use slits in one spatial direction, set this to True. If the data uses fibres for all spaxels, set this to False.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+``spat_subpixel``     int    ..                                                                               5             When method=subpixel, spat_subpixel sets the subpixellation scale of each detector pixel in the spatial direction. The total number of subpixels in each pixel is given by spec_subpixel x spat_subpixel. The default option is to divide each spec2d pixel into 25 subpixels during datacube creation. See also, spec_subpixel and slice_subpixel.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+``spatial_delta``     float  ..                                                                               ..            The spatial size of each spaxel to use when generating the WCS (in arcsec). If None, the default is set by the spectrograph file.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+``spec_subpixel``     int    ..                                                                               5             When method=subpixel, spec_subpixel sets the subpixellation scale of each detector pixel in the spectral direction. The total number of subpixels in each pixel is given by spec_subpixel x spat_subpixel. The default option is to divide each spec2d pixel into 25 subpixels during datacube creation. See also, spat_subpixel and slice_subpixel.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+``wave_delta``        float  ..                                                                               ..            The wavelength step to use when generating the WCS (in Angstroms). If None, the default is set by the wavelength solution.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+``wave_max``          float  ..                                                                               ..            Maximum wavelength to use when generating the WCS. If None, the default is maximum wavelength based on the WCS of all spaxels. Units should be Angstroms.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+``wave_min``          float  ..                                                                               ..            Minimum wavelength to use when generating the WCS. If None, the default is minimum wavelength based on the WCS of all spaxels. Units should be Angstroms.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+``weight_method``     str    ``auto``, ``constant``, ``uniform``, ``wave_dependent``, ``relative``, ``ivar``  ``auto``      Method used to weight the spectra for coadding. The options are: 'auto' - Use constant weights if rms_sn < 3.0, otherwise use wavelength dependent; 'constant' - Constant weights based on rms_sn**2; 'uniform' - Uniform weighting; 'wave_dependent' - Wavelength dependent weights will be used irrespective of the rms_sn ratio (this option will not work well at low S/N ratio although it is useful for objects where only a small fraction of the spectral coverage has high S/N ratio, like high-z quasars); 'relative' - Apply relative weights implying one reference exposure will receive unit weight at all wavelengths and all others receive relatively wavelength dependent weights (note that relative weighting will only work well when there is at least one spectrum with a reasonable S/N, and a continuum.  This option may only be better when the object being used has a strong continuum + emission lines.  This is particularly useful if you are dealing with highly variable spectra, e.g. emission lines, and require a precision better than ~1 per cent.); 'ivar' - Use inverse variance weighting (This is not well tested and should probably be deprecated).
+``whitelight_range``  list   ..                                                                               None, None    A two element list specifying the wavelength range over which to generate the white light image. The first (second) element is the minimum (maximum) wavelength to use. If either of these elements are None, PypeIt will automatically use a wavelength range that ensures all spaxels have the same wavelength coverage. Note, if you are using a reference_image to align all frames, it is preferable to use the same white light wavelength range for all white light images. For example, you may wish to use an emission line map to register two frames.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+====================  =====  ===============================================================================  ============  ================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
 
 
 ----
@@ -755,20 +1066,20 @@ ExtractionPar Keywords
 
 Class Instantiation: :class:`~pypeit.par.pypeitpar.ExtractionPar`
 
-====================  ==========  =======  =======  =============================================================================================================================================================================================================================================================================================
-Key                   Type        Options  Default  Description                                                                                                                                                                                                                                                                                  
-====================  ==========  =======  =======  =============================================================================================================================================================================================================================================================================================
-``boxcar_radius``     int, float  ..       1.5      Boxcar radius in arcseconds used for boxcar extraction                                                                                                                                                                                                                                       
-``min_frac_prof``     float       ..       0.05     For each spectral pixel, if the sum of the normalized object profile across the spatial direction is less than this value, the optimal extraction will also be masked.                                                                                                                       
-``model_full_slit``   bool        ..       False    If True local sky subtraction will be performed on the entire slit. If False, local sky subtraction will be applied to only a restricted region around each object. This should be set to True for either multislit observations using narrow slits or echelle observations with narrow slits
-``return_negative``   bool        ..       False    If ``True`` the negative traces will be extracted and saved to disk                                                                                                                                                                                                                          
-``skip_extraction``   bool        ..       False    Do not perform an object extraction                                                                                                                                                                                                                                                          
-``skip_optimal``      bool        ..       False    Perform boxcar extraction only (i.e. skip Optimal and local skysub)                                                                                                                                                                                                                          
-``sn_gauss``          int, float  ..       4.0      S/N threshold for performing the more sophisticated optimal extraction which performs a b-spline fit to the object profile. For S/N < sn_gauss the code will simply optimal extractwith a Gaussian with FWHM determined from the object finding.                                             
-``std_prof_nsigma``   float       ..       30.0     prof_nsigma parameter for Standard star extraction.  Prevents undesired rejection. NOTE: Not consumed by the code at present.                                                                                                                                                                
-``use_2dmodel_mask``  bool        ..       True     Mask pixels rejected during profile fitting when extracting.Turning this off may help with bright emission lines.                                                                                                                                                                            
-``use_user_fwhm``     bool        ..       False    Boolean indicating if PypeIt should use the FWHM provided by the user (``find_fwhm`` in `FindObjPar`) for the optimal extraction. If this parameter is ``False`` (default), PypeIt estimates the FWHM for each detected object, and uses ``find_fwhm`` as initial guess.                     
-====================  ==========  =======  =======  =============================================================================================================================================================================================================================================================================================
+====================  ==========  =======  =======  ==============================================================================================================================================================================================================================================================================================
+Key                   Type        Options  Default  Description                                                                                                                                                                                                                                                                                   
+====================  ==========  =======  =======  ==============================================================================================================================================================================================================================================================================================
+``boxcar_radius``     int, float  ..       1.5      Boxcar radius in arcseconds used for boxcar extraction                                                                                                                                                                                                                                        
+``min_frac_prof``     float       ..       0.05     For each spectral pixel, if the sum of the normalized object profile across the spatial direction is less than this value, the optimal extraction will also be masked.                                                                                                                        
+``model_full_slit``   bool        ..       False    If True local sky subtraction will be performed on the entire slit. If False, local sky subtraction will be applied to only a restricted region around each object. This should be set to True for either multislit observations using narrow slits or echelle observations with narrow slits.
+``return_negative``   bool        ..       False    If ``True`` the negative traces will be extracted and saved to disk                                                                                                                                                                                                                           
+``skip_extraction``   bool        ..       False    Do not perform an object extraction                                                                                                                                                                                                                                                           
+``skip_optimal``      bool        ..       False    Perform boxcar extraction only (i.e. skip Optimal and local skysub)                                                                                                                                                                                                                           
+``sn_gauss``          int, float  ..       4.0      S/N threshold for performing the more sophisticated optimal extraction which performs a b-spline fit to the object profile. For S/N < sn_gauss the code will simply optimal extract with a Gaussian with FWHM determined from the object finding.                                             
+``std_prof_nsigma``   float       ..       30.0     prof_nsigma parameter for Standard star extraction.  Prevents undesired rejection. NOTE: Not consumed by the code at present.                                                                                                                                                                 
+``use_2dmodel_mask``  bool        ..       True     Mask pixels rejected during profile fitting when extracting.Turning this off may help with bright emission lines.                                                                                                                                                                             
+``use_user_fwhm``     bool        ..       False    Boolean indicating if PypeIt should use the FWHM provided by the user (``find_fwhm`` in `FindObjPar`) for the optimal extraction. If this parameter is ``False`` (default), PypeIt estimates the FWHM for each detected object, and uses ``find_fwhm`` as initial guess.                      
+====================  ==========  =======  =======  ==============================================================================================================================================================================================================================================================================================
 
 
 ----
@@ -780,32 +1091,32 @@ FindObjPar Keywords
 
 Class Instantiation: :class:`~pypeit.par.pypeitpar.FindObjPar`
 
-===========================  ==========  =======  =======  =============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-Key                          Type        Options  Default  Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-===========================  ==========  =======  =======  =============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-``ech_find_max_snr``         int, float  ..       1.0      Criteria for keeping echelle objects. They must either have a maximum S/N across all the orders greater than this value  or satisfy the min_snr criteria described by the min_snr parameters. If maxnumber is set (see above) then these criteria will be applied but only the maxnumber highest (median) S/N ratio objects will be kept.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
-``ech_find_min_snr``         int, float  ..       0.3      Criteria for keeping echelle objects. They must either have a maximum S/N across all the orders greater than ech_find_max_snr,  value  or they must have S/N > ech_find_min_snr on >= ech_find_nabove_min_snr orders. If maxnumber is set (see above) then these criteria will be applied but only the maxnumber highest (median) S/N ratio objects will be kept.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
-``ech_find_nabove_min_snr``  int         ..       2        Criteria for keeping echelle objects. They must either have a maximum S/N across all the orders greater than ech_find_max_snr,  value  or they must have S/N > ech_find_min_snr on >= ech_find_nabove_min_snr orders. If maxnumber is set (see above) then these criteria will be applied but only the maxnumber highest (median) S/N ratio objects will be kept.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
-``find_fwhm``                int, float  ..       5.0      Indicates roughly the fwhm of objects in pixels for object finding                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
-``find_min_max``             list        ..       ..       It defines the minimum and maximum of your object in pixels in the spectral direction on the detector. It only used for object finding. This parameter is helpful if your object only has emission lines or at high redshift and the trace only shows in part of the detector.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
-``find_negative``            bool        ..       ..       Identify negative objects in object finding for spectra that are differenced. This is used to manually override the default behavior in PypeIt for object finding by setting this parameter to something other than None The default behavior is that PypeIt will search for negative object traces if background frames are present in the PypeIt file that are classified as "science" (i.e. via pypeit_setup -b, and setting bkg_id in the PypeIt file). If background frames are present that are classified as "sky", then PypeIt will NOT search for negative object traces. If one wishes to explicitly override this default behavior, set this parameter to True to find negative objects or False to ignore them.                                                                                                                                                                                                                                                                                                                                                                                                                                  
-``find_numiterfit``          int         ..       9        Number of iterations to perform on the trace fitting.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-``find_trim_edge``           list        ..       5, 5     Trim the slit by this number of pixels left/right before finding objects                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-``fof_link``                 int, float  ..       1.5      The linking distance, in arcseconds, for the Friends of Friends algorithm to link objects across traces in Echelle spectrographs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
-``maxnumber_sci``            int         ..       10       Maximum number of objects to extract in a science frame.  Use None for no limit. This parameter can be useful in situations where systematics lead to spurious extra objects. Setting this parameter means they will be trimmed. For mulitslit maxnumber applies per slit, for echelle observations this applies per order. Note that objects on a slit/order impact the sky-modeling and so maxnumber should never be lower than the true number of detectable objects on your slit. For image differenced observations with positive and negative object traces, maxnumber applies to the number of positive (or negative) traces individually. In other words, if you had two positive objects and one negative object, then you would set maxnumber to be equal to two (not three). Note that if manually extracted apertures are explicitly requested, they do not count against this maxnumber. If more than maxnumber objects are detected, then highest S/N ratio objects will be the ones that are kept. For multislit observations the choice here depends on the slit length. For echelle observations with short slits we set the default to be 1
-``maxnumber_std``            int         ..       5        Maximum number of objects to extract in a standard star frame.  Same functionality as maxnumber_sci documented above. For multislit observations the default here is 5, for echelle observations the default is 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
-``skip_final_global``        bool        ..       False    If True, do not update initial sky to get global sky using updated noise model. This should be True for quicklook to save time. This should also be True for near-IR reductions which perform difference imaging, since there we fit sky-residuals rather than the sky itself, so there is no noise model to update.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-``skip_second_find``         bool        ..       False    Only perform one round of object finding (mainly for quick_look)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
-``skip_skysub``              bool        ..       False    If True, do not sky subtract when performing object finding. This should be set to True for example when running on data that is already sky-subtracted. Note that for near-IR difference imaging one still wants to remove sky-residuals via sky-subtraction, and so this is typically set to False                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-``snr_thresh``               int, float  ..       10.0     S/N threshold for object finding in wavelength direction smashed image.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
-``std_spec1d``               str         ..       ..       A PypeIt spec1d file of a previously reduced standard star. This can be used to trace the object spectra, but the ``use_std_trace`` parameter must be set to True. If provided, this overrides use of any standards included in your pypeit file; the standard exposures will still be reduced.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-``trace_extrap_npoly``       int         ..       3        Polynomial order used for trace extrapolation.  NOTE: Not consumed by the code at present. (For ``pypeit<=1.18.x``, this parameter was called ``find_extrap_npoly``.)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-``trace_maxdev``             int, float  ..       2.0      Maximum deviation of pixels from polynomial fit to trace used to reject bad pixels in trace fitting.  (For ``pypeit<=1.18.x``, this parameter was called ``find_maxdev``.)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-``trace_maxshift``           int, float  ..       1.0      Maximum shift allowed between the input and recalculated centroid in trace fitting.  This parameter may be increased to allow the fiter to follow curved traces (*e.g.*, for wide spectral ranges at high airmass).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
-``trace_min_max``            list        ..       ..       It defines the minimum and maximum pixel in the spectral direction with useable data for this slit/order. This parameter limits the range over which the trace is fit, and may be useful if the selected slit/order would include regions without expected signal (*e.g.* bluer than the atmospheric cutoff or redder than the silicon cutoff).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-``trace_npoly``              int         ..       5        Order of legendre polynomial fits to object traces.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
-``use_std_trace``            bool        ..       True     If True, the trace of the standard star spectrum is used as a crutch for tracing the object spectra. This is useful when a direct trace is not possible (i.e., faint sources). Note that a standard star exposure must be included in your pypeit file, or the ``std_spec1d`` parameter must be set for this to work.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-===========================  ==========  =======  =======  =============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+===========================  ==========  =======  =======  ==================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+Key                          Type        Options  Default  Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+===========================  ==========  =======  =======  ==================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+``ech_find_max_snr``         int, float  ..       1.0      Criteria for keeping echelle objects. They must either have a maximum S/N across all the orders greater than this value or satisfy the min_snr criteria described by the min_snr parameters. If maxnumber is set (see above) then these criteria will be applied but only the maxnumber highest (median) S/N ratio objects will be kept.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+``ech_find_min_snr``         int, float  ..       0.3      Criteria for keeping echelle objects. They must either have a maximum S/N across all the orders greater than ech_find_max_snr,  value or they must have S/N > ech_find_min_snr on >= ech_find_nabove_min_snr orders. If maxnumber is set (see above) then these criteria will be applied but only the maxnumber highest (median) S/N ratio objects will be kept.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+``ech_find_nabove_min_snr``  int         ..       2        Criteria for keeping echelle objects. They must either have a maximum S/N across all the orders greater than ech_find_max_snr, value or they must have S/N > ech_find_min_snr on >= ech_find_nabove_min_snr orders.  If maxnumber is set (see above) then these criteria will be applied but only the maxnumber highest (median) S/N ratio objects will be kept.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+``find_fwhm``                int, float  ..       5.0      Indicates roughly the fwhm of objects in pixels for object finding                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+``find_min_max``             list        ..       ..       It defines the minimum and maximum of your object in pixels in the spectral direction on the detector. It only used for object finding. This parameter is helpful if your object only has emission lines or at high redshift and the trace only shows in part of the detector.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+``find_negative``            bool        ..       ..       Identify negative objects in object finding for spectra that are differenced.  This is used to manually override the default behavior in PypeIt for object finding by setting this parameter to something other than None.  The default behavior is that PypeIt will search for negative object traces if background frames are present in the PypeIt file that are classified as "science" (i.e. via pypeit_setup -b, and setting bkg_id in the PypeIt file). If background frames are present that are classified as "sky", then PypeIt will NOT search for negative object traces. If one wishes to explicitly override this default behavior, set this parameter to True to find negative objects or False to ignore them.                                                                                                                                                                                                                                                                                                                                                                                                                                    
+``find_numiterfit``          int         ..       9        Number of iterations to perform on the trace fitting.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+``find_trim_edge``           list        ..       5, 5     Trim the slit by this number of pixels left/right before finding objects                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+``fof_link``                 int, float  ..       1.5      The linking distance, in arcseconds, for the Friends of Friends algorithm to link objects across traces in Echelle spectrographs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+``maxnumber_sci``            int         ..       10       Maximum number of objects to extract in a science frame.  Use None for no limit.  This parameter can be useful in situations where systematics lead to spurious extra objects. Setting this parameter means they will be trimmed.  For mulitslit maxnumber applies per slit, for echelle observations this applies per order. Note that objects on a slit/order impact the sky-modeling and so maxnumber should never be lower than the true number of detectable objects on your slit.  For image differenced observations with positive and negative object traces, maxnumber applies to the number of positive (or negative) traces individually. In other words, if you had two positive objects and one negative object, then you would set maxnumber to be equal to two (not three). Note that if manually extracted apertures are explicitly requested, they do not count against this maxnumber. If more than maxnumber objects are detected, then highest S/N ratio objects will be the ones that are kept.  For multislit observations the choice here depends on the slit length. For echelle observations with short slits we set the default to be 1.
+``maxnumber_std``            int         ..       5        Maximum number of objects to extract in a standard star frame.  Same functionality as maxnumber_sci documented above. For multislit observations the default here is 5, for echelle observations the default is 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+``skip_final_global``        bool        ..       False    If True, do not update initial sky to get global sky using updated noise model.  This should be True for quicklook to save time. This should also be True for near-IR reductions which perform difference imaging, since there we fit sky-residuals rather than the sky itself, so there is no noise model to update.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+``skip_second_find``         bool        ..       False    Only perform one round of object finding (mainly for quick_look)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+``skip_skysub``              bool        ..       False    If True, do not sky subtract when performing object finding. This should be set to True for example when running on data that is already sky-subtracted. Note that for near-IR difference imaging one still wants to remove sky-residuals via sky-subtraction, and so this is typically set to False.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+``snr_thresh``               int, float  ..       10.0     S/N threshold for object finding in wavelength direction smashed image.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+``std_spec1d``               str         ..       ..       A PypeIt spec1d file of a previously reduced standard star. This can be used to trace the object spectra, but the ``use_std_trace`` parameter must be set to True. If provided, this overrides use of any standards included in your pypeit file; the standard exposures will still be reduced.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+``trace_extrap_npoly``       int         ..       3        Polynomial order used for trace extrapolation.  NOTE: Not consumed by the code at present. (For ``pypeit<=1.18.x``, this parameter was called ``find_extrap_npoly``.)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+``trace_maxdev``             int, float  ..       2.0      Maximum deviation of pixels from polynomial fit to trace used to reject bad pixels in trace fitting.  (For ``pypeit<=1.18.x``, this parameter was called ``find_maxdev``.)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+``trace_maxshift``           int, float  ..       1.0      Maximum shift allowed between the input and recalculated centroid in trace fitting.  This parameter may be increased to allow the fiter to follow curved traces (*e.g.*, for wide spectral ranges at high airmass).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+``trace_min_max``            list        ..       ..       It defines the minimum and maximum pixel in the spectral direction with useable data for this slit/order. This parameter limits the range over which the trace is fit, and may be useful if the selected slit/order would include regions without expected signal (*e.g.* bluer than the atmospheric cutoff or redder than the silicon cutoff).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+``trace_npoly``              int         ..       5        Order of legendre polynomial fits to object traces.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+``use_std_trace``            bool        ..       True     If True, the trace of the standard star spectrum is used as a crutch for tracing the object spectra. This is useful when a direct trace is not possible (i.e., faint sources). Note that a standard star exposure must be included in your pypeit file, or the ``std_spec1d`` parameter must be set for this to work.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+===========================  ==========  =======  =======  ==================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
 
 
 ----
@@ -821,12 +1132,12 @@ Class Instantiation: :class:`~pypeit.par.pypeitpar.SkySubPar`
 Key                  Type        Options  Default  Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
 ===================  ==========  =======  =======  ===================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
 ``bspline_spacing``  int, float  ..       0.6      Break-point spacing for the bspline sky subtraction fits.                                                                                                                                                                                                                                                                                                                                                                                                                          
-``global_sky_std``   bool        ..       True     Global sky subtraction will be performed on standard stars. This should be turned off for example for near-IR reductions with narrow slits, since bright standards can fill the slit causing global sky-subtraction to fail. In these situations we go straight to local sky-subtraction since it is designed to deal with such situations                                                                                                                                         
+``global_sky_std``   bool        ..       True     Global sky subtraction will be performed on standard stars. This should be turned off for example for near-IR reductions with narrow slits, since bright standards can fill the slit causing global sky-subtraction to fail. In these situations we go straight to local sky-subtraction since it is designed to deal with such situations.                                                                                                                                        
 ``joint_fit``        bool        ..       False    Perform a simultaneous joint fit to sky regions using all available slits. Currently, this parameter is only used for IFU data reduction. Note that the current implementation does not account for variations in the instrument FWHM in different slits. This will be addressed by Issue #1660.                                                                                                                                                                                   
-``local_maskwidth``  float       ..       4.0      Initial width of the region in units of FWHM that will be used for local sky subtraction                                                                                                                                                                                                                                                                                                                                                                                           
+``local_maskwidth``  float       ..       4.0      Initial width of the region in units of FWHM that will be used for local sky subtraction.                                                                                                                                                                                                                                                                                                                                                                                          
 ``mask_by_boxcar``   bool        ..       False    In global sky evaluation, mask the sky region around the object by the boxcar radius (set in ExtractionPar).                                                                                                                                                                                                                                                                                                                                                                       
-``max_mask_frac``    float       ..       0.8      Maximum fraction of total pixels on a slit that can be masked by the input masks. If more than this threshold is masked the code will return zeros and throw a warning.                                                                                                                                                                                                                                                                                                            
-``no_local_sky``     bool        ..       False    If True, turn off local sky model evaluation, but do fit object profile and perform optimal extraction                                                                                                                                                                                                                                                                                                                                                                             
+``max_mask_frac``    float       ..       0.8      Maximum fraction of total pixels on a slit that can be masked by the input masks.  If more than this threshold is masked the code will return zeros and throw a warning.                                                                                                                                                                                                                                                                                                           
+``no_local_sky``     bool        ..       False    If True, turn off local sky model evaluation, but do fit object profile and perform optimal extraction.                                                                                                                                                                                                                                                                                                                                                                            
 ``no_poly``          bool        ..       False    Turn off polynomial basis (Legendre) in global sky subtraction                                                                                                                                                                                                                                                                                                                                                                                                                     
 ``sky_sigrej``       float       ..       3.0      Rejection parameter for local sky subtraction                                                                                                                                                                                                                                                                                                                                                                                                                                      
 ``user_regions``     str, list   ..       ..       Provides a user-defined mask defining sky regions.  By default, the sky regions are identified automatically.  To specify sky regions for *all* slits, provide a comma separated list of percentages.  For example, setting user_regions = :10,35:65,80: selects the first 10%, the inner 30%, and the final 20% of *all* slits as containing sky.  Setting user_regions = user will attempt to load any SkyRegions files generated by the user via the pypeit_skysub_regions tool.
@@ -860,94 +1171,19 @@ Key                          Type        Options  Default  Description
 
 ----
 
-.. _framegrouppar:
+.. _scienceframepar:
 
-FrameGroupPar Keywords
-----------------------
+ScienceFramePar Keywords
+------------------------
 
-Class Instantiation: :class:`~pypeit.par.pypeitpar.FrameGroupPar`
+Class Instantiation: :class:`~pypeit.par.pypeitpar.ScienceFramePar`
 
-=============  ===============================================  ==================================================================================================================================================================================================  ============================  ===============================================================================================================================================================================================================================================================
-Key            Type                                             Options                                                                                                                                                                                             Default                       Description                                                                                                                                                                                                                                                    
-=============  ===============================================  ==================================================================================================================================================================================================  ============================  ===============================================================================================================================================================================================================================================================
-``exprng``     list                                             ..                                                                                                                                                                                                  None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
-``frametype``  str                                              ``align``, ``arc``, ``bias``, ``dark``, ``pinhole``, ``pixelflat``, ``illumflat``, ``lampoffflats``, ``slitless_pixflat``, ``scattlight``, ``science``, ``standard``, ``trace``, ``tilt``, ``sky``  ``science``                   Frame type.  Options are: align, arc, bias, dark, pinhole, pixelflat, illumflat, lampoffflats, slitless_pixflat, scattlight, science, standard, trace, tilt, sky                                                                                               
-``process``    :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..                                                                                                                                                                                                  `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
-``useframe``   str                                              ..                                                                                                                                                                                                  ..                            A calibrations file to use if it exists.                                                                                                                                                                                                                       
-=============  ===============================================  ==================================================================================================================================================================================================  ============================  ===============================================================================================================================================================================================================================================================
-
-
-----
-
-.. _processimagespar:
-
-ProcessImagesPar Keywords
--------------------------
-
-Class Instantiation: :class:`~pypeit.par.pypeitpar.ProcessImagesPar`
-
-==========================  ================================================  ===================================================================  =============================  ========================================================================================================================================================================================================================================================================================================================================================================================
-Key                         Type                                              Options                                                              Default                        Description                                                                                                                                                                                                                                                                                                                                                                             
-==========================  ================================================  ===================================================================  =============================  ========================================================================================================================================================================================================================================================================================================================================================================================
-``apply_gain``              bool                                              ..                                                                   True                           Convert the ADUs to electrons using the detector gain                                                                                                                                                                                                                                                                                                                                   
-``clip``                    bool                                              ..                                                                   True                           Perform sigma clipping when combining.  Only used with combine=mean                                                                                                                                                                                                                                                                                                                     
-``comb_sigrej``             float                                             ..                                                                   ..                             Sigma-clipping level for when clip=True; Use None for automatic limit (recommended).                                                                                                                                                                                                                                                                                                    
-``combine``                 str                                               ``median``, ``mean``                                                 ``mean``                       Method used to combine multiple frames.  Options are: median, mean                                                                                                                                                                                                                                                                                                                      
-``correct_nonlinear``       list                                              ..                                                                   ..                             Correct for non-linear response of the detector.  If None, no correction is performed. If a list, then the list should be the non-linear correction parameter (alpha), where the functional form is given by Ct = Cm (1 + alpha x Cm), with Ct and Cm the true and measured counts. This parameter is usually hard-coded for a given spectrograph, and should otherwise be left as None.
-``dark_expscale``           bool                                              ..                                                                   False                          If designated dark frames are used and have a different exposure time than the science frames, scale the counts by the by the ratio in the exposure times to adjust the dark counts for the difference in exposure time.  WARNING: You should always take dark frames that have the same exposure time as your science frames, so use this option with care!                            
-``empirical_rn``            bool                                              ..                                                                   False                          If True, use the standard deviation in the overscan region to measure an empirical readnoise to use in the noise model.                                                                                                                                                                                                                                                                 
-``grow``                    int, float                                        ..                                                                   1.5                            Factor by which to expand regions with cosmic rays detected by the LA cosmics routine.                                                                                                                                                                                                                                                                                                  
-``lamaxiter``               int                                               ..                                                                   1                              Maximum number of iterations for LA cosmics routine.                                                                                                                                                                                                                                                                                                                                    
-``mask_cr``                 bool                                              ..                                                                   False                          Identify CRs and mask them                                                                                                                                                                                                                                                                                                                                                              
-``n_lohi``                  list                                              ..                                                                   0, 0                           Number of pixels to reject at the lowest and highest ends of the distribution; i.e., n_lohi = low, high.  Use None for no limit.                                                                                                                                                                                                                                                        
-``noise_floor``             float                                             ..                                                                   0.0                            Impose a noise floor by adding the provided fraction of the bias- and dark-subtracted electron counts to the error budget.  E.g., a value of 0.01 means that the S/N of the counts in the image will never be greater than 100.                                                                                                                                                         
-``objlim``                  int, float                                        ..                                                                   3.0                            Object detection limit in LA cosmics routine                                                                                                                                                                                                                                                                                                                                            
-``orient``                  bool                                              ..                                                                   True                           Orient the raw image into the PypeIt frame                                                                                                                                                                                                                                                                                                                                              
-``overscan_method``         str                                               ``chebyshev``, ``polynomial``, ``savgol``, ``median``, ``odd_even``  ``savgol``                     Method used to fit the overscan. Options are: chebyshev, polynomial, savgol, median, odd_even  Note: Method "polynomial" is identical to "chebyshev"; the former is deprecated and will be removed.                                                                                                                                                                                     
-``overscan_par``            int, list                                         ..                                                                   5, 65                          Parameters for the overscan subtraction.  For 'chebyshev' or 'polynomial', set overcan_par = order; for 'savgol', set overscan_par = order, window size ; for 'median', set overscan_par = None or omit the keyword.                                                                                                                                                                    
-``rmcompact``               bool                                              ..                                                                   True                           Remove compact detections in LA cosmics routine                                                                                                                                                                                                                                                                                                                                         
-``satpix``                  str                                               ``reject``, ``force``, ``nothing``                                   ``reject``                     Handling of saturated pixels.  Options are: reject, force, nothing                                                                                                                                                                                                                                                                                                                      
-``scale_to_mean``           bool                                              ..                                                                   False                          If True, scale the input images to have the same mean before combining.                                                                                                                                                                                                                                                                                                                 
-``scattlight``              :class:`~pypeit.par.pypeitpar.ScatteredLightPar`  ..                                                                   `ScatteredLightPar Keywords`_  Scattered light subtraction parameters.                                                                                                                                                                                                                                                                                                                                                 
-``shot_noise``              bool                                              ..                                                                   True                           Use the bias- and dark-subtracted image to calculate and include electron count shot noise in the image processing error budget                                                                                                                                                                                                                                                         
-``sigclip``                 int, float                                        ..                                                                   4.5                            Sigma level for rejection in LA cosmics routine                                                                                                                                                                                                                                                                                                                                         
-``sigfrac``                 int, float                                        ..                                                                   0.3                            Fraction for the lower clipping threshold in LA cosmics routine.                                                                                                                                                                                                                                                                                                                        
-``skip_write_2d``           bool                                              ..                                                                   False                          Skip writing the 2D spectrum for science frames.  WARNING: This option should only be considered for reducing the volume of output data when processing large numbers of frames and only after ensuring the quality of the resulting reductions.                                                                                                                                        
-``spat_flexure_correct``    bool                                              ..                                                                   False                          Correct slits, illumination flat, etc. for flexure                                                                                                                                                                                                                                                                                                                                      
-``spat_flexure_maxlag``     int                                               ..                                                                   20                             Maximum of possible spatial flexure correction, in pixels                                                                                                                                                                                                                                                                                                                               
-``spat_flexure_sigdetect``  int, float                                        ..                                                                   5.0                            Sigma threshold above fluctuations in the Sobel-filtered significance image, used for finding slit edges in the spectral image, for which the spatial flexure is computed.                                                                                                                                                                                                              
-``spat_flexure_vrange``     tuple                                             ..                                                                   ..                             This parameter is used when generating the QA plot for the spatial flexure. It sets the data range (vmin,vmax) used by the colormap when showing the spectral image. If None, the range is set automatically.                                                                                                                                                                           
-``subtract_continuum``      bool                                              ..                                                                   False                          Subtract off the continuum level from an image. This parameter should only be set to True to combine arcs with multiple different lamps. For all other cases, this parameter should probably be False.                                                                                                                                                                                  
-``subtract_scattlight``     bool                                              ..                                                                   False                          Subtract off the scattered light from an image. This parameter should only be set to True for spectrographs that have dedicated methods to subtract scattered light. For all other cases, this parameter should be False.                                                                                                                                                               
-``trim``                    bool                                              ..                                                                   True                           Trim the image to the detector supplied region                                                                                                                                                                                                                                                                                                                                          
-``use_biasimage``           bool                                              ..                                                                   True                           Use a bias image.  If True, one or more must be supplied in the PypeIt file.                                                                                                                                                                                                                                                                                                            
-``use_darkimage``           bool                                              ..                                                                   False                          Subtract off a dark image.  If True, one or more darks must be provided.                                                                                                                                                                                                                                                                                                                
-``use_illumflat``           bool                                              ..                                                                   True                           Use the illumination flat to correct for the illumination profile of each slit.                                                                                                                                                                                                                                                                                                         
-``use_overscan``            bool                                              ..                                                                   True                           Subtract off the overscan.  Detector *must* have one or code will crash.                                                                                                                                                                                                                                                                                                                
-``use_pattern``             bool                                              ..                                                                   False                          Subtract off a detector pattern. This pattern is assumed to be sinusoidal along one direction, with a frequency that is constant across the detector.                                                                                                                                                                                                                                   
-``use_pixelflat``           bool                                              ..                                                                   True                           Use the pixel flat to make pixel-level corrections.  A pixelflat image must be provied.                                                                                                                                                                                                                                                                                                 
-``use_specillum``           bool                                              ..                                                                   False                          Use the relative spectral illumination profiles to correct the spectral illumination profile of each slit. This is primarily used for slicer IFUs.  To use this, you must set ``slit_illum_relative=True`` in the ``flatfield`` parameter set!                                                                                                                                          
-==========================  ================================================  ===================================================================  =============================  ========================================================================================================================================================================================================================================================================================================================================================================================
-
-
-----
-
-.. _scatteredlightpar:
-
-ScatteredLightPar Keywords
---------------------------
-
-Class Instantiation: :class:`~pypeit.par.pypeitpar.ScatteredLightPar`
-
-===================  =========  =================================  =========  ================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-Key                  Type       Options                            Default    Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-===================  =========  =================================  =========  ================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-``finecorr_mask``    int, list  ..                                 ..         A list containing the inter-slit regions that the user wishes to mask during the fine correction to the scattered light. Each integer corresponds to an inter-slit region. For example, "0" corresponds to all pixels left of the leftmost slit, while a value of "1" corresponds to all pixels between the first and second slit (counting from the left). It should be either a single integer value, or a list of integer values. The default (None) means that no inter-slit regions will be masked.                                                        
-``finecorr_method``  str        ``median``, ``poly``               ..         If None, a fine correction to the scattered light will not be performed. Otherwise, the allowed methods include: median, poly. 'median' will subtract a constant value from an entire CCD row, based on a median of the pixels that are not on slits (see also, 'finecorr_pad'). 'poly' will fit a polynomial to the scattered light in each row, based on the pixels that are not on slits (see also, 'finecorr_pad').                                                                                                                                         
-``finecorr_order``   int        ..                                 2          Polynomial order to use for the fine correction to the scattered light subtraction. It should be a low value.                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-``finecorr_pad``     int        ..                                 4          Number of unbinned pixels to extend the slit edges by when masking the slits for the fine correction to the scattered light.                                                                                                                                                                                                                                                                                                                                                                                                                                    
-``method``           str        ``model``, ``frame``, ``archive``  ``model``  Method used to fit the overscan. Options are: model, frame, archive. 'model' will the scattered light model parameters derived from a user-specified frame during their reduction (note, you will need to make sure that you set appropriate scattlight frames in your .pypeit file for this option). 'frame' will use each individual frame to determine the scattered light that affects this frame. 'archive' will use an archival model parameter solution for the scattered light (note that this option is not currently available for all spectrographs).
-===================  =========  =================================  =========  ================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+Key          Type                                             Options  Default                       Description                                                                                                                                                                                                                                                    
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
+``exprng``   list                                             ..       None, None                    Used in identifying frames of this type.  This sets the minimum and maximum allowed exposure times.  There must be two items in the list.  Use None to indicate no limit; i.e., to select exposures with any time greater than 30 sec, use exprng = [30, None].
+``process``  :class:`~pypeit.par.pypeitpar.ProcessImagesPar`  ..       `ProcessImagesPar Keywords`_  Low level parameters used for basic image processing                                                                                                                                                                                                           
+===========  ===============================================  =======  ============================  ===============================================================================================================================================================================================================================================================
 
 
 ----
@@ -1135,16 +1371,47 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 60.0,
           [[[process]]]
@@ -1155,50 +1422,19 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = None, 60.0,
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           lamps = ThAr,
           n_final = 3
@@ -1211,9 +1447,9 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 61, None,
       [[process]]
+          noise_floor = 0.01
           mask_cr = True
           sigclip = 10.0
-          noise_floor = 0.01
   [reduce]
       [[skysub]]
           bspline_spacing = 3.0
@@ -1252,17 +1488,58 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_biasimage = False
@@ -1273,64 +1550,23 @@ Alterations to the default parameters are:
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[flatfield]]
           spat_samp = 0.7
           tweak_slits = False
@@ -1353,16 +1589,16 @@ Alterations to the default parameters are:
           smash_range = 0.35, 0.65,
   [scienceframe]
       [[process]]
-          mask_cr = True
           use_biasimage = False
           noise_floor = 0.01
           use_illumflat = False
+          mask_cr = True
   [reduce]
       [[findobj]]
-          snr_thresh = 3.0
-          find_trim_edge = 2, 2,
           maxnumber_sci = 1
           maxnumber_std = 1
+          snr_thresh = 3.0
+          find_trim_edge = 2, 2,
           find_fwhm = 4.0
           skip_skysub = True
       [[skysub]]
@@ -1404,20 +1640,70 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 120,
           [[[process]]]
@@ -1431,77 +1717,27 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           lamps = NeI, ArI, ArII, HeI,
           fwhm = 2.6
@@ -1512,13 +1748,13 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
-          mask_cr = True
-          sigclip = 5.0
-          objlim = 2.0
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
+          mask_cr = True
+          sigclip = 5.0
+          objlim = 2.0
   [reduce]
       [[findobj]]
           snr_thresh = 5.0
@@ -1560,20 +1796,68 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 20, None,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 1, 50,
           [[[process]]]
@@ -1587,75 +1871,27 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           exprng = None, 60,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = ArI, ArII, ThAr, NeI,
@@ -1672,11 +1908,11 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 20, None,
       [[process]]
-          mask_cr = True
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
+          mask_cr = True
   [reduce]
       [[findobj]]
           snr_thresh = 5.0
@@ -1714,20 +1950,68 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 20, None,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 50, None,
           [[[process]]]
@@ -1742,75 +2026,27 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           exprng = None, 30,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           lamps = OH_NIRES,
           fwhm = 5.0
@@ -1827,11 +2063,11 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 20, None,
       [[process]]
-          mask_cr = True
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
+          mask_cr = True
   [reduce]
       [[findobj]]
           snr_thresh = 5.0
@@ -1875,16 +2111,48 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -1893,56 +2161,24 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = CuI, ArI, ArII,
           fwhm = 5.0
-          rms_thresh_frac_fwhm = 0.08
           nsnippet = 1
+          rms_thresh_frac_fwhm = 0.08
       [[slitedges]]
           edge_thresh = 100.0
           follow_span = 80
@@ -1952,8 +2188,8 @@ Alterations to the default parameters are:
           tracethresh = 10.0
   [scienceframe]
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -1993,16 +2229,48 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -2011,56 +2279,24 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = CuI, ArI, ArII,
           fwhm = 5.0
-          rms_thresh_frac_fwhm = 0.08
           nsnippet = 1
+          rms_thresh_frac_fwhm = 0.08
       [[slitedges]]
           edge_thresh = 100.0
           follow_span = 80
@@ -2070,8 +2306,8 @@ Alterations to the default parameters are:
           tracethresh = 10.0
   [scienceframe]
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -2111,16 +2347,48 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -2129,56 +2397,24 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = CuI, ArI, ArII,
           fwhm = 5.0
-          rms_thresh_frac_fwhm = 0.08
           nsnippet = 1
+          rms_thresh_frac_fwhm = 0.08
       [[slitedges]]
           edge_thresh = 100.0
           follow_span = 80
@@ -2188,8 +2424,8 @@ Alterations to the default parameters are:
           tracethresh = 10.0
   [scienceframe]
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -2229,16 +2465,48 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -2247,56 +2515,24 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = CuI, ArI, ArII,
           fwhm = 5.0
-          rms_thresh_frac_fwhm = 0.08
           nsnippet = 1
+          rms_thresh_frac_fwhm = 0.08
       [[slitedges]]
           edge_thresh = 100.0
           follow_span = 80
@@ -2307,8 +2543,8 @@ Alterations to the default parameters are:
           tracethresh = 10.0
   [scienceframe]
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -2349,19 +2585,68 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = None, 30,
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_biasimage = False
@@ -2374,68 +2659,12 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          exprng = None, 30,
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = None, 30,
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
-              use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
               use_illumflat = False
       [[standardframe]]
           exprng = None, 30,
@@ -2444,6 +2673,13 @@ Alterations to the default parameters are:
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.9
       [[tilts]]
@@ -2451,16 +2687,16 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 30, None,
       [[process]]
-          mask_cr = True
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
+          mask_cr = True
   [reduce]
       [[findobj]]
-          find_trim_edge = 2, 2,
           maxnumber_sci = 2
           maxnumber_std = 1
+          find_trim_edge = 2, 2,
       [[skysub]]
           bspline_spacing = 0.8
           global_sky_std = False
@@ -2503,19 +2739,68 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = None, 30,
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_biasimage = False
@@ -2528,68 +2813,12 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          exprng = None, 30,
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = None, 30,
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
-              use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
               use_illumflat = False
       [[standardframe]]
           exprng = None, 30,
@@ -2598,6 +2827,13 @@ Alterations to the default parameters are:
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[flatfield]]
           tweak_method = gradient
           tweak_slits_thresh = 0.0
@@ -2610,24 +2846,24 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 30, None,
       [[process]]
-          mask_cr = True
-          sigclip = 4.0
-          objlim = 1.5
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
+          mask_cr = True
+          sigclip = 4.0
+          objlim = 1.5
   [reduce]
       [[findobj]]
-          find_trim_edge = 2, 2,
           maxnumber_sci = 2
           maxnumber_std = 1
+          find_trim_edge = 2, 2,
       [[skysub]]
           global_sky_std = False
           no_poly = True
       [[extraction]]
-          model_full_slit = True
           skip_extraction = True
+          model_full_slit = True
   [flexure]
       spec_maxshift = 0
   [sensfunc]
@@ -2669,76 +2905,76 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              clip = False
               use_pixelflat = False
               use_illumflat = False
-              subtract_continuum = True
-      [[tiltframe]]
-          [[[process]]]
-              clip = False
-              use_pixelflat = False
-              use_illumflat = False
-              subtract_continuum = True
+              satpix = nothing
       [[pixelflatframe]]
           [[[process]]]
-              combine = median
-              satpix = nothing
               use_pixelflat = False
               use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           exprng = 999999, None,
       [[alignframe]]
           [[[process]]]
-              satpix = nothing
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 300,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[flatfield]]
           tweak_method = gradient
           tweak_slits_thresh = 0.0
@@ -2757,12 +2993,12 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
-          mask_cr = True
-          sigclip = 4.0
-          objlim = 1.5
           use_biasimage = False
           noise_floor = 0.01
           use_illumflat = False
+          mask_cr = True
+          sigclip = 4.0
+          objlim = 1.5
   [reduce]
       [[findobj]]
           maxnumber_std = 1
@@ -2817,76 +3053,76 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              clip = False
               use_pixelflat = False
               use_illumflat = False
-              subtract_continuum = True
-      [[tiltframe]]
-          [[[process]]]
-              clip = False
-              use_pixelflat = False
-              use_illumflat = False
-              subtract_continuum = True
+              satpix = nothing
       [[pixelflatframe]]
           [[[process]]]
-              combine = median
-              satpix = nothing
               use_pixelflat = False
               use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           exprng = 999999, None,
       [[alignframe]]
           [[[process]]]
-              satpix = nothing
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 180,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = XeI, HgI, NeI, ArI,
@@ -2900,8 +3136,8 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [reduce]
       [[findobj]]
           maxnumber_std = 1
@@ -2948,76 +3184,76 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              clip = False
               use_pixelflat = False
               use_illumflat = False
-              subtract_continuum = True
-      [[tiltframe]]
-          [[[process]]]
-              clip = False
-              use_pixelflat = False
-              use_illumflat = False
-              subtract_continuum = True
+              satpix = nothing
       [[pixelflatframe]]
           [[[process]]]
-              combine = median
-              satpix = nothing
               use_pixelflat = False
               use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           exprng = 999999, None,
       [[alignframe]]
           [[[process]]]
-              satpix = nothing
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 300,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = XeI, HgI, NeI, ArI,
@@ -3031,8 +3267,8 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [reduce]
       [[findobj]]
           maxnumber_std = 1
@@ -3078,16 +3314,47 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -3096,61 +3363,30 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           refframe = observed
   [scienceframe]
       [[process]]
+          noise_floor = 0.01
           sigclip = 5.0
           objlim = 2.0
-          noise_floor = 0.01
   [reduce]
       trim_edge = 0, 0,
       [[findobj]]
-          find_trim_edge = 0, 0,
           maxnumber_sci = 2
+          find_trim_edge = 0, 0,
           find_fwhm = 2.0
       [[skysub]]
           bspline_spacing = 1.2
@@ -3194,16 +3430,47 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -3212,61 +3479,30 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           refframe = observed
   [scienceframe]
       [[process]]
+          noise_floor = 0.01
           sigclip = 5.0
           objlim = 2.0
-          noise_floor = 0.01
   [reduce]
       trim_edge = 0, 0,
       [[findobj]]
-          find_trim_edge = 0, 0,
           maxnumber_sci = 2
+          find_trim_edge = 0, 0,
           find_fwhm = 2.0
       [[skysub]]
           bspline_spacing = 5.0
@@ -3312,86 +3548,86 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              clip = False
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              clip = False
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           [[[process]]]
-              combine = median
-              satpix = nothing
-              comb_sigrej = 10.0
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
+              comb_sigrej = 10.0
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           [[[process]]]
               use_biasimage = False
       [[alignframe]]
           [[[process]]]
-              satpix = nothing
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           lamps = ArI, NeI, KrI, XeI,
           match_toler = 2.5
@@ -3406,11 +3642,11 @@ Alterations to the default parameters are:
           tracethresh = 10
   [scienceframe]
       [[process]]
+          use_biasimage = False
+          noise_floor = 0.01
           mask_cr = True
           sigclip = 4.0
           objlim = 1.5
-          use_biasimage = False
-          noise_floor = 0.01
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -3447,17 +3683,50 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 1, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              subtract_scattlight = True
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              subtract_scattlight = True
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 300, None,
           [[[process]]]
@@ -3467,52 +3736,19 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-              subtract_scattlight = True
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-              subtract_scattlight = True
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 60,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = reidentify
           echelle = True
@@ -3537,16 +3773,16 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 60, None,
       [[process]]
+          subtract_scattlight = True
+          noise_floor = 0.01
           satpix = nothing
           mask_cr = True
           sigclip = 20.0
-          noise_floor = 0.01
-          subtract_scattlight = True
   [reduce]
       [[findobj]]
-          find_trim_edge = 4, 4,
           maxnumber_sci = 2
           maxnumber_std = 1
+          find_trim_edge = 4, 4,
       [[extraction]]
           model_full_slit = True
   [sensfunc]
@@ -3584,112 +3820,113 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              overscan_method = median
-              combine = median
               use_biasimage = False
+              overscan_method = median
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              overscan_method = median
-              mask_cr = True
               use_biasimage = False
+              overscan_method = median
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = None, 60,
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          exprng = None, 60,
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              scale_to_mean = True
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
-              overscan_method = median
               use_biasimage = False
+              overscan_method = median
               use_pixelflat = False
               use_illumflat = False
       [[tiltframe]]
           [[[process]]]
-              overscan_method = median
               use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pixelflatframe]]
-          exprng = None, 60,
-          [[[process]]]
               overscan_method = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-          [[[process]]]
-              overscan_method = median
-              use_biasimage = False
-      [[alignframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
       [[traceframe]]
           exprng = None, 60,
           [[[process]]]
-              overscan_method = median
               use_biasimage = False
+              overscan_method = median
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          exprng = None, 60,
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              overscan_method = median
-              combine = median
-              satpix = nothing
-              scale_to_mean = True
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              overscan_method = median
-              mask_cr = True
-              use_biasimage = False
-              noise_floor = 0.01
       [[standardframe]]
           exprng = 1, 600,
           [[[process]]]
-              overscan_method = median
-              mask_cr = True
               use_biasimage = False
+              overscan_method = median
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              noise_floor = 0.01
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.9
           slit_illum_finecorr = False
       [[wavelengths]]
           method = echelle
           echelle = True
+          ech_separate_2d = True
           ech_nspec_coeff = 5
           ech_norder_coeff = 3
-          lamps = ThAr,
           bad_orders_maxfrac = 0.5
+          lamps = ThAr,
           reid_cont_sub = False
           cc_shift_range = (-80.0, 80.0)
           cc_thresh = 0.6
@@ -3697,9 +3934,9 @@ Alterations to the default parameters are:
           rms_thresh_frac_fwhm = 0.1
           match_toler = 1.5
           n_first = 3
-          ech_separate_2d = True
       [[slitedges]]
           edge_thresh = 8.0
+          mask_off_detector = True
           max_shift_adj = 0.5
           fit_order = 8
           left_right_pca = True
@@ -3709,22 +3946,21 @@ Alterations to the default parameters are:
           length_range = 0.3
           add_missed_orders = True
           overlap = True
-          mask_off_detector = True
       [[tilts]]
           tracethresh = 15
           spec_order = 5
   [scienceframe]
       exprng = 601, None,
       [[process]]
-          overscan_method = median
-          mask_cr = True
           use_biasimage = False
+          overscan_method = median
           noise_floor = 0.01
+          mask_cr = True
   [reduce]
       [[findobj]]
-          find_trim_edge = 3, 3,
           maxnumber_sci = 2
           maxnumber_std = 1
+          find_trim_edge = 3, 3,
       [[skysub]]
           global_sky_std = False
       [[extraction]]
@@ -3777,17 +4013,48 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 0.01, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -3796,51 +4063,20 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignment]]
-          locations = 0.1, 0.3, 0.5, 0.7, 0.9,
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
+      [[alignment]]
+          locations = 0.1, 0.3, 0.5, 0.7, 0.9,
       [[flatfield]]
           spec_samp_coarse = 20.0
           tweak_method = gradient
@@ -3857,11 +4093,11 @@ Alterations to the default parameters are:
           fit_order = 4
   [scienceframe]
       [[process]]
+          noise_floor = 0.01
+          use_specillum = True
           mask_cr = True
           sigclip = 4.0
           objlim = 1.5
-          noise_floor = 0.01
-          use_specillum = True
   [reduce]
       [[skysub]]
           bspline_spacing = 0.4
@@ -3907,19 +4143,54 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
+              use_pattern = True
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
-              use_pattern = True
+              combine = median
       [[darkframe]]
           exprng = 0.01, None,
           [[[process]]]
-              mask_cr = True
+              use_pattern = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              correct_nonlinear = -1.4e-07, -1.4e-07, -1.2e-07, -1.8e-07,
+              subtract_scattlight = True
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              correct_nonlinear = -1.4e-07, -1.4e-07, -1.2e-07, -1.8e-07,
               use_pattern = True
+              subtract_scattlight = True
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               correct_nonlinear = -1.4e-07, -1.4e-07, -1.2e-07, -1.8e-07,
@@ -3930,57 +4201,22 @@ Alterations to the default parameters are:
               correct_nonlinear = -1.4e-07, -1.4e-07, -1.2e-07, -1.8e-07,
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              correct_nonlinear = -1.4e-07, -1.4e-07, -1.2e-07, -1.8e-07,
-              use_pixelflat = False
-              use_illumflat = False
-              subtract_scattlight = True
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignment]]
-          locations = 0.1, 0.3, 0.5, 0.7, 0.9,
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              correct_nonlinear = -1.4e-07, -1.4e-07, -1.2e-07, -1.8e-07,
-              use_illumflat = False
-              use_pattern = True
-              subtract_scattlight = True
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               correct_nonlinear = -1.4e-07, -1.4e-07, -1.2e-07, -1.8e-07,
-              noise_floor = 0.01
               use_pattern = True
+              noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
+      [[alignment]]
+          locations = 0.1, 0.3, 0.5, 0.7, 0.9,
       [[flatfield]]
           spec_samp_coarse = 20.0
           spat_samp = 1.0
@@ -3999,13 +4235,13 @@ Alterations to the default parameters are:
           fit_order = 4
   [scienceframe]
       [[process]]
+          correct_nonlinear = -1.4e-07, -1.4e-07, -1.2e-07, -1.8e-07,
+          use_pattern = True
+          noise_floor = 0.01
+          use_specillum = True
           mask_cr = True
           sigclip = 4.0
           objlim = 1.5
-          correct_nonlinear = -1.4e-07, -1.4e-07, -1.2e-07, -1.8e-07,
-          noise_floor = 0.01
-          use_specillum = True
-          use_pattern = True
           [[[scattlight]]]
               finecorr_method = median
   [reduce]
@@ -4050,17 +4286,54 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 1,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = None, 300,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          exprng = None, 300,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          exprng = 0, 60,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              scale_to_mean = True
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -4069,58 +4342,21 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          exprng = None, 300,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = None, 300,
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          exprng = None, 300,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          exprng = 0, 60,
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              scale_to_mean = True
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = 1, 901,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
               spat_flexure_correct = True
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[flatfield]]
           slit_illum_finecorr = False
       [[wavelengths]]
@@ -4139,9 +4375,9 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 61, None,
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
           spat_flexure_correct = True
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -4179,17 +4415,54 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 1,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = None, 300,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          exprng = None, 300,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          exprng = 0, 60,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              scale_to_mean = True
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -4198,58 +4471,21 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          exprng = None, 300,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = None, 300,
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          exprng = None, 300,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          exprng = 0, 60,
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              scale_to_mean = True
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = 1, 901,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
               spat_flexure_correct = True
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[flatfield]]
           slit_illum_finecorr = False
       [[wavelengths]]
@@ -4268,9 +4504,9 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 61, None,
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
           spat_flexure_correct = True
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -4308,17 +4544,54 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 1,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = 0, 60,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          exprng = 0, 60,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          exprng = 0, 60,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              scale_to_mean = True
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -4327,58 +4600,21 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          exprng = 0, 60,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = 0, 60,
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          exprng = 0, 60,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          exprng = 0, 60,
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              scale_to_mean = True
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = 1, 61,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
               spat_flexure_correct = True
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[flatfield]]
           slit_illum_finecorr = False
       [[wavelengths]]
@@ -4401,11 +4637,11 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 61, None,
       [[process]]
+          noise_floor = 0.01
+          spat_flexure_correct = True
           mask_cr = True
           sigclip = 5.0
           objlim = 5.0
-          noise_floor = 0.01
-          spat_flexure_correct = True
   [reduce]
       [[skysub]]
           bspline_spacing = 0.8
@@ -4448,17 +4684,54 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 1,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = 0, 60,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          exprng = 0, 60,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          exprng = 0, 60,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              scale_to_mean = True
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -4467,58 +4740,21 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          exprng = 0, 60,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = 0, 60,
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          exprng = 0, 60,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          exprng = 0, 60,
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              scale_to_mean = True
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = 1, 61,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
               spat_flexure_correct = True
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[flatfield]]
           slit_illum_finecorr = False
       [[wavelengths]]
@@ -4541,11 +4777,11 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 61, None,
       [[process]]
+          noise_floor = 0.01
+          spat_flexure_correct = True
           mask_cr = True
           sigclip = 5.0
           objlim = 5.0
-          noise_floor = 0.01
-          spat_flexure_correct = True
   [reduce]
       [[skysub]]
           bspline_spacing = 0.8
@@ -4588,17 +4824,54 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 1,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = 0, 60,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          exprng = 0, 60,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          exprng = 0, 60,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              scale_to_mean = True
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -4607,58 +4880,21 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          exprng = 0, 60,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = 0, 60,
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          exprng = 0, 60,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          exprng = 0, 60,
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              scale_to_mean = True
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = 1, 61,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
               spat_flexure_correct = True
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[flatfield]]
           slit_illum_finecorr = False
       [[wavelengths]]
@@ -4681,11 +4917,11 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 61, None,
       [[process]]
+          noise_floor = 0.01
+          spat_flexure_correct = True
           mask_cr = True
           sigclip = 5.0
           objlim = 5.0
-          noise_floor = 0.01
-          spat_flexure_correct = True
   [reduce]
       [[skysub]]
           bspline_spacing = 0.8
@@ -4727,20 +4963,67 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 1, None,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 1, None,
           [[[process]]]
@@ -4754,72 +5037,25 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 20,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           lamps = OH_NIRES,
           fwhm = 5.0
@@ -4830,12 +5066,12 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 20, None,
       [[process]]
-          satpix = nothing
-          mask_cr = True
-          sigclip = 20.0
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
+          satpix = nothing
+          mask_cr = True
+          sigclip = 20.0
   [reduce]
       [[skysub]]
           bspline_spacing = 0.8
@@ -4879,19 +5115,67 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 61, None,
           [[[process]]]
@@ -4906,75 +5190,27 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           exprng = None, 60,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           method = reidentify
           echelle = True
@@ -4995,13 +5231,13 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 61, None,
       [[process]]
-          satpix = nothing
-          mask_cr = True
-          sigclip = 20.0
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
+          satpix = nothing
+          mask_cr = True
+          sigclip = 20.0
   [reduce]
       [[findobj]]
           maxnumber_std = 1
@@ -5049,19 +5285,68 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 20, None,
           [[[process]]]
@@ -5075,77 +5360,28 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_pixelflat = False
-              use_illumflat = False
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_pixelflat = False
+              use_illumflat = False
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.8
       [[wavelengths]]
@@ -5170,14 +5406,14 @@ Alterations to the default parameters are:
           overlap = True
   [scienceframe]
       [[process]]
-          satpix = nothing
-          mask_cr = True
-          sigclip = 20.0
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_pixelflat = False
           use_illumflat = False
+          satpix = nothing
+          mask_cr = True
+          sigclip = 20.0
   [reduce]
       [[findobj]]
           fof_link = 0.2
@@ -5219,19 +5455,68 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 20, None,
           [[[process]]]
@@ -5245,77 +5530,28 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_pixelflat = False
-              use_illumflat = False
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_pixelflat = False
+              use_illumflat = False
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.8
       [[wavelengths]]
@@ -5339,14 +5575,14 @@ Alterations to the default parameters are:
           overlap = True
   [scienceframe]
       [[process]]
-          satpix = nothing
-          mask_cr = True
-          sigclip = 20.0
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_pixelflat = False
           use_illumflat = False
+          satpix = nothing
+          mask_cr = True
+          sigclip = 20.0
   [reduce]
       [[findobj]]
           fof_link = 0.2
@@ -5388,20 +5624,68 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 20, None,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 20, None,
           [[[process]]]
@@ -5415,75 +5699,27 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           exprng = None, 20,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.8
       [[wavelengths]]
@@ -5496,13 +5732,13 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 20, None,
       [[process]]
-          satpix = nothing
-          mask_cr = True
-          sigclip = 20.0
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
+          satpix = nothing
+          mask_cr = True
+          sigclip = 20.0
   [reduce]
       [[skysub]]
           bspline_spacing = 0.8
@@ -5544,19 +5780,67 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_biasimage = False
@@ -5571,74 +5855,26 @@ Alterations to the default parameters are:
               use_illumflat = False
               spat_flexure_correct = True
               spat_flexure_sigdetect = 100
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.85
       [[wavelengths]]
@@ -5650,15 +5886,15 @@ Alterations to the default parameters are:
           minimum_slit_length = 10.0
   [scienceframe]
       [[process]]
-          satpix = nothing
-          mask_cr = True
-          sigclip = 20.0
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
           spat_flexure_correct = True
           spat_flexure_sigdetect = 100
+          satpix = nothing
+          mask_cr = True
+          sigclip = 20.0
   [reduce]
       [[findobj]]
           maxnumber_std = 1
@@ -5702,19 +5938,67 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_biasimage = False
@@ -5729,74 +6013,26 @@ Alterations to the default parameters are:
               use_illumflat = False
               spat_flexure_correct = True
               spat_flexure_sigdetect = 100
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.85
       [[wavelengths]]
@@ -5808,15 +6044,15 @@ Alterations to the default parameters are:
           minimum_slit_length = 10.0
   [scienceframe]
       [[process]]
-          satpix = nothing
-          mask_cr = True
-          sigclip = 20.0
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
           spat_flexure_correct = True
           spat_flexure_sigdetect = 100
+          satpix = nothing
+          mask_cr = True
+          sigclip = 20.0
   [reduce]
       [[findobj]]
           maxnumber_std = 1
@@ -5860,104 +6096,104 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              overscan_method = odd_even
-              combine = median
               use_biasimage = False
+              overscan_method = odd_even
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
+              use_biasimage = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              overscan_method = odd_even
-              clip = False
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              clip = False
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           exprng = 0, None,
           [[[process]]]
+              use_biasimage = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-          [[[process]]]
-              overscan_method = odd_even
-              use_biasimage = False
-      [[alignframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[traceframe]]
-          exprng = 0, None,
-          [[[process]]]
-              overscan_method = odd_even
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
       [[illumflatframe]]
           [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
       [[lampoffflatsframe]]
           [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
       [[slitless_pixflatframe]]
           exprng = 0, None,
           [[[process]]]
+              use_biasimage = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               combine = median
               satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+          [[[process]]]
               use_biasimage = False
+              overscan_method = odd_even
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              overscan_method = odd_even
               satpix = nothing
+      [[arcframe]]
+          [[[process]]]
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[skyframe]]
+              clip = False
+      [[tiltframe]]
           [[[process]]]
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
-              noise_floor = 0.01
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[traceframe]]
+          exprng = 0, None,
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
       [[standardframe]]
           exprng = 1, 200,
           [[[process]]]
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
+              overscan_method = odd_even
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           lamps = HgI_MODS, ArI_MODS, NeI_MODS, KrI_MODS, XeI_MODS,
           sigdetect = 10.0
@@ -5973,10 +6209,10 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 1, None,
       [[process]]
-          overscan_method = odd_even
-          mask_cr = True
           use_biasimage = False
+          overscan_method = odd_even
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -6015,136 +6251,125 @@ Alterations to the default parameters are:
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              combine = median
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
               trim = False
               apply_gain = False
+              use_biasimage = False
+              use_overscan = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              clip = False
               use_biasimage = False
               use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
               overscan_method = odd_even
-              clip = False
-              use_biasimage = False
-              use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           exprng = 0, None,
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          exprng = 0, None,
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           exprng = 999999, None,
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
       [[alignframe]]
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           exprng = 0, None,
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
               use_biasimage = False
               use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
               overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          exprng = 0, None,
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
               use_pixelflat = False
               use_illumflat = False
       [[standardframe]]
@@ -6152,13 +6377,24 @@ Alterations to the default parameters are:
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               noise_floor = 0.01
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              noise_floor = 0.01
+              use_pixelflat = False
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           lamps = HgI_MODS, ArI_MODS, NeI_MODS, KrI_MODS, XeI_MODS,
           sigdetect = 10.0
@@ -6176,13 +6412,13 @@ Alterations to the default parameters are:
       [[process]]
           trim = False
           apply_gain = False
-          overscan_method = odd_even
-          mask_cr = True
           use_biasimage = False
           use_overscan = False
+          overscan_method = odd_even
           noise_floor = 0.01
           use_pixelflat = False
           use_illumflat = False
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -6219,104 +6455,104 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              overscan_method = odd_even
-              combine = median
               use_biasimage = False
+              overscan_method = odd_even
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
+              use_biasimage = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              overscan_method = odd_even
-              clip = False
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              clip = False
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           exprng = 0, None,
           [[[process]]]
+              use_biasimage = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-          [[[process]]]
-              overscan_method = odd_even
-              use_biasimage = False
-      [[alignframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[traceframe]]
-          exprng = 0, None,
-          [[[process]]]
-              overscan_method = odd_even
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
       [[illumflatframe]]
           [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
       [[lampoffflatsframe]]
           [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
       [[slitless_pixflatframe]]
           exprng = 0, None,
           [[[process]]]
+              use_biasimage = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               combine = median
               satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+          [[[process]]]
               use_biasimage = False
+              overscan_method = odd_even
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              overscan_method = odd_even
               satpix = nothing
+      [[arcframe]]
+          [[[process]]]
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[skyframe]]
+              clip = False
+      [[tiltframe]]
           [[[process]]]
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
-              noise_floor = 0.01
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[traceframe]]
+          exprng = 0, None,
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
       [[standardframe]]
           exprng = 1, 200,
           [[[process]]]
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
+              overscan_method = odd_even
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           lamps = HgI_MODS, ArI_MODS, NeI_MODS, KrI_MODS, XeI_MODS,
           fwhm = 10.0
@@ -6334,10 +6570,10 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 1, None,
       [[process]]
-          overscan_method = odd_even
-          mask_cr = True
           use_biasimage = False
+          overscan_method = odd_even
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -6378,136 +6614,125 @@ Alterations to the default parameters are:
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              combine = median
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
               trim = False
               apply_gain = False
+              use_biasimage = False
+              use_overscan = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              clip = False
               use_biasimage = False
               use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
               overscan_method = odd_even
-              clip = False
-              use_biasimage = False
-              use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           exprng = 0, None,
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          exprng = 0, None,
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           exprng = 999999, None,
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
       [[alignframe]]
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           exprng = 0, None,
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
               use_biasimage = False
               use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
               overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          exprng = 0, None,
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
               use_pixelflat = False
               use_illumflat = False
       [[standardframe]]
@@ -6515,13 +6740,24 @@ Alterations to the default parameters are:
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               noise_floor = 0.01
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              noise_floor = 0.01
+              use_pixelflat = False
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           lamps = HgI_MODS, ArI_MODS, NeI_MODS, KrI_MODS, XeI_MODS,
           fwhm = 10.0
@@ -6541,13 +6777,13 @@ Alterations to the default parameters are:
       [[process]]
           trim = False
           apply_gain = False
-          overscan_method = odd_even
-          mask_cr = True
           use_biasimage = False
           use_overscan = False
+          overscan_method = odd_even
           noise_floor = 0.01
           use_pixelflat = False
           use_illumflat = False
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -6586,104 +6822,104 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              overscan_method = odd_even
-              combine = median
               use_biasimage = False
+              overscan_method = odd_even
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
+              use_biasimage = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              overscan_method = odd_even
-              clip = False
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              clip = False
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           exprng = 0, None,
           [[[process]]]
+              use_biasimage = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-          [[[process]]]
-              overscan_method = odd_even
-              use_biasimage = False
-      [[alignframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[traceframe]]
-          exprng = 0, None,
-          [[[process]]]
-              overscan_method = odd_even
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
       [[illumflatframe]]
           [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
       [[lampoffflatsframe]]
           [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
       [[slitless_pixflatframe]]
           exprng = 0, None,
           [[[process]]]
+              use_biasimage = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               combine = median
               satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+          [[[process]]]
               use_biasimage = False
+              overscan_method = odd_even
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              overscan_method = odd_even
               satpix = nothing
+      [[arcframe]]
+          [[[process]]]
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[skyframe]]
+              clip = False
+      [[tiltframe]]
           [[[process]]]
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
-              noise_floor = 0.01
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[traceframe]]
+          exprng = 0, None,
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
       [[standardframe]]
           exprng = 1, 200,
           [[[process]]]
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
+              overscan_method = odd_even
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           lamps = HgI_MODS, ArI_MODS, NeI_MODS, KrI_MODS, XeI_MODS,
           sigdetect = 10.0
@@ -6699,10 +6935,10 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 1, None,
       [[process]]
-          overscan_method = odd_even
-          mask_cr = True
           use_biasimage = False
+          overscan_method = odd_even
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -6741,136 +6977,125 @@ Alterations to the default parameters are:
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              combine = median
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
               trim = False
               apply_gain = False
+              use_biasimage = False
+              use_overscan = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              clip = False
               use_biasimage = False
               use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
               overscan_method = odd_even
-              clip = False
-              use_biasimage = False
-              use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           exprng = 0, None,
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          exprng = 0, None,
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           exprng = 999999, None,
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
       [[alignframe]]
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           exprng = 0, None,
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
               use_biasimage = False
               use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
               overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          exprng = 0, None,
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
               use_pixelflat = False
               use_illumflat = False
       [[standardframe]]
@@ -6878,13 +7103,24 @@ Alterations to the default parameters are:
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               noise_floor = 0.01
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              noise_floor = 0.01
+              use_pixelflat = False
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           lamps = HgI_MODS, ArI_MODS, NeI_MODS, KrI_MODS, XeI_MODS,
           sigdetect = 10.0
@@ -6902,13 +7138,13 @@ Alterations to the default parameters are:
       [[process]]
           trim = False
           apply_gain = False
-          overscan_method = odd_even
-          mask_cr = True
           use_biasimage = False
           use_overscan = False
+          overscan_method = odd_even
           noise_floor = 0.01
           use_pixelflat = False
           use_illumflat = False
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -6945,104 +7181,104 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              overscan_method = odd_even
-              combine = median
               use_biasimage = False
+              overscan_method = odd_even
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
+              use_biasimage = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              overscan_method = odd_even
-              clip = False
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              clip = False
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           exprng = 0, None,
           [[[process]]]
+              use_biasimage = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-          [[[process]]]
-              overscan_method = odd_even
-              use_biasimage = False
-      [[alignframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[traceframe]]
-          exprng = 0, None,
-          [[[process]]]
-              overscan_method = odd_even
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
       [[illumflatframe]]
           [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
       [[lampoffflatsframe]]
           [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
       [[slitless_pixflatframe]]
           exprng = 0, None,
           [[[process]]]
+              use_biasimage = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               combine = median
               satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+          [[[process]]]
               use_biasimage = False
+              overscan_method = odd_even
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              overscan_method = odd_even
               satpix = nothing
+      [[arcframe]]
+          [[[process]]]
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[skyframe]]
+              clip = False
+      [[tiltframe]]
           [[[process]]]
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
-              noise_floor = 0.01
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[traceframe]]
+          exprng = 0, None,
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
       [[standardframe]]
           exprng = 1, 200,
           [[[process]]]
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
+              overscan_method = odd_even
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           lamps = HgI_MODS, ArI_MODS, NeI_MODS, KrI_MODS, XeI_MODS,
           fwhm = 10.0
@@ -7060,10 +7296,10 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 1, None,
       [[process]]
-          overscan_method = odd_even
-          mask_cr = True
           use_biasimage = False
+          overscan_method = odd_even
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -7104,136 +7340,125 @@ Alterations to the default parameters are:
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              combine = median
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
               trim = False
               apply_gain = False
+              use_biasimage = False
+              use_overscan = False
               overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              clip = False
               use_biasimage = False
               use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
               overscan_method = odd_even
-              clip = False
-              use_biasimage = False
-              use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           exprng = 0, None,
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          exprng = 0, None,
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           exprng = 999999, None,
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
       [[alignframe]]
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           exprng = 0, None,
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
               use_biasimage = False
               use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
               overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          exprng = 0, None,
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              trim = False
-              apply_gain = False
-              overscan_method = odd_even
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
               use_pixelflat = False
               use_illumflat = False
       [[standardframe]]
@@ -7241,13 +7466,24 @@ Alterations to the default parameters are:
           [[[process]]]
               trim = False
               apply_gain = False
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
+              overscan_method = odd_even
               noise_floor = 0.01
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              trim = False
+              apply_gain = False
+              use_biasimage = False
+              use_overscan = False
+              overscan_method = odd_even
+              noise_floor = 0.01
+              use_pixelflat = False
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           lamps = HgI_MODS, ArI_MODS, NeI_MODS, KrI_MODS, XeI_MODS,
           fwhm = 10.0
@@ -7267,13 +7503,13 @@ Alterations to the default parameters are:
       [[process]]
           trim = False
           apply_gain = False
-          overscan_method = odd_even
-          mask_cr = True
           use_biasimage = False
           use_overscan = False
+          overscan_method = odd_even
           noise_floor = 0.01
           use_pixelflat = False
           use_illumflat = False
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -7312,41 +7548,56 @@ Alterations to the default parameters are:
       bpm_usebias = True
       [[biasframe]]
           [[[process]]]
+              use_biasimage = False
               overscan_method = chebyshev
               overscan_par = 1
-              combine = median
-              use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
               overscan_method = chebyshev
               overscan_par = 1
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
               overscan_method = chebyshev
               overscan_par = 1
-              clip = False
               use_pixelflat = False
               use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              overscan_method = chebyshev
-              overscan_par = 1
-              clip = False
-              use_pixelflat = False
-              use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           [[[process]]]
               overscan_method = chebyshev
               overscan_par = 1
-              satpix = nothing
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              overscan_method = chebyshev
+              overscan_par = 1
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              overscan_method = chebyshev
+              overscan_par = 1
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              overscan_method = chebyshev
+              overscan_par = 1
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           [[[process]]]
               overscan_method = chebyshev
@@ -7356,62 +7607,47 @@ Alterations to the default parameters are:
           [[[process]]]
               overscan_method = chebyshev
               overscan_par = 1
-              satpix = nothing
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              overscan_method = chebyshev
+              overscan_par = 1
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              overscan_method = chebyshev
+              overscan_par = 1
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           [[[process]]]
               overscan_method = chebyshev
               overscan_par = 1
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              overscan_method = chebyshev
-              overscan_par = 1
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              overscan_method = chebyshev
-              overscan_par = 1
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              overscan_method = chebyshev
-              overscan_par = 1
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              overscan_method = chebyshev
-              overscan_par = 1
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              overscan_method = chebyshev
-              overscan_par = 1
-              mask_cr = True
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           [[[process]]]
               overscan_method = chebyshev
               overscan_par = 1
-              mask_cr = True
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              overscan_method = chebyshev
+              overscan_par = 1
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[flatfield]]
           spec_samp_fine = 30
-          tweak_slits = False
           pixelflat_min_wave = 3000.0
+          tweak_slits = False
           slit_illum_finecorr = False
       [[wavelengths]]
           method = full_template
@@ -7430,18 +7666,18 @@ Alterations to the default parameters are:
       [[process]]
           overscan_method = chebyshev
           overscan_par = 1
+          noise_floor = 0.01
+          use_illumflat = False
           mask_cr = True
           sigclip = 5.0
           objlim = 2.0
-          noise_floor = 0.01
-          use_illumflat = False
   [reduce]
       [[findobj]]
           trace_npoly = 3
-          snr_thresh = 50.0
-          find_trim_edge = 0, 0,
           maxnumber_sci = 5
           maxnumber_std = 1
+          snr_thresh = 50.0
+          find_trim_edge = 0, 0,
           find_fwhm = 4.4
       [[skysub]]
           sky_sigrej = 4.0
@@ -7487,20 +7723,68 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 20, None,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 20, None,
           [[[process]]]
@@ -7514,75 +7798,27 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           exprng = None, 60,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           method = reidentify
           echelle = True
@@ -7606,13 +7842,13 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 20, None,
       [[process]]
-          satpix = nothing
-          mask_cr = True
-          sigclip = 20.0
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
+          satpix = nothing
+          mask_cr = True
+          sigclip = 20.0
   [reduce]
       [[findobj]]
           maxnumber_sci = 2
@@ -7656,20 +7892,68 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 20, None,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 1, 50,
           [[[process]]]
@@ -7683,86 +7967,38 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           exprng = None, 60,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = Ar_IR_MOSFIRE, Ne_IR_MOSFIRE,
           sigdetect = 3
           fwhm = 10
           reid_arxiv = magellan_fire_long.fits
+          nsnippet = 4
           rms_thresh_frac_fwhm = 0.05
           match_toler = 5.0
           n_first = 3
           n_final = 6
-          nsnippet = 4
       [[slitedges]]
           trace_thresh = 10.0
           sync_predict = nearest
@@ -7771,11 +8007,11 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 20, None,
       [[process]]
-          mask_cr = True
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
+          mask_cr = True
   [reduce]
       [[findobj]]
           snr_thresh = 5
@@ -7814,17 +8050,48 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 20, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 20, None,
           [[[process]]]
@@ -7834,50 +8101,19 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 20,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = reidentify
           echelle = True
@@ -7898,15 +8134,15 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 20, None,
       [[process]]
+          noise_floor = 0.01
           satpix = nothing
           mask_cr = True
           sigclip = 20.0
-          noise_floor = 0.01
   [reduce]
       [[findobj]]
-          find_trim_edge = 4, 4,
           maxnumber_sci = 2
           maxnumber_std = 1
+          find_trim_edge = 4, 4,
       [[extraction]]
           model_full_slit = True
   [coadd1d]
@@ -7945,77 +8181,77 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              overscan_method = median
-              combine = median
               use_biasimage = False
+              overscan_method = median
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              clip = False
               use_pixelflat = False
               use_illumflat = False
-              subtract_continuum = True
-      [[tiltframe]]
-          [[[process]]]
-              clip = False
-              use_pixelflat = False
-              use_illumflat = False
-              subtract_continuum = True
+              satpix = nothing
       [[pixelflatframe]]
           [[[process]]]
-              satpix = nothing
-              n_lohi = 1, 1,
-              comb_sigrej = 3.0
               use_pixelflat = False
               use_illumflat = False
+              comb_sigrej = 3.0
+              satpix = nothing
+              n_lohi = 1, 1,
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           exprng = 999999, None,
       [[alignframe]]
           [[[process]]]
-              satpix = nothing
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[flatfield]]
           slit_illum_finecorr = False
       [[wavelengths]]
@@ -8029,7 +8265,6 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 10, 600,
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
   [sensfunc]
       [[IR]]
@@ -8065,17 +8300,51 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -8084,53 +8353,19 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = ArI, XeI,
@@ -8141,7 +8376,6 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
   [sensfunc]
       [[IR]]
@@ -8177,100 +8411,100 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 1,
           [[[process]]]
-              overscan_method = odd_even
-              combine = median
               use_biasimage = False
+              overscan_method = odd_even
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
-              overscan_method = odd_even
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
       [[tiltframe]]
           [[[process]]]
-              overscan_method = odd_even
               use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
               overscan_method = odd_even
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-          [[[process]]]
-              overscan_method = odd_even
-              use_biasimage = False
-      [[alignframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
       [[traceframe]]
           [[[process]]]
-              overscan_method = odd_even
               use_biasimage = False
+              overscan_method = odd_even
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              overscan_method = odd_even
-              mask_cr = True
-              use_biasimage = False
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
-              overscan_method = odd_even
-              mask_cr = True
               use_biasimage = False
+              overscan_method = odd_even
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = odd_even
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = HgI, NeI,
@@ -8282,9 +8516,8 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
-          overscan_method = odd_even
-          mask_cr = True
           use_biasimage = False
+          overscan_method = odd_even
           noise_floor = 0.01
   [sensfunc]
       [[IR]]
@@ -8319,18 +8552,58 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 20, None,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 20, None,
           [[[process]]]
@@ -8342,62 +8615,22 @@ Alterations to the default parameters are:
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 100,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = HeI, NeI, ArI, ArII,
@@ -8411,11 +8644,11 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 20, None,
       [[process]]
+          use_biasimage = False
+          noise_floor = 0.01
           mask_cr = True
           sigclip = 5.0
           objlim = 2.0
-          use_biasimage = False
-          noise_floor = 0.01
   [reduce]
       [[skysub]]
           bspline_spacing = 0.8
@@ -8457,18 +8690,61 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 300, None,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = None, 600,
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          exprng = 1, None,
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 1, None,
           [[[process]]]
@@ -8480,68 +8756,25 @@ Alterations to the default parameters are:
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          exprng = None, 600,
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = None, 600,
           [[[process]]]
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          exprng = 1, None,
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           exprng = None, 600,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           lamps = use_header,
           fwhm = 3.1
@@ -8550,12 +8783,12 @@ Alterations to the default parameters are:
           bound_detector = True
   [scienceframe]
       [[process]]
-          mask_cr = True
-          sigclip = 5.0
-          objlim = 2.0
           use_biasimage = False
           noise_floor = 0.01
           use_illumflat = False
+          mask_cr = True
+          sigclip = 5.0
+          objlim = 2.0
   [reduce]
       [[skysub]]
           bspline_spacing = 0.8
@@ -8594,20 +8827,68 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 30, None,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 60, None,
           [[[process]]]
@@ -8622,75 +8903,27 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           exprng = None, 60,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           lamps = OH_NIRES,
           rms_thresh_frac_fwhm = 0.125
@@ -8708,13 +8941,13 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 30, None,
       [[process]]
+          use_biasimage = False
+          use_overscan = False
+          noise_floor = 0.01
           mask_cr = True
           grow = 0.5
           sigclip = 5.0
           objlim = 2.0
-          use_biasimage = False
-          use_overscan = False
-          noise_floor = 0.01
   [reduce]
       [[findobj]]
           snr_thresh = 5.0
@@ -8757,91 +8990,91 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 1,
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              clip = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-              subtract_continuum = True
-      [[tiltframe]]
-          [[[process]]]
-              clip = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-              subtract_continuum = True
+              satpix = nothing
       [[pixelflatframe]]
           [[[process]]]
-              combine = median
-              satpix = nothing
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           exprng = 999999, None,
           [[[process]]]
               use_overscan = False
       [[alignframe]]
           [[[process]]]
-              satpix = nothing
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              use_overscan = False
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              use_overscan = False
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           [[[process]]]
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_overscan = False
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
-              mask_cr = True
               use_overscan = False
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_overscan = False
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = HeI, NeI, ArI,
@@ -8854,7 +9087,6 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 10, None,
       [[process]]
-          mask_cr = True
           use_overscan = False
           noise_floor = 0.01
   [sensfunc]
@@ -8891,91 +9123,91 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 1,
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              clip = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-              subtract_continuum = True
-      [[tiltframe]]
-          [[[process]]]
-              clip = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-              subtract_continuum = True
+              satpix = nothing
       [[pixelflatframe]]
           [[[process]]]
-              combine = median
-              satpix = nothing
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           exprng = 999999, None,
           [[[process]]]
               use_overscan = False
       [[alignframe]]
           [[[process]]]
-              satpix = nothing
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              use_overscan = False
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              use_overscan = False
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           [[[process]]]
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_overscan = False
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
-              mask_cr = True
               use_overscan = False
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_overscan = False
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = HeI, NeI, ArI,
@@ -8988,7 +9220,6 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 10, None,
       [[process]]
-          mask_cr = True
           use_overscan = False
           noise_floor = 0.01
   [sensfunc]
@@ -9024,16 +9255,47 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_pixelflat = False
@@ -9042,49 +9304,18 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.9
       [[wavelengths]]
@@ -9099,8 +9330,8 @@ Alterations to the default parameters are:
           tracethresh = 25.0
   [scienceframe]
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [reduce]
       [[skysub]]
           sky_sigrej = 5.0
@@ -9143,17 +9374,51 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 120,
           [[[process]]]
@@ -9163,54 +9428,20 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
+              noise_floor = 0.01
               combine = median
               mask_cr = True
+      [[skyframe]]
+          [[[process]]]
               noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = FeI, ArI, ArII,
@@ -9220,9 +9451,9 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
+          noise_floor = 0.01
           combine = median
           mask_cr = True
-          noise_floor = 0.01
   [sensfunc]
       [[UVIS]]
           nresln = 5
@@ -9260,17 +9491,51 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 120,
           [[[process]]]
@@ -9280,54 +9545,20 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
+              noise_floor = 0.01
               combine = median
               mask_cr = True
+      [[skyframe]]
+          [[[process]]]
               noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = ArI, ArII, NeI, HeI,
@@ -9336,11 +9567,11 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
+          noise_floor = 0.01
           combine = median
           mask_cr = True
           sigclip = 4.0
           objlim = 1.5
-          noise_floor = 0.01
   [sensfunc]
       [[UVIS]]
           polycorrect = False
@@ -9378,16 +9609,48 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 120,
           [[[process]]]
@@ -9397,52 +9660,20 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
+              noise_floor = 0.01
               combine = median
               mask_cr = True
+      [[skyframe]]
+          [[[process]]]
               noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = ThAr,
@@ -9456,6 +9687,7 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
+          noise_floor = 0.01
           combine = median
           mask_cr = True
           sigclip = 4.0
@@ -9496,16 +9728,48 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 120,
           [[[process]]]
@@ -9515,52 +9779,20 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
+              noise_floor = 0.01
               combine = median
               mask_cr = True
+      [[skyframe]]
+          [[[process]]]
               noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = ThAr,
@@ -9574,6 +9806,7 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
+          noise_floor = 0.01
           combine = median
           mask_cr = True
           sigclip = 4.0
@@ -9612,20 +9845,68 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 0, None,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 100, None,
           [[[process]]]
@@ -9640,75 +9921,27 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
-              use_illumflat = False
       [[standardframe]]
           exprng = None, 60,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[wavelengths]]
           method = reidentify
           echelle = True
@@ -9729,13 +9962,13 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 60, None,
       [[process]]
-          satpix = nothing
-          mask_cr = True
-          sigclip = 20.0
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
+          satpix = nothing
+          mask_cr = True
+          sigclip = 20.0
   [reduce]
       [[findobj]]
           maxnumber_sci = 2
@@ -9784,17 +10017,51 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = 0, None,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 61,
           [[[process]]]
@@ -9804,54 +10071,20 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          exprng = 0, None,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = 0, None,
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = 1, 61,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = CdI, HgI, HeI,
@@ -9868,8 +10101,8 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 61, None,
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
       spectrum = sky_kastb_600.fits
@@ -9908,17 +10141,51 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = 0, None,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 61,
           [[[process]]]
@@ -9928,54 +10195,20 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          exprng = 0, None,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = 0, None,
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = 1, 61,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           lamps = NeI, HgI, HeI, ArI,
       [[slitedges]]
@@ -9984,8 +10217,8 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 61, None,
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -10023,17 +10256,51 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = 0, None,
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+      [[alignframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 61,
           [[[process]]]
@@ -10043,66 +10310,32 @@ Alterations to the default parameters are:
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          exprng = 0, None,
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = 0, None,
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = 1, 61,
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           lamps = NeI, HgI, HeI, ArI,
-          rms_thresh_frac_fwhm = 0.09
           use_instr_flag = True
+          rms_thresh_frac_fwhm = 0.09
       [[slitedges]]
           sync_predict = nearest
           bound_detector = True
   [scienceframe]
       exprng = 61, None,
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -10139,17 +10372,57 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 30,
           [[[process]]]
@@ -10161,62 +10434,22 @@ Alterations to the default parameters are:
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           lamps = NeI, ArI, HgI,
           fwhm = 5.0
@@ -10227,9 +10460,9 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
-          mask_cr = True
           use_biasimage = False
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -10266,17 +10499,57 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 30,
           [[[process]]]
@@ -10288,62 +10561,22 @@ Alterations to the default parameters are:
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              noise_floor = 0.01
+              mask_cr = True
       [[flatfield]]
           slit_illum_finecorr = False
       [[wavelengths]]
@@ -10356,9 +10589,9 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
-          mask_cr = True
           use_biasimage = False
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -10396,18 +10629,59 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              overscan_method = median
-              combine = median
               use_biasimage = False
+              overscan_method = median
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
               overscan_method = median
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          exprng = 0, None,
+          [[[process]]]
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              overscan_method = median
+      [[alignframe]]
+          [[[process]]]
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = 1, None,
           [[[process]]]
@@ -10419,64 +10693,23 @@ Alterations to the default parameters are:
               overscan_method = median
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          exprng = 0, None,
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              overscan_method = median
-      [[alignframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           exprng = 0, None,
           [[[process]]]
               overscan_method = median
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              overscan_method = median
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              overscan_method = median
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           exprng = 1, 61,
           [[[process]]]
               overscan_method = median
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              overscan_method = median
+              noise_floor = 0.01
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.9
       [[wavelengths]]
@@ -10493,8 +10726,8 @@ Alterations to the default parameters are:
       exprng = 61, None,
       [[process]]
           overscan_method = median
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -10533,80 +10766,79 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              clip = False
               use_pixelflat = False
               use_illumflat = False
-              subtract_continuum = True
-      [[tiltframe]]
-          [[[process]]]
-              clip = False
-              use_pixelflat = False
-              use_illumflat = False
-              subtract_continuum = True
+              satpix = nothing
       [[pixelflatframe]]
           [[[process]]]
-              satpix = nothing
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           exprng = 999999, None,
       [[alignframe]]
           [[[process]]]
-              satpix = nothing
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
+      [[tiltframe]]
+          [[[process]]]
+              subtract_continuum = True
+              use_pixelflat = False
+              use_illumflat = False
+              clip = False
       [[traceframe]]
           [[[process]]]
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              noise_floor = 0.01
+              mask_cr = True
       [[slitedges]]
           sync_predict = nearest
   [scienceframe]
       exprng = 1, None,
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
   [sensfunc]
       [[IR]]
@@ -10641,18 +10873,58 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              overscan_method = median
-              combine = median
               use_biasimage = False
+              overscan_method = median
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
               overscan_method = median
-              mask_cr = True
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              overscan_method = median
+      [[alignframe]]
+          [[[process]]]
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               overscan_method = median
@@ -10663,61 +10935,21 @@ Alterations to the default parameters are:
               overscan_method = median
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              overscan_method = median
-      [[alignframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               overscan_method = median
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              overscan_method = median
-              combine = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              overscan_method = median
-              mask_cr = True
-              noise_floor = 0.01
       [[standardframe]]
           [[[process]]]
               overscan_method = median
-              mask_cr = True
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              overscan_method = median
+              noise_floor = 0.01
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.9
       [[wavelengths]]
@@ -10732,8 +10964,8 @@ Alterations to the default parameters are:
           tracethresh = 25.0
   [scienceframe]
       [[process]]
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [flexure]
       spec_method = boxcar
   [sensfunc]
@@ -10771,111 +11003,111 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 20, None,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[arcframe]]
-          exprng = 20, None,
+              mask_cr = True
+      [[scattlightframe]]
           [[[process]]]
-              mask_cr = True
-              sigclip = 20.0
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              mask_cr = True
-              sigclip = 20.0
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           [[[process]]]
-              satpix = nothing
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
       [[alignframe]]
           [[[process]]]
-              satpix = nothing
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          exprng = 20, None,
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              mask_cr = True
+              sigclip = 20.0
+      [[tiltframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              mask_cr = True
+              sigclip = 20.0
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              sigclip = 20.0
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 20,
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              mask_cr = True
+              sigclip = 20.0
       [[wavelengths]]
           method = full_template
           lamps = OH_FIRE_Echelle,
           fwhm = 5.0
           reid_arxiv = vlt_sinfoni_K.fits
-          rms_thresh_frac_fwhm = 0.1
           nsnippet = 1
+          rms_thresh_frac_fwhm = 0.1
       [[slitedges]]
           edge_thresh = 50.0
           sync_predict = nearest
@@ -10885,12 +11117,12 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 20, None,
       [[process]]
-          satpix = nothing
-          mask_cr = True
-          sigclip = 20.0
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
+          satpix = nothing
+          mask_cr = True
+          sigclip = 20.0
   [reduce]
       [[findobj]]
           find_fwhm = 10
@@ -10937,19 +11169,67 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
-              mask_cr = True
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_illumflat = False
+      [[alignframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           [[[process]]]
               use_biasimage = False
@@ -10962,66 +11242,11 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          [[[process]]]
-              use_biasimage = False
-              use_overscan = False
-              use_illumflat = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_biasimage = False
               use_overscan = False
               use_pixelflat = False
-              use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_biasimage = False
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_biasimage = False
-              use_overscan = False
-              noise_floor = 0.01
               use_illumflat = False
       [[standardframe]]
           [[[process]]]
@@ -11029,6 +11254,13 @@ Alterations to the default parameters are:
               use_overscan = False
               noise_floor = 0.01
               use_illumflat = False
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              use_overscan = False
+              noise_floor = 0.01
+              use_illumflat = False
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.9
       [[wavelengths]]
@@ -11059,13 +11291,13 @@ Alterations to the default parameters are:
           rm_continuum = True
   [scienceframe]
       [[process]]
-          satpix = nothing
-          mask_cr = True
-          sigclip = 20.0
           use_biasimage = False
           use_overscan = False
           noise_floor = 0.01
           use_illumflat = False
+          satpix = nothing
+          mask_cr = True
+          sigclip = 20.0
   [reduce]
       [[findobj]]
           trace_npoly = 10
@@ -11117,100 +11349,100 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              overscan_method = median
-              combine = median
               use_biasimage = False
+              overscan_method = median
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
+              use_biasimage = False
               overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              overscan_method = median
               use_biasimage = False
+              overscan_method = median
               use_pixelflat = False
               use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              overscan_method = median
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           [[[process]]]
-              overscan_method = median
-              satpix = nothing
               use_biasimage = False
+              overscan_method = median
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           [[[process]]]
-              overscan_method = median
               use_biasimage = False
+              overscan_method = median
               use_pixelflat = False
               use_illumflat = False
       [[alignframe]]
           [[[process]]]
-              overscan_method = median
-              satpix = nothing
               use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+      [[tiltframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
               use_pixelflat = False
               use_illumflat = False
       [[traceframe]]
           [[[process]]]
-              overscan_method = median
               use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
               overscan_method = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              overscan_method = median
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              overscan_method = median
-              mask_cr = True
-              use_biasimage = False
-              noise_floor = 0.01
               use_pixelflat = False
               use_illumflat = False
       [[standardframe]]
           [[[process]]]
-              overscan_method = median
-              mask_cr = True
               use_biasimage = False
+              overscan_method = median
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              noise_floor = 0.01
+              use_pixelflat = False
+              use_illumflat = False
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.9
       [[wavelengths]]
@@ -11234,13 +11466,13 @@ Alterations to the default parameters are:
   [scienceframe]
       [[process]]
           overscan_method = median
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [reduce]
       [[findobj]]
-          find_trim_edge = 3, 3,
           maxnumber_sci = 2
           maxnumber_std = 1
+          find_trim_edge = 3, 3,
       [[skysub]]
           bspline_spacing = 0.5
           global_sky_std = False
@@ -11286,100 +11518,100 @@ Alterations to the default parameters are:
   [calibrations]
       [[biasframe]]
           [[[process]]]
-              overscan_method = median
-              combine = median
               use_biasimage = False
+              overscan_method = median
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           [[[process]]]
+              use_biasimage = False
               overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
               mask_cr = True
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[arcframe]]
+      [[scattlightframe]]
           [[[process]]]
-              overscan_method = median
               use_biasimage = False
+              overscan_method = median
               use_pixelflat = False
               use_illumflat = False
-      [[tiltframe]]
-          [[[process]]]
-              overscan_method = median
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
+              satpix = nothing
       [[pixelflatframe]]
           [[[process]]]
-              overscan_method = median
-              satpix = nothing
               use_biasimage = False
+              overscan_method = median
               use_pixelflat = False
               use_illumflat = False
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
       [[pinholeframe]]
           [[[process]]]
-              overscan_method = median
               use_biasimage = False
+              overscan_method = median
               use_pixelflat = False
               use_illumflat = False
       [[alignframe]]
           [[[process]]]
-              overscan_method = median
-              satpix = nothing
               use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[arcframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              use_pixelflat = False
+              use_illumflat = False
+      [[tiltframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
               use_pixelflat = False
               use_illumflat = False
       [[traceframe]]
           [[[process]]]
-              overscan_method = median
               use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
               overscan_method = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              overscan_method = median
-              combine = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              overscan_method = median
-              satpix = nothing
-              use_biasimage = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              overscan_method = median
-              mask_cr = True
-              use_biasimage = False
-              noise_floor = 0.01
               use_pixelflat = False
               use_illumflat = False
       [[standardframe]]
           [[[process]]]
-              overscan_method = median
-              mask_cr = True
               use_biasimage = False
+              overscan_method = median
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_biasimage = False
+              overscan_method = median
+              noise_floor = 0.01
+              use_pixelflat = False
+              use_illumflat = False
+              mask_cr = True
       [[flatfield]]
           tweak_slits_thresh = 0.9
       [[wavelengths]]
@@ -11405,13 +11637,13 @@ Alterations to the default parameters are:
   [scienceframe]
       [[process]]
           overscan_method = median
-          mask_cr = True
           noise_floor = 0.01
+          mask_cr = True
   [reduce]
       [[findobj]]
-          find_trim_edge = 3, 3,
           maxnumber_sci = 2
           maxnumber_std = 1
+          find_trim_edge = 3, 3,
       [[skysub]]
           bspline_spacing = 0.5
           global_sky_std = False
@@ -11460,19 +11692,61 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+          [[[process]]]
+              use_overscan = False
+      [[alignframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 120,
           [[[process]]]
@@ -11484,64 +11758,22 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-          [[[process]]]
-              use_overscan = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_overscan = False
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
-              mask_cr = True
               use_overscan = False
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_overscan = False
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = NeI, ArI, ArII, CuI,
@@ -11553,7 +11785,6 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
-          mask_cr = True
           use_overscan = False
           noise_floor = 0.01
   [sensfunc]
@@ -11591,19 +11822,61 @@ Alterations to the default parameters are:
       [[biasframe]]
           exprng = None, 0.001,
           [[[process]]]
-              combine = median
               use_biasimage = False
               use_overscan = False
               shot_noise = False
               use_pixelflat = False
               use_illumflat = False
+              combine = median
       [[darkframe]]
           exprng = 999999, None,
           [[[process]]]
-              mask_cr = True
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
+              mask_cr = True
+      [[scattlightframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[pixelflatframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[illumflatframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[lampoffflatsframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
+      [[slitless_pixflatframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              combine = median
+              satpix = nothing
+      [[pinholeframe]]
+          exprng = 999999, None,
+          [[[process]]]
+              use_overscan = False
+      [[alignframe]]
+          [[[process]]]
+              use_overscan = False
+              use_pixelflat = False
+              use_illumflat = False
+              satpix = nothing
       [[arcframe]]
           exprng = None, 120,
           [[[process]]]
@@ -11615,64 +11888,22 @@ Alterations to the default parameters are:
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[pixelflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[pinholeframe]]
-          exprng = 999999, None,
-          [[[process]]]
-              use_overscan = False
-      [[alignframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
       [[traceframe]]
           [[[process]]]
               use_overscan = False
               use_pixelflat = False
               use_illumflat = False
-      [[illumflatframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[lampoffflatsframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[slitless_pixflatframe]]
-          [[[process]]]
-              combine = median
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[scattlightframe]]
-          [[[process]]]
-              satpix = nothing
-              use_overscan = False
-              use_pixelflat = False
-              use_illumflat = False
-      [[skyframe]]
-          [[[process]]]
-              mask_cr = True
-              use_overscan = False
-              noise_floor = 0.01
       [[standardframe]]
           exprng = None, 120,
           [[[process]]]
-              mask_cr = True
               use_overscan = False
               noise_floor = 0.01
+              mask_cr = True
+      [[skyframe]]
+          [[[process]]]
+              use_overscan = False
+              noise_floor = 0.01
+              mask_cr = True
       [[wavelengths]]
           method = full_template
           lamps = NeI, ArI, ArII, CuI,
@@ -11682,7 +11913,6 @@ Alterations to the default parameters are:
   [scienceframe]
       exprng = 90, None,
       [[process]]
-          mask_cr = True
           use_overscan = False
           noise_floor = 0.01
   [sensfunc]
