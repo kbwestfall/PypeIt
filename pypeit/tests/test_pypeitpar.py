@@ -325,7 +325,6 @@ def test_func_par_from_dict():
     assert p['init'] == DESubsetPar.parameters['init']['default'], \
         'init should be set to default value!'
 
-test_func_par_from_dict()
 
 class DEPar(funcpar.FuncPar, metaclass=funcpar.FuncParMetaClass):
     func = differential_evolution

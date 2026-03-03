@@ -15,7 +15,32 @@ from pypeit.par import parset
 
 
 def _valid_default_kwargs(func, kw_subset, omitted_keys):
+    """
+    Use the signature of the provided function to extract its keyword arguments
+    and their default values.
 
+    This is a helper function for :mod:`~pypeit.par.funcpar`.
+
+    Parameters
+    ----------
+    func : callable
+        The callable function whose keyword arguments are to be collected.
+    kw_subset : list
+        A subset of keyword arguments (provided as a list of strings) to
+        extract.  If None, all keywords are included.  Any keyword that is
+        *not* part of the function argument list will lead to an exception,
+        which must be fixed at the coding level (i.e., this would not be user
+        error).
+    omitted_keys : list
+        Keyword arguments (provided as a list of strings) that should be
+        excluded from the extracted set.  Any keyword in this list that is *not*
+        part of the function signature is ignored.
+
+    Returns
+    -------
+    dict
+        The dictionary with the keyword parameters and their default values.
+    """
     if func is None:
         raise NotImplementedError(
             f'CODING ERROR: Function from which to pull the keyword arguments is not defined!'
@@ -44,13 +69,44 @@ def _valid_default_kwargs(func, kw_subset, omitted_keys):
 
 
 def _get_module(func):
+    """
+    Get the parent module for the provided function.
+
+    This is a helper function for :mod:`~pypeit.par.funcpar`.
+
+    Parameters
+    ----------
+    func : callable
+        The callable function to inspect.
+
+    Returns
+    -------
+    str
+        The string representation of the parent module of ``func``.  If
+        :func:`inspect.getmodule` is unsuccessful, None is returned.
+    """
     mod = inspect.getmodule(func)
     return mod.__name__ if mod else None
 
 
 def _define_parameters(func, func_kwargs):
     """
-    Define the parameter dictionary
+    Define the parameter dictionary to use for a
+    :class:`~pypeit.par.funcpar.FuncPar` subclass.
+
+    Parameters
+    ----------
+    func : callable
+        The callable function whose keyword arguments are to be collected into a
+        parameter set.
+    func_kwargs : dict
+        A dictionary with the keyword parameters for ``func`` and their default
+        values; see :func:`~pypeit.par.funcpar._valid_default_kwargs`.
+
+    Returns
+    -------
+    dict
+        The ``parameters`` dictionary to use for the function parameter set.
     """
     module_name = _get_module(func)
     descr = f'Parameter for {func.__name__} in {module_name}.'
@@ -61,6 +117,11 @@ def _define_parameters(func, func_kwargs):
 
 
 class FuncParMetaClass(type):
+    """
+    The metaclass to use for :class:`~pypeit.par.funcpar.FuncPar` to enable the
+    parameter dictionary to be constructed dynamically (instead of having to be
+    hard-coded).
+    """
     def __new__(mcs, name, bases, dic):
         # Create the class object
         cls = super().__new__(mcs, name, bases, dic)
@@ -76,7 +137,11 @@ class FuncPar(parset.ParSet):
     A abstract :class:`~pypeit.par.parset.ParSet` subclass that collects the
     keyword arguments of a function.
 
-    This class cannot be instantiated directly.
+    This class cannot be instantiated directly.  All subclasses must also use
+    :class:`~pypeit.par.funcpar.FuncParMetaClass` for the class to be fully
+    defined.
+
+    Attributes listed below are in addition to those provided by the base class.
 
     .. note::
     
@@ -93,7 +158,9 @@ class FuncPar(parset.ParSet):
         The initial values for the keyword arguments.  If not provided, the
         default values from the function signature will be used.  An exception
         is raised if any of the provided keywords are *not* part of the function
-        argument list.
+        argument list.  Note that subclasses can limit the keywords that are
+        ingested as parameters; setting a value for any of the excluded
+        parameters will raise an exception.
 
     Attributes
     ----------
@@ -101,12 +168,6 @@ class FuncPar(parset.ParSet):
         The module where the function is defined.
     name : str
         The name of the function.
-
-    Raises
-    ------
-    PypeItError:
-        Raised if any of the keywords in the ``restrict_to`` or ``kwargs`` list
-        are not part of the function argument list.
     """
 
     func = None
