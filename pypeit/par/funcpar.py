@@ -9,8 +9,10 @@ import inspect
 
 from IPython import embed
 import numpy as np
+from scipy import optimize
 
 from pypeit import utils
+from pypeit.core.pydl import djs_reject
 from pypeit.par import parset
 
 
@@ -199,3 +201,31 @@ class FuncPar(parset.ParSet):
         self.module = _get_module(self.func)
         self.name = self.func.__name__
 
+
+class DifferentialEvolutionPar(FuncPar, metaclass=FuncParMetaClass):
+    """
+    Parameters used by :func:`scipy.optimize.differential_evolution`.
+    """
+
+    func = optimize.differential_evolution
+
+    omitted_keys = ['args', 'seed']
+    """
+    Differential evolution parameters omit the arguments for the fitting
+    function.  Also, the seed parameter is being deprecated by scipy; use rng
+    instead.
+    """
+
+
+class DJSRejectPar(FuncPar, metaclass=FuncParMetaClass):
+    """
+    Parameters used by :func:`~pypeit.core.pydl.djs_reject`.
+    """
+
+    func = djs_reject
+
+    omitted_keys = ['outmask', 'inmask', 'invvar', 'groupdim', 'groupsize', 'groupbadpix']
+    """
+    Omit the data-specific parameters for :func:`~pypeit.core.pydl.djs_reject`,
+    as well as all the ``group*`` parameters.
+    """
