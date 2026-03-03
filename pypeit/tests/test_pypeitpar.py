@@ -4,15 +4,14 @@ Module to run tests on PypeItPar classes
 import os
 
 from IPython import embed
-
 import pytest
+from scipy.optimize import differential_evolution
 
-#from pypeit.par import oldparset
-#from pypeit.par import oldpypeitpar
+from pypeit import PypeItError
 from pypeit.par import pypeitpar
 from pypeit.par import parset
+from pypeit.par import funcpar
 from pypeit.spectrographs.util import load_spectrograph
-
 
 
 # NOTE: FrameGroupPar is now an abstract class that faults when you try to

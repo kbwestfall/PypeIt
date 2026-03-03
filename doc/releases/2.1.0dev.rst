@@ -44,6 +44,8 @@ Under-the-hood Improvements
 - Separated previous functions in :mod:`~pypeit.core.extract` that have to do
   with modeling the spatial profile of the object into a new module,
   :mod:`~pypeit.core.spatialprofile`.
+- Added a new class, :class:`~pypeit.par.funcpar.FuncPar` that ingests a
+  function signature to create a parameter set
 
 Bug Fixes
 ---------

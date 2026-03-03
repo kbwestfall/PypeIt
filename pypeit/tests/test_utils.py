@@ -11,10 +11,11 @@ import pytest
 import yaml
 import numpy as np
 
-from pypeit import utils
-from pypeit import log
-from pypeit.tests.tstutils import data_output_path
 from pypeit import io
+from pypeit import log
+from pypeit import PypeItError
+from pypeit import utils
+from pypeit.tests.tstutils import data_output_path
 
 
 # Move this to tstutils?
