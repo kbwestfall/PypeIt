@@ -117,7 +117,8 @@ def _define_parameters(func, func_kwargs):
 
 
 # NOTE: I'm not crazy about the idea of having to use a metaclass, but that's
-# the only way that we can define the `parameters` dictionary dynamically.
+# the only way that we can dynamically define the `parameters` dictionary as a
+# class attribute.
 
 class FuncParMetaClass(type):
     """
