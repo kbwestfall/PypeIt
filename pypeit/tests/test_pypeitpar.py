@@ -261,3 +261,85 @@ def test_lists():
     with pytest.raises(TypeError):
         p['calibrations']['alignment']['locations'] = 0.0
         _p = pypeitpar.PypeItPar.from_cfg_lines(cfg_lines=p.to_config())  # Once as tuple
+
+
+class UnlimitedDEPar(funcpar.FuncPar):
+    func = differential_evolution
+
+
+class DESubsetPar(funcpar.FuncPar):
+    func = differential_evolution
+    kw_subset = ['maxiter', 'popsize', 'init', 'tol']
+
+
+class BadKeywordDESubsetPar(funcpar.FuncPar):
+    func = differential_evolution
+    kw_subset = ['invalid']
+
+
+def test_func_par():
+    # Basic functionality, uses scipy.optimize.differential_evolution as a test
+    # case
+
+    # The base class cannot be instantiated directly
+    with pytest.raises(NotImplementedError):
+        p = funcpar.FuncPar()
+
+    # Test the unrestricted set of keywords
+    p = UnlimitedDEPar()
+    assert p.name == 'differential_evolution', 'Function name is incorrect!'
+    assert p.module == 'scipy.optimize._differentialevolution', 'Module name is incorrect!'
+    assert p.npar == 20, 'The number of parameters changed.'
+
+    # Check for failure when restricting to an invalid parameter
+    with pytest.raises(PypeItError):
+        p = BadKeywordDESubsetPar()
+    
+    # Check for failure when providing a value for an invalid parameter
+    with pytest.raises(PypeItError):
+        p = UnlimitedDEPar(invalid='test')
+
+    # Check for success when restricting the parameter list
+    p = DESubsetPar()
+    assert p.name == 'differential_evolution', 'Function name is incorrect!'
+    assert p.module == 'scipy.optimize._differentialevolution', 'Module name is incorrect!'
+    assert p.npar == 4, 'The number of parameters changed.'
+    assert 'recombination' not in p.keys(), 'recombination should not be in the parameter list!'
+
+    # Check that both the default value and provided value are currectly set
+    tol_input = 0.1
+    p = DESubsetPar(tol=tol_input)
+    assert p.default['tol'] == 0.01, 'Default value for tol changed.'
+    assert p['tol'] == tol_input, 'Provided value for tol not set correctly!'
+
+
+def test_func_par_kwargs():
+    func_kwargs = DESubsetPar.valid_default_kwargs()
+    assert len(func_kwargs) == 4, 'Number of valid kwargs should be 4!'
+
+
+def test_func_par_from_dict():
+    cfg = {'maxiter': 100, 'popsize': 20}
+    func_kwargs = DESubsetPar.valid_default_kwargs()
+    p = DESubsetPar.from_dict(cfg)
+    assert p['maxiter'] == cfg['maxiter'], 'maxiter not set correctly from dict!'
+    assert p['popsize'] == cfg['popsize'], 'popsize not set correctly from dict!'
+    assert p['tol'] == func_kwargs['tol'], 'tol should be set to default value!'
+    assert p['init'] == func_kwargs['init'], 'init should be set to default value!'
+
+
+class DEPar(funcpar.FuncPar):
+    func = differential_evolution
+    omitted_keys = ['args', 'seed']
+
+
+def test_func_par_subclass():
+    # Basic functionality, uses scipy.optimize.differential_evolution as a test
+    # case
+    p = DEPar(popsize=10)
+
+    assert p.default['popsize'] == 15, 'Default value for popsize changed.'
+    assert p['popsize'] == 10, 'Provided value for popsize not set correctly!'
+    assert p.npar == 18, 'The number of parameters changed.'
+    assert 'args' not in p.keys(), 'args should have been omitted from the parameter list!'
+    assert 'seed' not in p.keys(), 'seed should have been omitted from the parameter list!'
