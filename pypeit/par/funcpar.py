@@ -116,6 +116,9 @@ def _define_parameters(func, func_kwargs):
     }
 
 
+# NOTE: I'm not crazy about the idea of having to use a metaclass, but that's
+# the only way that we can define the `parameters` dictionary dynamically.
+
 class FuncParMetaClass(type):
     """
     The metaclass to use for :class:`~pypeit.par.funcpar.FuncPar` to enable the
