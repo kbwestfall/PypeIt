@@ -161,8 +161,7 @@ class ParSet:
         # that the defaults in the parameters attribute adhere to their
         # definition, just as any user-defined value should.
         for key in self._data.keys():
-            self.__setitem__(key, self.parameters[key]['default'])
-
+#            self.__setitem__(key, self.parameters[key]['default'])
             try:
                 self.__setitem__(key, self.parameters[key]['default'])
             except KeyError as e:
@@ -171,8 +170,6 @@ class ParSet:
                     f'{e}'
                 ) from e
             except TypeError as e:
-                embed()
-                exit()
                 raise TypeError(
                     f'CODING ERROR: The object type for the default value of {key} in '
                     f'{self.__class__.__name__} does not adhere to its definition!'

@@ -7,9 +7,9 @@ keyword arguments of a function.
 
 import inspect
 
+from IPython import embed
 import numpy as np
 
-from pypeit import PypeItError
 from pypeit import utils
 from pypeit.par import parset
 
@@ -28,7 +28,7 @@ def _valid_default_kwargs(func, kw_subset, omitted_keys):
     if kw_subset is not None:
         indx = [k not in func_kwargs for k in kw_subset]
         if any(indx):
-            raise PypeItError(
+            raise KeyError(
                 f'CODING ERROR: {np.asarray(kw_subset)[indx]} are not valid keyword arguments '
                 f'for {func.__name__}!'
             )
@@ -58,6 +58,17 @@ def _define_parameters(func, func_kwargs):
         key : parset.set_parameter_definition(default=value, descr=descr)
         for key, value in func_kwargs.items()
     }
+
+
+class FuncParMetaClass(type):
+    def __new__(mcs, name, bases, dic):
+        # Create the class object
+        cls = super().__new__(mcs, name, bases, dic)
+        # Add the attribute to the newly created class object
+        cls.parameters = _define_parameters(
+            cls.func, _valid_default_kwargs(cls.func, cls.kw_subset, cls.omitted_keys)
+        )
+        return cls
 
 
 class FuncPar(parset.ParSet):
@@ -119,10 +130,7 @@ class FuncPar(parset.ParSet):
     """
 
     def __init__(self, **kwargs):
-        self.parameters = _define_parameters(
-            self.func, _valid_default_kwargs(self.func, self.kw_subset, self.omitted_keys)
-        )
         super().__init__(**kwargs)
-        self.module = self.get_module()
+        self.module = _get_module(self.func)
         self.name = self.func.__name__
 
