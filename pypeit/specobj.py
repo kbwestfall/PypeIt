@@ -14,7 +14,6 @@ import numpy as np
 from pypeit import log
 from pypeit import PypeItError
 from pypeit.core import flexure
-from pypeit.core import flux_calib_refactor
 from pypeit.core import parse
 from pypeit import datamodel
 from pypeit import onespec
