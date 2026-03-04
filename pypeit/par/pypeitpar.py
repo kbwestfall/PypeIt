@@ -2148,7 +2148,7 @@ class TelluricPar(parset.ParSet):
             ),
         ),
         'tel_npca': parset.set_parameter_definition(
-            dtypes=int,
+            dtype=int,
             default=5,
             descr=(
                 'Number of telluric PCA components used. Can be set to any number from 1 to 10.'
@@ -2319,7 +2319,7 @@ class TelluricPar(parset.ParSet):
             default=funcpar.DifferentialEvolutionPar(
                 popsize=30, tol=1e-3, recombination=0.7, polish=True, rng=777, disp=False
             ),
-            desc=(
+            descr=(
                 'Parameters passed to `scipy.optimize.differential_evolution` during the model '
                 'optimization.'
             ),
@@ -2364,9 +2364,10 @@ class TelluricPar(parset.ParSet):
         """
         Check the parameters are valid for the provided method.
         """
-        if self.data['tel_npca'] < 1 or self.data['tel_npca'] > 10:
+        if self['tel_npca'] < 1 or self['tel_npca'] > 10:
             raise ValueError(
-                f'Invalid value {self.data["tel_npca"]} for tell_npca (must be between 1 and 10).'
+                f'Invalid value {self["tel_npca"]} for tell_npca; it must be an integer between 1 '
+                'and 10.'
             )
 
         # Other checks?

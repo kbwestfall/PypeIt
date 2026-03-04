@@ -571,16 +571,14 @@ class ObservedSourceModelFitter:
 
         # Copy the parameters for the optimizer so that we can use them with the
         # guess parameters, as needed, without altering the input de_par object.
-        # TODO: I don't like this deepcopy, but I'm not sure there's a way
-        # around it.
-        de_kwargs = copy.deepcopy(_de_par.data)
+        de_kwargs = _de_par.to_dict()
 
         # If the guess parameters are provided, use them to construct the
         # initial population used by differential evolution
         if guess_par is not None:
             # Setup the generator and add it to the optimizer kwargs.  If rng is
             # already a Generator, default_rng just returns it.
-            rng = np.random.default_rng(de_kwargs.pop('rng', _de_par.default['rng']))
+            rng = np.random.default_rng(de_kwargs.pop('rng', _de_par.parameters['rng']['default']))
 
             # Get the initial population and add it to the optimizer kwargs.
             # Here we pop the `init` and `popsize` paraemeters, if they're
@@ -588,7 +586,8 @@ class ObservedSourceModelFitter:
             # the guess paraeamters.
             de_kwargs.pop('init', None)
             init = self.init_fit_pop(
-                bounds, guess_par, de_kwargs.pop('popsize', _de_par.default['popsize']),
+                bounds, guess_par,
+                de_kwargs.pop('popsize', _de_par.parameters['popsize']['default']),
                 ballsize, rng
             )
 
