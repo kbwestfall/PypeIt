@@ -2091,683 +2091,642 @@ class SensfuncUVISPar(parset.ParSet):
         ):
             raise ValueError(f'Provided sensitivity function does not exist: {self["sensfunc"]}.')
 
-# class TelluricPar(ParSet):
-#     """
-#     A parameter set holding the telluric correction parameters.
-# 
-#     For a table with the current keywords, defaults, and descriptions,
-#     see :ref:`parameters`.
-#     """
-# 
-#     def __init__(
-#         self, only_orders=None, sn_clip=None, resolution_guess=None, tel_file=None, tel_npca=None,
-#         tel_type=None, resolution_frac_bounds=None, pix_shift_bounds=None, src_type=None,
-#         qso_z=None, qso_dz=None, qso_pca_file=None, qso_npca=None, star_type=None, star_mag=None,
-#         star_ra=None, star_dec=None, poly_func=None, poly_model=None, poly_order=None,
-#         rel_coeff_bounds=None, abs_coeff_bounds=None, ballsize=None, diff_evol=None,
-#         max_rej_iter=None, reject=None, fit_wave_range=None, spec_mask_files=None
-#     ):
-# 
-#         # Grab the parameter names and values from the function arguments
-#         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-#         pars = {k: values[k] for k in args[1:]}
-# 
-#         # Initialize the other used specifications for this parameter set
-#         defaults = dict.fromkeys(pars.keys())
-#         options = dict.fromkeys(pars.keys())
-#         dtypes = dict.fromkeys(pars.keys())
-#         descr = dict.fromkeys(pars.keys())
-# 
-#         # Spectrum parameters
-# 
-#         defaults['only_orders'] = None
-#         dtypes['only_orders'] = [int, list, np.ndarray]
-#         descr['only_orders'] = (
-#             'For echelle spectrographs, list one or more orders to restrict those included in fit.'
-#         )
-# 
-#         defaults['sn_clip'] = 30.0
-#         dtypes['sn_clip'] = [int, float]
-#         descr['sn_clip'] = (
-#             'Impose a maximum S/N limit on the observed spectrum by adding imposing a floor on '
-#             'the measurement error. This prevents overly aggressive rejection of high S/N data, '
-#             'which nevertheless differ at a level greater than the formal S/N due to the fact '
-#             'that our telluric models are only good to about 3%.'
-#         )
-# 
-#         defaults['resolution_guess'] = None
-#         dtypes['resolution_guess'] = [int, float]
-#         descr['resolution_guess'] = (
-#             'An estimate of the resolution of your observed spectrum expressed as '
-#             'lambda/dlambda.  The spectral resolution is fit explicitly as part of the telluric '
-#             'model fitting, but this guess helps determine the fractional bounds on the '
-#             'resolution for the optimization (see ``resolution_frac_bounds``). If not provided, '
-#             'the wavelength sampling of your spectrum will be used to estimate the resolution '
-#             'assuming a typical sampling of 3 spectral pixels per resolution element.'
-#         )
-# 
-#         # Parameters for the telluric model
-#         defaults['tel_file'] = None
-#         dtypes['tel_file'] = str
-#         descr['tel_file'] = (
-#             'File with the telluric model spectra to use.  Due to their size, the files are not '
-#             'included with the released pypeit package; instead the code downloads each file '
-#             'into your cache as needed.  This can be the name of a file provided by PypeIt, like '
-#             'TellPCA_3000_26000_R10000.fits, or the full path to a local file, which must '
-#             'have the correct format.'
-#         )
-# 
-#         defaults['tel_npca'] = 5
-#         dtypes['tel_npca'] = int
-#         descr['tel_npca'] = (
-#             'Number of telluric PCA components used. Can be set to any number from 1 to 10.'
-#         )
-# 
-#         defaults['tel_type'] = 'pca'
-#         options['tel_type'] = TelluricPar.valid_tel_type()
-#         dtypes['tel_type'] = str
-#         descr['tel_type'] = (
-#             'Type of telluric models used.  The options are ``pca`` or ``grid``. The ``grid`` '
-#             'option uses a fixed grid of pre-computed HITRAN+LBLRTM atmospheric transmission '
-#             'models for each observatory, whereas the ``pca`` option uses principal components '
-#             'of a large model grid to compute an accurate pseudo-telluric model.  The pca '
-#             'should be used in all new applications of PypeIt; the grid approach is only provided '
-#             'for comparing the pca and grid approaches.'
-#         )
-# 
-#         # - Parameters used to set the bounds for the telluric model parameters
-# 
-#         pars['resolution_frac_bounds'] = util.tuple_force(pars['resolution_frac_bounds'])
-#         defaults['resolution_frac_bounds'] = (0.6,1.4)
-#         dtypes['resolution_frac_bounds'] = tuple
-#         descr['resolution_frac_bounds'] = (
-#             'Fractional bounds for the spectral resolution, relative to the provided, or '
-#             'estimated, resolution value (see ``resolution_guess``). For example, if the '
-#             'guess resolution is 1000, the default bounds on the resolution will be 600 to 1400.'
-#         )
-# 
-#         pars['pix_shift_bounds'] = util.tuple_force(pars['pix_shift_bounds'])
-#         defaults['pix_shift_bounds'] = (-5.0,5.0)
-#         dtypes['pix_shift_bounds'] = tuple
-#         descr['pix_shift_bounds'] = (
-#             'Bounds for the pixel shift optimization in the telluric model fit in pixels.  The '
-#             'telluric spectrum will be allowed to shift within this range during the fit.'
-#         )
-# 
-#         # TODO: Add pix_stretch_bounds?
-# 
-#         # Parameters for the source model
-#         defaults['src_type'] = None
-#         dtypes['src_type'] = str
-#         descr['src_type'] = (
-#             'The model source type to be used for telluric fitting. Currently the options are: '
-#             '``qso``, ``star``, and ``poly``.  Make sure to set all the ``qso_*`` parameters '
-#             'when using the QSO model, all the ``star_*`` parameters when using the star '
-#             'model, and all the ``poly_*`` parameters when using the polynomial model.  '
-#             'Importantly, all three models allow for a low-order polynomial modification to the '
-#             'model spectrum, as determined by the ``poly_*`` parameters.  If you do not want any '
-#             'polynomial modification of the QSO or star spectrum, you *must* set '
-#             '``poly_order=0``.  Note that the stellar model spectrum is generated using '
-#             ':class:`~pypeit.core.standard.get_standard_spectrum`; see the documentation for '
-#             'that function for more description of the ``star_*`` parameters.'
-#         )
-# 
-#         #   -- Parameters for QSO model
-#         defaults['qso_z'] = 0.0
-#         dtypes['qso_z'] = [int, float]
-#         descr['qso_z'] = (
-#             'The redshift for the QSO model.  This needs to be accurate to within the redshift '
-#             'range set by ``qso_dz``.'
-#         )
-# 
-#         defaults['qso_dz'] = 0.1
-#         dtypes['qso_dz'] = [int, float]
-#         descr['qso_dz'] = 'The +/- redshift range of the observed QSO.'
-# 
-#         defaults['qso_pca_file'] = 'qso_pca_1200_3100.fits'
-#         dtypes['qso_pca_file'] = str
-#         descr['qso_pca_file'] = (
-#             'Fits file containing a PCA model for QSO spectra.  If you change the default, you' 
-#             'may need to alter the upper and lower limit for the wavelength range.'
-#         )
-# 
-#         defaults['qso_npca'] = 8
-#         dtypes['qso_npca'] = int
-#         descr['qso_npca'] = 'Number of PCA components to use for the QSO source model.'
-# 
-#         #   - Parameters for a stellar source
-#         defaults['star_type'] = None
-#         dtypes['star_type'] = str
-#         descr['star_type'] = (
-#             'Spectral type of the star; same as the ``spectral_type`` keyword in '
-#             ':class:`~pypeit.core.standard.get_standard_spectrum`.'
-#         )
-# 
-#         defaults['star_mag'] = None
-#         dtypes['star_mag'] = [float, int]
-#         descr['star_mag'] = (
-#             'V-band magnitude of the star; same as the ``V_mag`` keyword in '
-#             ':class:`~pypeit.core.standard.get_standard_spectrum`.'
-#         )
-# 
-#         defaults['star_ra'] = None
-#         dtypes['star_ra'] = float
-#         descr['star_ra'] = (
-#             'On-sky right ascension coordinate of the standard star in decimal degrees; same as '
-#             'the ``ra`` keyword in :class:`~pypeit.core.standard.get_standard_spectrum`.'
-#         )
-# 
-#         defaults['star_dec'] = None
-#         dtypes['star_dec'] = float
-#         descr['star_dec'] = (
-#             'On-sky declination coordinate of the standard star in decimal degrees; same as '
-#             'the ``dec`` keyword in :class:`~pypeit.core.standard.get_standard_spectrum`.'
-#         )
-# 
-#         # TODO: Allow the standard to be set by name, and allow the user to
-#         # specify the archive name.
-# 
-#         # - General parameters used to make low-order adjustments to the source model
-#         defaults['poly_func'] = 'legendre'
-#         dtypes['poly_func'] = str
-#         descr['poly_func'] = 'Polynomial model function'
-# 
-#         defaults['poly_model'] = 'exp'
-#         dtypes['poly_model'] = str
-#         descr['poly_model'] = (
-#             'Type of polynomial model to use, where the options are ``linear``, ``square``, or '
-#             '``exp`` corresponding to normal polynomial, squared polynomial, or exponentiated '
-#             'polynomial.'
-#         )
-# 
-#         defaults['poly_order'] = 3
-#         dtypes['poly_order'] = int
-#         descr['poly_order'] = 'Order of the polynomial model.'
-# 
-#         # - Parameters used to set the bounds for the source model polynomial parameters
-# 
-#         pars['rel_coeff_bounds'] = util.tuple_force(pars['rel_coeff_bounds'])
-#         defaults['rel_coeff_bounds'] = (-20.0, 20.0)
-#         dtypes['rel_coeff_bounds'] = tuple
-#         descr['rel_coeff_bounds'] = (
-#             'Fractional boundaries on the polynomial coefficients, relative to the coefficients '
-#             'estimated during an initial fit.'
-#         )
-# 
-#         pars['abs_coeff_bounds'] = util.tuple_force(pars['abs_coeff_bounds'])
-#         defaults['abs_coeff_bounds'] = (-5.0, 5.0)
-#         dtypes['abs_coeff_bounds'] = tuple
-#         descr['abs_coeff_bounds'] = (
-#             'Absolute boundaries for the polynomial coefficients, relative to the coefficients '
-#             'estimated during an initial fit.'
-#         )
-# 
-#         # Optimizer parameters
-# 
-#         defaults['ballsize'] = 5e-4
-#         dtypes['ballsize'] = float
-#         descr['ballsize'] = (
-#             'When initializing the population of samplers for the differential evolution '
-#             'optimizer, this sets that scale of the Gaussian distribution to adopt around the '
-#             'initial guess for or the most recent estimates of the parameters.  This value is '
-#             'relative to the total parameter space allowed for each parameter based on their '
-#             'bounds.  That is, if a parameter can range from 0 to 2, the default value of 5e-4 '
-#             'means that the initial samplers will be drawn from a Gaussian with a sigma of 1e-3 '
-#             'centered on the initial guess parameter or its most recent estimate.  The optimizer '
-#             'will converge faster when the samplers start closer to the optimal solution.'
-#         )
-# 
-#         defaults['diff_evol'] = funcpar.DifferentialEvolutionPar(
-#             popsize=30, tol=1e-3, recombination=0.7, polish=True, rng=777, disp=False
-#         )
-#         dtypes['diff_evol'] = funcpar.DifferentialEvolutionPar
-#         descr['diff_evol'] = (
-#             'Parameters passed to `scipy.optimize.differential_evolution` during the model '
-#             'optimization.'
-#         )
-# 
-#         # Rejection parameters
-#         defaults['max_rej_iter'] = 2
-#         dtypes['max_rej_iter'] = int
-#         descr['max_rej_iter'] = (
-#             'Maximum number of rejection iterations to perform when fitting the observed '
-#             'spectrum.  Set to 0 to skip all rejection iterations.'
-#         )
-# 
-#         defaults['reject'] = funcpar.DJSRejectPar(sticky=True, lower=3.0, upper=3.0)
-#         dtypes['reject'] = funcpar.DJSRejectPar
-#         descr['reject'] = (
-#             'Parameters passed to :func:`~pypeit.utils.djs_reject` during rejecting outliers '
-#             'during iterative fitting.  To force no rejection iterations, set the '
-#             '``max_rej_iter`` parameter to 0.'
-#         )
-# 
-#         # Masking
-#         defaults['fit_wave_range'] = None
-#         dtypes['fit_wave_range'] = list
-#         descr['fit_wave_range'] = (
-#             'Limit the model fitting to this wavelength range. The format is [wave_min, wave_max].'
-#         ) 
-# 
-#         defaults['spec_mask_files'] = ['atm.toml', 'hydrogen.toml']
-#         dtypes['spec_mask_files'] = [str, list]
-#         descr['spec_mask_files'] = (
-#             'One or more TOML files with masks to apply to the spectra during the fit.  These '
-#             'can be local files or files provided by the pypeit package.'
-#         )
-# 
-#         # Instantiate the parameter set
-#         super().__init__(
-#             list(pars.keys()), values=list(pars.values()), defaults=list(defaults.values()),
-#             dtypes=list(dtypes.values()), descr=list(descr.values())
-#         )
-#         self.validate()
-# 
-#     @classmethod
-#     def from_dict(cls, cfg):
-#         k = np.array([*cfg.keys()])
-# 
-#         # Basic keywords
-#         parkeys = [
-#             'only_orders', 'sn_clip', 'resolution_guess', 'tel_file', 'tel_npca', 'tel_type',
-#             'resolution_frac_bounds', 'pix_shift_bounds', 'src_type', 'qso_z', 'qso_dz',
-#             'qso_pca_file', 'qso_npca', 'star_type', 'star_mag', 'star_ra', 'star_dec',
-#             'poly_func', 'poly_model', 'poly_order', 'rel_coeff_bounds', 'abs_coeff_bounds',
-#             'ballsize', 'max_rej_iter', 'fit_wave_range', 'spec_mask_files'
-#         ]
-#         allkeys = parkeys + ['diff_evol', 'reject']
-# 
-#         badkeys = np.array([pk not in allkeys for pk in k])
-#         if np.any(badkeys):
-#             raise ValueError(f'{k[badkeys]} not recognized key(s) for {cls.__name__}.')
-# 
-#         kwargs = {}
-#         for pk in parkeys:
-#             kwargs[pk] = cfg[pk] if pk in k else None
-# 
-#         # Keywords that are ParSets
-#         pk = 'diff_evol'
-#         kwargs[pk] = funcpar.DifferentialEvolutionPar.from_dict(cfg[pk]) if pk in k else None
-#         pk = 'reject'
-#         kwargs[pk] = funcpar.DJSRejectPar.from_dict(cfg[pk]) if pk in k else None
-# 
-#         return cls(**kwargs)
-# 
-#     @staticmethod
-#     def valid_tel_type():
-#         """
-#         Return the valid telluric methods.
-#         """
-#         return ['pca', 'grid']
-# 
-#     def validate(self):
-#         """
-#         Check the parameters are valid for the provided method.
-#         """
-#         if self.data['tel_npca'] < 1 or self.data['tel_npca'] > 10:
-#             raise ValueError(
-#                 f'Invalid value {self.data["tel_npca"]} for tell_npca (must be between 1 and 10).'
-#             )
-# 
-#         # Other checks?
 
-class TelluricPar(parset.ParSet):
+class TelluricPar(ParSet):
     """
-    New-style parameter set holding telluric-correction arguments (replacement for TelluricPar).
+    A parameter set holding the telluric correction parameters.
 
-    Mirrors the legacy `TelluricPar` in :mod:`pypeit.par.pypeitpar`.
+    For a table with the current keywords, defaults, and descriptions,
+    see :ref:`parameters`.
     """
 
     default_key = 'telluric'
 
-    valid_teltype = ['pca', 'grid']
+    valid_tel_type = ['pca', 'grid']
+
+    valid_source_type = ['qso', 'star', 'poly']
 
     parameters = {
-        'telgridfile': parset.set_parameter_definition(
-            dtype=str,
+        'only_orders': parset.set_parameter_definition(
+            dtype=[int, list, np.ndarray],
             descr=(
-                'File with the telluric model spectra to use.  Generally, these do '
-                'not need to be set; reasonable defaults are provided for each '
-                'spectrograph.  Due to their size, the files are not included with '
-                'the released pypeit package; instead the code downloads each file '
-                'into your cache as needed.  If this parameter is set in your pypeit '
-                'file, it can be the path to a local file (which must have the '
-                'correct format), or it can be the name of the specific cache file to '
-                'use (e.g., TellPCA_3000_26000_R10000.fits).'
-            ),
-        ),
-        'tell_npca': parset.set_parameter_definition(
-            dtype=int,
-            default=5,
-            descr='Number of telluric PCA components used. Can be set to any number from 1 to 10.',
-        ),
-        'teltype': parset.set_parameter_definition(
-            dtype=str,
-            default='pca',
-            options=valid_teltype,
-            descr=(
-                'Method used to evaluate telluric models.  Options are ``pca`` or '
-                '``grid``. The ``grid`` option uses a fixed grid of pre-computed '
-                'HITRAN+LBLRTM atmospheric transmission models for each observatory, '
-                'whereas the ``pca`` option uses principal components of a larger '
-                'model grid to compute an accurate pseudo-telluric model with a much '
-                'lighter telgridfile.'
+                'For echelle spectrographs, list one or more orders to restrict those included in '
+                'fit.'
             ),
         ),
         'sn_clip': parset.set_parameter_definition(
             dtype=[int, float],
             default=30.0,
             descr=(
-                'This adds an error floor to the variance, preventing too much '
-                'rejection at high-S/N (i.e., standard stars, bright objects), using '
-                'the function :func:`~pypeit.utils.clip_ivar`. A small erorr is added '
-                'to the input variance so that the output variance will never give '
-                'S/N greater than ``sn_clip``. This prevents overly aggressive '
-                'rejection in high S/N ratio spectra that neverthless differ at a '
-                'level greater than the formal S/N due to the fact that our telluric '
-                'models are only good to about 3%.'
+                'Impose a maximum S/N limit on the observed spectrum by adding imposing a floor '
+                'on the measurement error. This prevents overly aggressive rejection of high S/N '
+                'data, which nevertheless differ at a level greater than the formal S/N due to '
+                'the fact that our telluric models are only good to about 3%.'
             ),
         ),
-        'resln_guess': parset.set_parameter_definition(
+        'resolution_guess': parset.set_parameter_definition(
             dtype=[int, float],
             descr=(
-                'A guess for the resolution of your spectrum expressed as '
-                'lambda/dlambda. The resolution is fit explicitly as part of the '
-                'telluric model fitting, but this guess helps determine the bounds '
-                'for the optimization (see ``resln_frac_bounds``). If not provided, '
-                'the wavelength sampling of your spectrum will be used and the '
-                'resolution calculated using a typical sampling of 3 spectral pixels '
-                'per resolution element.'
+                'An estimate of the resolution of your observed spectrum expressed as '
+                'lambda/dlambda.  The spectral resolution is fit explicitly as part of the '
+                'telluric model fitting, but this guess helps determine the fractional bounds on '
+                'the resolution for the optimization (see ``resolution_frac_bounds``). If not '
+                'provided, the wavelength sampling of your spectrum will be used to estimate the '
+                'resolution assuming a typical sampling of 3 spectral pixels per resolution '
+                'element.'
             ),
         ),
-        'resln_frac_bounds': parset.set_parameter_definition(
+        'tel_file': parset.set_parameter_definition(
+            dtype=str,
+            descr=(
+                'File with the telluric model spectra to use.  Due to their size, the files are '
+                'not included with the released pypeit package; instead the code downloads each '
+                'file into your cache as needed.  This can be the name of a file provided by '
+                'PypeIt, like TellPCA_3000_26000_R10000.fits, or the full path to a local file, '
+                'which must have the correct format.'
+            ),
+        ),
+        'tel_npca': parset.set_parameter_definition(
+            dtypes=int,
+            default=5,
+            descr=(
+                'Number of telluric PCA components used. Can be set to any number from 1 to 10.'
+            ),
+        ),
+        'tel_type': parset.set_parameter_definition(
+            dtype=str,
+            default='pca',
+            options=valid_tel_type,
+            descr=(
+                'Type of telluric models used.  The options are ``pca`` or ``grid``. The ``grid`` '
+                'option uses a fixed grid of pre-computed HITRAN+LBLRTM atmospheric transmission '
+                'models for each observatory, whereas the ``pca`` option uses principal '
+                'components of a large model grid to compute an accurate pseudo-telluric model.  '
+                'The pca should be used in all new applications of PypeIt; the grid approach is '
+                'only provided for comparing the pca and grid approaches.'
+            ),
+        ),
+        'resolution_frac_bounds': parset.set_parameter_definition(
             dtype=tuple,
             default=(0.6, 1.4),
             descr=(
-                'Bounds for the resolution fit optimization which is part of the '
-                'telluric model.  This range is in units of ``resln_guess``, so the '
-                'default would bound the spectral resolution fit to be within the '
-                'range ``bounds_resln = (0.6*resln_guess, 1.4*resln_guess)``.'
+                'Fractional bounds for the spectral resolution, relative to the provided, or '
+                'estimated, resolution value (see ``resolution_guess``). For example, if the '
+                'guess resolution is 1000, the default bounds on the resolution will be 600 to '
+                '1400.'
             ),
         ),
         'pix_shift_bounds': parset.set_parameter_definition(
             dtype=tuple,
             default=(-5.0, 5.0),
             descr=(
-                'Bounds for the pixel shift optimization in the telluric model fit in units of '
-                'pixels.  The atmosphere will be allowed to shift within this range during the '
-                'fit.'
+                'Bounds for the pixel shift optimization in the telluric model fit in pixels.  '
+                'The telluric spectrum will be allowed to shift within this range during the fit.'
             ),
         ),
-        'delta_coeff_bounds': parset.set_parameter_definition(
-            dtype=tuple,
-            default=(-20.0, 20.0),
-            descr=(
-                'Parameters setting the polynomial coefficient bounds for sensfunc optimization.'
-            ),
-        ),
-        'minmax_coeff_bounds': parset.set_parameter_definition(
-            dtype=tuple,
-            default=(-5.0, 5.0),
-            descr=(
-                "Parameters setting the polynomial coefficient bounds for sensfunc "
-                "optimization.  Bounds are currently determined as follows.  We "
-                "compute an initial fit to the sensfunc in the "
-                ":func:`~pypeit.core.telluric.init_sensfunc_model` function. That "
-                "determines a set of coefficients. The bounds are then determined "
-                "according to: "
-                "``[(np.fmin(np.abs(this_coeff)*obj_params['delta_coeff_bounds'][0], "
-                "obj_params['minmax_coeff_bounds'][0]), "
-                "np.fmax(np.abs(this_coeff)*obj_params['delta_coeff_bounds'][1], "
-                "obj_params['minmax_coeff_bounds'][1]))]``."
-            ),
-        ),
-        'maxiter': parset.set_parameter_definition(
-            dtype=int,
-            default=2,
-            descr=(
-                'Maximum number of iterations for the telluric + object model fitting.  The code '
-                'performs multiple iterations rejecting outliers at each step.  The fit is then '
-                'performed anew to the remaining good pixels.  For this reason if you run with '
-                'the ``disp=True`` option, you will see that the f(x) loss function gets '
-                'progressively better during the iterations.'
-            ),
-        ),
-        'sticky': parset.set_parameter_definition(
-            dtype=bool,
-            default=True,
-            descr=(
-                'Sticky parameter for the :func:`~pypeit.utils.djs_reject` algorithm '
-                'for iterative model fit rejection.  If set to True then points '
-                'rejected from a previous iteration are kept rejected, in other words '
-                'the bad pixel mask is the OR of all previous iterations and rejected '
-                'pixels accumulate.  If set to False, the bad pixel mask is the mask '
-                'from the previous iteration, and if the model fit changes between '
-                'iterations, points can alternate from being rejected to not '
-                'rejected.  At present this code only performs optimizations with '
-                'differential evolution and experience shows that sticky needs to be '
-                'True in order for these to converge.  This is because the outliers '
-                'can be so large that they dominate the loss function, and one never '
-                'iteratively converges to a good model fit.  In other words, the '
-                'deformations in the model between iterations with ``sticky=False`` '
-                'are too small to approach a reasonable fit.'
-            ),
-        ),
-        'lower': parset.set_parameter_definition(
-            dtype=[int, float],
-            default=3.0,
-            descr=(
-                'Lower rejection threshold in units of ``sigma_corr*sigma``, where '
-                '``sigma`` is the formal noise of the spectrum, and sigma_corr is an '
-                'empirically determined correction to the formal error. The '
-                'distribution of input chi (defined by ``chi = (data - '
-                'model)/sigma``) values is analyzed, and a correction factor to the '
-                'formal error ``sigma_corr`` is returned which is multiplied into the '
-                'formal errors. In this way, a rejection threshold of e.g. 3 sigma, '
-                'will always correspond to roughly the same percentile.  This '
-                'renormalization is performed with '
-                ':func:`~pypeit.coadd1d.renormalize_errors` function, and guarantees '
-                'that rejection is not too aggressive in cases where the empirical '
-                'errors determined from the chi-distribution differ significantly '
-                'from the formal noise which is used to determine chi.'
-            ),
-        ),
-        'upper': parset.set_parameter_definition(
-            dtype=[int, float],
-            default=3.0,
-            descr=(
-                'Upper rejection threshold in units of ``sigma_corr*sigma``, where ``sigma`` is '
-                'the formal noise of the spectrum, and ``sigma_corr`` is an empirically '
-                'determined correction to the formal error. See ``lower`` for additional detail.'
-            ),
-        ),
-        'seed': parset.set_parameter_definition(
-            dtype=int,
-            default=777,
-            descr=(
-                'An initial seed for the differential evolution optimization, which is a random '
-                'process.  The default is 777, which will be used to generate a unique seed for '
-                'every order.  A specific seed is used because otherwise the random number '
-                'generator will use the time for the seed, and the results will not be '
-                'reproducible.'
-            ),
-        ),
-        'tol': parset.set_parameter_definition(
-            dtype=float,
-            default=1e-3,
-            descr=(
-                'Relative tolerance for converage of the differential evolution optimization. '
-                'See `scipy.optimize.differential_evolution`_ for details.'
-            ),
-        ),
-        'popsize': parset.set_parameter_definition(
-            dtype=int,
-            default=30,
-            descr=(
-                'A multiplier for setting the total population size for the differential '
-                'evolution optimization. See `scipy.optimize.differential_evolution`_ for details.'
-            ),
-        ),
-        'recombination': parset.set_parameter_definition(
-            dtype=[int, float],
-            default=0.7,
-            descr=(
-                'The recombination constant for the differential evolution optimization. This '
-                'should be in the range between 0 and 1. See '
-                ':class:`scipy.optimize.differential_evolution` for details.'
-            ),
-        ),
-        'polish': parset.set_parameter_definition(
-            dtype=bool,
-            default=True,
-            descr=(
-                'If True then differential evolution will perform an additional optimization at '
-                'the end to polish the best fit at the end, which can improve the optimization '
-                'slightly. See `scipy.optimize.differential_evolution`_ for details.'
-            ),
-        ),
-        'disp': parset.set_parameter_definition(
-            dtype=bool,
-            default=False,
-            descr=(
-                'Argument for `scipy.optimize.differential_evolution`_ that will display status '
-                'messages to the screen indicating the status of the optimization.  See '
-                'documentation for :class:`~pypeit.core.telluric.Telluric` for a description of '
-                'the output and how to know if things are working well.'
-            ),
-        ),
-        'only_orders': parset.set_parameter_definition(
-            dtype=[int, list, np.ndarray],
-            descr=(
-                'Order number, or list of order numbers if you only want to fit specific orders.'
-            ),
-        ),
-        'objmodel': parset.set_parameter_definition(
+        # TODO: Add pix_stretch_bounds?
+        'src_type': parset.set_parameter_definition(
             dtype=str,
+            options=valid_source_type
             descr=(
-                'The object model to be used for telluric fitting. Currently the options are: '
-                '``qso``, ``star``, and ``poly``.  For ``qso``, you might need to set '
-                '``redshift`` and ``bal_wv_min_max``.  For ``star``, you must set ``star_type``, '
-                '``star_ra``, ``star_dec``, and ``star_mag``.  For ``poly``, you might need to '
-                'set ``fit_wv_min_max`` and ``norder``.'
+                'The model source type to be used for telluric fitting. Currently the options '
+                'are: ``qso``, ``star``, and ``poly``.  Make sure to set all the ``qso_*`` '
+                'parameters when using the QSO model, all the ``star_*`` parameters when using '
+                'the star model, and all the ``poly_*`` parameters when using the polynomial '
+                'model.  Importantly, all three models allow for a low-order polynomial '
+                'modification to the model spectrum, as determined by the ``poly_*`` parameters.  '
+                'If you do not want any polynomial modification of the QSO or star spectrum, you '
+                '*must* set ``poly_order=0``.  Note that the stellar model spectrum is generated '
+                'using :class:`~pypeit.core.standard.get_standard_spectrum`; see the '
+                'documentation for that function for more description of the ``star_*`` '
+                'parameters.'
             ),
         ),
-        'redshift': parset.set_parameter_definition(
+        #   -- Parameters for QSO model
+        'qso_z': parset.set_parameter_definition(
             dtype=[int, float],
             default=0.0,
             descr=(
-                'The redshift for the object model. This is currently only used by the QSO model.'
+                'The redshift for the QSO model.  This needs to be accurate to within the '
+                'redshift range set by ``qso_dz``.'
             ),
         ),
-        'delta_redshift': parset.set_parameter_definition(
-            dtype=float,
+        'qso_dz': parset.set_parameter_definition(
+            dtype=[int, float],
             default=0.1,
-            descr=(
-                'Range within the redshift can be varied for telluric fitting, i.e. the code '
-                'performs a bounded optimization within the redshift +- delta_redshift.'
-            ),
+            descr='The +/- redshift range of the observed QSO.',
         ),
-        'pca_file': parset.set_parameter_definition(
+        'qso_pca_file': parset.set_parameter_definition(
             dtype=str,
             default='qso_pca_1200_3100.fits',
             descr=(
-                'Fits file containing quasar PCA model. Needed for the QSO model.  If you change '
-                'the default, you might need to set ``pca_lower`` and ``pca_upper``.'
+                'Fits file containing a PCA model for QSO spectra.  If you change the default, '
+                'you may need to alter the upper and lower limit for the wavelength range.'
             ),
         ),
-        'npca': parset.set_parameter_definition(
+        'qso_npca': parset.set_parameter_definition(
             dtype=int,
             default=8,
-            descr='Number of pca for the objmodel=qso qso PCA fit',
+            descr='Number of PCA components to use for the QSO source model.',
         ),
-        'bal_wv_min_max': parset.set_parameter_definition(
-            dtype=[list, np.ndarray],
-            descr=(
-                'Min/max wavelength of broad absorption features. If there are several BAL '
-                'features, the format for this mask is ``[wave_min_bal1, wave_max_bal1, '
-                'wave_min_bal2, wave_max_bal2,...]``. These masked pixels will be ignored during '
-                'the fitting.'
-            ),
-        ),
-        'bounds_norm': parset.set_parameter_definition(
-            dtype=tuple,
-            default=(0.1, 3.0),
-            descr='Normalization bounds for scaling the initial object model.',
-        ),
-        'tell_norm_thresh': parset.set_parameter_definition(
-            dtype=[int, float],
-            default=0.9,
-            descr='Threshold of telluric absorption region',
-        ),
-        'pca_lower': parset.set_parameter_definition(
-            dtype=[int, float],
-            default=1220.0,
-            descr='Minimum wavelength for the qso pca model',
-        ),
-        'pca_upper': parset.set_parameter_definition(
-            dtype=[int, float],
-            default=3100.0,
-            descr='Maximum wavelength for the qso pca model',
-        ),
-        'mask_lyman_a': parset.set_parameter_definition(
-            dtype=bool,
-            default=True,
-            descr='Mask the blueward of Lyman-alpha line during the fitting?',
-        ),
+        #   -- Parameters for a stellar source
         'star_type': parset.set_parameter_definition(
             dtype=str,
-            descr='stellar type',
+            descr=(
+                'Spectral type of the star; same as the ``spectral_type`` keyword in '
+                ':class:`~pypeit.core.standard.get_standard_spectrum`.'
+            ),
         ),
         'star_mag': parset.set_parameter_definition(
             dtype=[float, int],
-            descr='AB magnitude in V band',
+            descr=(
+                'V-band magnitude of the star; same as the ``V_mag`` keyword in '
+                ':class:`~pypeit.core.standard.get_standard_spectrum`.'
+            ),
         ),
         'star_ra': parset.set_parameter_definition(
             dtype=float,
-            descr='Object right-ascension in decimal deg',
+            descr=(
+                'On-sky right ascension coordinate of the standard star in decimal degrees; same '
+                'as the ``ra`` keyword in :class:`~pypeit.core.standard.get_standard_spectrum`.'
+            ),
         ),
         'star_dec': parset.set_parameter_definition(
             dtype=float,
-            descr='Object declination in decimal deg',
+            descr=(
+                'On-sky declination coordinate of the standard star in decimal degrees; same as '
+                'the ``dec`` keyword in :class:`~pypeit.core.standard.get_standard_spectrum`.'
+            ),
         ),
-        'func': parset.set_parameter_definition(
+        # TODO: Allow the standard to be set by name, and allow the user to
+        # specify the archive name.
+        # -- General parameters used to make low-order adjustments to the source model
+        'poly_func': parset.set_parameter_definition(
             dtype=str,
             default='legendre',
             descr='Polynomial model function',
         ),
-        'model': parset.set_parameter_definition(
+        'poly_model': parset.set_parameter_definition(
             dtype=str,
             default='exp',
             descr=(
-                'Types of polynomial model. Options are ``poly``, ``square``, ``exp`` '
-                'corresponding to normal polynomial, squared polynomial, or exponentiated '
-                'polynomial.'
+                'Type of polynomial model to use, where the options are ``linear``, ``square``, '
+                'or ``exp`` corresponding to normal polynomial, squared polynomial, or '
+                'exponentiated polynomial.'
             ),
         ),
-        'polyorder': parset.set_parameter_definition(
+        'poly_order': parset.set_parameter_definition(
             dtype=int,
             default=3,
-            descr='Order of the polynomial model fit',
+            descr='Order of the polynomial model.',
         ),
-        'fit_wv_min_max': parset.set_parameter_definition(
-            dtype=list,
+        # -- Parameters used to set the bounds for the source model polynomial parameters
+        'rel_coeff_bounds': parset.set_parameter_definition(
+            dtype=tuple,
+            default=(-20.0, 20.0),
             descr=(
-                'Pixels within this mask will be used during the fitting. The format is the same '
-                'with ``bal_wv_min_max``, but this mask is good pixel masks.'
+                'Fractional boundaries on the polynomial coefficients, relative to the '
+                'coefficients estimated during an initial fit.'
             ),
         ),
+        'abs_coeff_bounds': parset.set_parameter_definition(
+            dtype=tuple,
+            default=(-5.0, 5.0),
+            descr=(
+                'Absolute boundaries for the polynomial coefficients, relative to the '
+                'coefficients estimated during an initial fit.'
+            ),
+        ),
+        # -- Optimizer parameters
+        'ballsize': parset.set_parameter_definition(
+            dtype=float,
+            default=5e-4,
+            descr=(
+                'When initializing the population of samplers for the differential evolution '
+                'optimizer, this sets that scale of the Gaussian distribution to adopt around the '
+                'initial guess for or the most recent estimates of the parameters.  This value is '
+                'relative to the total parameter space allowed for each parameter based on their '
+                'bounds.  That is, if a parameter can range from 0 to 2, the default value of '
+                '5e-4 means that the initial samplers will be drawn from a Gaussian with a sigma '
+                'of 1e-3 centered on the initial guess parameter or its most recent estimate.  '
+                'The optimizer will converge faster when the samplers start closer to the optimal '
+                'solution.'
+            ),
+        ),
+        'diff_evol': parset.set_parameter_definition(
+            dtype=funcpar.DifferentialEvolutionPar,
+            default=funcpar.DifferentialEvolutionPar(
+                popsize=30, tol=1e-3, recombination=0.7, polish=True, rng=777, disp=False
+            ),
+            desc=(
+                'Parameters passed to `scipy.optimize.differential_evolution` during the model '
+                'optimization.'
+            ),
+        ),
+        # -- Rejection parameters
+        'max_rej_iter': parset.set_parameter_definition(
+            dtype=int,
+            default=2,
+            descr=(
+                'Maximum number of rejection iterations to perform when fitting the observed '
+                'spectrum.  Set to 0 to skip all rejection iterations.'
+            ),
+        ),
+        'reject': parset.set_parameter_definition(
+            dtype=funcpar.DJSRejectPar,
+            default=funcpar.DJSRejectPar(sticky=True, lower=3.0, upper=3.0),
+            descr=(
+                'Parameters passed to :func:`~pypeit.utils.djs_reject` during rejecting outliers '
+                'during iterative fitting.  To force no rejection iterations, set the '
+                '``max_rej_iter`` parameter to 0.'
+            ),
+        ),
+        # -- Masking
+        'fit_wave_range': parset.set_parameter_definition(
+            dtype=list,
+            descr=(
+                'Limit the model fitting to this wavelength range. The format is [wave_min, '
+                'wave_max].'
+            ),
+        ),
+        'spec_mask_files': parset.set_parameter_definition(
+            dtype=[str, list],
+            default=['atm.toml', 'hydrogen.toml'],
+            descr=(
+                'One or more TOML files with masks to apply to the spectra during the fit.  These '
+                'can be local files or files provided by the pypeit package.'
+            ),
+        )
     }
 
     def validate(self):
-        if self['tell_npca'] < 1 or self['tell_npca'] > 10:
-            raise ValueError('Invalid value {:d} for tell_npca '.format(self['tell_npca'])+
-                             '(must be between 1 and 10).')
+        """
+        Check the parameters are valid for the provided method.
+        """
+        if self.data['tel_npca'] < 1 or self.data['tel_npca'] > 10:
+            raise ValueError(
+                f'Invalid value {self.data["tel_npca"]} for tell_npca (must be between 1 and 10).'
+            )
 
-        self['teltype'] = self['teltype'].lower()
-        if self['teltype'] not in self.valid_teltype:
-            raise ValueError('Invalid teltype "{}"'.format(self['teltype'])+
-                             ', valid options are: {}.'.format(', '.join(self.valid_teltype)))
+        # Other checks?
 
+# class TelluricPar(parset.ParSet):
+#     """
+#     New-style parameter set holding telluric-correction arguments (replacement for TelluricPar).
+# 
+#     Mirrors the legacy `TelluricPar` in :mod:`pypeit.par.pypeitpar`.
+#     """
+# 
+#     default_key = 'telluric'
+# 
+#     valid_teltype = ['pca', 'grid']
+# 
+#     parameters = {
+#         'telgridfile': parset.set_parameter_definition(
+#             dtype=str,
+#             descr=(
+#                 'File with the telluric model spectra to use.  Generally, these do '
+#                 'not need to be set; reasonable defaults are provided for each '
+#                 'spectrograph.  Due to their size, the files are not included with '
+#                 'the released pypeit package; instead the code downloads each file '
+#                 'into your cache as needed.  If this parameter is set in your pypeit '
+#                 'file, it can be the path to a local file (which must have the '
+#                 'correct format), or it can be the name of the specific cache file to '
+#                 'use (e.g., TellPCA_3000_26000_R10000.fits).'
+#             ),
+#         ),
+#         'tell_npca': parset.set_parameter_definition(
+#             dtype=int,
+#             default=5,
+#             descr='Number of telluric PCA components used. Can be set to any number from 1 to 10.',
+#         ),
+#         'teltype': parset.set_parameter_definition(
+#             dtype=str,
+#             default='pca',
+#             options=valid_teltype,
+#             descr=(
+#                 'Method used to evaluate telluric models.  Options are ``pca`` or '
+#                 '``grid``. The ``grid`` option uses a fixed grid of pre-computed '
+#                 'HITRAN+LBLRTM atmospheric transmission models for each observatory, '
+#                 'whereas the ``pca`` option uses principal components of a larger '
+#                 'model grid to compute an accurate pseudo-telluric model with a much '
+#                 'lighter telgridfile.'
+#             ),
+#         ),
+#         'sn_clip': parset.set_parameter_definition(
+#             dtype=[int, float],
+#             default=30.0,
+#             descr=(
+#                 'This adds an error floor to the variance, preventing too much '
+#                 'rejection at high-S/N (i.e., standard stars, bright objects), using '
+#                 'the function :func:`~pypeit.utils.clip_ivar`. A small erorr is added '
+#                 'to the input variance so that the output variance will never give '
+#                 'S/N greater than ``sn_clip``. This prevents overly aggressive '
+#                 'rejection in high S/N ratio spectra that neverthless differ at a '
+#                 'level greater than the formal S/N due to the fact that our telluric '
+#                 'models are only good to about 3%.'
+#             ),
+#         ),
+#         'resln_guess': parset.set_parameter_definition(
+#             dtype=[int, float],
+#             descr=(
+#                 'A guess for the resolution of your spectrum expressed as '
+#                 'lambda/dlambda. The resolution is fit explicitly as part of the '
+#                 'telluric model fitting, but this guess helps determine the bounds '
+#                 'for the optimization (see ``resln_frac_bounds``). If not provided, '
+#                 'the wavelength sampling of your spectrum will be used and the '
+#                 'resolution calculated using a typical sampling of 3 spectral pixels '
+#                 'per resolution element.'
+#             ),
+#         ),
+#         'resln_frac_bounds': parset.set_parameter_definition(
+#             dtype=tuple,
+#             default=(0.6, 1.4),
+#             descr=(
+#                 'Bounds for the resolution fit optimization which is part of the '
+#                 'telluric model.  This range is in units of ``resln_guess``, so the '
+#                 'default would bound the spectral resolution fit to be within the '
+#                 'range ``bounds_resln = (0.6*resln_guess, 1.4*resln_guess)``.'
+#             ),
+#         ),
+#         'pix_shift_bounds': parset.set_parameter_definition(
+#             dtype=tuple,
+#             default=(-5.0, 5.0),
+#             descr=(
+#                 'Bounds for the pixel shift optimization in the telluric model fit in units of '
+#                 'pixels.  The atmosphere will be allowed to shift within this range during the '
+#                 'fit.'
+#             ),
+#         ),
+#         'delta_coeff_bounds': parset.set_parameter_definition(
+#             dtype=tuple,
+#             default=(-20.0, 20.0),
+#             descr=(
+#                 'Parameters setting the polynomial coefficient bounds for sensfunc optimization.'
+#             ),
+#         ),
+#         'minmax_coeff_bounds': parset.set_parameter_definition(
+#             dtype=tuple,
+#             default=(-5.0, 5.0),
+#             descr=(
+#                 "Parameters setting the polynomial coefficient bounds for sensfunc "
+#                 "optimization.  Bounds are currently determined as follows.  We "
+#                 "compute an initial fit to the sensfunc in the "
+#                 ":func:`~pypeit.core.telluric.init_sensfunc_model` function. That "
+#                 "determines a set of coefficients. The bounds are then determined "
+#                 "according to: "
+#                 "``[(np.fmin(np.abs(this_coeff)*obj_params['delta_coeff_bounds'][0], "
+#                 "obj_params['minmax_coeff_bounds'][0]), "
+#                 "np.fmax(np.abs(this_coeff)*obj_params['delta_coeff_bounds'][1], "
+#                 "obj_params['minmax_coeff_bounds'][1]))]``."
+#             ),
+#         ),
+#         'maxiter': parset.set_parameter_definition(
+#             dtype=int,
+#             default=2,
+#             descr=(
+#                 'Maximum number of iterations for the telluric + object model fitting.  The code '
+#                 'performs multiple iterations rejecting outliers at each step.  The fit is then '
+#                 'performed anew to the remaining good pixels.  For this reason if you run with '
+#                 'the ``disp=True`` option, you will see that the f(x) loss function gets '
+#                 'progressively better during the iterations.'
+#             ),
+#         ),
+#         'sticky': parset.set_parameter_definition(
+#             dtype=bool,
+#             default=True,
+#             descr=(
+#                 'Sticky parameter for the :func:`~pypeit.utils.djs_reject` algorithm '
+#                 'for iterative model fit rejection.  If set to True then points '
+#                 'rejected from a previous iteration are kept rejected, in other words '
+#                 'the bad pixel mask is the OR of all previous iterations and rejected '
+#                 'pixels accumulate.  If set to False, the bad pixel mask is the mask '
+#                 'from the previous iteration, and if the model fit changes between '
+#                 'iterations, points can alternate from being rejected to not '
+#                 'rejected.  At present this code only performs optimizations with '
+#                 'differential evolution and experience shows that sticky needs to be '
+#                 'True in order for these to converge.  This is because the outliers '
+#                 'can be so large that they dominate the loss function, and one never '
+#                 'iteratively converges to a good model fit.  In other words, the '
+#                 'deformations in the model between iterations with ``sticky=False`` '
+#                 'are too small to approach a reasonable fit.'
+#             ),
+#         ),
+#         'lower': parset.set_parameter_definition(
+#             dtype=[int, float],
+#             default=3.0,
+#             descr=(
+#                 'Lower rejection threshold in units of ``sigma_corr*sigma``, where '
+#                 '``sigma`` is the formal noise of the spectrum, and sigma_corr is an '
+#                 'empirically determined correction to the formal error. The '
+#                 'distribution of input chi (defined by ``chi = (data - '
+#                 'model)/sigma``) values is analyzed, and a correction factor to the '
+#                 'formal error ``sigma_corr`` is returned which is multiplied into the '
+#                 'formal errors. In this way, a rejection threshold of e.g. 3 sigma, '
+#                 'will always correspond to roughly the same percentile.  This '
+#                 'renormalization is performed with '
+#                 ':func:`~pypeit.coadd1d.renormalize_errors` function, and guarantees '
+#                 'that rejection is not too aggressive in cases where the empirical '
+#                 'errors determined from the chi-distribution differ significantly '
+#                 'from the formal noise which is used to determine chi.'
+#             ),
+#         ),
+#         'upper': parset.set_parameter_definition(
+#             dtype=[int, float],
+#             default=3.0,
+#             descr=(
+#                 'Upper rejection threshold in units of ``sigma_corr*sigma``, where ``sigma`` is '
+#                 'the formal noise of the spectrum, and ``sigma_corr`` is an empirically '
+#                 'determined correction to the formal error. See ``lower`` for additional detail.'
+#             ),
+#         ),
+#         'seed': parset.set_parameter_definition(
+#             dtype=int,
+#             default=777,
+#             descr=(
+#                 'An initial seed for the differential evolution optimization, which is a random '
+#                 'process.  The default is 777, which will be used to generate a unique seed for '
+#                 'every order.  A specific seed is used because otherwise the random number '
+#                 'generator will use the time for the seed, and the results will not be '
+#                 'reproducible.'
+#             ),
+#         ),
+#         'tol': parset.set_parameter_definition(
+#             dtype=float,
+#             default=1e-3,
+#             descr=(
+#                 'Relative tolerance for converage of the differential evolution optimization. '
+#                 'See `scipy.optimize.differential_evolution`_ for details.'
+#             ),
+#         ),
+#         'popsize': parset.set_parameter_definition(
+#             dtype=int,
+#             default=30,
+#             descr=(
+#                 'A multiplier for setting the total population size for the differential '
+#                 'evolution optimization. See `scipy.optimize.differential_evolution`_ for details.'
+#             ),
+#         ),
+#         'recombination': parset.set_parameter_definition(
+#             dtype=[int, float],
+#             default=0.7,
+#             descr=(
+#                 'The recombination constant for the differential evolution optimization. This '
+#                 'should be in the range between 0 and 1. See '
+#                 ':class:`scipy.optimize.differential_evolution` for details.'
+#             ),
+#         ),
+#         'polish': parset.set_parameter_definition(
+#             dtype=bool,
+#             default=True,
+#             descr=(
+#                 'If True then differential evolution will perform an additional optimization at '
+#                 'the end to polish the best fit at the end, which can improve the optimization '
+#                 'slightly. See `scipy.optimize.differential_evolution`_ for details.'
+#             ),
+#         ),
+#         'disp': parset.set_parameter_definition(
+#             dtype=bool,
+#             default=False,
+#             descr=(
+#                 'Argument for `scipy.optimize.differential_evolution`_ that will display status '
+#                 'messages to the screen indicating the status of the optimization.  See '
+#                 'documentation for :class:`~pypeit.core.telluric.Telluric` for a description of '
+#                 'the output and how to know if things are working well.'
+#             ),
+#         ),
+#         'only_orders': parset.set_parameter_definition(
+#             dtype=[int, list, np.ndarray],
+#             descr=(
+#                 'Order number, or list of order numbers if you only want to fit specific orders.'
+#             ),
+#         ),
+#         'objmodel': parset.set_parameter_definition(
+#             dtype=str,
+#             descr=(
+#                 'The object model to be used for telluric fitting. Currently the options are: '
+#                 '``qso``, ``star``, and ``poly``.  For ``qso``, you might need to set '
+#                 '``redshift`` and ``bal_wv_min_max``.  For ``star``, you must set ``star_type``, '
+#                 '``star_ra``, ``star_dec``, and ``star_mag``.  For ``poly``, you might need to '
+#                 'set ``fit_wv_min_max`` and ``norder``.'
+#             ),
+#         ),
+#         'redshift': parset.set_parameter_definition(
+#             dtype=[int, float],
+#             default=0.0,
+#             descr=(
+#                 'The redshift for the object model. This is currently only used by the QSO model.'
+#             ),
+#         ),
+#         'delta_redshift': parset.set_parameter_definition(
+#             dtype=float,
+#             default=0.1,
+#             descr=(
+#                 'Range within the redshift can be varied for telluric fitting, i.e. the code '
+#                 'performs a bounded optimization within the redshift +- delta_redshift.'
+#             ),
+#         ),
+#         'pca_file': parset.set_parameter_definition(
+#             dtype=str,
+#             default='qso_pca_1200_3100.fits',
+#             descr=(
+#                 'Fits file containing quasar PCA model. Needed for the QSO model.  If you change '
+#                 'the default, you might need to set ``pca_lower`` and ``pca_upper``.'
+#             ),
+#         ),
+#         'npca': parset.set_parameter_definition(
+#             dtype=int,
+#             default=8,
+#             descr='Number of pca for the objmodel=qso qso PCA fit',
+#         ),
+#         'bal_wv_min_max': parset.set_parameter_definition(
+#             dtype=[list, np.ndarray],
+#             descr=(
+#                 'Min/max wavelength of broad absorption features. If there are several BAL '
+#                 'features, the format for this mask is ``[wave_min_bal1, wave_max_bal1, '
+#                 'wave_min_bal2, wave_max_bal2,...]``. These masked pixels will be ignored during '
+#                 'the fitting.'
+#             ),
+#         ),
+#         'bounds_norm': parset.set_parameter_definition(
+#             dtype=tuple,
+#             default=(0.1, 3.0),
+#             descr='Normalization bounds for scaling the initial object model.',
+#         ),
+#         'tell_norm_thresh': parset.set_parameter_definition(
+#             dtype=[int, float],
+#             default=0.9,
+#             descr='Threshold of telluric absorption region',
+#         ),
+#         'pca_lower': parset.set_parameter_definition(
+#             dtype=[int, float],
+#             default=1220.0,
+#             descr='Minimum wavelength for the qso pca model',
+#         ),
+#         'pca_upper': parset.set_parameter_definition(
+#             dtype=[int, float],
+#             default=3100.0,
+#             descr='Maximum wavelength for the qso pca model',
+#         ),
+#         'mask_lyman_a': parset.set_parameter_definition(
+#             dtype=bool,
+#             default=True,
+#             descr='Mask the blueward of Lyman-alpha line during the fitting?',
+#         ),
+#         'star_type': parset.set_parameter_definition(
+#             dtype=str,
+#             descr='stellar type',
+#         ),
+#         'star_mag': parset.set_parameter_definition(
+#             dtype=[float, int],
+#             descr='AB magnitude in V band',
+#         ),
+#         'star_ra': parset.set_parameter_definition(
+#             dtype=float,
+#             descr='Object right-ascension in decimal deg',
+#         ),
+#         'star_dec': parset.set_parameter_definition(
+#             dtype=float,
+#             descr='Object declination in decimal deg',
+#         ),
+#         'func': parset.set_parameter_definition(
+#             dtype=str,
+#             default='legendre',
+#             descr='Polynomial model function',
+#         ),
+#         'model': parset.set_parameter_definition(
+#             dtype=str,
+#             default='exp',
+#             descr=(
+#                 'Types of polynomial model. Options are ``poly``, ``square``, ``exp`` '
+#                 'corresponding to normal polynomial, squared polynomial, or exponentiated '
+#                 'polynomial.'
+#             ),
+#         ),
+#         'polyorder': parset.set_parameter_definition(
+#             dtype=int,
+#             default=3,
+#             descr='Order of the polynomial model fit',
+#         ),
+#         'fit_wv_min_max': parset.set_parameter_definition(
+#             dtype=list,
+#             descr=(
+#                 'Pixels within this mask will be used during the fitting. The format is the same '
+#                 'with ``bal_wv_min_max``, but this mask is good pixel masks.'
+#             ),
+#         ),
+#     }
+# 
+#     def validate(self):
+#         if self['tell_npca'] < 1 or self['tell_npca'] > 10:
+#             raise ValueError('Invalid value {:d} for tell_npca '.format(self['tell_npca'])+
+#                              '(must be between 1 and 10).')
+# 
+#         self['teltype'] = self['teltype'].lower()
+#         if self['teltype'] not in self.valid_teltype:
+#             raise ValueError('Invalid teltype "{}"'.format(self['teltype'])+
+#                              ', valid options are: {}.'.format(', '.join(self.valid_teltype)))
+# 
 
 class SensFuncPar(parset.ParSet):
     """
