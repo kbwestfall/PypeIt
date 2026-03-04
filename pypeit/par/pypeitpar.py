@@ -17,6 +17,7 @@ from pypeit import PypeItError
 from pypeit.core import parse
 from pypeit.core.framematch import FrameTypeBitMask
 from pypeit.par import parset
+from pypeit.par import funcpar
 from pypeit.par import util
 
 
@@ -2092,7 +2093,7 @@ class SensfuncUVISPar(parset.ParSet):
             raise ValueError(f'Provided sensitivity function does not exist: {self["sensfunc"]}.')
 
 
-class TelluricPar(ParSet):
+class TelluricPar(parset.ParSet):
     """
     A parameter set holding the telluric correction parameters.
 
@@ -2187,7 +2188,7 @@ class TelluricPar(ParSet):
         # TODO: Add pix_stretch_bounds?
         'src_type': parset.set_parameter_definition(
             dtype=str,
-            options=valid_src_type
+            options=valid_src_type,
             descr=(
                 'The model source type to be used for telluric fitting. Currently the options '
                 'are: ``qso``, ``star``, and ``poly``.  Make sure to set all the ``qso_*`` '
