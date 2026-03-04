@@ -2104,7 +2104,7 @@ class TelluricPar(ParSet):
 
     valid_tel_type = ['pca', 'grid']
 
-    valid_source_type = ['qso', 'star', 'poly']
+    valid_src_type = ['qso', 'star', 'poly']
 
     parameters = {
         'only_orders': parset.set_parameter_definition(
@@ -2187,7 +2187,7 @@ class TelluricPar(ParSet):
         # TODO: Add pix_stretch_bounds?
         'src_type': parset.set_parameter_definition(
             dtype=str,
-            options=valid_source_type
+            options=valid_src_type
             descr=(
                 'The model source type to be used for telluric fitting. Currently the options '
                 'are: ``qso``, ``star``, and ``poly``.  Make sure to set all the ``qso_*`` '
