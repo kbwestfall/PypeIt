@@ -763,7 +763,7 @@ class ObservedSourceModelFitter:
             # Perform the rejection using the rescaled inverse variance data
             rej_gpm, qdone = pydl.djs_reject(
                 self.obs_spec.flux, bf_model, outmask=self.obs_spec.gpm, inmask=orig_gpm,
-                invvar=self.obs_spec.ivar / err_corr**2, **_rej_par.data 
+                invvar=self.obs_spec.ivar / err_corr**2, **_rej_par.to_dict()
             )
             log.info(
                 f'Total number of pixels rejected after iteration {i+1}: '

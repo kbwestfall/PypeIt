@@ -113,7 +113,9 @@ def _define_parameters(func, func_kwargs):
     module_name = _get_module(func)
     descr = f'Parameter for {func.__name__} in {module_name}.'
     return {
-        key : parset.set_parameter_definition(default=value, descr=descr)
+        key : parset.set_parameter_definition(
+            default=value, dtype=tuple if isinstance(value, tuple) else None, descr=descr
+        )
         for key, value in func_kwargs.items()
     }
 
@@ -157,6 +159,9 @@ class FuncPar(parset.ParSet):
 
             - determine the options, data types, or descriptions of the
               parameters.
+
+        The only exception to this is that function keywords that are tuples by
+        default will force the dtype to be tuple for that parameter.
 
     Parameters
     ----------
