@@ -167,7 +167,7 @@ class ObservedSourceModelFitter:
         Parameters
         ----------
         theta : :class:`numpy.ndarray`
-            Model parameters.  The length mush be :attr:`npar`.
+            Model parameters.  The length must be :attr:`npar`.
 
         Returns
         -------
