@@ -75,59 +75,22 @@ class SensFunc(scriptbase.ScriptBase):
         from pypeit import log
         from pypeit import PypeItError
         from pypeit import inputfiles
-#        from pypeit import io
-#        from pypeit.par import pypeitpar
         from pypeit import sensfunc
-#        from pypeit.spectrographs.util import load_spectrograph
+        from pypeit.scripts import loader
 
         # Initialize the log
         cls.init_log(args)
-
-        if args.sens_file is None:
-            raise PypeItError('Must provide either a .pypeit or .sens configuration file')
 
         # Check the input files exist
         _spec1dfiles = [Path(sf).absolute() for sf in np.atleast_1d(args.spec1dfiles)]
         badfiles = [sf for sf in _spec1dfiles if not sf.is_file()]
         if len(badfiles) > 0:
             raise FileNotFoundError(f'The following spec1d files were not found: {badfiles}')
-
-        # NOTE: This block of code that instantiates the parameter set is very
-        # similar to what is used in pypeit/scripts/tellfit.py.  We might want
-        # a function that can be used by both scripts.
-        # Load the parameters.  First try to read the input file as a .pypeit
-        # file.
-        # TODO: Do we need to save both the 'senfunc' and 'fluxcalib' groups?
-        try:
-            ifile = inputfiles.PypeItFile.from_file(args.sens_file)
-        except PypeItError as e:
-            log.warning(
-                f'Could not read {args.sens_file} as a .pypeit file.  Attempting to read as a '
-                f'.sens file.  Error was: {e}'
-            )
-            par = None
-        else:
-            spectrograph, par, config_specific_file = ifile.get_pypeitpar()
-
-        if par is None:
-            # That failed, so now attempt a .sens file.
-            try:
-                ifile = inputfiles.SensFile.from_file(args.sens_file)
-            except PypeItError as e:
-                raise PypeItError(
-                    f'Unable to parse {args.sens_file} as a .pypeit file or a .sens file!'
-                )
-            else:
-                # Get the set of parameters
-                # NOTE: We set `pypeit_fits=True` below because, *by definition*,
-                # the input files to sensfunc are PypeIt output files.
-                with fits.open(_spec1dfiles[0]) as hdu:
-                    spectrograph, par, config_specific_file = ifile.get_pypeitpar(
-                        config_specific_file=hdu, spectrograph_name=hdu[0].header['PYP_SPEC'],
-                        pypeit_fits=True
-                    )
-
-        # To get here, par and spectrograph cannot be None
+        
+        # Get the parameters and spectrograph
+        par, spec = loader.get_pypeitpar(
+            _spec1dfiles[0], ifile=args.sens_file, secondary_ifile_class=inputfiles.SensFile
+        )
 
         # TODO: Return to this.  How much of this is already in the header of
         # the spec1d files and the coadd output files?  Can we make sure the
@@ -149,25 +112,15 @@ class SensFunc(scriptbase.ScriptBase):
 #                    primary_hdr[key.upper()] = hdul[0].header[key.upper()]
         primary_hdr = None
 
-#        # If the .sens file was passed in read it and overwrite default parameters
-#        if args.sens_file is not None:
-#            sensFile = inputfiles.SensFile.from_file(args.sens_file)
-#            # Read sens file
-#            par = pypeitpar.PypeItPar.from_cfg_lines(
-#                        cfg_lines=spectrograph_config_par.to_config(),
-#                        merge_with=(sensFile.cfg_lines,))
-#        else:
-#            par = pypeitpar.PypeItPar.from_cfg_lines(cfg_lines=spectrograph_config_par.to_config())
-
         # Write the par to disk
+        # TODO: Restrict this to the sensfunc set!
         if args.par_outfile is not None:
             log.info(f'Writing the sensfunc parameters to {args.par_outfile}')
             par.to_config(cfg_file=args.par_outfile, include_descr=False)
 
         # Parse the output filename
-        if args.outfile is not None:
-            outfile = args.outfile
-        else:
+        outfile = args.outfile
+        if outfile is None:
             # read the filenames and parse
             _names = [f.name for f in _spec1dfiles]
             # if spec1d_ in the filename, remove it
@@ -175,7 +128,6 @@ class SensFunc(scriptbase.ScriptBase):
             spec1dname = _names[0] if len(_names) == 1 else f"{_names[0].split('.fits')[0]}-{_names[-1]}"
             outfile = 'sens_' + spec1dname
 
-        # Read the spectra
         embed()
         exit()
 
