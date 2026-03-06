@@ -77,8 +77,8 @@ class TellFit(scriptbase.ScriptBase):
         from pypeit import inputfiles
         from pypeit import log
         from pypeit import PypeItError
-        from pypeit import loader
         from pypeit import telluric
+        from pypeit.scripts import loader
 
         # Initialize the log
         cls.init_log(args)

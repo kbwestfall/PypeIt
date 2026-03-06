@@ -1,6 +1,5 @@
 """
-A temporary module to deal with organization of high-level functions that lead
-to circular imports.
+Provides convenience functions for scripts that load spectra output by PypeIt.
 """
 from IPython import embed
 import numpy as np
