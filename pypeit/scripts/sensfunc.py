@@ -28,21 +28,16 @@ class SensFunc(scriptbase.ScriptBase):
         )
         parser.add_argument(
             '-s', '--sens_file', type=str,
-            help='Configuration file with sensitivity function parameters.  If not provided, the '
-                 'default parameters for this spectrographs will be used.'
+            help=(
+                'Configuration file used to set the parameters used to calculate the sensitivity '
+                'function.  This can be a ".pypeit" file that includes the desired "sensfunc" '
+                'parameter group or a ".sens" file.  This argument is *required*.'
+            )
         )
         parser.add_argument(
             '--par_outfile', default=None,
             help='File name for parameters used by the fit.  No file is written if no name is '
                  'given.'
-        )
-        parser.add_argument(
-            '--extract', type=str, default=None, choices=[None, 'BOX', 'OPT'],
-            help='The extraction to use.  Must be either None, BOX (for a boxcar extraction), '
-                 'or OPT (for optimal extraction).  If None, the optimal extraction will be '
-                 'used, if it exists, otherwise the boxcar extraction will be used.  This is '
-                 'only relevant if the input is a spec1d file (as opposed to a onespec/coadd '
-                 'file).'
         )
         parser.add_argument(
             "-o", "--outfile", type=str,
@@ -74,22 +69,35 @@ class SensFunc(scriptbase.ScriptBase):
 
         from pathlib import Path
 
+        from astropy.io import fits
+        import numpy as np
+
         from pypeit import log
         from pypeit import PypeItError
         from pypeit import inputfiles
-        from pypeit import io
-        from pypeit.par import pypeitpar
+#        from pypeit import io
+#        from pypeit.par import pypeitpar
         from pypeit import sensfunc
-        from pypeit.spectrographs.util import load_spectrograph
+#        from pypeit.spectrographs.util import load_spectrograph
 
         # Initialize the log
         cls.init_log(args)
+
+        if args.sens_file is None:
+            raise PypeItError('Must provide either a .pypeit or .sens configuration file')
+
+        # Check the input files exist
+        _spec1dfiles = [Path(sf).absolute() for sf in np.atleast_1d(args.spec1dfiles)]
+        badfiles = [sf for sf in _spec1dfiles if not sf.is_file()]
+        if len(badfiles) > 0:
+            raise FileNotFoundError(f'The following spec1d files were not found: {badfiles}')
 
         # NOTE: This block of code that instantiates the parameter set is very
         # similar to what is used in pypeit/scripts/tellfit.py.  We might want
         # a function that can be used by both scripts.
         # Load the parameters.  First try to read the input file as a .pypeit
         # file.
+        # TODO: Do we need to save both the 'senfunc' and 'fluxcalib' groups?
         try:
             ifile = inputfiles.PypeItFile.from_file(args.sens_file)
         except PypeItError as e:
@@ -99,10 +107,10 @@ class SensFunc(scriptbase.ScriptBase):
             )
             par = None
         else:
-            par = ifile.get_pypeitpar()[1]['sensfunc']
+            spectrograph, par, config_specific_file = ifile.get_pypeitpar()
 
         if par is None:
-            # That failed, so now attempt a .tell file.
+            # That failed, so now attempt a .sens file.
             try:
                 ifile = inputfiles.SensFile.from_file(args.sens_file)
             except PypeItError as e:
@@ -112,87 +120,65 @@ class SensFunc(scriptbase.ScriptBase):
             else:
                 # Get the set of parameters
                 # NOTE: We set `pypeit_fits=True` below because, *by definition*,
-                # the input files to tellfit are PypeIt output files.
-                with fits.open(_spec1dfile) as hdu:
-                    par = ifile.get_pypeitpar(
+                # the input files to sensfunc are PypeIt output files.
+                with fits.open(_spec1dfiles[0]) as hdu:
+                    spectrograph, par, config_specific_file = ifile.get_pypeitpar(
                         config_specific_file=hdu, spectrograph_name=hdu[0].header['PYP_SPEC'],
                         pypeit_fits=True
-                    )[1]
-                par = par['sensfunc']
+                    )
 
-        # Determine the spectrograph and generate the primary FITS header
-        with io.fits_open(args.spec1dfiles[0]) as hdul:
-            spectrograph = load_spectrograph(hdul[0].header['PYP_SPEC'], pypeit_fits=True)
-            spectrograph_config_par = spectrograph.config_specific_par(hdul)
+        # To get here, par and spectrograph cannot be None
 
-            # Construct a primary FITS header that includes the spectrograph's
-            #   config keys for inclusion in the output sensfunc file
-            primary_hdr = io.initialize_header()
-            add_keys = (
-                ['PYP_SPEC', 'DATE-OBS', 'TELESCOP', 'INSTRUME', 'DETECTOR']
-                + spectrograph.configuration_keys() + spectrograph.raw_header_cards()
-            )
-            for key in add_keys:
-                if key.upper() in hdul[0].header.keys():
-                    primary_hdr[key.upper()] = hdul[0].header[key.upper()]
+        # TODO: Return to this.  How much of this is already in the header of
+        # the spec1d files and the coadd output files?  Can we make sure the
+        # headers of *those* files are complete?
+#        # Determine the spectrograph and generate the primary FITS header
+#        with io.fits_open(args.spec1dfiles[0]) as hdul:
+#            spectrograph = load_spectrograph(hdul[0].header['PYP_SPEC'], pypeit_fits=True)
+#            spectrograph_config_par = spectrograph.config_specific_par(hdul)
+#
+#            # Construct a primary FITS header that includes the spectrograph's
+#            #   config keys for inclusion in the output sensfunc file
+#            primary_hdr = io.initialize_header()
+#            add_keys = (
+#                ['PYP_SPEC', 'DATE-OBS', 'TELESCOP', 'INSTRUME', 'DETECTOR']
+#                + spectrograph.configuration_keys() + spectrograph.raw_header_cards()
+#            )
+#            for key in add_keys:
+#                if key.upper() in hdul[0].header.keys():
+#                    primary_hdr[key.upper()] = hdul[0].header[key.upper()]
+        primary_hdr = None
 
-
-
-        # If the .sens file was passed in read it and overwrite default parameters
-        if args.sens_file is not None:
-            sensFile = inputfiles.SensFile.from_file(args.sens_file)
-            # Read sens file
-            par = pypeitpar.PypeItPar.from_cfg_lines(
-                        cfg_lines=spectrograph_config_par.to_config(),
-                        merge_with=(sensFile.cfg_lines,))
-        else:
-            par = pypeitpar.PypeItPar.from_cfg_lines(cfg_lines=spectrograph_config_par.to_config())
-
-        # If algorithm was provided override defaults. Note this does undo .sens
-        # file since they cannot both be passed
-        if args.algorithm is not None:
-            par['sensfunc']['algorithm'] = args.algorithm
-
-        # If use_flat was flagged in the input, set use_flat to True. Note this does undo .sens
-        # file since they cannot both be passed
-        if args.use_flat:
-            par['sensfunc']['use_flat'] = True
-
-        # If multi was set override defaults. Note this does undo .sens file
-        # since they cannot both be passed
-        if args.multi is not None:
-            # parse
-            multi_spec_det  = [int(item) for item in args.multi.split(',')]
-            par['sensfunc']['multi_spec_det'] = multi_spec_det
-
-        # If extr was provided override defaults. Note this does undo .sens
-        # file since they cannot both be passed
-        if args.extr is not None:
-            par['sensfunc']['extr'] = args.extr
-
-        # TODO Add parsing of detectors here. If detectors passed from the
-        # command line, overwrite the parset values read in from the .sens file
+#        # If the .sens file was passed in read it and overwrite default parameters
+#        if args.sens_file is not None:
+#            sensFile = inputfiles.SensFile.from_file(args.sens_file)
+#            # Read sens file
+#            par = pypeitpar.PypeItPar.from_cfg_lines(
+#                        cfg_lines=spectrograph_config_par.to_config(),
+#                        merge_with=(sensFile.cfg_lines,))
+#        else:
+#            par = pypeitpar.PypeItPar.from_cfg_lines(cfg_lines=spectrograph_config_par.to_config())
 
         # Write the par to disk
-        log.info(f'Writing the parameters to {args.par_outfile}')
-        par['sensfunc'].to_config(args.par_outfile, section_name='sensfunc', include_descr=False)
-
-        # TODO JFH I would like to be able to run only
-        # par['sensfunc'].to_config('sensfunc.par') but this crashes.
-        # TODO: KBW - You can do that if you override the
-        # pypeit.par.parset.ParSet.to_config method in the
-        # pypeit.par.pypeitpar.SensFuncPar class.
+        if args.par_outfile is not None:
+            log.info(f'Writing the sensfunc parameters to {args.par_outfile}')
+            par.to_config(cfg_file=args.par_outfile, include_descr=False)
 
         # Parse the output filename
         if args.outfile is not None:
             outfile = args.outfile
         else:
             # read the filenames and parse
-            _names = [Path(f).name for f in args.spec1dfiles]
+            _names = [f.name for f in _spec1dfiles]
             # if spec1d_ in the filename, remove it
             _names = [n.split('spec1d_')[-1] if n.startswith('spec1d') else n for n in _names]
             spec1dname = _names[0] if len(_names) == 1 else f"{_names[0].split('.fits')[0]}-{_names[-1]}"
             outfile = 'sens_' + spec1dname
+
+        # Read the spectra
+        embed()
+        exit()
+
         # Instantiate the relevant class for the requested algorithm
         sensobj = sensfunc.SensFunc.get_instance(args.spec1dfiles, outfile, par['sensfunc'],
                                                  par_fluxcalib=par['fluxcalib'], debug=args.debug,

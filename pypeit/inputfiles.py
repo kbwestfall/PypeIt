@@ -758,12 +758,16 @@ class PypeItFile(InputFile):
 
         # Confirm spectrograph is present
         if 'rdx' not in self.config.keys() or 'spectrograph' not in self.config['rdx'].keys():
-            raise PypeItError(f"Missing spectrograph in the Parameter block of your PypeIt file.  Add it!")
+            raise PypeItError(
+                f'The spectrograph must be defined in the parameter block of your PypeIt file.  '
+                'Make sure your pypeit file includes the [rdx] block and defines the spectrograph '
+                'parameter.'
+            )
 
         # Setup
         setup_keys = list(self.setup)
         if 'Setup' not in setup_keys[0]:
-            raise PypeItError("Setup does not appear in your setup block! Add it")
+            raise PypeItError('Setup does not appear in your setup block!')
 
         # Done
         log.info('PypeIt file successfully vetted.')

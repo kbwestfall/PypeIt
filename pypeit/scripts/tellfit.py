@@ -21,9 +21,9 @@ class TellFit(scriptbase.ScriptBase):
         parser.add_argument(
             'tell_file', type=str,
             help=(
-                'Configuration file used to set the telluric.  This can be a ".pypeit" file '
-                'that includes the desired telluric parameters or a ".tell" file with a set of '
-                'parameters specific to the provided 1D spectrum.'
+                'Configuration file used to set the parameters used to determine the telluric '
+                'correction.  This can be a ".pypeit" file that includes the desired "telluric" '
+                'parameter group or a ".tell" file.'
             )
         )
         parser.add_argument(
@@ -131,11 +131,11 @@ class TellFit(scriptbase.ScriptBase):
                 'your input file and there is no default for your spectrograph.  You must set '
                 'the tel_file parameter; see the pypeit documentation for options.'
             )
-
+        
         # Write the par to disk
         if args.par_outfile is not None:
             log.info(f'Writing the telluric fitting parameters to {args.par_outfile}')
-            par.to_config(args.par_outfile, section_name='telluric', include_descr=False)
+            par.to_config(cfg_file=args.par_outfile, include_descr=False)
 
         # Set the output files, and put them in the same directory that has the
         # spectrum file
