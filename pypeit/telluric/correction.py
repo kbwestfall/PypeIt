@@ -10,10 +10,10 @@ from IPython import embed
 import numpy as np
 
 from pypeit import datamodel
-from pypeit import loader
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import telluric
+from pypeit.core.spectrum import Spectrum
 from pypeit.par import pypeitpar
 
 
@@ -23,25 +23,10 @@ class TelluricCorrection(datamodel.DataContainer):
 
     Parameters
     ----------
-    specfile : str, :class:`Path`
-        PypeIt output file that contains 1D spectra to correct.
+    spectra : list
+        List of :class:`~pypeit.core.spectrum.Spectrum` objects to fit.
     par : :class:`~pypeit.par.pypeitpar.TelluricPar`
         The parameters used to determine the telluric correction.
-    extract : str, optional
-        The extraction used to produce the spectrum.  Must be either None,
-        ``'BOX'`` (for a boxcar extraction), or ``'OPT'`` for optimal
-        extraction.  If None, the optimal extraction will be returned, if it
-        exists, otherwise the boxcar extraction will be returned.  Only relevant
-        if the input is a spec1d file.
-    fluxed : bool, optional
-        If True, return the flux-calibrated spectrum, if it exists.  If the flux
-        calibration hasn't been performed or ``fluxed=False``, the spectrum is
-        returned in counts.  Only relevant if the input is a spec1d file.
-    chk_version : :obj:`bool`, optional
-        When reading in existing files written by PypeIt, perform strict
-        version checking to ensure a valid file.  If False, the code will
-        try to keep going, but this may lead to faults and quiet failures.
-        User beware!
     """
 
     version = '1.0.0'
@@ -66,19 +51,17 @@ class TelluricCorrection(datamodel.DataContainer):
         ),
 #                 'airmass': dict(otype=float, descr='Airmass of the observation'),
 #                 'exptime': dict(otype=float, descr='Exposure time (s)'),
-#                 'lbound_norm': dict(otype=float, descr='Flux normalization lower bound'),
-#                 'ubound_norm': dict(otype=float, descr='Flux normalization upper bound'),
     }
     """DataContainer datamodel."""
 
     internals = [
-        'par', 'hdr', 'spectra', 'nspec', 'npix', 'wave_min', 'wave_max', 'tel_model', 'src_model',
+        'par', 'spectra', 'nspec', 'npix', 'wave_min', 'wave_max', 'tel_model', 'src_model',
         'fitter'
     ]
 
     # TODO: Change the interface to provide the spectra directly, instead of
     # providing a file with spectra to read
-    def __init__(self, specfile, par, extract=None, fluxed=False, chk_version=True):
+    def __init__(self, spectra, par):
 
         # Instantiate as an empty DataContainer
         super().__init__()
@@ -89,9 +72,9 @@ class TelluricCorrection(datamodel.DataContainer):
         self.par = par
 
         # Load the spectral data
-        self.hdr, self.spectra = loader.load_spectra(
-            specfile, extract=extract, fluxed=fluxed, chk_version=chk_version
-        )
+        self.spectra = np.atleast_1d(spectra).tolist()
+        if not all(isinstance(s, Spectrum) for s in self.spectra):
+            raise PypeItError('Must provide Spectrum objects for telluric correction/modeling.')
         self.nspec = len(self.spectra)
 
         # Get the wavelength range of all the spectra

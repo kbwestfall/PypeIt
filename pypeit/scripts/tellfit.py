@@ -20,34 +20,43 @@ class TellFit(scriptbase.ScriptBase):
         )
         parser.add_argument(
             'tell_file', type=str,
-            help='Configuration file used to set the telluric.  This can be a ".pypeit" file '
-                 'that includes the desired telluric parameters or a ".tell" file with a set '
-                 'of parameters specific to the provided 1D spectrum.'
+            help=(
+                'Configuration file used to set the telluric.  This can be a ".pypeit" file '
+                'that includes the desired telluric parameters or a ".tell" file with a set of '
+                'parameters specific to the provided 1D spectrum.'
+            )
         )
         parser.add_argument(
             '--par_outfile', default=None,
-            help='File name for parameters used by the fit.  No file is written if no name is '
-                 'given.'
+            help=(
+                'File name for parameters used by the fit.  No file is written if no name is '
+                'given.'
+            )
         )
         parser.add_argument(
             '--extract', type=str, default=None, choices=[None, 'BOX', 'OPT'],
-            help='The extraction to use.  Must be either None, BOX (for a boxcar extraction), '
-                 'or OPT (for optimal extraction).  If None, the optimal extraction will be '
-                 'used, if it exists, otherwise the boxcar extraction will be used.  This is '
-                 'only relevant if the input is a spec1d file (as opposed to a onespec/coadd '
-                 'file).'
+            help=(
+                'The extraction to use.  Must be either None, BOX (for a boxcar extraction), or '
+                'OPT (for optimal extraction).  If None, the optimal extraction will be used, if '
+                'it exists, otherwise the boxcar extraction will be used.  This is only relevant '
+                'if the input is a spec1d file (as opposed to a onespec/coadd file).'
+            )
         )
         parser.add_argument(
             '--fluxed', default=False, action='store_true',
-            help='If True, use the flux-calibrated spectrum, if it exists.  If the flux '
-                 'calibration has not been performed or fluxed is False, the spectrum used is '
-                 'in counts.  This is only relevant if the input is a spec1d file (as opposed '
-                 'to a onespec/coadd file).'
+            help=(
+                'If True, use the flux-calibrated spectrum, if it exists.  If the flux '
+                'calibration has not been performed or fluxed is False, the spectrum used is '
+                'in counts.  This is only relevant if the input is a spec1d file (as opposed to '
+                'a onespec/coadd file).'
+            )
         )
-        parser.add_argument('--show', default=False, action='store_true',
-                            help='Show the telluric corrected spectrum')
-        parser.add_argument('--debug', default=False, action='store_true',
-                            help='show debug plots?')
+        parser.add_argument(
+            '--show', default=False, action='store_true', help='Show the fit results'
+        )
+        parser.add_argument(
+            '--debug', default=False, action='store_true', help='Run in debugging mode'
+        )
         parser.add_argument(
             '--try_old', dest='chk_version', default=True, action='store_false',
             help='Ensure the datamodels are from the current PypeIt version.'
@@ -68,6 +77,7 @@ class TellFit(scriptbase.ScriptBase):
         from pypeit import inputfiles
         from pypeit import log
         from pypeit import PypeItError
+        from pypeit import loader
         from pypeit import telluric
 
         # Initialize the log
@@ -78,6 +88,9 @@ class TellFit(scriptbase.ScriptBase):
         if not _spec1dfile.is_file():
             raise FileNotFoundError(f'Spec1d file not found: {_spec1dfile}')
 
+        # NOTE: This block of code that instantiates the parameter set is very
+        # similar to what is used in pypeit/scripts/sensfunc.py.  We might want
+        # a function that can be used by both scripts.
         # Load the parameters.  First try to read the input file as a .pypeit
         # file.
         try:
@@ -100,6 +113,9 @@ class TellFit(scriptbase.ScriptBase):
                     f'Unable to parse {args.tell_file} as a .pypeit file or a .tell file!'
                 )
             else:
+                # Get the set of parameters
+                # NOTE: We set `pypeit_fits=True` below because, *by definition*,
+                # the input files to tellfit are PypeIt output files.
                 with fits.open(_spec1dfile) as hdu:
                     par = ifile.get_pypeitpar(
                         config_specific_file=hdu, spectrograph_name=hdu[0].header['PYP_SPEC'],
@@ -111,7 +127,7 @@ class TellFit(scriptbase.ScriptBase):
 
         if par['tel_file'] is None:
             raise PypeItError(
-                'No telluric grid file is specified.  This means it has not been specific in '
+                'No telluric grid file is specified.  This means it has not been specified in '
                 'your input file and there is no default for your spectrograph.  You must set '
                 'the tel_file parameter; see the pypeit documentation for options.'
             )
@@ -129,11 +145,12 @@ class TellFit(scriptbase.ScriptBase):
         modelfile = _spec1dfile.parent / _spec1dfile.name.replace('.fits','_tellmodel.fits')
         log.info(f'Best-fit telluric model will be saved to: {modelfile}.')
 
-        # Instantiate the object used to determine the telluric correction
-        tell_corr = telluric.correction.TelluricCorrection(
-            _spec1dfile, par, extract=args.extract, fluxed=args.fluxed,
-            chk_version=args.chk_version
+        # Load the spectra to fit
+        hdr, spectra = loader.load_spectra(
+            _spec1dfile, extract=args.extract, fluxed=args.fluxed, chk_version=args.chk_version
         )
+        # Instantiate the object used to determine the telluric correction
+        tell_corr = telluric.correction.TelluricCorrection(spectra, par)
         # Run the fit
         tell_corr.fit(show=args.show, debug=args.debug)
         # Save the results

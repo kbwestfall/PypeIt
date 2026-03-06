@@ -7,8 +7,6 @@ Script to determine the sensitivity function for a PypeIt 1D spectrum.
 from IPython import embed
 
 from pypeit.scripts import scriptbase
-from pathlib import Path
-
 
 class SensFunc(scriptbase.ScriptBase):
 
@@ -16,81 +14,65 @@ class SensFunc(scriptbase.ScriptBase):
     # of numbers in the SensFunc parset, or as --det 3 7 on the command line
     @classmethod
     def get_parser(cls, width=None):
-        parser = super().get_parser(description='Compute a sensitivity function', width=width,
-                                    formatter=scriptbase.SmartFormatter, default_log_file=True)
-        parser.add_argument("spec1dfiles", type=str, nargs='+',
-                            help='file(s) of the reduced standard star spectrum.  These '
-                                 'can be either spec1d*.fits files or the output of '
-                                 '`pypeit_coadd_1dspec` (except for cross-dispersed echelle data).'
-                                 ' Multiple files can be provided, but they are helpful only'
-                                 'if they cover different wavelength ranges, since this'
-                                 'script will splice (not combine) them together.')
-        parser.add_argument("--extr", type=str, default=None, choices=['OPT', 'BOX'],
-                            help="R|Override the default extraction method used for computing the sensitivity "
-                                 "function.  Note that it is not possible to set --extr and "
-                                 "simultaneously use a .sens file with the --sens_file option. If "
-                                 "you are using a .sens file, set the algorithm there via:\n\n"
-                                 "F|    [sensfunc]\n"
-                                 "F|         extr = BOX\n"
-                                 "\nThe extraction options are: OPT or BOX")
-        parser.add_argument("--algorithm", type=str, default=None, choices=['UVIS', 'IR'],
-                            help="R|Override the default algorithm for computing the sensitivity "
-                                 "function.  Note that it is not possible to set --algorithm and "
-                                 "simultaneously use a .sens file with the --sens_file option. If "
-                                 "you are using a .sens file, set the algorithm there via:\n\n"
-                                 "F|    [sensfunc]\n"
-                                 "F|         algorithm = IR\n"
-                                 "\nThe algorithm options are:\n\n"
-                                 "UVIS = Should be used for data with lambda < 7000A.  No "
-                                 "detailed model of telluric absorption but corrects for "
-                                 "atmospheric extinction.\n\n"
-                                 "IR = Should be used for data with lambbda > 7000A. Performs "
-                                 "joint fit for sensitivity function and telluric absorption "
-                                 "using HITRAN models.\n\n")
-        parser.add_argument("--multi", type=str,
-                            help="R|List of detector numbers to splice together for instruments "
-                                 "with multiple detectors arranged in the spectral direction, "
-                                 "e.g. --multi = '3,7'.  Note that it is not possible to set "
-                                 "--multi and simultaneously use a .sens file with the "
-                                 "--sens_file option.  If you are using a .sens file, set the "
-                                 "multi_spec_det param there via:\n\n"
-                                 "F|    [sensfunc]\n"
-                                 "F|        multi_spec_det = 3,7\n"
-                                 "\n")
-        parser.add_argument("-o", "--outfile", type=str,
-                            help='Output file for sensitivity function. If not specified, the '
-                                 'sensitivity function will be written out to a standard filename '
-                                 'in the current working directory, i.e. if the standard spec1d '
-                                 'file is named spec1d_b24-Feige66_KASTb_foo.fits the sensfunc '
-                                 'will be written to sens_b24-Feige66_KASTb_foo.fits. A QA file '
-                                 'will also be written as sens_spec1d_b24-Feige66_KASTb_foo_QA.pdf '
-                                 'and a file showing throughput plots to '
-                                 'sens_spec1d_b24-Feige66_KASTb_foo_throughput.pdf. The same '
-                                 'extensions for QA and throughput will be used if outfile is '
-                                 'provided but with .fits trimmed off if it is in the filename.')
-        parser.add_argument("-s", "--sens_file", type=str,
-                            help='Configuration file with sensitivity function parameters')
-        parser.add_argument("-f", "--use_flat", default=False, action="store_true",
-                            help="R|Use the extracted spectrum of the flatfield calibration to estimate the blaze "
-                                 "function when generating the sensitivity function. This is helpful to account for "
-                                 "small scale undulations in the sensitivity function. The spec1dfile must contain the "
-                                 "extracted flatfield response in order to use this option. This spectrum is extracted "
-                                 "by default, unless you did not compute a pixelflat frame. Note that it is not "
-                                 "possible to set --use_flat and simultaneously use a .sens file with the --sens_file "
-                                 "option. If you are using a .sens file, set the use_flat flag with the argument:\n\n"
-                                 "F|    [sensfunc]\n"
-                                 "F|         use_flat = True")
-        parser.add_argument("--debug", default=False, action="store_true",
-                            help="show debug plots?")
-        parser.add_argument("--par_outfile", default='sensfunc.par',
-                            help="Name of output file to save the parameters used by the fit")
+        parser = super().get_parser(
+            description='Compute a sensitivity function', width=width,
+            formatter=scriptbase.SmartFormatter, default_log_file=True
+        )
+        parser.add_argument(
+            'spec1dfiles', type=str, nargs='+',
+            help='file(s) of the reduced standard star spectrum.  These can be either '
+                 'spec1d*.fits files or the output of `pypeit_coadd_1dspec` (except for '
+                 'cross-dispersed echelle data).  Multiple files can be provided, but they are '
+                 'helpful only if they cover different wavelength ranges, since this script will '
+                 'splice (not combine) them together.'
+        )
+        parser.add_argument(
+            '-s', '--sens_file', type=str,
+            help='Configuration file with sensitivity function parameters.  If not provided, the '
+                 'default parameters for this spectrographs will be used.'
+        )
+        parser.add_argument(
+            '--par_outfile', default=None,
+            help='File name for parameters used by the fit.  No file is written if no name is '
+                 'given.'
+        )
+        parser.add_argument(
+            '--extract', type=str, default=None, choices=[None, 'BOX', 'OPT'],
+            help='The extraction to use.  Must be either None, BOX (for a boxcar extraction), '
+                 'or OPT (for optimal extraction).  If None, the optimal extraction will be '
+                 'used, if it exists, otherwise the boxcar extraction will be used.  This is '
+                 'only relevant if the input is a spec1d file (as opposed to a onespec/coadd '
+                 'file).'
+        )
+        parser.add_argument(
+            "-o", "--outfile", type=str,
+            help='Output file for sensitivity function. If not specified, the sensitivity '
+                 'function will be written out to a standard filename in the current working '
+                 'directory, i.e. if the standard spec1d file is named ' \
+                 'spec1d_b24-Feige66_KASTb_foo.fits the sensfunc will be written to '
+                 'sens_b24-Feige66_KASTb_foo.fits. A QA file will also be written as '
+                 'sens_spec1d_b24-Feige66_KASTb_foo_QA.pdf and a file showing throughput plots to '
+                 'sens_spec1d_b24-Feige66_KASTb_foo_throughput.pdf. The same extensions for QA '
+                 'and throughput will be used if outfile is provided but with .fits trimmed off '
+                 'if it is in the filename.'
+        )
+        parser.add_argument(
+            '--show', default=False, action='store_true', help='Show the fit results'
+        )
+        parser.add_argument(
+            '--debug', default=False, action='store_true', help='Run in debugging mode'
+        )
+        parser.add_argument(
+            '--try_old', dest='chk_version', default=True, action='store_false',
+            help='Ensure the datamodels are from the current PypeIt version.'
+        )
         return parser
 
     @classmethod
     def main(cls, args):
         """Executes sensitivity function computation."""
 
-        import os
+        from pathlib import Path
 
         from pypeit import log
         from pypeit import PypeItError
@@ -103,43 +85,40 @@ class SensFunc(scriptbase.ScriptBase):
         # Initialize the log
         cls.init_log(args)
 
-        # Check parameter inputs
-        if args.algorithm is not None and args.sens_file is not None:
-            raise PypeItError("It is not possible to set --algorithm and simultaneously use a .sens "
-                       "file via the --sens_file option. If you are using a .sens file set the "
-                       "algorithm there via:\n"
-                       "\n"
-                       "    [sensfunc]\n"
-                       "         algorithm = IR\n"
-                       "\n")
+        # NOTE: This block of code that instantiates the parameter set is very
+        # similar to what is used in pypeit/scripts/tellfit.py.  We might want
+        # a function that can be used by both scripts.
+        # Load the parameters.  First try to read the input file as a .pypeit
+        # file.
+        try:
+            ifile = inputfiles.PypeItFile.from_file(args.sens_file)
+        except PypeItError as e:
+            log.warning(
+                f'Could not read {args.sens_file} as a .pypeit file.  Attempting to read as a '
+                f'.sens file.  Error was: {e}'
+            )
+            par = None
+        else:
+            par = ifile.get_pypeitpar()[1]['sensfunc']
 
-        if args.use_flat and args.sens_file is not None:
-            raise PypeItError("It is not possible to set --use_flat and simultaneously use a .sens "
-                       "file via the --sens_file option. If you are using a .sens file set the "
-                       "use_flat flag in your .sens file using the argument:\n"
-                       "\n"
-                       "    [sensfunc]\n"
-                       "       use_flat = True\n"
-                       "\n")
-
-        if args.multi is not None and args.sens_file is not None:
-            raise PypeItError("It is not possible to set --multi and simultaneously use a .sens file via "
-                       "the --sens_file option. If you are using a .sens file set the detectors "
-                       "there via:\n"
-                       "\n"
-                       "         [sensfunc]\n"
-                       "              multi_spec_det = 3,7\n"
-                       "\n")
-
-        if args.extr is not None and args.sens_file is not None:
-            raise PypeItError("It is not possible to set --extr and simultaneously use a .sens file via "
-                       "the --sens_file option. If you are using a .sens file set the extraction "
-                       "method there via:\n"
-                       "\n"
-                       "         [sensfunc]\n"
-                       "              extr = BOX\n"
-                       "\n")
-
+        if par is None:
+            # That failed, so now attempt a .tell file.
+            try:
+                ifile = inputfiles.SensFile.from_file(args.sens_file)
+            except PypeItError as e:
+                raise PypeItError(
+                    f'Unable to parse {args.sens_file} as a .pypeit file or a .sens file!'
+                )
+            else:
+                # Get the set of parameters
+                # NOTE: We set `pypeit_fits=True` below because, *by definition*,
+                # the input files to tellfit are PypeIt output files.
+                with fits.open(_spec1dfile) as hdu:
+                    par = ifile.get_pypeitpar(
+                        config_specific_file=hdu, spectrograph_name=hdu[0].header['PYP_SPEC'],
+                        pypeit_fits=True
+                    )[1]
+                par = par['sensfunc']
 
         # Determine the spectrograph and generate the primary FITS header
         with io.fits_open(args.spec1dfiles[0]) as hdul:
