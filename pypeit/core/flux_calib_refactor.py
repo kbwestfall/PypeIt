@@ -384,7 +384,7 @@ def standard_zeropoint(
     """
     zp_spec = calculate_zeropoint(
         obs_spec, std_spec, exptime=exptime, atm_extinction=atm_extinction, airmass=airmass,
-        telluric_model=telluric_model
+        telluric_model=telluric_model, relative_throughput=relative_throughput
     )
     fit_gpm, fit_gpm_rej, zp_bspl = spectrum.fit_spectrum_bspline(
         zp_spec, bkspace=bkspace, resolution=resolution, nresln=nresln, region_mask=region_mask,
@@ -454,8 +454,8 @@ def calculate_zeropoint(
             'Relative throughput must be sampled at the same wavelengths as the observed spectrum.'
         )
     
-    # The calculations below use the relevant spectrum.Spectrum methods to
-    # propagate errors.
+    # The calculations below use the multiply(), inverse(), and to_magnitude()
+    # methods in spectrum.Spectrum to propagate the errors.
 
     # Convert observed spectrum to counts/s/angstrom
     dw = np.diff(sampling.centers_to_borders(obs_spec.wave))

@@ -151,40 +151,41 @@ def load_spectra(specfile, extract=None, fluxed=False, chk_version=True):
     list:
         List of :class:`~pypeit.core.spectrum.Spectrum` objects.
     """
+    # TODO: Can we use try/except blocks to avoid opening the fits file?  Is
+    # that any more efficient than what's being done already?
 
-    # TODO: Can we use try/except blocks to avoid opening the fits file?
-
-    # Load a OneSpec file
-    hdu = io.fits_open(specfile)
-    is_onespec = 'DMODCLS' in hdu[1].header and hdu[1].header['DMODCLS'] == 'OneSpec'
-    hdu.close()
-    if is_onespec:
-        spec = onespec.OneSpec.from_file(specfile, chk_version=chk_version)
-
-        # TODO: I'm not sure which wavelength vector to use, but allowing data
-        # with wave==0 wreaks havoc later on, so I deal with it here.
-        _wave = spec.wave
-        _gpm = spec.mask.astype(bool)
-        bad_wave = _wave == 0
-        if np.any(bad_wave):
-            if np.any(bad_wave & _gpm):
-                raise PypeItError(
-                    'The input spectrum has unmasked pixels with the wavelength set to zero.'
-                )
-            if spec.wave_grid_mid is None:
-                raise PypeItError(
-                    'The input spectrum has pixels with the wavelength set to zero and no '
-                    'alternative wavelength grid to use.'
-                )
-            _wave[bad_wave] = spec.wave_grid_mid[bad_wave]
-
-        return spec.head0, [spectrum.Spectrum(
-            _wave, spec.flux, ivar=spec.ivar, gpm=_gpm, meta=spec.spect_meta
-        )]
+    # Get the type of file.
+    with io.fits_open(specfile) as hdu:
+        is_specobjs = 'DMODCLS' in hdu[1].header and hdu[1].header['DMODCLS'] == 'SpecObjs'
 
     # Load a spec1d file
-    sobjs = specobjs.SpecObjs.from_fitsfile(specfile, chk_version=chk_version)
-    return sobjs.header, specobjs_to_spectrum(sobjs, extract=extract, fluxed=fluxed)
+    if is_specobjs:
+        sobjs = specobjs.SpecObjs.from_fitsfile(specfile, chk_version=chk_version)
+        return sobjs.header, specobjs_to_spectrum(sobjs, extract=extract, fluxed=fluxed)
+
+    # Load a OneSpec file
+    spec = onespec.OneSpec.from_file(specfile, chk_version=chk_version)
+
+    # TODO: I'm not sure which wavelength vector to use, but allowing data
+    # with wave==0 wreaks havoc later on, so I deal with it here.
+    _wave = spec.wave
+    _gpm = spec.mask.astype(bool)
+    bad_wave = _wave == 0
+    if np.any(bad_wave):
+        if np.any(bad_wave & _gpm):
+            raise PypeItError(
+                'The input spectrum has unmasked pixels with the wavelength set to zero.'
+            )
+        if spec.wave_grid_mid is None:
+            raise PypeItError(
+                'The input spectrum has pixels with the wavelength set to zero and no '
+                'alternative wavelength grid to use.'
+            )
+        _wave[bad_wave] = spec.wave_grid_mid[bad_wave]
+
+    return spec.head0, [
+        spectrum.Spectrum(_wave, spec.flux, ivar=spec.ivar, gpm=_gpm, meta=spec.spect_meta)
+    ]
 
 
 # TODO: This could possibly be a member function of pypeit.specobjs.SpecObjs.

@@ -9,6 +9,7 @@ from copy import deepcopy
 
 from IPython import embed
 from matplotlib import pyplot
+from matplotlib import ticker
 import numpy as np
 from scipy import interpolate
 
