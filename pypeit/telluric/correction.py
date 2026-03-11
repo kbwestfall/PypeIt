@@ -3,13 +3,12 @@ Module implementing a class that determines the telluric correction for an
 observed spectrum.
 """
 
-from pathlib import Path
-
 from astropy import table
 from IPython import embed
 import numpy as np
 
 from pypeit import datamodel
+# TODO: Add some log messages?
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import telluric
@@ -225,9 +224,9 @@ class TelluricCorrection(datamodel.DataContainer):
             # having to instantiate the values (i.e., just be setting the length
             # of the column like all the other columns), but I explicitly do
             # this just to ensure the initial values are as expected.
-            # TODO: We may want to change this to a code that can differentiate
-            # between (1) a fit that has not yet been attempted, (2) a failed
-            # fit, or (3) a successful fit.
+            # TODO: We may want to change "SUCCESS" this to an integer code that
+            # can differentiate between (1) a fit that has not yet been
+            # attempted, (2) a failed fit, or (3) a successful fit.
             table.Column(
                 name='SUCCESS', dtype=bool, data=[False]*nfit,
                 description='Flag that fit was successful'

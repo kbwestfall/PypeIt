@@ -472,7 +472,7 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
 
 
 def calculate_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airmass=1.,
-                        telluric_model=None):
+                        telluric_model=None, relative_throughput=None):
     r"""
     Calculate the flux zeropoints based on observed flux and standard spectrum.
 
@@ -480,12 +480,12 @@ def calculate_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, air
     ----------
     obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
         Observed spectrum.  The input wavelength and flux units are expected to
-        be angstroms and counts, respectively.  The spectrum is expected to be a
-        single vector..
+        be angstroms and counts/electrons per pixel, respectively.  The spectrum
+        is expected to be a single vector.
     std_spec : :class:`~pypeit.core.spectrum.Spectrum`
         Standard, flux calibrated spectrum.  Flux must be in :math:`10^{-17}
-        {\rm erg/s/cm}^2/\AA`.  Must be sampled at the same wavelengths as the
-        observed spectrum.
+        {\rm erg/s/cm}^2/\AA` and it must be sampled at the same wavelengths as
+        the observed spectrum.
     exptime : :obj:`float`, optional
         Exposure time in seconds.
     atm_extinction : :class:`~pypeit.core.atmextinction.AtmosphericExtinction`, optional
@@ -501,6 +501,8 @@ def calculate_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, air
         observed spectrum.  Note that if both ``atm_extinction`` and
         ``telluric_model`` are provided, they are *both* used in the zeropoint
         calculation.
+    relative_throughput : :class:`numpy.ndarray`, optional
+        The normalized throughput of the spectrum.
 
     Returns
     -------
@@ -515,8 +517,21 @@ def calculate_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, air
     if not isinstance(std_spec, spectrum.Spectrum):
         raise PypeItError('Must provide standard spectrum as a Spectrum object.')
     if not np.allclose(obs_spec.wave, std_spec.wave):
-        raise PypeItError('Standard spectrum is expected to be sampled at the same wavelengths as the '
-                   'observed spectrum.')
+        raise PypeItError(
+            'Standard spectrum is expected to be sampled at the same wavelengths as the observed '
+            'spectrum.'
+        )
+    if telluric_model is not None and telluric_model.shape != obs_spec.shape:
+        raise PypeItError(
+            'Telluric model must be sampled at the same wavelengths as the observed spectrum.'
+        )
+    if relative_throughput is not None and relative_throughput.shape != obs_spec.shape:
+        raise PypeItError(
+            'Relative throughput must be sampled at the same wavelengths as the observed spectrum.'
+        )
+    
+    # The calculations below use the relevant spectrum.Spectrum methods to
+    # propagate errors.
 
     # Convert observed spectrum to counts/s/angstrom
     dw = np.diff(sampling.centers_to_borders(obs_spec.wave))
@@ -526,14 +541,17 @@ def calculate_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, air
     # Correct for the atmospheric extinction
     if atm_extinction is not None:
         zp_spec.multiply(atm_extinction.correction_factor(zp_spec.wave, airmass=airmass))
+    if telluric_model is not None:
+        zp_spec.multiply(1./telluric_model)
 
-    # Compute the zeropoint at each wavelength.  This uses spectrum.Spectrum
-    # operations to propagate the errors.
+    # Correct for relative throughput variations
+    if relative_throughput is not None:
+        zp_spec.multiply(1./relative_throughput)
+
+    # Compute the zeropoint at each wavelength.
     zp_spec.inverse()
     zp_spec.multiply(std_spec)
     zp_spec.multiply(zp_spec.wave**2)
-    if telluric_model is not None:
-        zp_spec.multiply(telluric_model)
     zp_spec.to_magnitude(zeropoint=ZP_UNIT_CONST)
 
     return zp_spec
