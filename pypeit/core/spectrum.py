@@ -8,12 +8,17 @@ Ideally this would be replaced by specutils.Spectrum
 from copy import deepcopy
 
 from IPython import embed
+from matplotlib import pyplot
 import numpy as np
+from scipy import interpolate
 
+from pypeit import bspline
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import sampling
 from pypeit import utils
+from pypeit.core import fitting
+from pypeit.core import wavemask
 
 
 class Spectrum:
@@ -285,3 +290,264 @@ class Spectrum:
         return Spectrum(
             r.outx, r.outy.T, ivar=ivar, gpm=r.outf.T > pixel_fraction_threshold, meta=self.meta,
         )
+
+
+def fit_spectrum_bspline(
+    spec, bkspace=None, resolution=2700., nresln=20., region_mask=None, maxiter=35, upper=3.0,
+    lower=3.0
+):
+    r"""
+    Fit a bspline model to the continuum of a spectrum.
+
+    Parameters
+    ----------
+    spec : :class:`~pypeit.core.spectrum.Spectrum`
+        The spectrum to fit.  Note that the good-pixel mask of the spectrum is
+        used to ignore pixels during the fit; see also ``region_mask``
+    bkspace : :obj:`float`, optional
+        The spacing in angstroms between breakpoints in the bspline; see
+        :func:`fit_spectrum_bspline_breakpoints`.  If provided, ``resolution``
+        and ``nresln`` are ignored.  If None, ``resolution`` and ``nresln`` must
+        be provided and these are used to set the breakpoints.
+    resolution : :obj:`int`, :obj:`float`, optional
+        The resolution of the spectrum (:math:`R=\lambda/\Delta\lambda`).  If
+        ``bkspace`` is not provided, the combination of ``resolution`` and
+        ``nresln`` are used to set the breakpoint spacing; they are ignored
+        otherwise.
+    nresln : :obj:`int`, :obj:`float`, optional
+        The number of resolution elements between adjacent breakpoints.  If
+        ``bkspace`` is not provided, the combination of ``resolution`` and
+        ``nresln`` are used to set the breakpoint spacing; they are ignored
+        otherwise.
+    region_mask : `numpy.ndarray`_, optional
+        A :math:`(N_{\rm mask},2)` array with starting and ending wavelengths
+        for a set of spectral regions to mask during the fit.  See
+        :func:`~pypeit.core.wavemask.build_wavelength_gpm`.  If None, the
+        masking only incorporates the good-pixel mask of the spectrum.
+    maxiter : :obj:`int`, optional
+        Maximum number of fit and rejection iterations to perform.
+        See :func:`~pypeit.bspline.bspline.iterfit`.
+    upper : :obj:`int`, :obj:`float`, optional
+        Number of sigma used for rejecting positive residuals during bspline fitting.
+    lower : :obj:`int`, :obj:`float`, optional
+        Number of sigma used for rejecting negative residuals during bspline fitting.
+
+    Returns
+    -------
+    fit_gpm : `numpy.ndarray`_
+        Boolean array (good-pixel mask) selecting pixels that were initially
+        included in the bspline fit.  Note this can be different from
+        ``fit_rej_gpm``, which excludes measurements that are rejected during
+        the iterative fitting procedure.  Shape matches ``spec``.
+    fit_gpm_rej : `numpy.ndarray`_
+        Same as ``fit_gpm``, except that measurements rejected by the iterative
+        fitting procedures have been flagged as bad.  Shape matches ``spec``.
+    bspl : :class:`~pypeit.bspline.bspline.bspline`
+        Best-fitting bspline model.  To sample the model at the observed
+        wavelengths, use ``bspl.value(spec.wave)`` (see
+        :func:`~pypeit.bspline.bspline.bspline.value`).
+    """
+    # TODO: I think changes need to be made to the lines below to enable the
+    # function to work on an multi-vector spectrum.
+
+    # Construct the good-pixel mask to use while fitting
+    if region_mask is None:
+        fit_gpm = spec.gpm.copy()
+    else:
+        fit_gpm = spec.gpm & wavemask.build_wavelength_gpm(spec.wave, region_mask)
+
+    # Set the bspline breakpoints
+    init_breakpoints = fit_spectrum_bspline_breakpoints(
+        spec.wave, gpm=spec.gpm, fit_gpm=fit_gpm, bkspace=bkspace, resolution=resolution,
+        nresln=nresln
+    )
+
+    # Perform the fit
+    # TODO:
+    #   - remove hardcoding of maxrej
+    #   - pass all djs_reject parameters?
+    kwargs_reject = {'maxrej': 5}
+    bspl, fit_gpm_rej = fitting.iterfit(
+        spec.wave, spec.flux, invvar=spec.ivar, inmask=fit_gpm, upper=upper, lower=lower,
+        fullbkpt=init_breakpoints, maxiter=maxiter, kwargs_reject=kwargs_reject
+    )
+
+    # Return the results
+    return fit_gpm, fit_gpm_rej, bspl
+
+
+def fit_spectrum_bspline_breakpoints(
+    wave, gpm=None, fit_gpm=None, bkspace=None, resolution=None, nresln=None
+):
+    """
+    Create the vector of breakpoints for fitting a spectrum.
+
+    Parameters
+    ----------
+    wave : `numpy.ndarray`_
+        Vector of observed wavelengths in angstroms.
+    gpm : `numpy.ndarray`_, optional
+        Good-pixel mask selecting wavelength regions where the measurements are
+        good.  Shape must match ``wave``.  If None, all pixels are assumed to be
+        good.
+    fit_gpm : `numpy.ndarray`_, optional
+        Good-pixel mask selecting wavelength regions to include in the fit.
+        Shape must match ``wave``.  If None, this is assumed to be identical to
+        ``gpm``.
+    bkspace : :obj:`float`, optional
+        The spacing in angstroms between breakpoints in the bspline`.  If
+        provided, ``resolution`` and ``nresln`` are ignored.  If None,
+        ``resolution`` and ``nresln`` must be provided and these are used to set
+        the breakpoints.
+    resolution : :obj:`int`, :obj:`float`, optional
+        The resolution of the spectrum (:math:`R=\lambda/\Delta\lambda`).  If
+        ``bkspace`` is not provided, the combination of ``resolution`` and
+        ``nresln`` are used to set the breakpoint spacing; they are ignored
+        otherwise.
+    nresln : :obj:`int`, :obj:`float`, optional
+        The number of resolution elements between adjacent breakpoints.  If
+        ``bkspace`` is not provided, the combination of ``resolution`` and
+        ``nresln`` are used to set the breakpoint spacing; they are ignored
+        otherwise.
+
+    Returns
+    -------
+    :class:`numpy.ndarray`
+        A vector with the breakpoint locations in angstroms; i.e., this is
+        ``fullbkpt`` in :func:`~pypeit.bspline.bspline.iterfit`.
+    """
+    # Only use the valid wavelengths
+    _wave = wave if gpm is None else wave[gpm]
+
+    if bkspace is None:
+        if resolution is None or nresln is None:
+            raise PypeItError(
+                'If not providing breakpoint spacing when fitting spectra, you must provide the '
+                'resolution and the number of resolution elements between breakpoints (nresln).'
+            )
+        dw = np.diff(sampling.centers_to_borders(wave))
+        dw_pix = np.median(dw)
+        dw_res = np.median(_wave/resolution)
+        if nresln * dw_res < dw_pix:
+            _nresln = 2 * dw_pix / dw_res
+            log.warning(
+                'Nominal breakpoint spacing is less than one pixel.  Adjusting the number of '
+                f'resolution elements from {nresln:.1f} to {_nresln:.1f}.'
+            )
+        else:
+            _nresln = nresln
+        _bkspace = dw_res * _nresln
+        log.info(f'Median wavelength step per pixel: {dw_pix:.2f} Å')
+        log.info(f'Median wavelength step per resolution element: {dw_res:.2f} Å')
+    else:
+        _bkspace = bkspace
+    log.info(f'Breakpoint spacing: {_bkspace:.2f} Å')
+
+    # Control the set of breakpoints used
+    init_bspline = bspline.bspline(_wave, bkspace=_bkspace)
+    if fit_gpm is None:
+        return init_bspline.breakpoints
+
+    _fit_gpm = fit_gpm if gpm is None else fit_gpm[gpm]
+    # remove masked regions from breakpoints
+    msk_bkpt = interpolate.interp1d(
+        _wave, _fit_gpm.astype(float), kind='nearest', fill_value='extrapolate'
+    )
+    return init_bspline.breakpoints[msk_bkpt(init_bspline.breakpoints) > 0.999]
+
+
+def fit_spectrum_bspline_qa(spec, fit_gpm, fit_gpm_rej, bspl, ofile=None):
+    """
+    Quality assessment plot for the spectrum bspline modeling.
+
+    Parameters
+    ----------
+    spec : :class:`~pypeit.core.spectrum.Spectrum`
+        Observed spectrum.
+    fit_gpm : `numpy.ndarray`_
+        Boolean array (good-pixel mask) selecting pixels that were initially
+        included in the bspline fit.  Shape matches ``spec``.
+    fit_gpm_rej : `numpy.ndarray`_
+        Same as ``fit_gpm``, except that measurements rejected by the iterative
+        fitting procedures have been flagged as bad.  Shape matches ``spec``.
+    bspl : :class:`~pypeit.bspline.bspline.bspline`
+        Best-fitting bspline model.
+    ofile : :obj:`str`, `Path`_, optional
+        If provided, the plot is written to a file.  If None, the plot is shown
+        in a matplotlib window.
+    """
+
+    bspl_model, bspl_model_gpm = bspl.value(spec.wave)
+    bspl_model = np.ma.MaskedArray(bspl_model, mask=np.logical_not(bspl_model_gpm))
+    bspl_model_bkpt = bspl.value(bspl.breakpoints)[0]
+    fit_bpm = np.logical_not(fit_gpm)
+    # The data rejected during the fit
+    fit_rejected = fit_gpm & np.logical_not(fit_gpm_rej)
+
+    wflux = np.amax(spec.flux) - np.amin(spec.flux)
+    cflux = (np.amax(spec.flux) + np.amin(spec.flux))/2
+    flux_lim = [cflux - 1.1 * wflux / 2, cflux + 1.1 * wflux / 2]
+    wave_lim = [np.amin(spec.wave), np.amax(spec.wave)]
+
+    dflux = spec.flux - bspl_model
+    mean_dflux = np.mean(dflux[fit_gpm])
+    sdev_dflux = np.std(dflux[fit_gpm])
+    dflux_lim = [mean_dflux - 5 * sdev_dflux, mean_dflux + 5 * sdev_dflux]
+
+    # Set figure
+    w,h = pyplot.figaspect(1)
+    fig = pyplot.figure(figsize=(3*w,1.5*h))
+
+    ax = fig.add_axes([0.08, 0.3, 0.90, 0.68])
+    ax.minorticks_on()
+    ax.tick_params(which='major', length=8, direction='in', top=True, right=True)
+    ax.tick_params(which='minor', length=4, direction='in', top=True, right=True)
+    ax.grid(True, which='major', color='0.9', zorder=0, linestyle='-')
+    ax.set_xlim(wave_lim)
+    ax.set_ylim(flux_lim)
+    ax.xaxis.set_major_formatter(ticker.NullFormatter())
+    ax.text(-0.05, 0.5, 'Zeropoint (AB mag)', ha='center', va='center', rotation='vertical',
+            transform=ax.transAxes)
+
+    ax.plot(spec.wave, spec.flux,
+            drawstyle='steps-mid', color='black', label='Zeropoint Data', zorder=2)
+    ax.plot(spec.wave, bspl_model,
+            color='cornflowerblue', label='Bspline fit', linewidth=1.0, zorder=3)
+    ax.scatter(spec.wave[fit_bpm], spec.flux[fit_bpm],
+                marker='+', color='red', s=5, label='masked on input', zorder=5)
+    ax.scatter(spec.wave[fit_rejected], spec.flux[fit_rejected],
+                marker='x', color='pink', s=5, label='rejected by fit', zorder=4)
+    ax.scatter(bspl.breakpoints, bspl_model_bkpt,
+                marker= '.', color='cyan', s=8, label='breakpoints', zorder=10)
+    ax.plot(spec.wave, 1.0 / np.sqrt(spec.ivar), color='orange', label='1-sigma error')
+
+    pyplot.legend()
+
+    ax = fig.add_axes([0.08, 0.1, 0.90, 0.2])
+    ax.minorticks_on()
+    ax.tick_params(which='major', length=8, direction='in', top=True, right=True)
+    ax.tick_params(which='minor', length=4, direction='in', top=True, right=True)
+    ax.grid(True, which='major', color='0.9', zorder=0, linestyle='-')
+    ax.set_xlim(wave_lim)
+    ax.set_ylim(dflux_lim)
+    ax.text(-0.05, 0.5, 'Residuals (AB mag)', ha='center', va='center', rotation='vertical',
+            transform=ax.transAxes)
+    ax.text(0.5, -0.25, 'Wavelength (Angstroms)', ha='center', va='center',
+            transform=ax.transAxes)
+
+    ax.plot(spec.wave, dflux, drawstyle='steps-mid', color='black', zorder=2)
+    ax.scatter(spec.wave[fit_bpm], dflux[fit_bpm],
+                marker='+', color='red', s=5, zorder=5)
+    ax.scatter(spec.wave[fit_rejected], dflux[fit_rejected],
+                marker='x', color='pink', s=5, zorder=4)
+    ax.scatter(bspl.breakpoints, np.zeros(bspl.breakpoints.size),
+                marker= '.', color='cyan', s=8, zorder=10)
+    ax.plot(spec.wave, 1.0 / np.sqrt(spec.ivar), color='orange')
+
+    if ofile is None:
+        pyplot.show()
+    else:
+        fig.canvas.print_figure(ofile, bbox_inches='tight')
+    fig.clear()
+    pyplot.close(fig)
+
