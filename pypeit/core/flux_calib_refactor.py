@@ -57,6 +57,26 @@ Value is: ZP_UNIT_CONST = 40.092117379602044.
 """
 
 
+def throughput_unit_const():
+    """
+    Calculate the constant used for throughput calculations based on the
+    measured spectroscopic zeropoints.  See :ref:`fluxcalib`.
+    """
+    return (
+        constants.h * constants.c / units.angstrom
+        / units.m**2
+        / (PYPEIT_FLUX_SCALE * units.erg / units.cm**2)
+    ).decompose().value
+
+
+THROUGHPUT_UNIT_CONST = throughput_unit_const()
+"""
+Global variable with the throughput conversion constant.
+
+Value is: THROUGHPUT_UNIT_CONST = 198644.5857148928.
+"""
+
+
 def sensfunc(obs_spec, std_spec, **kwargs):
     """
     Calculate the sensitivity functions for one or more observed spectra given
@@ -251,95 +271,42 @@ def eval_zeropoint(theta, func, wave, wave_min, wave_max, log10_blaze_func_per_a
     return zeropoint
 
 
-def Nlam_to_Flam(wave, zeropoint, zp_min=5.0, zp_max=30.0):
-    r"""
-    The factor that when multiplied into N_lam 
-    converts to F_lam, i.e. S_lam where S_lam \equiv F_lam/N_lam
-
-    Parameters
-    ----------
-    wave: `numpy.ndarray`_
-       Wavelength vector for zeropoint
-    zeropoint: `numpy.ndarray`_
-       zeropoint
-    zp_min: float, optional
-       Minimum allowed value of the ZP. For smaller values the S_lam factor is set to zero
-    zp_max: float, optional
-       Maximum allowed value of the ZP. For larger values the S_lam factor is set to zero
-
-    Returns
-    -------
-    factor: `numpy.ndarray`_
-         S_lam factor
-
-    """
-    gpm = (wave > 1.0) & (zeropoint > zp_min) & (zeropoint < zp_max)
-    factor = np.zeros_like(wave)
-    factor[gpm] = np.power(10.0, -0.4*(zeropoint[gpm] - ZP_UNIT_CONST))/np.square(wave[gpm])
-    return factor
-
-
-def Flam_to_Nlam(wave, zeropoint, zp_min=5.0, zp_max=30.0):
-    r"""
-    The factor that when multiplied into F_lam converts to N_lam, 
-    i.e. 1/S_lam where S_lam \equiv F_lam/N_lam
-
-
-    Parameters
-    ----------
-    wave: `numpy.ndarray`_
-       Wavelength array, float, shape (nspec,)
-    zeropoint: `numpy.ndarray`_
-       zeropoint array, float, shape (nspec,)
-
-    Returns
-    -------
-    factor: `numpy.ndarray`_
-        Factor that when multiplied into F_lam converts to N_lam, i.e. 1/S_lam
-
-    """
-    gpm = (wave > 1.0) & (zeropoint > zp_min) & (zeropoint < zp_max)
-    factor = np.zeros_like(wave)
-    factor[gpm] = np.power(10.0, 0.4*(zeropoint[gpm] - ZP_UNIT_CONST))*np.square(wave[gpm])
-    return factor
-
-
 def zeropoint_to_throughput(wave, zeropoint, eff_aperture):
     """
-    Routine to compute the spectrograph throughput from the zeropoint and effective aperture.
+    Calculate the telescope+spectrograph throughput from the zeropoint and
+    effective aperture.
+
+    See :ref:`fluxcalib`.
 
     Parameters
     ----------
-    wave: `numpy.ndarray`_
-         Wavelength array shape (nspec,) or (nspec, norders)
-    zeropoint: `numpy.ndarray`_
-         Zeropoint array shape (nspec,) or (nspec, norders)
-    eff_aperture: float
-         Effective aperture of the telescope in m^2. See spectrograph object
+    wave: :class:`numpy.ndarray`
+         Wavelengths at which the zeropoints were measured.  Must be in Angstroms.
+    zeropoint : :class:`numpy.ndarray`
+         Spectroscopic zeropoints; see :func:`calculate_zeropoint`.  Shape must
+         broadcast to ``wave``.
+    eff_aperture : float
+         Effective aperture of the telescope; i.e., this is the area of the
+         telescope aperture corrected for any structural obscurations.  Must be
+         in square meters.
 
     Returns
     -------
-    throughput: `numpy.ndarray`_
+    :class:`numpy.ndarray`
         Throughput of the spectroscopic setup. 
-        Same shape as wave and zeropoint
-
     """
-
-    eff_aperture_m2 = eff_aperture*units.m**2
-    S_lam_units = PYPEIT_FLUX_SCALE*units.erg/units.cm**2
-    # Set the throughput to be -1 in places where it is not defined.
-    throughput = np.full_like(zeropoint, -1.0)
-    zeropoint_gpm = (zeropoint > 5.0) & (zeropoint < 30.0) & (wave > 1.0)
-    inv_S_lam = Flam_to_Nlam(wave[zeropoint_gpm], zeropoint[zeropoint_gpm])/S_lam_units
-    inv_wave = utils.inverse(wave[zeropoint_gpm])/units.angstrom
-    thru = ((constants.h*constants.c)*inv_wave/eff_aperture_m2*inv_S_lam).decompose()
-    throughput[zeropoint_gpm] = thru
-    return throughput
+    # TODO:
+    #   - Return a gpm based on the following?
+    #       throughput_gpm = (zeropoint > 5.0) & (zeropoint < 30.0) & (wave > 1.0)
+    #   - Propagate errors?
+    return THROUGHPUT_UNIT_CONST * 10**(0.4*(zeropoint-ZP_UNIT_CONST)) * wave / eff_aperture
 
 
-def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airmass=1.,
-                       telluric_model=None, bkspace=None, resolution=2700., nresln=20.,
-                       region_mask=None, maxiter=35, upper=3.0, lower=3.0):
+def standard_zeropoint(
+    obs_spec, std_spec, exptime=1., atm_extinction=None, airmass=1., telluric_model=None,
+    relative_throughput=None, bkspace=None, resolution=2700., nresln=20., region_mask=None,
+    maxiter=35, upper=3.0, lower=3.0
+):
     r"""
     Generate a sensitivity function based on observed flux and standard spectrum.
 
@@ -369,6 +336,8 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
         observed spectrum.  Note that if both ``atm_extinction`` and
         ``telluric_model`` are provided, they are *both* used in the zeropoint
         calculation.
+    relative_throughput : :class:`numpy.ndarray`, optional
+        The normalized throughput of the spectrum.
     bkspace : :obj:`float`, optional
         The spacing in angstroms between breakpoints in the bspline used to fit
         the sensitivity function zeropoints; see :func:`zeropoint_breakpoints`.
@@ -424,8 +393,10 @@ def standard_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airm
     return zp_spec, fit_gpm, fit_gpm_rej, zp_bspl
 
 
-def calculate_zeropoint(obs_spec, std_spec, exptime=1., atm_extinction=None, airmass=1.,
-                        telluric_model=None, relative_throughput=None):
+def calculate_zeropoint(
+    obs_spec, std_spec, exptime=1., atm_extinction=None, airmass=1., telluric_model=None,
+    relative_throughput=None
+):
     r"""
     Calculate the flux zeropoints based on observed flux and standard spectrum.
 
@@ -549,6 +520,7 @@ def load_filter_file(filter):
 
     # Return
     return wave, instr
+
 
 # TODO Replace this stuff wth calls to the astropy speclite package.
 def scale_in_filter(wave, flux, gpm, scale_dict):
