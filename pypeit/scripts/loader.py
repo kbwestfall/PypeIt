@@ -156,7 +156,7 @@ def load_spectra(specfile, extract=None, fluxed=False, chk_version=True):
 
     # Get the type of file.
     with io.fits_open(specfile) as hdu:
-        is_specobjs = 'DMODCLS' in hdu[1].header and hdu[1].header['DMODCLS'] == 'SpecObjs'
+        is_specobjs = 'DMODCLS' in hdu[0].header and hdu[0].header['DMODCLS'] == 'SpecObjs'
 
     # Load a spec1d file
     if is_specobjs:
@@ -164,7 +164,15 @@ def load_spectra(specfile, extract=None, fluxed=False, chk_version=True):
         return sobjs.header, specobjs_to_spectrum(sobjs, extract=extract, fluxed=fluxed)
 
     # Load a OneSpec file
-    spec = onespec.OneSpec.from_file(specfile, chk_version=chk_version)
+    try:
+        spec = onespec.OneSpec.from_file(specfile, chk_version=chk_version)
+    except PypeItError as e:
+        # TODO: Catch a specific exception!
+        raise PypeItError(
+            f'Unable to load data in {specfile} using the SpecObjs or OneSpec datamodels.  The '
+            'DMODCLS keyword is either not present or not equal to SpecObjs in the primary '
+            f'header, and the error raised when attempting to read the file using OneSpec was: {e}'
+        )
 
     # TODO: I'm not sure which wavelength vector to use, but allowing data
     # with wave==0 wreaks havoc later on, so I deal with it here.
