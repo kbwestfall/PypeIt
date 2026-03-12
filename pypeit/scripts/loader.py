@@ -120,7 +120,7 @@ def get_pypeitpar(spec1dfile, ifile=None, secondary_ifile_class=None):
         return par, spec
 
 
-def load_spectra(specfile, extract=None, fluxed=False, chk_version=True):
+def load_spectra(specfile, extract=None, fluxed=False, include_flat=False, chk_version=True):
     """
     Read a spec1d or onespec file.
 
@@ -138,6 +138,8 @@ def load_spectra(specfile, extract=None, fluxed=False, chk_version=True):
         If True, return the flux-calibrated spectrum, if it exists.  If the flux
         calibration hasn't been performed or ``fluxed=False``, the spectrum is
         returned in counts.  Only relevant if the input is a spec1d file.
+    include_flat : :obj:`bool`, optional
+        If True, include the extracted flat spectrum as an associated array.
     chk_version : :obj:`bool`, optional
         When reading in existing files written by PypeIt, perform strict
         version checking to ensure a valid file.  If False, the code will
@@ -161,7 +163,9 @@ def load_spectra(specfile, extract=None, fluxed=False, chk_version=True):
     # Load a spec1d file
     if is_specobjs:
         sobjs = specobjs.SpecObjs.from_fitsfile(specfile, chk_version=chk_version)
-        return sobjs.header, specobjs_to_spectrum(sobjs, extract=extract, fluxed=fluxed)
+        return sobjs.header, specobjs_to_spectrum(
+            sobjs, extract=extract, fluxed=fluxed, include_flat=include_flat
+        )
 
     # Load a OneSpec file
     try:
@@ -197,7 +201,7 @@ def load_spectra(specfile, extract=None, fluxed=False, chk_version=True):
 
 
 # TODO: This could possibly be a member function of pypeit.specobjs.SpecObjs.
-def specobjs_to_spectrum(sobjs, extract=None, fluxed=False):
+def specobjs_to_spectrum(sobjs, extract=None, fluxed=False, include_flat=False):
     """
     Utility function to convert a :class:`~pypeit.specobjs.SpecObjs` object into
     a list of :class:`~pypeit.core.spectrum.Spectrum` objects.
@@ -212,6 +216,8 @@ def specobjs_to_spectrum(sobjs, extract=None, fluxed=False):
     fluxed : :obj:`bool`, optional
         If True, return the flux-calibrated spectrum.  If False, return the
         uncalibrated counts.
+    include_flat : :obj:`bool`, optional
+        If True, include the extracted flat spectrum as an associated array.
 
     Returns
     -------
@@ -228,8 +234,10 @@ def specobjs_to_spectrum(sobjs, extract=None, fluxed=False):
     for sobj in sobjs:
         ext, cal = sobj.best_ext_match(extract=extract, fluxed=fluxed)
         func = sobj.get_box_ext if ext == 'BOX' else sobj.get_opt_ext
-        wave, flux, ivar, gpm = func(fluxed=cal)
+        wave, flux, ivar, gpm, flat = func(fluxed=cal)
+        if include_flat:
+            assoc = {'flat': flat}
         # TODO: Deal with wave=0 data?
-        spectra += [spectrum.Spectrum(wave, flux, ivar=ivar, gpm=gpm, meta=meta_spec)]
+        spectra += [spectrum.Spectrum(wave, flux, ivar=ivar, gpm=gpm, meta=meta_spec, assoc=assoc)]
     return spectra
 

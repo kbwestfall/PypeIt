@@ -48,8 +48,15 @@ class Spectrum:
         all pixels are valid.
     meta : dict, optional
         Collection of relevant metadata.
+    assoc : dict, optional
+        A set of arrays associated with the flux data.  E.g., these can be
+        measurements of the sky flux, the spectral resolution, or a spectral
+        model.  The key of the provided dictionary should be a unique identifier
+        (name) for each array, and the dictionary item provides its data.  The
+        shape of each associated array *must* match the shape of the ``flux``
+        array.
     """
-    def __init__(self, wave, flux, ivar=None, gpm=None, meta=None):
+    def __init__(self, wave, flux, ivar=None, gpm=None, meta=None, assoc=None):
 
         # Throughout I use the copy method to ensure the original arrays are
         # copied
@@ -75,7 +82,27 @@ class Spectrum:
             if self.gpm.shape != self.flux.shape:
                 raise PypeItError('Wavelength and good-pixel arrays do not have the same size.')
 
-        self.meta = meta if meta is None else deepcopy(meta)
+        self.meta = None if meta is None else deepcopy(meta)
+
+        self.assoc = self._ingest_associated(assoc)
+
+    def _ingest_associated(self, assoc):
+        """
+        Helper function to ingest associated data arrays
+        """
+        if assoc is None:
+            return None
+        if not isinstance(assoc, dict):
+            raise PypeItError('Associated data arrays must be provided via a dictionary.')
+        
+        self.assoc = {}
+        for key, arr in assoc.items():
+            _arr = np.asarray(arr).copy()
+            if _arr.shape != self.flux.shape:
+                raise PypeItError(
+                    f'Associated data array {key} does not match the shape of the flux array.'
+                )
+            self.assoc[key] = _arr
 
     @property
     def size(self):
@@ -104,8 +131,13 @@ class Spectrum:
         """
         _ivar = None if self.ivar is None else self.ivar.copy()
         _meta = None if self.meta is None else deepcopy(self.meta)
+        _assoc = (
+            None if self.assoc is None
+            else {key : arr.copy() for key, arr in self.assoc.items()}
+        )
         return self.__class__(
-            self.wave.copy(), self.flux.copy(), ivar=_ivar, gpm=self.gpm.copy(), meta=_meta
+            self.wave.copy(), self.flux.copy(), ivar=_ivar, gpm=self.gpm.copy(), meta=_meta,
+            assoc=_assoc
         )
 
     def multiply(self, a):
@@ -123,6 +155,10 @@ class Spectrum:
             :attr:`flux`.  If a spectrum, the wavelength arrays of the two
             spectrum *must be identical*.
         """
+        if self.assoc is not None:
+            log.warning('Removing associated arrays due to use of multiply().')
+            self.assoc = None
+
         # Multiply by a scalar
         if isinstance(a, (int, np.integer, float, np.floating)):
             if float(a) == 0.:
@@ -213,6 +249,9 @@ class Spectrum:
         they are propagated.  Any divisions by 0 result in an inverse variance
         of 0 and the good pixel mask is set to False.
         """
+        if self.assoc is not None:
+            log.warning('Removing associated arrays due to use of inverse().')
+            self.assoc = None
         if self.ivar is not None:
             self.ivar *= self.flux**4
             self.gpm[np.logical_not(self.ivar > 0)] = False
@@ -239,6 +278,10 @@ class Spectrum:
         zeropoint : float, optional
             The magnitude conversion zeropoint (see above)
         """
+        if self.assoc is not None:
+            log.warning('Removing associated arrays due to use of to_magnitude().')
+            self.assoc = None
+
         if self.ivar is not None:
             self.ivar *= (self.flux * np.log(10) / 2.5)**2
         self.gpm[np.logical_not(self.flux > 0)] = False
@@ -272,6 +315,10 @@ class Spectrum:
         :class:`~pypeit.core.spectrum.Spectrum`
             A new spectrum object with the resample data.
         """
+        if self.assoc is not None:
+            log.warning('Removing associated arrays due to use of resample().')
+            self.assoc = None
+
         # Setup
         bpm = None if np.all(self.gpm) else np.logical_not(self.gpm).T
         if self.ivar is None:

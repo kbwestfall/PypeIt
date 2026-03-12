@@ -513,14 +513,14 @@ class CoAdd2D:
             order_str = f' on slit/order {order}' if order is not None else ''
             # check if OPT_COUNTS is available
             if sobjs[ithis][0].has_opt_ext() and np.any(sobjs[ithis][0].OPT_MASK):
-                wave_iexp, flux_iexp, ivar_iexp, gpm_iexp = sobjs[ithis][0].get_opt_ext()
+                wave_iexp, flux_iexp, ivar_iexp, gpm_iexp, _ = sobjs[ithis][0].get_opt_ext()
                 waves.append(wave_iexp)
                 fluxes.append(flux_iexp)
                 ivars.append(ivar_iexp)
                 gpms.append(gpm_iexp)
             # check if BOX_COUNTS is available
             elif sobjs[ithis][0].has_box_ext() and np.any(sobjs[ithis][0].BOX_MASK):
-                wave_iexp, flux_iexp, ivar_iexp, gpm_iexp = sobjs[ithis][0].get_box_ext()
+                wave_iexp, flux_iexp, ivar_iexp, gpm_iexp, _ = sobjs[ithis][0].get_box_ext()
                 waves.append(wave_iexp)
                 fluxes.append(flux_iexp)
                 ivars.append(ivar_iexp)

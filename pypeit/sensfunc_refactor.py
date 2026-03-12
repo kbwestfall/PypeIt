@@ -61,21 +61,23 @@ class SensFunc(datamodel.DataContainer):
 
     .. include:: ../include/class_datamodel_sensfunc.rst
 
-    Args:
-        spec1dfiles (:obj:`list`):
-            PypeIt spec1d file(s) for the standard file.
-        sensfile (:obj:`str`):
-            File name for the sensitivity function data.
-        par (:class:`~pypeit.par.pypeitpar.SensFuncPar`):
-            The parameters required for the sensitivity function computation.
-        par_fluxcalib (:class:`~pypeit.par.pypeitpar.FluxCalibratePar`, optional):
-            The parameters required for flux calibration. These are only used
-            for flux calibration of the standard star spectrum for the QA plot.
-            If None, defaults will be used.
-        debug (:obj:`bool`, optional):
-            Run in debug mode, sending diagnostic information to the screen.
-        chk_version (:obj:`bool`, optional):
-            Check the version of the data model.
+    Parameters
+    ----------
+    spec1dfiles (:obj:`list`):
+        One or more PypeIt spec1d files with the observations of the standard
+        star.
+    sensfile (:obj:`str`):
+        File name for the sensitivity function data.
+    par (:class:`~pypeit.par.pypeitpar.SensFuncPar`):
+        The parameters required for the sensitivity function computation.
+    par_fluxcalib (:class:`~pypeit.par.pypeitpar.FluxCalibratePar`, optional):
+        The parameters required for flux calibration. These are only used
+        for flux calibration of the standard star spectrum for the QA plot.
+        If None, defaults will be used.
+    debug (:obj:`bool`, optional):
+        Run in debug mode, sending diagnostic information to the screen.
+    chk_version (:obj:`bool`, optional):
+        Check the version of the data model.
     """
     version = '1.0.2'
     """Datamodel version."""
@@ -132,7 +134,6 @@ class SensFunc(datamodel.DataContainer):
         'std_spec',
         'atmext',
         'region_mask',
-        'chk_version'
     ]
 
     _algorithm = None
@@ -197,14 +198,14 @@ class SensFunc(datamodel.DataContainer):
 
     # Superclass factory method generates the subclass instance
     @classmethod
-    def get_instance(cls, spec1dfile, par, par_fluxcalib=None, debug=False, chk_version=True):
+    def get_instance(cls, spec1dfiles, par, par_fluxcalib=None, debug=False, chk_version=True):
         """
         Instantiate the relevant subclass based on the algorithm provided in
         ``par``.
         """
         return next(c for c in cls.__subclasses__()
                     if c.__name__ == f"{par['algorithm']}SensFunc")(
-                        spec1dfile, par, par_fluxcalib=par_fluxcalib, debug=debug,
+                        spec1dfiles, par, par_fluxcalib=par_fluxcalib, debug=debug,
                         chk_version=chk_version)
 
     def __init__(self, spec1dfiles, par, par_fluxcalib=None, debug=False, chk_version=True):
@@ -219,7 +220,6 @@ class SensFunc(datamodel.DataContainer):
         self.spec1d_arr = np.array(spec1dfiles)
         self.extr = par['extr']
         self.par = par
-        self.chk_version = chk_version
         # Spectrograph
         header = fits.getheader(self.spec1d_arr[0])
         self.PYP_SPEC = header['PYP_SPEC']
@@ -244,7 +244,7 @@ class SensFunc(datamodel.DataContainer):
         self.splice_multi_det = True if self.par['multi_spec_det'] is not None else False
 
         # # Unpack standard star data
-        self.sobjs_std = self.unpack_std()
+        self.sobjs_std = self.unpack_std(chk_version=chk_version)
         wave, counts, counts_ivar, counts_mask, log10_blaze_function, self.meta_spec, header \
             = self.sobjs_std.unpack_object(
                 ret_flam=False, log10blaze=True, extract_blaze=self.par['use_flat'],
@@ -305,7 +305,7 @@ class SensFunc(datamodel.DataContainer):
         # Get the atmospheric extinction
         self.atmext = self.spectrograph.get_atmospheric_extinction(par['UVIS']['extinct_file'])
 
-    def unpack_std(self):
+    def unpack_std(self, chk_version=True):
         """
         Unpack the standard star data from a 1D spectrum file(s) with a SpecObj or OneSpec class.
 
@@ -983,7 +983,7 @@ class IRSensFunc(SensFunc):
     be used with NIR spectra (:math:`\lambda > 7000` angstrom).
 
     Args:
-        spec1dfile (:obj:`str`):
+        spec1dfiles (:obj:`str`):
             PypeIt spec1d file for the standard file.
         sensfile (:obj:`str`):
             File name for the sensitivity function data.
@@ -1137,7 +1137,7 @@ class UVISSensFunc(SensFunc):
     be used with UVIS spectra (:math:`\lambda < 7000` angstrom).
 
     Args:
-        spec1dfile (:obj:`str`):
+        spec1dfiles (:obj:`str`):
             PypeIt spec1d file for the standard file.
         sensfile (:obj:`str`):
             File name for the sensitivity function data.
@@ -1150,8 +1150,8 @@ class UVISSensFunc(SensFunc):
     _algorithm = 'UVIS'
     """Algorithm used for the sensitivity calculation."""
 
-    def __init__(self, spec1dfile,par, par_fluxcalib=None, debug=False, chk_version=True):
-        super().__init__(spec1dfile, par, par_fluxcalib=par_fluxcalib, debug=debug,
+    def __init__(self, spec1dfiles, par, par_fluxcalib=None, debug=False, chk_version=True):
+        super().__init__(spec1dfiles, par, par_fluxcalib=par_fluxcalib, debug=debug,
                          chk_version=chk_version)
 
         # Add some cards to the meta spec. These should maybe just be added

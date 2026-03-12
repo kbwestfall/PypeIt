@@ -729,65 +729,107 @@ class SpecObj(datamodel.DataContainer):
 
     def has_opt_ext(self, fluxed=False):
         """
-        Check that all the values of the optimal extraction exist
+        Check that optimal extractions are available.
 
-        Args:
-            fluxed (:obj:`bool`, optional):
-                Check that the flux-calibrated data exist.
+        Specifically, this checks that :attr:`OPT_WAVE`, :attr:`OPT_COUNTS` or
+        :attr:`OPT_FLAM`, :attr:`OPT_COUNTS_IVAR` or :attr:`OPT_FLAM_IVAR`, 
+        :attr:`OPT_MASK` all exist.  The selection of the uncalibrated
+        (``*COUNTS*``) vs. calibrated (``*FLAM*``) vectors is set by the
+        ``fluxed`` boolean.
 
-        Returns:
-            :obj:`bool`: True if all OPT values are available
+        Parameters
+        ----------
+        fluxed : :obj:`bool`, optional
+            Check that the flux-calibrated data exist.
+
+        Returns
+        -------
+        :obj:`bool`
+            True if *all* OPT values are available
         """
         flx = 'FLAM' if fluxed else 'COUNTS'
         return self.check_populated(['OPT_WAVE', f'OPT_{flx}', f'OPT_{flx}_IVAR', 'OPT_MASK'])
 
     def get_opt_ext(self, fluxed=False):
         """
-        Return the optimal extraction values
+        Return the optimal extraction vectors
 
-        Args:
-            fluxed (:obj:`bool`, optional):
-                Return the flux-calibrated data.
+        Parameters
+        ----------
+        fluxed : :obj:`bool`, optional
+            Check that the flux-calibrated data exist.
 
-        Returns:
-            :obj:`tuple`: OPT_WAVE, OPT_COUNTS, OPT_COUNTS_IVAR, OPT_MASK
-            attributes of SpecObj
+        Returns
+        -------
+        wave : :class:`numpy.ndarray`
+            Vector with wavelengths (angstroms in vacuum)
+        flux : :class:`numpy.ndarray`
+            Vector with uncalibrated counts or calibrated flux density
+        ivar : :class:`numpy.ndarray`
+            Vector with inverse variance in the output ``flux`` vector
+        gpm : :class:`numpy.ndarray`
+            Good-pixel mask for the returned ``flux`` vector
+        flat : :class:`numpy.ndarray`
+            Vector with the extracted spectrum of the flat-field observation at
+            the position of the extracted source spectrum.  This will be None if
+            unavailable.
         """
         if fluxed:
             # TODO: This does not check if the fluxed data exists!
-            return self.OPT_WAVE, self.OPT_FLAM, self.OPT_FLAM_IVAR, self.OPT_MASK
-        return self.OPT_WAVE, self.OPT_COUNTS, self.OPT_COUNTS_IVAR, self.OPT_MASK
+            return self.OPT_WAVE, self.OPT_FLAM, self.OPT_FLAM_IVAR, self.OPT_MASK, self.OPT_FLAT
+        return self.OPT_WAVE, self.OPT_COUNTS, self.OPT_COUNTS_IVAR, self.OPT_MASK, self.OPT_FLAT
 
     def has_box_ext(self, fluxed=False):
         """
-        Check that all the values of the boxcar extraction exist
+        Check that boxcar extractions are available.
 
-        Args:
-            fluxed (:obj:`bool`, optional):
-                Check that the flux-calibrated data exist.
+        Specifically, this checks that :attr:`BOX_WAVE`, :attr:`BOX_COUNTS` or
+        :attr:`BOX_FLAM`, :attr:`BOX_COUNTS_IVAR` or :attr:`BOX_FLAM_IVAR`, 
+        :attr:`BOX_MASK` all exist.  The selection of the uncalibrated
+        (``*COUNTS*``) vs. calibrated (``*FLAM*``) vectors is set by the
+        ``fluxed`` boolean.
 
-        Returns:
-            :obj:`bool`: True if all BOX values are available
+        Parameters
+        ----------
+        fluxed : :obj:`bool`, optional
+            Check that the flux-calibrated data exist.
+
+        Returns
+        -------
+        :obj:`bool`
+            True if *all* BOX values are available
         """
         flx = 'FLAM' if fluxed else 'COUNTS'
         return self.check_populated(['BOX_WAVE', f'BOX_{flx}', f'BOX_{flx}_IVAR', 'BOX_MASK'])
 
     def get_box_ext(self, fluxed=False):
         """
-        Return the boxcar extraction values
+        Return the boxcar extraction vectors
 
-        Args:
-            fluxed (:obj:`bool`, optional):
-                Return the flux-calibrated data.
+        Parameters
+        ----------
+        fluxed : :obj:`bool`, optional
+            Check that the flux-calibrated data exist.
 
-        Returns:
-            :obj:`tuple`: BOX_WAVE, BOX_COUNTS, BOX_COUNTS_IVAR, BOX_MASK
-            attributes of SpecObj
+        Returns
+        -------
+        wave : :class:`numpy.ndarray`
+            Vector with wavelengths (angstroms in vacuum)
+        flux : :class:`numpy.ndarray`
+            Vector with uncalibrated counts or calibrated flux density
+        ivar : :class:`numpy.ndarray`
+            Vector with inverse variance in the output ``flux`` vector
+        gpm : :class:`numpy.ndarray`
+            Good-pixel mask for the returned ``flux`` vector
+        flat : :class:`numpy.ndarray`
+            Vector with the extracted spectrum of the flat-field observation at
+            the position of the extracted source spectrum.  This will be None if
+            unavailable.
         """
         if fluxed:
             # TODO: This does not check if the fluxed data exists!
-            return self.BOX_WAVE, self.BOX_FLAM, self.BOX_FLAM_IVAR, self.BOX_MASK
-        return self.BOX_WAVE, self.BOX_COUNTS, self.BOX_COUNTS_IVAR, self.BOX_MASK
+            return self.BOX_WAVE, self.BOX_FLAM, self.BOX_FLAM_IVAR, self.BOX_MASK, self.BOX_FLAT
+        return self.BOX_WAVE, self.BOX_COUNTS, self.BOX_COUNTS_IVAR, self.BOX_MASK, self.BOX_FLAT
 
     def best_ext_match(self, extract=None, fluxed=True):
         """
