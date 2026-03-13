@@ -2099,17 +2099,21 @@ class Spectrograph:
         """
         raise PypeItError(f'Method to match slits across detectors not defined for {self.name}')
 
-    def tweak_standard(self, spec, trim_std_pixs=None):
+    # TODO: In the old version, the wavelength range was ignored if
+    # trim_std_pixs was provided.  Revert to that same behavior?
+    def tweak_standard(self, spec, trim_std_pixs=None, wave_range=None, mask=True):
         """
         Tweak spectra of a standard star to improve flux-calibration robustness.
 
         Relevant tweaks are instrument/disperser specific adjustments performed
         to help ensure the sensitivity function will be well behaved, such as
         masking second order light.
-        
-        This base-class function only trims pixels at either end of the provided
-        spectrum/spectra.  If ``trim_std_pixs`` is not provided, this function
-        returns a copy of the input spectrum/spectra.
+
+        This base-class function either trims pixels at either end of the
+        provided spectrum/spectra (via ``trim_std_pixs``) or imposes a specified
+        wavelength range (via ``wave_range``).  These two options are *not*
+        mutually exclusive.  If both are provided, both are applied.  If neither
+        are provided, this returns a copy of the input spectrum/spectra.
 
         This base function should be overloaded for each spectrograph requiring
         more specific tweaks.
@@ -2120,39 +2124,48 @@ class Spectrograph:
             One or more spectra to modify.
         trim_std_pixs: :obj:`list`, :obj:`tuple`, optional
             List or tuple of two integers specifying the number of pixels to
-            trim from the start and end of the standard star spectrum. If None,
-            no trimming is applied.
+            trim from the start and end of the standard star spectra/spectrum.
+            If None, no trimming is applied.
+        wave_range : :obj:`list`, :obj:`tuple`, optional
+            List or tuple with the starting and ending wavelength for a spectral
+            range to *include* in the spectrum.  Pixels outside this wavelength
+            range are masked or removed.  If None, no trimming is applied.
+        mask : :obj:`bool`, optional
+            If True, simply mask the pixels in the relevant pixels/wavelengths.
+            If False, the pixels are removed from the relevant data arrays.
 
         Returns
         -------
         :class:`~pypeit.spectrum.Spectrum`, list
             Modified spectrum/spectra.  Matches the input type.
         """
+        # Convert spec to a list, just so the rest of the code doesn't have to
+        # repeatedly check the type
+        single_spec = isinstance(spec, spectrum.Spectrum)
+        _spec = [spec] if single_spec else spec
+
         # Create the copy
-        _spec = spec.copy() if isinstance(spec, spectrum.Spectrum) else [s.copy() for s in spec]
+        _spec = [s.copy() for s in _spec]
 
-        if trim_std_pixs is None:
-            # Nothing to do, so return the copy
-            return _spec
-
-        # Check the input
-        if not isinstance(trim_std_pixs, (list, tuple)) or len(trim_std_pixs) != 2:
-            raise PypeItError('trim_std_pixs must be a list or tuple of two integers.')
-        
-        # Get the starting and ending pixels as integers
-        try:
-            s, e = map(lambda x : int(x), trim_std_pixs)
-        except (TypeError, ValueError) as e:
-            raise PypeItError('Unable to convert elements of trim_std_pixs to integers')
-
-        # Trim each spectrum        
-        if isinstance(_spec, spectrum.Spectrum):
-            _spec.trim_edges_pix(s, e, mask=True)
-        else:
+        # Trim pixels
+        if trim_std_pixs is not None:
+            # Check the input
+            if not isinstance(trim_std_pixs, (list, tuple)) or len(trim_std_pixs) != 2:
+                raise PypeItError('trim_std_pixs must be a list or tuple of two integers.')
+            # Trim each spectrum
             for s in _spec:
-                s.trim_edges_pix(s, e, mask=True)
+                s.trim_edges_pix(trim_std_pixs[0], trim_std_pixs[1], mask=mask)
 
-        return _spec
+        # Impose a wavelength range
+        if wave_range is not None:
+            # Check the input
+            if not isinstance(wave_range, (list, tuple)) or len(wave_range) != 2:
+                raise PypeItError('wave_range must be a list or tuple of two wavelengths.')
+            # Trim each spectrum
+            for s in _spec:
+                s.trim_edges_wave(wave_range[0], wave_range[1], mask=mask)
+
+        return _spec[0] if single_spec else _spec
 
 #    def tweak_standard(self, wave_in, counts_in, counts_ivar_in, gpm_in, meta_table,
 #                       trim_std_pixs=None, log10_blaze_function=None):

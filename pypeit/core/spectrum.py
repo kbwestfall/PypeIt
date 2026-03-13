@@ -36,8 +36,9 @@ class Spectrum:
     Parameters
     ----------
     wave : array-like
-        Vacuum wavelengths in angstrom.  Must be 1D, and its length must match
-        the first axis of ``flux``.
+        Vacuum wavelengths in angstrom.  The array must be 1D, the wavelength
+        should increase monotonically, and the array length must match the
+        *first* axis of ``flux``.  
     flux : array-like
         Flux data at each wavelength.  Can be 2D or 1D; see class description.
     ivar : array-like, optional
@@ -137,6 +138,12 @@ class Spectrum:
 
         This alters the contents of the object directly.
 
+        .. warning::
+
+            The values of ``start`` and ``end`` are *not* validated.  They are
+            applied directly to the spectral axis of the internal arrays.
+            Beware of numpy indexing errors.
+
         Parameters
         ----------
         start : int
@@ -146,28 +153,21 @@ class Spectrum:
         mask : bool, optional
             Mask the relevant pixels as bad instead of actually removing them.
         """
-        # TODO: Relax these limits?  I.e., interpret start < 0 as start == 0,
-        # and so on?
-        if start < 0 or start >= self.npix:
-            raise PypeItError(f'Starting index must be within 0 ... {self.npix-1}')
-        if end < 1 or end > self.npix:
-            raise PypeItError(f'Ending index must be within 1 ... {self.npix}')
-
-        if start == end:
-            if mask:
-                log.warning('Start and end are identical.  Masking entire spectral range!')
-            else:
-                raise PypeItError(
-                    'Start and end are identical.  Masking would result in a 0-size spectrum.'
-                )
-
-        if start > end:
-            log.warning('Starting index is greater than the ending index.  Swapping.')
-            s = end
-            e = start
-        else:
-            s = start
-            e = end
+        # Make sure the starting and ending pixels are integers
+        try:
+            s = int(start)
+        except (TypeError, ValueError) as err:
+            raise PypeItError(
+                'Unable to convert elements of start in trim_edges_pix to an integer.  Error was '
+                f'{err}'
+            )
+        try:
+            e = int(end)
+        except (TypeError, ValueError) as err:
+            raise PypeItError(
+                'Unable to convert elements of end in trim_edges_pix to an integer.  Error was '
+                f'{err}'
+            )
 
         if mask:
             # Just adjust the gpm
@@ -434,6 +434,50 @@ class Spectrum:
         return Spectrum(
             r.outx, r.outy.T, ivar=ivar, gpm=r.outf.T > pixel_fraction_threshold, meta=self.meta,
         )
+
+def get_spectrum_list_meta(spec, key):
+    """
+    Provided one or more spectra, determine the relevant value for a metadata
+    keyword.
+
+    This is a convenience funtion to handle lists of
+    :class:`~pypeit.core.spectrum.Spectrum` objects.  A primary place it is used
+    is :func:`~pypeit.spectrographs.spectrograph.Spectrograph.tweak_standard`.
+
+    Parameters
+    ----------
+    spec : :class:`~pypeit.core.spectrum.Spectrum`, list
+        One or more spectra to evaluate.
+    key : str
+        The metadata keyword to use.
+
+    Returns
+    -------
+    str
+        The value of the metadata for the provided keyword.  If only one
+        spectrum is provided, this is the entry in its metadata dictionary,
+        or None if the provided keyword doesn't exist.  If a list of spectra
+        is provided, this is None unless the metadata are all the same for
+        every spectrum in the list; otherwise, this is the same as if only
+        the first spectrum object was passed to the function.  Beware that
+        the function uses :class:`numpy.ndarray.unique` to determine whether
+        or not the metadata values are all the same; this is risky for
+        floats but should perform well for strings and integers.
+    """
+    # Get the dispnames.  If they are all the same, use that to limit the
+    # wavelength range
+    if isinstance(spec, Spectrum):
+        return spec.meta.get(key, None)
+
+    value = np.unique([s.meta.get(key, None) for s in spec])
+    if None in meta or len(value) > 1:
+        log.warning(
+            f'{key} not defined by spectrum metadata, or there are multiple spectra with '
+            f'different {key} values.'
+        )
+        return None
+
+    return value[0]
 
 
 def fit_spectrum_bspline(

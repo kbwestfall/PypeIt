@@ -218,7 +218,7 @@ def load_standard(
 
     Parameters
     ----------
-    specfiles : str, list
+    specfiles : str, Path, list
         One or more pypeit files with 1D standard-star spectra.
     names : str, list
         One or more pre-identified source names that are the standard-star
@@ -263,7 +263,7 @@ def load_standard(
     if names is None:
         _names = [None]*len(_specfiles)
     else:
-        _names = names
+        _names = names if isinstance(names, list) else [names]
     if len(_names) != len(_specfiles):
         raise PypeItError(
             f'The number of names provided ({len(_names)}) does not match the number of spectrum '
@@ -289,7 +289,7 @@ def load_standard(
         spec += load_spectra(
             sobj, extract=extract, fluxed=fluxed, include_flat=include_flat,
             chk_version=chk_version
-        )[0]
+        )[1]
 
         # TODO: Need to find an equivalent check for this.  E.g., the number of expected orders?
 #        if ospec.head0['PYPELINE'] == 'Echelle':

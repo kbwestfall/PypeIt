@@ -18,6 +18,7 @@ from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import parse
 from pypeit.core import framematch
+from pypeit.core import spectrum
 from pypeit.spectrographs import spectrograph
 from pypeit.images import detector_container
 from pypeit.par import parset
@@ -477,9 +478,17 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
 
         return bpm_img
 
-    def tweak_standard(self, spec, trim_std_pixs=None):
+    def tweak_standard(self, spec, trim_std_pixs=None, wave_range=None, mask=True):
         """
         Tweak spectra of a standard star to improve flux-calibration robustness.
+
+        .. warning::
+
+            The base class implementation of this function
+            (:func:`~pypeit.spectrographs.spectrograph.Spectrograph.tweak_standard`)
+            will apply *both* ``trim_std_pixs`` and ``wave_range``.  However, in
+            this subclass function, ``wave_range`` (and automatic determination
+            thereof) is ignored if ``trim_std_pixs`` is provided.
 
         Parameters
         ----------
@@ -487,154 +496,148 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
             One or more spectra to modify.
         trim_std_pixs: :obj:`list`, :obj:`tuple`, optional
             List or tuple of two integers specifying the number of pixels to
-            trim from the start and end of the standard star spectrum. If None,
-            no trimming is applied.
+            trim from the start and end of the standard star spectra/spectrum.
+            If None, no trimming is applied.
+        wave_range : :obj:`list`, :obj:`tuple`, optional
+            List or tuple with the starting and ending wavelength for a spectral
+            range to *include* in the spectrum.  Pixels outside this wavelength
+            range are masked or removed.  If None, no trimming is applied.
+        mask : :obj:`bool`, optional
+            If True, simply mask the pixels in the relevant pixels/wavelengths.
+            If False, the pixels are removed from the relevant data arrays.
 
         Returns
         -------
         :class:`~pypeit.spectrum.Spectrum`, list
             Modified spectrum/spectra.  Matches the input type.
         """
-        # Use the base class to either apply trim_std_pixs or get a copy of the input.
-        _spec = super().tweak_standard(spec, trim_std_pixs=trim_std_pixs)
         if trim_std_pixs is not None:
-            # trim_std_pixs is defined, so we're done
-            return _spec
+            return super().tweak_standard(spec, trim_std_pixs=trim_std_pixs, mask=mask)
 
-        # NEED TO FIX THIS!
+        if wave_range is None:
+            # Try to use the disperser name to set the relevant wavelength range
+            dispname = spectrum.get_spectrum_list_meta(spec, 'DISPNAME')
+            # TODO: Check the actual disperser names; i.e., was the use of `in`
+            # the correct approach
+            if dispname == 'R300R':
+                wave_range = (4800.0, 9300.0)
+            elif dispname == 'R500R':
+                wave_range = (4800.0, 9300.0)
+            elif dispname == 'R300B':
+                wave_range = (3400.0, 6500.0)
+            elif dispname == 'R500B':
+                wave_range = (3400.0, 6500.0)
+            elif dispname == 'R1000B':
+                wave_range = (3500.0, 6300.0)
+            # TODO: Emit a warning if the dispname is None?
 
-        # Could check the wavelenghts here to do something more robust to header/meta data issues
-        if 'R300R' in meta_table['DISPNAME']:
-            wave_blue = 4800.0  # blue wavelength below which there is contamination
-            wave_red = 9300.0  # red wavelength above which the spectrum is contaminated
-        elif 'R500R' in meta_table['DISPNAME']:
-            wave_blue = 4800.0  # blue wavelength below which there is contamination
-            wave_red = 9300.0  # red wavelength above which the spectrum is contaminated
-        elif 'R300B' in meta_table['DISPNAME']:
-            wave_blue = 3400.0  # blue wavelength below which there is contamination
-            wave_red = 6500.0  # red wavelength above which the spectrum is contaminated
-        elif 'R500B' in meta_table['DISPNAME']:
-            wave_blue = 3400.0  # blue wavelength below which there is contamination
-            wave_red = 6500.0  # red wavelength above which the spectrum is contaminated
-        elif 'R1000B' in meta_table['DISPNAME']:
-            wave_blue = 3500.0  # blue wavelength below which there is contamination
-            wave_red = 6300.0  # red wavelength above which the spectrum is contaminated
-        else:
-            # keep everything the same
-            return _spec
-        
-        # Trim each spectrum        
-        if isinstance(_spec, spectrum.Spectrum):
-            _spec.trim_edges_wave(wave_blue, wave_red, mask=True)
-        else:
-            for s in _spec:
-                s.trim_edges_wave(wave_blue, wave_red, mask=True)
-        return _spec
+        # Use the base class method
+        return super().tweak_standard(spec, wave_range=wave_range, mask=mask)
 
 
-    def tweak_standard(self, wave_in, counts_in, counts_ivar_in, gpm_in, meta_table, trim_std_pixs=None,
-                       log10_blaze_function=None, debug=False):
-        """
-
-        This routine is for performing instrument/disperser specific tweaks to standard stars so that sensitivity
-        function fits will be well behaved. For example, masking second order light. For instruments that don't
-        require such tweaks it will just return the inputs, but for instruments that do this function is overloaded
-        with a method that performs the tweaks.
-
-        Parameters
-        ----------
-        wave_in: `numpy.ndarray`_
-            Input standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
-        counts_in: `numpy.ndarray`_
-            Input standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        counts_ivar_in: `numpy.ndarray`_
-            Input inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        gpm_in: `numpy.ndarray`_
-            Input good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
-        meta_table: :obj:`dict`
-            Table containing meta data that is slupred from the :class:`~pypeit.specobjs.SpecObjs`
-            object.  See :meth:`~pypeit.specobjs.SpecObjs.unpack_object` for the
-            contents of this table.
-        trim_std_pixs: :obj:`list` or :obj:`tuple`, optional
-            List or tuple of two integers specifying the number of pixels to
-            trim from the start and end of the standard star spectrum. If None,
-            no trimming is applied. Default=None.
-        log10_blaze_function: `numpy.ndarray`_ or None
-            Input blaze function to be tweaked, optional. Default=None.
-
-
-        Returns
-        -------
-        wave_out: `numpy.ndarray`_
-            Output standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
-        counts_out: `numpy.ndarray`_
-            Output standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        counts_ivar_out: `numpy.ndarray`_
-            Output inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        gpm_out: `numpy.ndarray`_
-            Output good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
-        log10_blaze_function_out: `numpy.ndarray`_ or None
-            Output blaze function after being tweaked.
-        """
-        # If trim_std_pixs is provided, use the base class method to trim the standard star
-        if trim_std_pixs is not None:
-            return super().tweak_standard(wave_in, counts_in, counts_ivar_in, gpm_in, meta_table,
-                                          trim_std_pixs=trim_std_pixs, log10_blaze_function=log10_blaze_function)
-
-        # Could check the wavelenghts here to do something more robust to header/meta data issues
-        if 'R300R' in meta_table['DISPNAME']:
-            wave_blue = 4800.0  # blue wavelength below which there is contamination
-            wave_red = 9300.0  # red wavelength above which the spectrum is contaminated
-        elif 'R500R' in meta_table['DISPNAME']:
-            wave_blue = 4800.0  # blue wavelength below which there is contamination
-            wave_red = 9300.0  # red wavelength above which the spectrum is contaminated
-        elif 'R300B' in meta_table['DISPNAME']:
-            wave_blue = 3400.0  # blue wavelength below which there is contamination
-            wave_red = 6500.0  # red wavelength above which the spectrum is contaminated
-        elif 'R500B' in meta_table['DISPNAME']:
-            wave_blue = 3400.0  # blue wavelength below which there is contamination
-            wave_red = 6500.0  # red wavelength above which the spectrum is contaminated
-        elif 'R1000B' in meta_table['DISPNAME']:
-            wave_blue = 3500.0  # blue wavelength below which there is contamination
-            wave_red = 6300.0  # red wavelength above which the spectrum is contaminated
-        else:
-            # keep everything the same
-            wave_blue = 0.0
-            wave_red = np.inf
-
-        second_order_region = (wave_in < wave_blue) | (wave_in > wave_red)
-        wave = wave_in.copy()
-        counts = counts_in.copy()
-        counts_ivar = counts_ivar_in.copy()
-        gpm = gpm_in.copy()
-
-        wave[second_order_region] = 0.0
-        counts[second_order_region] = 0.0
-        counts_ivar[second_order_region] = 0.0
-        # By setting the wavelengths to zero, we guarantee that the sensitvity function will only be computed
-        # over the valid wavelength region. While we could mask, this would still produce a wave_min and wave_max
-        # for the zeropoint that includes the bad regions, and the polynomial fits will extrapolate crazily there
-        gpm[second_order_region] = False
-
-        if log10_blaze_function is not None:
-            log10_blaze_function_out = log10_blaze_function.copy()
-            log10_blaze_function_out[second_order_region] = 0.0
-        else:
-            log10_blaze_function_out = None
-
-        if debug:
-           from matplotlib import pyplot as plt
-           from pypeit import utils
-           counts_sigma = np.sqrt(utils.inverse(counts_ivar_in))
-           plt.plot(wave_in, counts, color='red', alpha=0.7, label='apodized flux')
-           plt.plot(wave_in, counts_in, color='black', alpha=0.7, label='flux')
-           plt.plot(wave_in, counts_sigma, color='blue', alpha=0.7, label='flux')
-           plt.axvline(wave_blue, color='blue')
-           plt.axvline(wave_red, color='red')
-           plt.legend()
-           plt.show()
-
-        return wave, counts, counts_ivar, gpm, log10_blaze_function_out
+#     def tweak_standard(self, wave_in, counts_in, counts_ivar_in, gpm_in, meta_table, trim_std_pixs=None,
+#                        log10_blaze_function=None, debug=False):
+#         """
+# 
+#         This routine is for performing instrument/disperser specific tweaks to standard stars so that sensitivity
+#         function fits will be well behaved. For example, masking second order light. For instruments that don't
+#         require such tweaks it will just return the inputs, but for instruments that do this function is overloaded
+#         with a method that performs the tweaks.
+# 
+#         Parameters
+#         ----------
+#         wave_in: `numpy.ndarray`_
+#             Input standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
+#         counts_in: `numpy.ndarray`_
+#             Input standard star counts (:obj:`float`, ``shape = (nspec,)``)
+#         counts_ivar_in: `numpy.ndarray`_
+#             Input inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
+#         gpm_in: `numpy.ndarray`_
+#             Input good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
+#         meta_table: :obj:`dict`
+#             Table containing meta data that is slupred from the :class:`~pypeit.specobjs.SpecObjs`
+#             object.  See :meth:`~pypeit.specobjs.SpecObjs.unpack_object` for the
+#             contents of this table.
+#         trim_std_pixs: :obj:`list` or :obj:`tuple`, optional
+#             List or tuple of two integers specifying the number of pixels to
+#             trim from the start and end of the standard star spectrum. If None,
+#             no trimming is applied. Default=None.
+#         log10_blaze_function: `numpy.ndarray`_ or None
+#             Input blaze function to be tweaked, optional. Default=None.
+# 
+# 
+#         Returns
+#         -------
+#         wave_out: `numpy.ndarray`_
+#             Output standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
+#         counts_out: `numpy.ndarray`_
+#             Output standard star counts (:obj:`float`, ``shape = (nspec,)``)
+#         counts_ivar_out: `numpy.ndarray`_
+#             Output inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
+#         gpm_out: `numpy.ndarray`_
+#             Output good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
+#         log10_blaze_function_out: `numpy.ndarray`_ or None
+#             Output blaze function after being tweaked.
+#         """
+#         # If trim_std_pixs is provided, use the base class method to trim the standard star
+#         if trim_std_pixs is not None:
+#             return super().tweak_standard(wave_in, counts_in, counts_ivar_in, gpm_in, meta_table,
+#                                           trim_std_pixs=trim_std_pixs, log10_blaze_function=log10_blaze_function)
+# 
+#         # Could check the wavelenghts here to do something more robust to header/meta data issues
+#         if 'R300R' in meta_table['DISPNAME']:
+#             wave_blue = 4800.0  # blue wavelength below which there is contamination
+#             wave_red = 9300.0  # red wavelength above which the spectrum is contaminated
+#         elif 'R500R' in meta_table['DISPNAME']:
+#             wave_blue = 4800.0  # blue wavelength below which there is contamination
+#             wave_red = 9300.0  # red wavelength above which the spectrum is contaminated
+#         elif 'R300B' in meta_table['DISPNAME']:
+#             wave_blue = 3400.0  # blue wavelength below which there is contamination
+#             wave_red = 6500.0  # red wavelength above which the spectrum is contaminated
+#         elif 'R500B' in meta_table['DISPNAME']:
+#             wave_blue = 3400.0  # blue wavelength below which there is contamination
+#             wave_red = 6500.0  # red wavelength above which the spectrum is contaminated
+#         elif 'R1000B' in meta_table['DISPNAME']:
+#             wave_blue = 3500.0  # blue wavelength below which there is contamination
+#             wave_red = 6300.0  # red wavelength above which the spectrum is contaminated
+#         else:
+#             # keep everything the same
+#             wave_blue = 0.0
+#             wave_red = np.inf
+# 
+#         second_order_region = (wave_in < wave_blue) | (wave_in > wave_red)
+#         wave = wave_in.copy()
+#         counts = counts_in.copy()
+#         counts_ivar = counts_ivar_in.copy()
+#         gpm = gpm_in.copy()
+# 
+#         wave[second_order_region] = 0.0
+#         counts[second_order_region] = 0.0
+#         counts_ivar[second_order_region] = 0.0
+#         # By setting the wavelengths to zero, we guarantee that the sensitvity function will only be computed
+#         # over the valid wavelength region. While we could mask, this would still produce a wave_min and wave_max
+#         # for the zeropoint that includes the bad regions, and the polynomial fits will extrapolate crazily there
+#         gpm[second_order_region] = False
+# 
+#         if log10_blaze_function is not None:
+#             log10_blaze_function_out = log10_blaze_function.copy()
+#             log10_blaze_function_out[second_order_region] = 0.0
+#         else:
+#             log10_blaze_function_out = None
+# 
+#         if debug:
+#            from matplotlib import pyplot as plt
+#            from pypeit import utils
+#            counts_sigma = np.sqrt(utils.inverse(counts_ivar_in))
+#            plt.plot(wave_in, counts, color='red', alpha=0.7, label='apodized flux')
+#            plt.plot(wave_in, counts_in, color='black', alpha=0.7, label='flux')
+#            plt.plot(wave_in, counts_sigma, color='blue', alpha=0.7, label='flux')
+#            plt.axvline(wave_blue, color='blue')
+#            plt.axvline(wave_red, color='red')
+#            plt.legend()
+#            plt.show()
+# 
+#         return wave, counts, counts_ivar, gpm, log10_blaze_function_out
 
 
 class GTCMAATSpectrograph(GTCOSIRISPlusSpectrograph):
@@ -1259,104 +1262,162 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
 
         return bpm_img
 
-    def tweak_standard(self, wave_in, counts_in, counts_ivar_in, gpm_in, meta_table, trim_std_pixs=None,
-                       log10_blaze_function=None, debug=False):
+    # TODO: This is exactly the same as the tweak_standard for the other
+    # spectrograph class.  Can we use a common base class for GTC/OSIRIS?
+    def tweak_standard(self, spec, trim_std_pixs=None, wave_range=None, mask=True):
         """
-        This routine is for performing instrument/disperser specific tweaks to standard stars so that sensitivity
-        function fits will be well behaved. For example, masking second order light. For instruments that don't
-        require such tweaks it will just return the inputs, but for instruments that do this function is overloaded
-        with a method that performs the tweaks.
+        Tweak spectra of a standard star to improve flux-calibration robustness.
+
+        .. warning::
+
+            The base class implementation of this function
+            (:func:`~pypeit.spectrographs.spectrograph.Spectrograph.tweak_standard`)
+            will apply *both* ``trim_std_pixs`` and ``wave_range``.  However, in
+            this subclass function, ``wave_range`` (and automatic determination
+            thereof) is ignored if ``trim_std_pixs`` is provided.
 
         Parameters
         ----------
-        wave_in: `numpy.ndarray`_
-            Input standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
-        counts_in: `numpy.ndarray`_
-            Input standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        counts_ivar_in: `numpy.ndarray`_
-            Input inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        gpm_in: `numpy.ndarray`_
-            Input good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
-        meta_table: :obj:`dict`
-            Table containing meta data that is slupred from the :class:`~pypeit.specobjs.SpecObjs`
-            object.  See :meth:`~pypeit.specobjs.SpecObjs.unpack_object` for the
-            contents of this table.
-        trim_std_pixs: :obj:`list` or :obj:`tuple`, optional
+        spec : :class:`~pypeit.core.spectrum.Spectrum`, list
+            One or more spectra to modify.
+        trim_std_pixs: :obj:`list`, :obj:`tuple`, optional
             List or tuple of two integers specifying the number of pixels to
-            trim from the start and end of the standard star spectrum. If None,
-            no trimming is applied. Default=None.
-        log10_blaze_function: `numpy.ndarray`_ or None
-            Input blaze function to be tweaked, optional. Default=None.
+            trim from the start and end of the standard star spectra/spectrum.
+            If None, no trimming is applied.
+        wave_range : :obj:`list`, :obj:`tuple`, optional
+            List or tuple with the starting and ending wavelength for a spectral
+            range to *include* in the spectrum.  Pixels outside this wavelength
+            range are masked or removed.  If None, no trimming is applied.
+        mask : :obj:`bool`, optional
+            If True, simply mask the pixels in the relevant pixels/wavelengths.
+            If False, the pixels are removed from the relevant data arrays.
 
         Returns
         -------
-        wave_out: `numpy.ndarray`_
-            Output standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
-        counts_out: `numpy.ndarray`_
-            Output standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        counts_ivar_out: `numpy.ndarray`_
-            Output inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        gpm_out: `numpy.ndarray`_
-            Output good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
-        log10_blaze_function_out: `numpy.ndarray`_ or None
-            Output blaze function after being tweaked.
+        :class:`~pypeit.spectrum.Spectrum`, list
+            Modified spectrum/spectra.  Matches the input type.
         """
-        # If trim_std_pixs is provided, use the base class method to trim the standard star
         if trim_std_pixs is not None:
-            return super().tweak_standard(wave_in, counts_in, counts_ivar_in, gpm_in, meta_table,
-                                          trim_std_pixs=trim_std_pixs, log10_blaze_function=log10_blaze_function)
+            return super().tweak_standard(spec, trim_std_pixs=trim_std_pixs, mask=mask)
 
-        # Could check the wavelenghts here to do something more robust to header/meta data issues
-        if 'R300R' in meta_table['DISPNAME']:
-            wave_blue = 4800.0  # blue wavelength below which there is contamination
-            wave_red = 9300.0  # red wavelength above which the spectrum is contaminated
-        elif 'R500R' in meta_table['DISPNAME']:
-            wave_blue = 4800.0  # blue wavelength below which there is contamination
-            wave_red = 9300.0  # red wavelength above which the spectrum is contaminated
-        elif 'R300B' in meta_table['DISPNAME']:
-            wave_blue = 3400.0  # blue wavelength below which there is contamination
-            wave_red = 6500.0  # red wavelength above which the spectrum is contaminated
-        elif 'R500B' in meta_table['DISPNAME']:
-            wave_blue = 3400.0  # blue wavelength below which there is contamination
-            wave_red = 6500.0  # red wavelength above which the spectrum is contaminated
-        elif 'R1000B' in meta_table['DISPNAME']:
-            wave_blue = 3500.0  # blue wavelength below which there is contamination
-            wave_red = 6300.0  # red wavelength above which the spectrum is contaminated
-        else:
-            # keep everything the same
-            wave_blue = 0.0
-            wave_red = np.inf
+        if wave_range is None:
+            # Try to use the disperser name to set the relevant wavelength range
+            dispname = spectrum.get_spectrum_list_meta(spec, 'DISPNAME')
+            # TODO: Check the actual disperser names; i.e., was the use of `in`
+            # the correct approach
+            if dispname == 'R300R':
+                wave_range = (4800.0, 9300.0)
+            elif dispname == 'R500R':
+                wave_range = (4800.0, 9300.0)
+            elif dispname == 'R300B':
+                wave_range = (3400.0, 6500.0)
+            elif dispname == 'R500B':
+                wave_range = (3400.0, 6500.0)
+            elif dispname == 'R1000B':
+                wave_range = (3500.0, 6300.0)
+            # TODO: Emit a warning if the dispname is None?
 
-        second_order_region = (wave_in < wave_blue) | (wave_in > wave_red)
-        wave = wave_in.copy()
-        counts = counts_in.copy()
-        counts_ivar = counts_ivar_in.copy()
-        gpm = gpm_in.copy()
+        # Use the base class method
+        return super().tweak_standard(spec, wave_range=wave_range, mask=mask)
 
-        wave[second_order_region] = 0.0
-        counts[second_order_region] = 0.0
-        counts_ivar[second_order_region] = 0.0
-        # By setting the wavelengths to zero, we guarantee that the sensitvity function will only be computed
-        # over the valid wavelength region. While we could mask, this would still produce a wave_min and wave_max
-        # for the zeropoint that includes the bad regions, and the polynomial fits will extrapolate crazily there
-        gpm[second_order_region] = False
-
-        if log10_blaze_function is not None:
-            log10_blaze_function_out = log10_blaze_function.copy()
-            log10_blaze_function_out[second_order_region] = 0.0
-        else:
-            log10_blaze_function_out = None
-
-        if debug:
-           from matplotlib import pyplot as plt
-           from pypeit import utils
-           counts_sigma = np.sqrt(utils.inverse(counts_ivar_in))
-           plt.plot(wave_in, counts, color='red', alpha=0.7, label='apodized flux')
-           plt.plot(wave_in, counts_in, color='black', alpha=0.7, label='flux')
-           plt.plot(wave_in, counts_sigma, color='blue', alpha=0.7, label='flux')
-           plt.axvline(wave_blue, color='blue')
-           plt.axvline(wave_red, color='red')
-           plt.legend()
-           plt.show()
-
-        return wave, counts, counts_ivar, gpm, log10_blaze_function_out
+#     def tweak_standard(self, wave_in, counts_in, counts_ivar_in, gpm_in, meta_table, trim_std_pixs=None,
+#                        log10_blaze_function=None, debug=False):
+#         """
+#         This routine is for performing instrument/disperser specific tweaks to standard stars so that sensitivity
+#         function fits will be well behaved. For example, masking second order light. For instruments that don't
+#         require such tweaks it will just return the inputs, but for instruments that do this function is overloaded
+#         with a method that performs the tweaks.
+# 
+#         Parameters
+#         ----------
+#         wave_in: `numpy.ndarray`_
+#             Input standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
+#         counts_in: `numpy.ndarray`_
+#             Input standard star counts (:obj:`float`, ``shape = (nspec,)``)
+#         counts_ivar_in: `numpy.ndarray`_
+#             Input inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
+#         gpm_in: `numpy.ndarray`_
+#             Input good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
+#         meta_table: :obj:`dict`
+#             Table containing meta data that is slupred from the :class:`~pypeit.specobjs.SpecObjs`
+#             object.  See :meth:`~pypeit.specobjs.SpecObjs.unpack_object` for the
+#             contents of this table.
+#         trim_std_pixs: :obj:`list` or :obj:`tuple`, optional
+#             List or tuple of two integers specifying the number of pixels to
+#             trim from the start and end of the standard star spectrum. If None,
+#             no trimming is applied. Default=None.
+#         log10_blaze_function: `numpy.ndarray`_ or None
+#             Input blaze function to be tweaked, optional. Default=None.
+# 
+#         Returns
+#         -------
+#         wave_out: `numpy.ndarray`_
+#             Output standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
+#         counts_out: `numpy.ndarray`_
+#             Output standard star counts (:obj:`float`, ``shape = (nspec,)``)
+#         counts_ivar_out: `numpy.ndarray`_
+#             Output inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
+#         gpm_out: `numpy.ndarray`_
+#             Output good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
+#         log10_blaze_function_out: `numpy.ndarray`_ or None
+#             Output blaze function after being tweaked.
+#         """
+#         # If trim_std_pixs is provided, use the base class method to trim the standard star
+#         if trim_std_pixs is not None:
+#             return super().tweak_standard(wave_in, counts_in, counts_ivar_in, gpm_in, meta_table,
+#                                           trim_std_pixs=trim_std_pixs, log10_blaze_function=log10_blaze_function)
+# 
+#         # Could check the wavelenghts here to do something more robust to header/meta data issues
+#         if 'R300R' in meta_table['DISPNAME']:
+#             wave_blue = 4800.0  # blue wavelength below which there is contamination
+#             wave_red = 9300.0  # red wavelength above which the spectrum is contaminated
+#         elif 'R500R' in meta_table['DISPNAME']:
+#             wave_blue = 4800.0  # blue wavelength below which there is contamination
+#             wave_red = 9300.0  # red wavelength above which the spectrum is contaminated
+#         elif 'R300B' in meta_table['DISPNAME']:
+#             wave_blue = 3400.0  # blue wavelength below which there is contamination
+#             wave_red = 6500.0  # red wavelength above which the spectrum is contaminated
+#         elif 'R500B' in meta_table['DISPNAME']:
+#             wave_blue = 3400.0  # blue wavelength below which there is contamination
+#             wave_red = 6500.0  # red wavelength above which the spectrum is contaminated
+#         elif 'R1000B' in meta_table['DISPNAME']:
+#             wave_blue = 3500.0  # blue wavelength below which there is contamination
+#             wave_red = 6300.0  # red wavelength above which the spectrum is contaminated
+#         else:
+#             # keep everything the same
+#             wave_blue = 0.0
+#             wave_red = np.inf
+# 
+#         second_order_region = (wave_in < wave_blue) | (wave_in > wave_red)
+#         wave = wave_in.copy()
+#         counts = counts_in.copy()
+#         counts_ivar = counts_ivar_in.copy()
+#         gpm = gpm_in.copy()
+# 
+#         wave[second_order_region] = 0.0
+#         counts[second_order_region] = 0.0
+#         counts_ivar[second_order_region] = 0.0
+#         # By setting the wavelengths to zero, we guarantee that the sensitvity function will only be computed
+#         # over the valid wavelength region. While we could mask, this would still produce a wave_min and wave_max
+#         # for the zeropoint that includes the bad regions, and the polynomial fits will extrapolate crazily there
+#         gpm[second_order_region] = False
+# 
+#         if log10_blaze_function is not None:
+#             log10_blaze_function_out = log10_blaze_function.copy()
+#             log10_blaze_function_out[second_order_region] = 0.0
+#         else:
+#             log10_blaze_function_out = None
+# 
+#         if debug:
+#            from matplotlib import pyplot as plt
+#            from pypeit import utils
+#            counts_sigma = np.sqrt(utils.inverse(counts_ivar_in))
+#            plt.plot(wave_in, counts, color='red', alpha=0.7, label='apodized flux')
+#            plt.plot(wave_in, counts_in, color='black', alpha=0.7, label='flux')
+#            plt.plot(wave_in, counts_sigma, color='blue', alpha=0.7, label='flux')
+#            plt.axvline(wave_blue, color='blue')
+#            plt.axvline(wave_red, color='red')
+#            plt.legend()
+#            plt.show()
+# 
+#         return wave, counts, counts_ivar, gpm, log10_blaze_function_out

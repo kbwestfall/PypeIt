@@ -4,6 +4,7 @@ Provides a simple datamodel for a single spectrum.
 .. include common links, assuming primary doc root is up one directory
 .. include:: ../include/links.rst
 """
+from copy import deepcopy
 import inspect
 
 from IPython import embed
@@ -51,6 +52,7 @@ class OneSpec(datamodel.DataContainer):
     """
     version = '1.0.2'
 
+    # TODO: Give the spectrum a "NAME"?
     datamodel = {'wave': dict(otype=np.ndarray, atype=np.floating,
                               # TODO: The "weighted by pixel contributions" part
                               # should be better explained.
@@ -197,7 +199,13 @@ class OneSpec(datamodel.DataContainer):
                 )
             _wave[bad_wave] = self.wave_grid_mid[bad_wave]
 
-        return spectrum.Spectrum(_wave, self.flux, ivar=self.ivar, gpm=_gpm, meta=self.spect_meta)
+        # Add the extraction type and flux-calibration status to the metadata
+        meta = deepcopy(self.spect_meta)
+        meta['ext_mode'] = self.ext_mode
+        meta['fluxed'] = self.fluxed
+        meta['PYP_SPEC'] = self.PYP_SPEC
+        # Return the Spectrum
+        return spectrum.Spectrum(_wave, self.flux, ivar=self.ivar, gpm=_gpm, meta=meta)
 
     def rebin(self, new_wv, fill_value=0., grow_bad_sig=False):
         """ Rebin the spectrum to a new OneSpec object with the input array

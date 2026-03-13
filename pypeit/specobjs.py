@@ -4,6 +4,7 @@ Module for the SpecObjs and SpecObj classes
 .. include common links, assuming primary doc root is up one directory
 .. include:: ../include/links.rst
 """
+from copy import deepcopy
 import os
 from pathlib import Path
 
@@ -352,17 +353,22 @@ class SpecObjs:
         """
 
         # Get the metadata
-        meta_spec = load_spectrograph(self.header['PYP_SPEC']).parse_spec_header(self.header)
+        base_meta_spec = load_spectrograph(self.header['PYP_SPEC']).parse_spec_header(self.header)
         # TODO: Add other items included in meta_spec from unpack_object()
 
         # Build up the list of spectra
         spectra = []
         for sobj in self.specobjs:
             ext, cal = sobj.best_ext_match(extract=extract, fluxed=fluxed)
+            # Add the extraction and calibration types to the metadata
+            meta_spec = deepcopy(base_meta_spec)
+            meta_spec['ext_mode'] = ext
+            meta_spec['fluxed'] = cal
+            meta_spec['NAME'] = sobj.NAME
+            meta_spec['PYP_SPEC'] = self.header['PYP_SPEC']
             func = sobj.get_box_ext if ext == 'BOX' else sobj.get_opt_ext
             wave, flux, ivar, gpm, flat = func(fluxed=cal)
-            if include_flat:
-                assoc = {'flat': flat}
+            assoc = {'flat': flat} if include_flat else None
             try:
                 # TODO: Deal with wave=0 data?
                 _spec = spectrum.Spectrum(
@@ -546,7 +552,7 @@ class SpecObjs:
             return None
 
         # Convert name to a list
-        _name = [name] if isinstance(name, str) else name
+        _name = name if isinstance(name, list) else [name]
 
         # Check the number of names makes sense
         if split_mosaic and len(_name) > 1:
@@ -566,7 +572,7 @@ class SpecObjs:
 
         # Convert from the source names to their index number in this object.
         # These should all be valid given the check above
-        indx = [np.where(all_names == n)[0][0] for n in name]
+        indx = [np.where(all_names == n)[0][0] for n in _name]
 
         if (
             len(indx) > 1

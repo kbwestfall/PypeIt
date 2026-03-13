@@ -17,6 +17,7 @@ from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import framematch
+from pypeit.core import spectrum
 from pypeit.spectrographs import spectrograph
 from pypeit.images import detector_container
 from pypeit.par import parset
@@ -579,9 +580,17 @@ class ShaneKastRedSpectrograph(ShaneKastSpectrograph):
         # Return
         return par
 
-    def tweak_standard(self, spec, trim_std_pixs=None):
+    def tweak_standard(self, spec, trim_std_pixs=None, wave_range=None, mask=True):
         """
         Tweak spectra of a standard star to improve flux-calibration robustness.
+
+        .. warning::
+
+            The base class implementation of this function
+            (:func:`~pypeit.spectrographs.spectrograph.Spectrograph.tweak_standard`)
+            will apply *both* ``trim_std_pixs`` and ``wave_range``.  However, in
+            this subclass function, ``wave_range`` (and automatic determination
+            thereof) is ignored if ``trim_std_pixs`` is provided.
 
         Parameters
         ----------
@@ -589,35 +598,33 @@ class ShaneKastRedSpectrograph(ShaneKastSpectrograph):
             One or more spectra to modify.
         trim_std_pixs: :obj:`list`, :obj:`tuple`, optional
             List or tuple of two integers specifying the number of pixels to
-            trim from the start and end of the standard star spectrum. If None,
-            no trimming is applied.
+            trim from the start and end of the standard star spectra/spectrum.
+            If None, no trimming is applied.
+        wave_range : :obj:`list`, :obj:`tuple`, optional
+            List or tuple with the starting and ending wavelength for a spectral
+            range to *include* in the spectrum.  Pixels outside this wavelength
+            range are masked or removed.  If None, no trimming is applied.
+        mask : :obj:`bool`, optional
+            If True, simply mask the pixels in the relevant pixels/wavelengths.
+            If False, the pixels are removed from the relevant data arrays.
 
         Returns
         -------
         :class:`~pypeit.spectrum.Spectrum`, list
             Modified spectrum/spectra.  Matches the input type.
         """
-        # Use the base class to either apply trim_std_pixs or get a copy of the input.
-        _spec = super().tweak_standard(spec, trim_std_pixs=trim_std_pixs)
         if trim_std_pixs is not None:
-            # trim_std_pixs is defined, so we're done
-            return _spec
+            return super().tweak_standard(spec, trim_std_pixs=trim_std_pixs, mask=mask)
 
-        # Could check the wavelenghts here to do something more robust to header/meta data issues
-        if '600/7500' in meta_table['DISPNAME']:
-            wave_s = 5400.0
-            wave_e = 8785.0
-        else:
-            return _spec
+        if wave_range is None:
+            # Try to use the disperser name to set the relevant wavelength range
+            dispname = spectrum.get_spectrum_list_meta(spec, 'DISPNAME')
+            if dispname == '600/7500':
+                wave_range = (5400.0, 8785.0)
+            # TODO: Emit a warning if the dispname is None?
 
-        # Trim each spectrum        
-        if isinstance(_spec, spectrum.Spectrum):
-            _spec.trim_edges_wave(wave_s, wave_e, mask=True)
-        else:
-            for s in _spec:
-                s.trim_edges_wave(wave_s, wave_e, mask=True)
-        return _spec
-
+        # Use the base class method
+        return super().tweak_standard(spec, wave_range=wave_range, mask=mask)
 
 
 class ShaneKastRedRetSpectrograph(ShaneKastSpectrograph):
