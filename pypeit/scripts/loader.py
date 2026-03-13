@@ -120,14 +120,16 @@ def get_pypeitpar(spec1dfile, ifile=None, secondary_ifile_class=None):
         return par, spec
 
 
-def load_spectra(specfile, extract=None, fluxed=False, include_flat=False, chk_version=True):
+def load_spectra(inp, extract=None, fluxed=False, include_flat=False, chk_version=True):
     """
-    Read a spec1d or onespec file.
+    Parse the input into a list of :class:`~pypeit.core.spectrum.Spectrum` objects
 
     Parameters
     ----------
-    specfile : :obj:`str`
-        File with the data
+    specfile : :obj:`str`, :class:`Path`, :class:`~pypeit.specobjs.SpecObjs`, :class:`~pypeit.onespec.OneSpec`
+        A file written by :class:`~pypeit.specobjs.SpecObjs` or
+        :class:`~pypeit.onespec.OneSpec`, or an instance of one of those
+        classes.
     extract : str, optional
         The extraction used to produce the spectrum.  Must be either None,
         ``'BOX'`` (for a boxcar extraction), or ``'OPT'`` for optimal
@@ -148,96 +150,164 @@ def load_spectra(specfile, extract=None, fluxed=False, include_flat=False, chk_v
 
     Returns
     -------
-    :class:`astropy.io.fits.Header`:
+    :class:`astropy.io.fits.Header`
         The primary header of the input file.
-    list:
+    list
         List of :class:`~pypeit.core.spectrum.Spectrum` objects.
     """
-    # TODO: Can we use try/except blocks to avoid opening the fits file?  Is
-    # that any more efficient than what's being done already?
 
-    # Get the type of file.
-    with io.fits_open(specfile) as hdu:
-        is_specobjs = 'DMODCLS' in hdu[0].header and hdu[0].header['DMODCLS'] == 'SpecObjs'
-
-    # Load a spec1d file
-    if is_specobjs:
-        sobjs = specobjs.SpecObjs.from_fitsfile(specfile, chk_version=chk_version)
-        return sobjs.header, specobjs_to_spectrum(
-            sobjs, extract=extract, fluxed=fluxed, include_flat=include_flat
+    if isinstance(inp, specobjs.SpecObjs) or specobjs.SpecObjs.is_specobjs_file(inp):
+        # Parse the SpecObjs object
+        if isinstance(inp, specobjs.SpecObjs):
+            sobjs = inp
+        else:
+            # Load a spec1d file
+            try:
+                sobjs = specobjs.SpecObjs.from_fitsfile(inp, chk_version=chk_version)
+            except PypeItError as e:
+                raise PypeItError(
+                    f'Reading {inp} failed, despite indications that it is a PypeIt spec1d file.  '
+                    f'The original error is: {e}'
+                )
+        return sobjs.header, sobjs.to_spectrum(
+            extract=extract, fluxed=fluxed, include_flat=include_flat
         )
 
-    # Load a OneSpec file
-    try:
-        spec = onespec.OneSpec.from_file(specfile, chk_version=chk_version)
-    except PypeItError as e:
-        # TODO: Catch a specific exception!
+    # Parse the OneSpec object
+    if isinstance(inp, onespec.Onespec):
+        ospec = inp
+    else:
+        # Load a OneSpec file
+        try:
+            ospec = onespec.OneSpec.from_file(inp, chk_version=chk_version)
+        except PypeItError as e:
+            raise PypeItError(
+                f'Unable to load data in {inp} using the SpecObjs or OneSpec datamodels.  The '
+                'DMODCLS keyword is either not present or not equal to SpecObjs in the primary'
+                'header, and the error raised when attempting to read the file using OneSpec '
+                f'was: {e}'
+            )
+        
+    if include_flat:
+        # TODO: Issue a warning instead?
         raise PypeItError(
-            f'Unable to load data in {specfile} using the SpecObjs or OneSpec datamodels.  The '
-            'DMODCLS keyword is either not present or not equal to SpecObjs in the primary '
-            f'header, and the error raised when attempting to read the file using OneSpec was: {e}'
+            'Spectra read from OneSpec output files do not contain the flat spectrum.  To '
+            'continue, you must set include_flat=False.'
         )
 
-    # TODO: I'm not sure which wavelength vector to use, but allowing data
-    # with wave==0 wreaks havoc later on, so I deal with it here.
-    _wave = spec.wave
-    _gpm = spec.mask.astype(bool)
-    bad_wave = _wave == 0
-    if np.any(bad_wave):
-        if np.any(bad_wave & _gpm):
-            raise PypeItError(
-                'The input spectrum has unmasked pixels with the wavelength set to zero.'
-            )
-        if spec.wave_grid_mid is None:
-            raise PypeItError(
-                'The input spectrum has pixels with the wavelength set to zero and no '
-                'alternative wavelength grid to use.'
-            )
-        _wave[bad_wave] = spec.wave_grid_mid[bad_wave]
+    if fluxed != ospec.fluxed:
+        raise PypeItError(
+            f'There is a mismatch between flux-calibration status for the provided spectrum '
+            f'({ospec.fluxed}) and the requested status (fluxed={fluxed}).  Unable to proceed.'
+        )
 
-    return spec.head0, [
-        spectrum.Spectrum(_wave, spec.flux, ivar=spec.ivar, gpm=_gpm, meta=spec.spect_meta)
-    ]
+    if extract is not None and ospec.ext_mode != extract:
+        raise PypeItError(
+            f'There is a mismatch between the extraction used for the provided spectrum '
+            f'({ospec.ext_mode}) and the requested status (extract={extract}).  Unable to proceed.'
+        )
+    
+    return ospec.head0, ospec.to_spectrum()
 
 
-# TODO: This could possibly be a member function of pypeit.specobjs.SpecObjs.
-def specobjs_to_spectrum(sobjs, extract=None, fluxed=False, include_flat=False):
+def load_standard(
+    specfiles, names=None, extract=None, fluxed=False, include_flat=False, multi_spec_det=None,
+    chk_version=True
+):
     """
-    Utility function to convert a :class:`~pypeit.specobjs.SpecObjs` object into
-    a list of :class:`~pypeit.core.spectrum.Spectrum` objects.
 
     Parameters
     ----------
-    sobjs : :class:`~pypeit.specobjs.SpecObjs`
-        Object with extracted 1D spectra
-    extract : :obj:`str`, optional
-        The type of extraction to use.  Options are 'OPT' for optimal extraction or
-        'BOX' for boxcar extraction.
-    fluxed : :obj:`bool`, optional
-        If True, return the flux-calibrated spectrum.  If False, return the
-        uncalibrated counts.
-    include_flat : :obj:`bool`, optional
-        If True, include the extracted flat spectrum as an associated array.
+    specfiles : str, list
+        One or more pypeit files with 1D standard-star spectra.
+    names : str, list
+        One or more pre-identified source names that are the standard-star
+        spectra.  This is only relevant if the provided ``specfiles`` are PypeIt
+        spec1d files; i.e., this is ignored for files written by
+        :class:`~pypeit.onespec.Onespec`.  If multiple files are provided, a
+        name should be provided for each file; however, the name can be ``None``
+        if you want the code to identify the highest S/N spectrum as the
+        standard star.  If more than one source name is required for a given
+        file, the corresponding entry in the ``names`` list can itself be a list
+        of names; see :func:`~pypeit.specobjs.SpecObjs.get_std`.
+    extract : str, optional
+        The extraction type to use; see :func:`~pypeit.loader.load_spectra`.
+    fluxed : bool, optional
+        Whether or not the loaded spectra should be flux-calibrated; see
+        :func:`~pypeit.loader.load_spectra`.
+    include_flat : bool, optional
+        Whether or not to include the extracted flat-field spectra; see
+        :func:`~pypeit.loader.load_spectra`.
+    multi_spec_det : list, optional
+        When automatically detecting the standard-star spectrum, load spectra
+        that cross multiple detectors; see
+        :func:`~pypeit.specobjs.SpecObjs.get_std`.
+    chk_version : bool, optional
+        Check the datamodel version of each file.
 
     Returns
     -------
     list
-        List of :class:`~pypeit.core.spectrum.Spectrum` objects with the
-        extracted spectra.
+        List of :class:`~pypeit.spectrum.Spectrum` objects with the standard-star spectra.
+    bool
+        Flag that the spectra should be spliced together
     """
+    # Check the input files
+    _specfiles = [specfiles] if isinstance(specfiles, (str,Path)) else specfiles
+    _specfiles = [Path(s).absolute() for s in _specfiles]
+    bad_files = [not s.is_file() for s in _specfiles]
+    if any(bad_files):
+        raise PypeItError(f'The following files do not exist: {np.asarray(_specfiles)[bad_files]}')
 
-    # Get the metadata
-    meta_spec = load_spectrograph(sobjs.header['PYP_SPEC']).parse_spec_header(sobjs.header)
+    # Parse the source names
+    if names is None:
+        _names = [None]*len(_specfiles)
+    else:
+        _names = names
+    if len(_names) != len(_specfiles):
+        raise PypeItError(
+            f'The number of names provided ({len(_names)}) does not match the number of spectrum '
+            'files.'
+        )
 
-    # Build up the list of spectra
-    spectra = []
-    for sobj in sobjs:
-        ext, cal = sobj.best_ext_match(extract=extract, fluxed=fluxed)
-        func = sobj.get_box_ext if ext == 'BOX' else sobj.get_opt_ext
-        wave, flux, ivar, gpm, flat = func(fluxed=cal)
-        if include_flat:
-            assoc = {'flat': flat}
-        # TODO: Deal with wave=0 data?
-        spectra += [spectrum.Spectrum(wave, flux, ivar=ivar, gpm=gpm, meta=meta_spec, assoc=assoc)]
-    return spectra
+    spec = []
+    dets = []
 
+    # TODO: This effectively allows for lists that combine both spec1d files and
+    # onespec files.  Is that a reasonable thing to do?
+    for name, specfile in zip(_names, _specfiles):
+
+        if specobjs.SpecObjs.is_specobjs_file(specfile):
+            sobj = specobjs.SpecObjs.from_fitsfile(specfile, chk_version=chk_version
+                ).get_std(name=name, multi_spec_det=multi_spec_det, split_mosaic=True)
+            if sobj is None:
+                raise PypeItError(f'Unable to read standard star spectrum from: {specfile}')
+            dets += sobj.DET.tolist()
+        else:
+            sobj = specfile
+
+        spec += load_spectra(
+            sobj, extract=extract, fluxed=fluxed, include_flat=include_flat,
+            chk_version=chk_version
+        )[0]
+
+        # TODO: Need to find an equivalent check for this.  E.g., the number of expected orders?
+#        if ospec.head0['PYPELINE'] == 'Echelle':
+#            raise PypeItError(
+#                'Standard star 1D spectrum from OneSpec class cannot be used for Echelle data.'
+#            )
+
+    if len(spec) == 0:
+        raise PypeItError(
+            f'Unable to load any standard spectra from the provided file(s):  {specfiles}'
+        )
+
+    # Sort by wavelength
+    srt = np.argsort(max([np.max(s.wave) for s in spec]), kind='stable')
+    spec = np.asarray(spec)[srt].tolist()
+
+    # splice together also mosaic-reduced spectra that have been split
+    splice_multi_det = len(_specfiles) > 1 or (len(dets) > 0 and np.unique(dets).size > 1)
+
+    # TODO: Return `dets` instead of `splice_multi_det`?
+    return spec, splice_multi_det

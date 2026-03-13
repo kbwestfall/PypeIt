@@ -15,6 +15,7 @@ from pypeit import io
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import utils
+from pypeit.core import spectrum
 from pypeit.spectrographs.util import load_spectrograph
 
 
@@ -174,6 +175,29 @@ class OneSpec(datamodel.DataContainer):
         # Do it
         super().to_file(ofile, primary_hdr=primary_hdr, **kwargs)
 
+    def to_spectrum(self):
+        """
+        Construct a :class:`~pypeit.core.spectrum.Spectrum` object from the data
+        in this object.
+        """
+        # TODO: I'm not sure which wavelength vector to use, but allowing data
+        # with wave==0 wreaks havoc later on, so I deal with it here.
+        _wave = self.wave
+        _gpm = self.mask.astype(bool)
+        bad_wave = _wave == 0
+        if np.any(bad_wave):
+            if np.any(bad_wave & _gpm):
+                raise PypeItError(
+                    'The spectrum has unmasked pixels with the wavelength set to zero.'
+                )
+            if self.wave_grid_mid is None:
+                raise PypeItError(
+                    'The input spectrum has pixels with the wavelength set to zero and no '
+                    'alternative wavelength grid to use.'
+                )
+            _wave[bad_wave] = self.wave_grid_mid[bad_wave]
+
+        return spectrum.Spectrum(_wave, self.flux, ivar=self.ivar, gpm=_gpm, meta=self.spect_meta)
 
     def rebin(self, new_wv, fill_value=0., grow_bad_sig=False):
         """ Rebin the spectrum to a new OneSpec object with the input array

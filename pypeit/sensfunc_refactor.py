@@ -18,6 +18,7 @@ from astropy import table
 
 from pypeit import datamodel
 from pypeit import io
+from pypeit import loader
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import specobjs
@@ -241,15 +242,28 @@ class SensFunc(datamodel.DataContainer):
         self.steps = []
 
         # Are we splicing together multiple detectors?
-        self.splice_multi_det = True if self.par['multi_spec_det'] is not None else False
+        # TODO: Which one do we want?  This or what is returned by load_standard
+        self.splice_multi_det = self.par['multi_spec_det'] is not None
 
-        # # Unpack standard star data
-        self.sobjs_std = self.unpack_std(chk_version=chk_version)
-        wave, counts, counts_ivar, counts_mask, log10_blaze_function, self.meta_spec, header \
-            = self.sobjs_std.unpack_object(
-                ret_flam=False, log10blaze=True, extract_blaze=self.par['use_flat'],
-                extract_type=self.extr, remove_missing=True
-            )
+        # TODO: Note that by default this, by default, gets the unfluxed spectra
+        # and tries to include the flat.  The latter will fault for any onespec
+        # spectra.
+        self.std_spec, self.splice_multi_det = loader.load_standard(
+            spec1dfiles, extract=self.par['extr'], include_flat=True,
+            multi_spec_det=self.par['multi_spec_det'], chk_version=chk_version
+        )
+
+        self.std_spec_twk = self.spectrograph.tweak_standard(
+            self.std_spec, trim_std_pixs=self.par['trim_std_pixs']
+        )
+
+#        # Unpack standard star data
+#        self.sobjs_std = self.unpack_std(chk_version=chk_version)
+#        wave, counts, counts_ivar, counts_mask, log10_blaze_function, self.meta_spec, header \
+#            = self.sobjs_std.unpack_object(
+#                ret_flam=False, log10blaze=True, extract_blaze=self.par['use_flat'],
+#                extract_type=self.extr, remove_missing=True
+#            )
 
         # Perform any instrument tweaks
         wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk, log10_blaze_function_twk = \
@@ -258,6 +272,8 @@ class SensFunc(datamodel.DataContainer):
                 log10_blaze_function=log10_blaze_function,
                 trim_std_pixs=self.par['trim_std_pixs']
             )
+
+        
 
         # Reshape to 2d arrays
         self.wave_cnts, self.counts, self.counts_ivar, self.counts_mask, \
@@ -305,86 +321,86 @@ class SensFunc(datamodel.DataContainer):
         # Get the atmospheric extinction
         self.atmext = self.spectrograph.get_atmospheric_extinction(par['UVIS']['extinct_file'])
 
-    def unpack_std(self, chk_version=True):
-        """
-        Unpack the standard star data from a 1D spectrum file(s) with a SpecObj or OneSpec class.
-
-        Returns
-        -------
-        sobjs_std : :class:`~pypeit.specobjs.SpecObjs`
-            The SpecObjs class with the standard star spectrum.
-
-        """
-        sobjs_std = None
-        for s, spec1d in enumerate(self.spec1d_arr):
-
-            # Get the datamodel type
-            with io.fits_open(spec1d) as hdul:
-                dmodcls = hdul[1].header.get('DMODCLS')
-
-            if dmodcls == 'SpecObj':
-                _std_obj = specobjs.SpecObjs.from_fitsfile(spec1d, chk_version=self.chk_version
-                    ).get_std(multi_spec_det=self.par['multi_spec_det'], split_mosaic=True)
-
-                if _std_obj is None:
-                    raise PypeItError(f'Unable to read standard star spectrum from: {spec1d}')
-            elif dmodcls == 'OneSpec':
-                spec = OneSpec.from_file(spec1d, chk_version=self.chk_version)
-                if spec.head0['PYPELINE'] == 'Echelle':
-                    raise PypeItError(
-                        'Standard star 1D spectrum from OneSpec class cannot be used for Echelle '
-                        'data.'
-                    )
-                if spec.fluxed:
-                    raise PypeItError(
-                        'Standard star 1D spectrum from OneSpec class is already fluxed and '
-                        'cannot be used to generate the sensitivity function.'
-                    )
-                if self.par['use_flat']:
-                    raise PypeItError(
-                        '"use_flat" set to True, but standard star 1D spectrum from OneSpec class '
-                        'does not contain the flat spectrum. The blaze function cannot be '
-                        'estimated.'
-                    )
-                if spec.ext_mode != self.par['extr']:
-                    log.warning(
-                        'Standard star 1D spectrum from OneSpec class was obtained using the '
-                        f'{spec.ext_mode} extraction, while the requested extraction is '
-                        f'{self.par["extr"]}.  The available {spec.ext_mode} extraction will be '
-                        'used instead.'
-                    )
-                    self.extr = spec.ext_mode
-
-                _sobj = specobj.SpecObj.from_arrays(spec.head0['PYPELINE'], spec.wave_grid_mid,
-                                                    spec.flux, spec.ivar, mode=self.extr)
-                # add mask from OneSpec, since `from_arrays` creates a mask based on the flux ivar
-                _sobj[f'{self.extr}_MASK'] |= spec.mask.astype(bool)
-                _std_obj = specobjs.SpecObjs(specobjs=np.array([_sobj]), header=spec.head0)
-            else:
-                raise PypeItError(
-                    'Unrecognized class for the 1D spectrum file. Cannot read in the standard'
-                )
-
-            # fill sobjs_std
-            if sobjs_std is None:
-                sobjs_std = _std_obj.copy()
-            else:
-                sobjs_std.add_sobj(_std_obj)
-
-        if sobjs_std is None:
-            raise PypeItError(
-                'There is a problem with your standard star 1D spectrum file(s):  '
-                f'{self.spec1d_arr}'
-            )
-        # Sort by wavelength
-        s_sort = np.argsort(np.max(sobjs_std[f'{self.extr}_WAVE'], axis=1), kind='stable')
-        sobjs_std = sobjs_std[s_sort]
-
-        # splice together also mosaic-reduced spectra that have been split
-        if np.unique(sobjs_std.DET).size > 1 or len(self.spec1d_arr) > 1:
-            self.splice_multi_det = True
-
-        return sobjs_std
+#     def unpack_std(self, chk_version=True):
+#         """
+#         Unpack the standard star data from a 1D spectrum file(s) with a SpecObj or OneSpec class.
+# 
+#         Returns
+#         -------
+#         sobjs_std : :class:`~pypeit.specobjs.SpecObjs`
+#             The SpecObjs class with the standard star spectrum.
+# 
+#         """
+#         sobjs_std = None
+#         for s, spec1d in enumerate(self.spec1d_arr):
+# 
+#             # Get the datamodel type
+#             with io.fits_open(spec1d) as hdul:
+#                 dmodcls = hdul[1].header.get('DMODCLS')
+# 
+#             if dmodcls == 'SpecObj':
+#                 _std_obj = specobjs.SpecObjs.from_fitsfile(spec1d, chk_version=self.chk_version
+#                     ).get_std(multi_spec_det=self.par['multi_spec_det'], split_mosaic=True)
+# 
+#                 if _std_obj is None:
+#                     raise PypeItError(f'Unable to read standard star spectrum from: {spec1d}')
+#             elif dmodcls == 'OneSpec':
+#                 spec = OneSpec.from_file(spec1d, chk_version=chk_version)
+#                 if spec.head0['PYPELINE'] == 'Echelle':
+#                     raise PypeItError(
+#                         'Standard star 1D spectrum from OneSpec class cannot be used for Echelle '
+#                         'data.'
+#                     )
+#                 if spec.fluxed:
+#                     raise PypeItError(
+#                         'Standard star 1D spectrum from OneSpec class is already fluxed and '
+#                         'cannot be used to generate the sensitivity function.'
+#                     )
+#                 if self.par['use_flat']:
+#                     raise PypeItError(
+#                         '"use_flat" set to True, but standard star 1D spectrum from OneSpec class '
+#                         'does not contain the flat spectrum. The blaze function cannot be '
+#                         'estimated.'
+#                     )
+#                 if spec.ext_mode != self.par['extr']:
+#                     log.warning(
+#                         'Standard star 1D spectrum from OneSpec class was obtained using the '
+#                         f'{spec.ext_mode} extraction, while the requested extraction is '
+#                         f'{self.par["extr"]}.  The available {spec.ext_mode} extraction will be '
+#                         'used instead.'
+#                     )
+#                     self.extr = spec.ext_mode
+# 
+#                 _sobj = specobj.SpecObj.from_arrays(spec.head0['PYPELINE'], spec.wave_grid_mid,
+#                                                     spec.flux, spec.ivar, mode=self.extr)
+#                 # add mask from OneSpec, since `from_arrays` creates a mask based on the flux ivar
+#                 _sobj[f'{self.extr}_MASK'] |= spec.mask.astype(bool)
+#                 _std_obj = specobjs.SpecObjs(specobjs=np.array([_sobj]), header=spec.head0)
+#             else:
+#                 raise PypeItError(
+#                     'Unrecognized class for the 1D spectrum file. Cannot read in the standard'
+#                 )
+# 
+#             # fill sobjs_std
+#             if sobjs_std is None:
+#                 sobjs_std = _std_obj.copy()
+#             else:
+#                 sobjs_std.add_sobj(_std_obj)
+# 
+#         if sobjs_std is None:
+#             raise PypeItError(
+#                 'There is a problem with your standard star 1D spectrum file(s):  '
+#                 f'{self.spec1d_arr}'
+#             )
+#         # Sort by wavelength
+#         s_sort = np.argsort(np.max(sobjs_std[f'{self.extr}_WAVE'], axis=1), kind='stable')
+#         sobjs_std = sobjs_std[s_sort]
+# 
+#         # splice together also mosaic-reduced spectra that have been split
+#         if np.unique(sobjs_std.DET).size > 1 or len(self.spec1d_arr) > 1:
+#             self.splice_multi_det = True
+# 
+#         return sobjs_std
 
     def _bundle(self):
         """

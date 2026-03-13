@@ -84,14 +84,13 @@ class Spectrum:
 
         self.meta = None if meta is None else deepcopy(meta)
 
-        self.assoc = self._ingest_associated(assoc)
-
-    def _ingest_associated(self, assoc):
-        """
-        Helper function to ingest associated data arrays
-        """
+        # Ingest the associated data arrays.  Given the return statement, this
+        # should be the last block of code in the constructor!
         if assoc is None:
-            return None
+            self.assoc = None
+            # Construction complete
+            return
+
         if not isinstance(assoc, dict):
             raise PypeItError('Associated data arrays must be provided via a dictionary.')
         
@@ -104,6 +103,13 @@ class Spectrum:
                 )
             self.assoc[key] = _arr
 
+    @property
+    def npix(self):
+        """
+        The number of spectral pixels.
+        """
+        return self.wave.size
+    
     @property
     def size(self):
         """
@@ -125,6 +131,96 @@ class Spectrum:
         """
         return self.flux.ndim
     
+    def trim_edges_pix(self, start, end, mask=False):
+        """
+        Trim the edges of the spectrum.
+
+        This alters the contents of the object directly.
+
+        Parameters
+        ----------
+        start : int
+            Starting index (inclusive) of the spectral pixels to keep.
+        end : int
+            Ending index (exclusive) of the spectral pixels to keep.
+        mask : bool, optional
+            Mask the relevant pixels as bad instead of actually removing them.
+        """
+        # TODO: Relax these limits?  I.e., interpret start < 0 as start == 0,
+        # and so on?
+        if start < 0 or start >= self.npix:
+            raise PypeItError(f'Starting index must be within 0 ... {self.npix-1}')
+        if end < 1 or end > self.npix:
+            raise PypeItError(f'Ending index must be within 1 ... {self.npix}')
+
+        if start == end:
+            if mask:
+                log.warning('Start and end are identical.  Masking entire spectral range!')
+            else:
+                raise PypeItError(
+                    'Start and end are identical.  Masking would result in a 0-size spectrum.'
+                )
+
+        if start > end:
+            log.warning('Starting index is greater than the ending index.  Swapping.')
+            s = end
+            e = start
+        else:
+            s = start
+            e = end
+
+        if mask:
+            # Just adjust the gpm
+            self.gpm[:s] = False
+            self.gpm[e:] = False
+            return
+
+        # Adjust the arrays
+        # NOTE: Stuff in meta should *not* depend on the size of the arrays.
+        self.wave = self.wave[s:e]
+        self.flux = self.flux[s:e,...]
+        self.ivar = self.ivar[s:e,...]
+        self.gpm = self.gpm[s:e,...]
+        if self.assoc is None:
+            return
+        for key in self.assoc.keys():
+            self.assoc[key] = self.assoc[key][s:e,...]
+
+    def trim_edges_wave(self, start, end, mask=False):
+        """
+        Trim the edges of the spectrum.
+
+        Identical to :func:`~pypeit.core.spectrum.Spectrum.trim_edges_pix`,
+        except that the edges are define by their wavelength.  In detail, the
+        pixels nearest ``start`` and ``end`` are used to define starting and
+        ending pixels that are then passed to
+        :func:`~pypeit.core.spectrum.Spectrum.trim_edges_pix`.  I.e., this does
+        not deal with fractional pixels.  For fractional pixels, you will need
+        to use :func:`~pypeit.core.spectrum.Spectrum.resample`.
+
+        This alters the contents of the object directly.
+
+        Parameters
+        ----------
+        start : float
+            Starting wavelength of the spectral pixels to keep.
+        end : float
+            Ending wavelegth of the spectral pixels to keep.
+        mask : bool, optional
+            Mask the relevant pixels as bad instead of actually removing them.
+        """
+        if start > end:
+            raise PypeItError(
+                f'Starting wavelength ({start}) should be less than ending wavelength ({end}).'
+            )
+        indx = np.where((self.wave >= start) & (self.wave <= end))[0]
+        if len(indx) == 0:
+            raise PypeItError(
+                'Spectrum does not overlap selected region.  Spectrum wavelength range is '
+                f'{self.wave[[0,-1]]}, selected wavelength range was {[start,end]}.'
+            )
+        self.trim_edges_pix(indx[0], indx[-1]+1, mask=mask)
+
     def copy(self):
         """
         Return a deepcopy of the object.
