@@ -125,8 +125,8 @@ class SensFunc(datamodel.DataContainer):
         'par',
         'par_fluxcalib',
         'debug',
-        'obs_std',
-        'obs_std_twk',
+        'obs_spec',
+        'obs_spec_twk',
         'nspec_in',
         'norderdet',
         'wave_splice',
@@ -134,7 +134,7 @@ class SensFunc(datamodel.DataContainer):
         'throughput_splice',
         'steps',
         'splice_multi_det',
-        'arx_std',
+        'std_spec',
         'atmext',
         'region_mask',
     ]
@@ -249,14 +249,14 @@ class SensFunc(datamodel.DataContainer):
 
         # TODO: Note that by default this gets the unfluxed spectra and tries to
         # include the flat.  The latter will fault for any onespec spectra.
-        self.obs_std, self.splice_multi_det = loader.load_standard(
+        self.obs_spec, self.splice_multi_det = loader.load_standard(
             spec1dfiles, extract=self.par['extr'], include_flat=True,
             multi_spec_det=self.par['multi_spec_det'], chk_version=chk_version
         )
 
         # TODO: Add wave_range as a parameter?
-        self.obs_std_twk = self.spectrograph.tweak_standard(
-            self.obs_std, trim_std_pixs=self.par['trim_std_pixs']
+        self.obs_spec_twk = self.spectrograph.tweak_standard(
+            self.obs_spec, trim_std_pixs=self.par['trim_std_pixs']
         )
 
         # Get metadata that must be the same for all spectra.  These data will
@@ -265,13 +265,13 @@ class SensFunc(datamodel.DataContainer):
         # sobjs.to_spectrum.
 
         # Exptime and airmass are part of the datamodel
-        self.exptime = spectrum.get_spectrum_list_meta(self.obs_std, 'EXPTIME')
+        self.exptime = spectrum.get_spectrum_list_meta(self.obs_spec, 'EXPTIME')
         if self.exptime is None:
             log.warning(
                 'Exposure time for the standard star observation is not available!  This may '
                 'cause the code to fault.'
             )
-        self.airmass = spectrum.get_spectrum_list_meta(self.obs_std, 'AIRMASS')
+        self.airmass = spectrum.get_spectrum_list_meta(self.obs_spec, 'AIRMASS')
         if self.airmass is None:
             log.warning(
                 'The airmass during the standard star observation is not available!  This may '
@@ -280,11 +280,11 @@ class SensFunc(datamodel.DataContainer):
 
         # If the user provided RA and DEC use those instead of what is in meta
         star_ra = (
-            spectrum.get_spectrum_list_meta(self.obs_std, 'RA')
+            spectrum.get_spectrum_list_meta(self.obs_spec, 'RA')
             if self.par['star_ra'] is None else self.par['star_ra']
         )
         star_dec = (
-            spectrum.get_spectrum_list_meta(self.obs_std, 'DEC')
+            spectrum.get_spectrum_list_meta(self.obs_spec, 'DEC')
             if self.par['star_dec'] is None else self.par['star_dec']
         )
         if star_ra is None or star_dec is None:
@@ -298,7 +298,7 @@ class SensFunc(datamodel.DataContainer):
         star_ra, star_dec = meta.convert_radec(star_ra, star_dec)
 
         # Get the archive standard star spectrum
-        self.arx_std = standard.get_standard_spectrum(
+        self.std_spec = standard.get_standard_spectrum(
             spectral_type=self.par['star_type'], V_mag=self.par['star_mag'], ra=star_ra,
             dec=star_dec
         )
@@ -306,19 +306,19 @@ class SensFunc(datamodel.DataContainer):
         # Add the components of the datamodel.  These are added to the standard
         # star meta dictionary when the spectra are loaded.  See
         # pypeit.core.standard.ArchivedFluxStandard._init_meta.
-        self.std_cal = self.arx_std.meta['source']
-        self.std_name = self.arx_std.meta['Name']
-        self.std_ra = self.arx_std.meta['ra_deg']
-        self.std_dec = self.arx_std.meta['dec_deg']
+        self.std_cal = self.std_spec.meta['source']
+        self.std_name = self.std_spec.meta['Name']
+        self.std_ra = self.std_spec.meta['ra_deg']
+        self.std_dec = self.std_spec.meta['dec_deg']
 
         # Check if this is the right standard star for the observation, i.e., if
         # there is overlap in the wavelength coverage between the archival and
         # observed standard star spectrum
         frac_overlap = np.array([
             np.sum(
-                (s.wave[s.gpm] >= np.min(self.arx_std.wave))
-                & (s.wave[s.gpm] <= np.max(self.arx_std.wave))
-            ) / np.sum(s.gpm) for s in self.obs_std
+                (s.wave[s.gpm] >= np.min(self.std_spec.wave))
+                & (s.wave[s.gpm] <= np.max(self.std_spec.wave))
+            ) / np.sum(s.gpm) for s in self.obs_spec
         ])
 
         if np.all(np.isclose(frac_overlap, 0.)):
@@ -338,9 +338,6 @@ class SensFunc(datamodel.DataContainer):
                  f'{np.round(frac_overlap, decimals=1)}.  Beware of extrapolation errors in the '
                  'calibration.'
             )
-
-        embed()
-        exit()
 
         # Get the wavelength regions to mask
         # TODO: Add ability to mask telluric regions
@@ -1147,10 +1144,14 @@ class UVISSensFunc(SensFunc):
         #   - Make parameters that specifiy the location of the breakpoints (not
         #     just resolution based) available to the user?
         zp_spec, fit_gpm, fit_gpm_rej, zp_bspl = flux_calib_refactor.sensfunc(
-            self.obs_std, self.arx_std, exptime=self.meta_spec['EXPTIME'], atm_extinction=self.atmext,
-            airmass=self.meta_spec['AIRMASS'], nresln=self.par['UVIS']['nresln'],
+            self.obs_spec, self.std_spec, exptime=self.exptime, atm_extinction=self.atmext,
+            airmass=self.airmass, nresln=self.par['UVIS']['nresln'],
             resolution=self.par['UVIS']['resolution'], region_mask=self.region_mask
         )
+
+        embed(header='after sensfunc')
+        exit()
+
 
         if self.debug:
             flux_calib_refactor.standard_zeropoint_qa(

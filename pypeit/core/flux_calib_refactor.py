@@ -82,6 +82,15 @@ def sensfunc(obs_spec, std_spec, **kwargs):
     Calculate the sensitivity functions for one or more observed spectra given
     the spectrum of the flux standard.
 
+    This is primarily a wrapper for 
+    :func:`~pypeit.core.flux_calib_refactor.standard_zeropoint` that handles:
+
+        - resampling the archived standard star spectrum (``std_spec``) to match
+          the observed spectrum
+
+        - iterating through multiple spectra if ``obs_spec`` provides more than
+          one :class:`~pypeit.core.spectrum.Spectrum` object.
+
     Parameters
     ----------
     obs_spec : array-like, :class:`~pypeit.core.spectrum.Spectrum`
@@ -102,20 +111,22 @@ def sensfunc(obs_spec, std_spec, **kwargs):
     if isinstance(obs_spec, spectrum.Spectrum):
         return standard_zeropoint(obs_spec, std_spec.resample(obs_spec.wave), **kwargs)
 
-    raise PypeItError('Entering untested part of the function!!')
-#    embed(header='in sensfunc()')
-#    exit()
-
-    _obs_spec = np.asarray(obs_spec)
-    if not all([isinstance(s, spectrum.Spectrum) for s in _obs_spec]):
+    if not all([isinstance(s, spectrum.Spectrum) for s in obs_spec]):
         raise PypeItError('Multiple spectra must be provided as a list of pypeit Spectrum objects.')
+    
+    # TODO: HAVE NOT YET TESTED RESULTS WITH MULTIPLE SPECTRA; I've only tested
+    # when a list of one spectrum is provided.
 
     results = []
-    for _spec in _obs_spec:
-        r = sampling.Resample(std_spec.flux, x=std_spec.wave, newx=_obs_spec.wave, conserve=False)
-        _std_spec = spectrum.Spectrum(r.outx, r.outy, gpm=r.outf > 0.8)
-        results += [list(standard_zeropoint(_obs_spec, _std_spec, **kwargs))]
-    return tuple([r.tolist() for r in np.asarray(results).T])
+    for _spec in obs_spec:
+        results += [list(standard_zeropoint(_spec, std_spec.resample(_spec.wave), **kwargs))]
+
+    # NOTE: This return statement reformats the results list into a tuple of
+    # lists, where each list contains the relevant returned object from
+    # standard_zeropoint for each spectrum.  See, e.g.,
+    # pypeit.sensfunc.UVISSensFunc.compute_zeropoint.
+
+    return tuple([r.tolist() for r in np.asarray(results, dtype=object).T])
 
 
 def get_sensfunc_factor(wave, wave_zp, zeropoint, exptime, tellmodel=None, delta_wave=None, extinct_correct=False,

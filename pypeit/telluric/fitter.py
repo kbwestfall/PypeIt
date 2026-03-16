@@ -21,6 +21,11 @@ from pypeit.core import spectrum
 from pypeit.par import funcpar
 
 
+# TODO: Allow for multiple spectra to be fit simultaneously where the telluric
+# model and source model are forced to be the same for all spectra, but the
+# polynomial adjustment is done per observed spectrum.
+
+
 class ObservedSourceModelFitter:
     """
     Class to perform the source + telluric model fit to an observed spectrum.
