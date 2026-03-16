@@ -354,21 +354,21 @@ class SpecObjs:
 
         # Get the metadata
         base_meta_spec = load_spectrograph(self.header['PYP_SPEC']).parse_spec_header(self.header)
+        base_meta_spec['PYP_SPEC'] = self.header['PYP_SPEC']
         # TODO: Add other items included in meta_spec from unpack_object()
 
         # Build up the list of spectra
         spectra = []
         for sobj in self.specobjs:
             ext, cal = sobj.best_ext_match(extract=extract, fluxed=fluxed)
+            func = sobj.get_box_ext if ext == 'BOX' else sobj.get_opt_ext
+            wave, flux, ivar, gpm, flat = func(fluxed=cal)
+            assoc = {'flat': flat} if include_flat else None
             # Add the extraction and calibration types to the metadata
             meta_spec = deepcopy(base_meta_spec)
             meta_spec['ext_mode'] = ext
             meta_spec['fluxed'] = cal
-            meta_spec['NAME'] = sobj.NAME
-            meta_spec['PYP_SPEC'] = self.header['PYP_SPEC']
-            func = sobj.get_box_ext if ext == 'BOX' else sobj.get_opt_ext
-            wave, flux, ivar, gpm, flat = func(fluxed=cal)
-            assoc = {'flat': flat} if include_flat else None
+            meta_spec['NAME'] = sobj.NAME   # TODO: Should this be ECH_NAME for echelles?
             try:
                 # TODO: Deal with wave=0 data?
                 _spec = spectrum.Spectrum(

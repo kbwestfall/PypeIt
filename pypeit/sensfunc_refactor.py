@@ -245,44 +245,21 @@ class SensFunc(datamodel.DataContainer):
         # TODO: Which one do we want?  This or what is returned by load_standard
         self.splice_multi_det = self.par['multi_spec_det'] is not None
 
-        # TODO: Note that by default this, by default, gets the unfluxed spectra
-        # and tries to include the flat.  The latter will fault for any onespec
-        # spectra.
+        # TODO: Note that by default this gets the unfluxed spectra and tries to
+        # include the flat.  The latter will fault for any onespec spectra.
         self.std_spec, self.splice_multi_det = loader.load_standard(
             spec1dfiles, extract=self.par['extr'], include_flat=True,
             multi_spec_det=self.par['multi_spec_det'], chk_version=chk_version
         )
 
+        # TODO: Add wave_range as a parameter?
         self.std_spec_twk = self.spectrograph.tweak_standard(
             self.std_spec, trim_std_pixs=self.par['trim_std_pixs']
         )
 
-#        # Unpack standard star data
-#        self.sobjs_std = self.unpack_std(chk_version=chk_version)
-#        wave, counts, counts_ivar, counts_mask, log10_blaze_function, self.meta_spec, header \
-#            = self.sobjs_std.unpack_object(
-#                ret_flam=False, log10blaze=True, extract_blaze=self.par['use_flat'],
-#                extract_type=self.extr, remove_missing=True
-#            )
 
-        # Perform any instrument tweaks
-        wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk, log10_blaze_function_twk = \
-            self.spectrograph.tweak_standard(
-                wave, counts, counts_ivar, counts_mask, self.meta_spec,
-                log10_blaze_function=log10_blaze_function,
-                trim_std_pixs=self.par['trim_std_pixs']
-            )
+        RETURN HERE
 
-        
-
-        # Reshape to 2d arrays
-        self.wave_cnts, self.counts, self.counts_ivar, self.counts_mask, \
-            self.log10_blaze_function, self.nspec_in, self.norderdet = utils.spec_atleast_2d(
-                wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk,
-                log10_blaze_function=log10_blaze_function_twk
-            )
-        if self.nspec_in == 0:
-            raise PypeItError('1D spectra have 0 length!')
 
         # If the user provided RA and DEC use those instead of what is in meta
         star_ra = self.meta_spec['RA'] if self.par['star_ra'] is None else self.par['star_ra']

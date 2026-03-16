@@ -470,7 +470,7 @@ def get_spectrum_list_meta(spec, key):
         return spec.meta.get(key, None)
 
     value = np.unique([s.meta.get(key, None) for s in spec])
-    if None in meta or len(value) > 1:
+    if None in value or len(value) > 1:
         log.warning(
             f'{key} not defined by spectrum metadata, or there are multiple spectra with '
             f'different {key} values.'
