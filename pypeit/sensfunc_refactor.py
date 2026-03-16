@@ -18,7 +18,6 @@ from astropy import table
 
 from pypeit import datamodel
 from pypeit import io
-from pypeit import loader
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import specobjs
@@ -34,6 +33,7 @@ from pypeit.core.wavecal import wvutils
 from pypeit.core import meta
 from pypeit.core import wavemask
 from pypeit.onespec import OneSpec
+from pypeit.scripts import loader
 from pypeit.spectrographs.util import load_spectrograph
 
 
@@ -57,6 +57,13 @@ class SensFunc(datamodel.DataContainer):
     either :class:`UVISSensFunc` or :class:`IRSensFunc`, depending on the
     wavelength range of your data (UVIS for :math:`\lambda < 7000` angstrom,
     IR for :math:`\lambda > 7000` angstrom.)
+
+    When calculating the sensitivity function using multiple spectra, the
+    expectation is that these are multiple spectra of the same object taken
+    during a single observation; i.e., they are spectra from multiple orders of
+    an echelle or spectra the cross detectors in a multi-slit observation.
+    These should *not* be separate observations of the same standard star taken
+    at different times.
 
     The datamodel attributes are:
 
@@ -118,12 +125,8 @@ class SensFunc(datamodel.DataContainer):
         'par',
         'par_fluxcalib',
         'debug',
-        'sobjs_std',
-        'wave_cnts',
-        'counts',
-        'counts_ivar',
-        'counts_mask',
-        'log10_blaze_function',
+        'obs_std',
+        'obs_std_twk',
         'nspec_in',
         'norderdet',
         'wave_splice',
@@ -131,8 +134,7 @@ class SensFunc(datamodel.DataContainer):
         'throughput_splice',
         'steps',
         'splice_multi_det',
-        'meta_spec',
-        'std_spec',
+        'arx_std',
         'atmext',
         'region_mask',
     ]
@@ -247,138 +249,108 @@ class SensFunc(datamodel.DataContainer):
 
         # TODO: Note that by default this gets the unfluxed spectra and tries to
         # include the flat.  The latter will fault for any onespec spectra.
-        self.std_spec, self.splice_multi_det = loader.load_standard(
+        self.obs_std, self.splice_multi_det = loader.load_standard(
             spec1dfiles, extract=self.par['extr'], include_flat=True,
             multi_spec_det=self.par['multi_spec_det'], chk_version=chk_version
         )
 
         # TODO: Add wave_range as a parameter?
-        self.std_spec_twk = self.spectrograph.tweak_standard(
-            self.std_spec, trim_std_pixs=self.par['trim_std_pixs']
+        self.obs_std_twk = self.spectrograph.tweak_standard(
+            self.obs_std, trim_std_pixs=self.par['trim_std_pixs']
         )
 
+        # Get metadata that must be the same for all spectra.  These data will
+        # be contained in the `meta` dictionary of each Spectrum, unless they
+        # are unavailable.  See Spectrograph.parse_spec_header, used by
+        # sobjs.to_spectrum.
 
-        RETURN HERE
-
+        # Exptime and airmass are part of the datamodel
+        self.exptime = spectrum.get_spectrum_list_meta(self.obs_std, 'EXPTIME')
+        if self.exptime is None:
+            log.warning(
+                'Exposure time for the standard star observation is not available!  This may '
+                'cause the code to fault.'
+            )
+        self.airmass = spectrum.get_spectrum_list_meta(self.obs_std, 'AIRMASS')
+        if self.airmass is None:
+            log.warning(
+                'The airmass during the standard star observation is not available!  This may '
+                'cause the code to fault.'
+            )
 
         # If the user provided RA and DEC use those instead of what is in meta
-        star_ra = self.meta_spec['RA'] if self.par['star_ra'] is None else self.par['star_ra']
-        star_dec = self.meta_spec['DEC'] if self.par['star_dec'] is None else self.par['star_dec']
+        star_ra = (
+            spectrum.get_spectrum_list_meta(self.obs_std, 'RA')
+            if self.par['star_ra'] is None else self.par['star_ra']
+        )
+        star_dec = (
+            spectrum.get_spectrum_list_meta(self.obs_std, 'DEC')
+            if self.par['star_dec'] is None else self.par['star_dec']
+        )
+        if star_ra is None or star_dec is None:
+            # TODO: We need to ensure this does not happen, and we should allow
+            # users to define the name and "archive" of the observed standard so
+            # that it can be pulled directly without having to match the
+            # coordinates.
+            raise PypeItError('Unable to determine the RA/Dec of the standard star observed.')
+
         # Convert to decimal deg, as needed
         star_ra, star_dec = meta.convert_radec(star_ra, star_dec)
 
-        # Read in standard star dictionary
-        self.std_spec = standard.get_standard_spectrum(
+        # Get the archive standard star spectrum
+        self.arx_std = standard.get_standard_spectrum(
             spectral_type=self.par['star_type'], V_mag=self.par['star_mag'], ra=star_ra,
             dec=star_dec
         )
 
+        # Add the components of the datamodel.  These are added to the standard
+        # star meta dictionary when the spectra are loaded.  See
+        # pypeit.core.standard.ArchivedFluxStandard._init_meta.
+        self.std_cal = self.arx_std.meta['source']
+        self.std_name = self.arx_std.meta['Name']
+        self.std_ra = self.arx_std.meta['ra_deg']
+        self.std_dec = self.arx_std.meta['dec_deg']
+
         # Check if this is the right standard star for the observation, i.e., if
         # there is overlap in the wavelength coverage between the archival and
         # observed standard star spectrum
-        overlap = (self.wave_cnts[self.counts_mask] <= np.max(self.std_spec.wave)) & \
-                  (self.wave_cnts[self.counts_mask] >= np.min(self.std_spec.wave))
-        frac_overlap = np.sum(overlap)/self.nspec_in
-        if np.isclose(frac_overlap, 0.):
+        frac_overlap = np.array([
+            np.sum(
+                (s.wave[s.gpm] >= np.min(self.arx_std.wave))
+                & (s.wave[s.gpm] <= np.max(self.arx_std.wave))
+            ) / np.sum(s.gpm) for s in self.obs_std
+        ])
+
+        if np.all(np.isclose(frac_overlap, 0.)):
             raise PypeItError(
                  'No wavelength overlap between the archival and observed standard star '
                  'spectrum. This is not the right standard star for your observations.'
             )
-        elif frac_overlap < 0.8:
+        elif np.any(np.isclose(frac_overlap, 0.)):
             log.warning(
-                 f'Only {frac_overlap:.1%} of the observed wavelength range is covered by the '
-                 'archival standard star. This may not be the right standard star for your '
-                 'observations.'
+                'Some of the observed spectra (e.g. one or more echelle orders) to use to '
+                'calculate the sensitivity function do not overlap with the standard star '
+                'observation.  These spectra will be ignored during the calculation.'
             )
+        elif np.any(frac_overlap < 0.8):
+            log.warning(
+                 'The observed spectra cover the following fractions of the spectra: '
+                 f'{np.round(frac_overlap, decimals=1)}.  Beware of extrapolation errors in the '
+                 'calibration.'
+            )
+
+        embed()
+        exit()
 
         # Get the wavelength regions to mask
         # TODO: Add ability to mask telluric regions
         self.region_mask = wavemask.read_wavelength_masks(par['spec_mask_files'])
 
         # Get the atmospheric extinction
+        # TODO: Move extinct_file into the main sensfunc parameter set
         self.atmext = self.spectrograph.get_atmospheric_extinction(par['UVIS']['extinct_file'])
 
-#     def unpack_std(self, chk_version=True):
-#         """
-#         Unpack the standard star data from a 1D spectrum file(s) with a SpecObj or OneSpec class.
-# 
-#         Returns
-#         -------
-#         sobjs_std : :class:`~pypeit.specobjs.SpecObjs`
-#             The SpecObjs class with the standard star spectrum.
-# 
-#         """
-#         sobjs_std = None
-#         for s, spec1d in enumerate(self.spec1d_arr):
-# 
-#             # Get the datamodel type
-#             with io.fits_open(spec1d) as hdul:
-#                 dmodcls = hdul[1].header.get('DMODCLS')
-# 
-#             if dmodcls == 'SpecObj':
-#                 _std_obj = specobjs.SpecObjs.from_fitsfile(spec1d, chk_version=self.chk_version
-#                     ).get_std(multi_spec_det=self.par['multi_spec_det'], split_mosaic=True)
-# 
-#                 if _std_obj is None:
-#                     raise PypeItError(f'Unable to read standard star spectrum from: {spec1d}')
-#             elif dmodcls == 'OneSpec':
-#                 spec = OneSpec.from_file(spec1d, chk_version=chk_version)
-#                 if spec.head0['PYPELINE'] == 'Echelle':
-#                     raise PypeItError(
-#                         'Standard star 1D spectrum from OneSpec class cannot be used for Echelle '
-#                         'data.'
-#                     )
-#                 if spec.fluxed:
-#                     raise PypeItError(
-#                         'Standard star 1D spectrum from OneSpec class is already fluxed and '
-#                         'cannot be used to generate the sensitivity function.'
-#                     )
-#                 if self.par['use_flat']:
-#                     raise PypeItError(
-#                         '"use_flat" set to True, but standard star 1D spectrum from OneSpec class '
-#                         'does not contain the flat spectrum. The blaze function cannot be '
-#                         'estimated.'
-#                     )
-#                 if spec.ext_mode != self.par['extr']:
-#                     log.warning(
-#                         'Standard star 1D spectrum from OneSpec class was obtained using the '
-#                         f'{spec.ext_mode} extraction, while the requested extraction is '
-#                         f'{self.par["extr"]}.  The available {spec.ext_mode} extraction will be '
-#                         'used instead.'
-#                     )
-#                     self.extr = spec.ext_mode
-# 
-#                 _sobj = specobj.SpecObj.from_arrays(spec.head0['PYPELINE'], spec.wave_grid_mid,
-#                                                     spec.flux, spec.ivar, mode=self.extr)
-#                 # add mask from OneSpec, since `from_arrays` creates a mask based on the flux ivar
-#                 _sobj[f'{self.extr}_MASK'] |= spec.mask.astype(bool)
-#                 _std_obj = specobjs.SpecObjs(specobjs=np.array([_sobj]), header=spec.head0)
-#             else:
-#                 raise PypeItError(
-#                     'Unrecognized class for the 1D spectrum file. Cannot read in the standard'
-#                 )
-# 
-#             # fill sobjs_std
-#             if sobjs_std is None:
-#                 sobjs_std = _std_obj.copy()
-#             else:
-#                 sobjs_std.add_sobj(_std_obj)
-# 
-#         if sobjs_std is None:
-#             raise PypeItError(
-#                 'There is a problem with your standard star 1D spectrum file(s):  '
-#                 f'{self.spec1d_arr}'
-#             )
-#         # Sort by wavelength
-#         s_sort = np.argsort(np.max(sobjs_std[f'{self.extr}_WAVE'], axis=1), kind='stable')
-#         sobjs_std = sobjs_std[s_sort]
-# 
-#         # splice together also mosaic-reduced spectra that have been split
-#         if np.unique(sobjs_std.DET).size > 1 or len(self.spec1d_arr) > 1:
-#             self.splice_multi_det = True
-# 
-#         return sobjs_std
-
+    # TODO: REVISIT
     def _bundle(self):
         """
         Bundle the object for writing using
@@ -441,6 +413,7 @@ class SensFunc(datamodel.DataContainer):
 
         return d
 
+    # TODO: REVISIT
     @classmethod
     def from_hdu(cls, hdu, hdu_prefix=None, chk_version=True):
         """
@@ -479,8 +452,8 @@ class SensFunc(datamodel.DataContainer):
         Dummy method overloaded by subclasses
         """
         raise PypeItError(
-            f'This subclass of SensFunc ({self.__class__.__name__}) had not defined the '
-            'compute_zeropoint method!'
+            f'CODING ERROR: This subclass of SensFunc ({self.__class__.__name__}) does not define '
+            'the compute_zeropoint method!'
         )
 
     def run(self):
@@ -489,6 +462,9 @@ class SensFunc(datamodel.DataContainer):
         """
         # Compute the sensitivity function
         self.compute_zeropoint()
+
+        embed()
+        exit()
 
         # Extrapolate the zeropoint based on par['extrap_blu'], par['extrap_red']
         self.wave, self.zeropoint = self.extrapolate(samp_fact=self.par['samp_fact'])
@@ -999,7 +975,7 @@ class IRSensFunc(SensFunc):
             Best-fitting telluric model
         """
 
-        embed(header='in compute_zerpoint')
+        embed(header='in IRSensFunc compute_zerpoint')
         exit()
 
         self.telluric = telluric.sensfunc_telluric(self.wave_cnts, self.counts, self.counts_ivar,
@@ -1143,27 +1119,27 @@ class UVISSensFunc(SensFunc):
     _algorithm = 'UVIS'
     """Algorithm used for the sensitivity calculation."""
 
-    def __init__(self, spec1dfiles, par, par_fluxcalib=None, debug=False, chk_version=True):
-        super().__init__(spec1dfiles, par, par_fluxcalib=par_fluxcalib, debug=debug,
-                         chk_version=chk_version)
-
-        # Add some cards to the meta spec. These should maybe just be added
-        # already in unpack object
-        self.meta_spec['LATITUDE'] = self.spectrograph.telescope['latitude']
-        self.meta_spec['LONGITUDE'] = self.spectrograph.telescope['longitude']
+#     def __init__(self, spec1dfiles, par, par_fluxcalib=None, debug=False, chk_version=True):
+#         super().__init__(spec1dfiles, par, par_fluxcalib=par_fluxcalib, debug=debug,
+#                          chk_version=chk_version)
+# 
+#         # Add some cards to the meta spec. These should maybe just be added
+#         # already in unpack object
+#         self.meta_spec['LATITUDE'] = self.spectrograph.telescope['latitude']
+#         self.meta_spec['LONGITUDE'] = self.spectrograph.telescope['longitude']
 
     def compute_zeropoint(self):
         """
         Calls routine to compute the sensitivity function.
         """
-        if self.wave_cnts.ndim == 2 and self.wave_cnts.shape[1] != 1:
-            raise PypeItError('Not ready for multiple wavelength vectors.')
-
-        # Construct the Spectrum object
-        obs_spec = spectrum.Spectrum(
-            self.wave_cnts[:,0], self.counts.squeeze(), ivar=self.counts_ivar.squeeze(),
-            gpm=self.counts_mask.squeeze()
-        )
+#        if self.wave_cnts.ndim == 2 and self.wave_cnts.shape[1] != 1:
+#            raise PypeItError('Not ready for multiple wavelength vectors.')
+#
+#        # Construct the Spectrum object
+#        obs_spec = spectrum.Spectrum(
+#            self.wave_cnts[:,0], self.counts.squeeze(), ivar=self.counts_ivar.squeeze(),
+#            gpm=self.counts_mask.squeeze()
+#        )
 
         # Get the zeropoints
         # TODO:
@@ -1171,7 +1147,7 @@ class UVISSensFunc(SensFunc):
         #   - Make parameters that specifiy the location of the breakpoints (not
         #     just resolution based) available to the user?
         zp_spec, fit_gpm, fit_gpm_rej, zp_bspl = flux_calib_refactor.sensfunc(
-            obs_spec, self.std_spec, exptime=self.meta_spec['EXPTIME'], atm_extinction=self.atmext,
+            self.obs_std, self.arx_std, exptime=self.meta_spec['EXPTIME'], atm_extinction=self.atmext,
             airmass=self.meta_spec['AIRMASS'], nresln=self.par['UVIS']['nresln'],
             resolution=self.par['UVIS']['resolution'], region_mask=self.region_mask
         )

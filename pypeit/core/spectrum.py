@@ -440,7 +440,7 @@ def get_spectrum_list_meta(spec, key):
     Provided one or more spectra, determine the relevant value for a metadata
     keyword.
 
-    This is a convenience funtion to handle lists of
+    This is a convenience function to handle lists of
     :class:`~pypeit.core.spectrum.Spectrum` objects.  A primary place it is used
     is :func:`~pypeit.spectrographs.spectrograph.Spectrograph.tweak_standard`.
 

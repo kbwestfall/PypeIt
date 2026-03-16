@@ -544,7 +544,7 @@ def save_exposure(spectrograph, fitstbl, par,
         # This was to address Issue #1116 in PR #1154. Slightly inefficient, but only other
         # option is to re-work write_info to also "append"
         sobjs = specobjs.SpecObjs.from_fitsfile(outfile1d, chk_version=False)
-        sobjs.write_info(outfiletxt, spectrograph.pypeline)
+        sobjs.write_info(outfiletxt)
 
     if skip_write_2d:
         return

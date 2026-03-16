@@ -31,7 +31,9 @@ class SensFunc(scriptbase.ScriptBase):
             help=(
                 'Configuration file used to set the parameters used to calculate the sensitivity '
                 'function.  This can be a ".pypeit" file that includes the desired "sensfunc" '
-                'parameter group or a ".sens" file.  This argument is *required*.'
+                'parameter group or a ".sens" file.  If not provided, the default parameters are '
+                'used, adhering to configuration-specific information pulled from the spec1d '
+                'files headers.'
             )
         )
         parser.add_argument(
@@ -75,7 +77,7 @@ class SensFunc(scriptbase.ScriptBase):
         from pypeit import log
         from pypeit import PypeItError
         from pypeit import inputfiles
-        from pypeit import sensfunc
+        from pypeit import sensfunc_refactor
         from pypeit.scripts import loader
 
         # Initialize the log
@@ -125,16 +127,20 @@ class SensFunc(scriptbase.ScriptBase):
             _names = [f.name for f in _spec1dfiles]
             # if spec1d_ in the filename, remove it
             _names = [n.split('spec1d_')[-1] if n.startswith('spec1d') else n for n in _names]
-            spec1dname = _names[0] if len(_names) == 1 else f"{_names[0].split('.fits')[0]}-{_names[-1]}"
+            spec1dname = (
+                _names[0] if len(_names) == 1 else f"{_names[0].split('.fits')[0]}-{_names[-1]}"
+            )
             outfile = 'sens_' + spec1dname
+
+        # Instantiate the relevant class for the requested algorithm
+        sensobj = sensfunc_refactor.SensFunc.get_instance(
+            args.spec1dfiles, par['sensfunc'], par_fluxcalib=par['fluxcalib'], debug=args.debug,
+            chk_version=args.chk_version
+        )
 
         embed()
         exit()
 
-        # Instantiate the relevant class for the requested algorithm
-        sensobj = sensfunc.SensFunc.get_instance(args.spec1dfiles, outfile, par['sensfunc'],
-                                                 par_fluxcalib=par['fluxcalib'], debug=args.debug,
-                                                 chk_version=par['rdx']['chk_version'])
         # Generate the sensfunc
         sensobj.run()
         # Write it out to a file, including the new primary FITS header
