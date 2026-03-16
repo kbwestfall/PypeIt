@@ -492,6 +492,102 @@ def calculate_zeropoint(
     return zp_spec
 
 
+def standard_zeropoint_qa(zp_spec, fit_gpm, fit_gpm_rej, zp_bspl, ofile=None):
+    """
+    Quality assessment plot for the zeropoint modeling.
+
+    Parameters
+    ----------
+    zp_spec : :class:`~pypeit.core.spectrum.Spectrum`
+        Measured spectrum of zeropoints.
+    fit_gpm : `numpy.ndarray`_
+        Boolean array (good-pixel mask) selecting pixels that were initially
+        included in the bspline fit.  Shape matches ``zp_spec``.
+    fit_gpm_rej : `numpy.ndarray`_
+        Same as ``fit_gpm``, except that measurements rejected by the iterative
+        fitting procedures have been flagged as bad.  Shape matches ``zp_spec``.
+    zp_bspl : :class:`~pypeit.bspline.bspline.bspline`
+        Best-fitting bspline model.
+    ofile : :obj:`str`, `Path`_, optional
+        If provided, the plot is written to a file.  If None, the plot is shown
+        in a matplotlib window.
+    """
+
+    zp_model, zp_model_gpm = zp_bspl.value(zp_spec.wave)
+    zp_model = np.ma.MaskedArray(zp_model, mask=np.logical_not(zp_model_gpm))
+    zp_model_bkpt = zp_bspl.value(zp_bspl.breakpoints)[0]
+    fit_bpm = np.logical_not(fit_gpm)
+    # The data rejected during the fit
+    fit_rejected = fit_gpm & np.logical_not(fit_gpm_rej)
+
+    wflux = np.amax(zp_spec.flux) - np.amin(zp_spec.flux)
+    cflux = (np.amax(zp_spec.flux) + np.amin(zp_spec.flux))/2
+    flux_lim = [cflux - 1.1 * wflux / 2, cflux + 1.1 * wflux / 2]
+    wave_lim = [np.amin(zp_spec.wave), np.amax(zp_spec.wave)]
+
+    dflux = zp_spec.flux - zp_model
+    mean_dflux = np.mean(dflux[fit_gpm])
+    sdev_dflux = np.std(dflux[fit_gpm])
+    dflux_lim = [mean_dflux - 5 * sdev_dflux, mean_dflux + 5 * sdev_dflux]
+
+    # Set figure
+    w,h = plt.figaspect(1)
+    fig = plt.figure(figsize=(3*w,1.5*h))
+
+    ax = fig.add_axes([0.08, 0.3, 0.90, 0.68])
+    ax.minorticks_on()
+    ax.tick_params(which='major', length=8, direction='in', top=True, right=True)
+    ax.tick_params(which='minor', length=4, direction='in', top=True, right=True)
+    ax.grid(True, which='major', color='0.9', zorder=0, linestyle='-')
+    ax.set_xlim(wave_lim)
+    ax.set_ylim(flux_lim)
+    ax.xaxis.set_major_formatter(ticker.NullFormatter())
+    ax.text(-0.05, 0.5, 'Zeropoint (AB mag)', ha='center', va='center', rotation='vertical',
+            transform=ax.transAxes)
+
+    ax.plot(zp_spec.wave, zp_spec.flux,
+            drawstyle='steps-mid', color='black', label='Zeropoint Data', zorder=2)
+    ax.plot(zp_spec.wave, zp_model,
+            color='cornflowerblue', label='Bspline fit', linewidth=1.0, zorder=3)
+    ax.scatter(zp_spec.wave[fit_bpm], zp_spec.flux[fit_bpm],
+                marker='+', color='red', s=5, label='masked on input', zorder=5)
+    ax.scatter(zp_spec.wave[fit_rejected], zp_spec.flux[fit_rejected],
+                marker='x', color='pink', s=5, label='rejected by fit', zorder=4)
+    ax.scatter(zp_bspl.breakpoints, zp_model_bkpt,
+                marker= '.', color='cyan', s=8, label='breakpoints', zorder=10)
+    ax.plot(zp_spec.wave, 1.0 / np.sqrt(zp_spec.ivar), color='orange', label='1-sigma error')
+
+    plt.legend()
+
+    ax = fig.add_axes([0.08, 0.1, 0.90, 0.2])
+    ax.minorticks_on()
+    ax.tick_params(which='major', length=8, direction='in', top=True, right=True)
+    ax.tick_params(which='minor', length=4, direction='in', top=True, right=True)
+    ax.grid(True, which='major', color='0.9', zorder=0, linestyle='-')
+    ax.set_xlim(wave_lim)
+    ax.set_ylim(dflux_lim)
+    ax.text(-0.05, 0.5, 'Residuals (AB mag)', ha='center', va='center', rotation='vertical',
+            transform=ax.transAxes)
+    ax.text(0.5, -0.25, 'Wavelength (Angstroms)', ha='center', va='center',
+            transform=ax.transAxes)
+
+    ax.plot(zp_spec.wave, dflux, drawstyle='steps-mid', color='black', zorder=2)
+    ax.scatter(zp_spec.wave[fit_bpm], dflux[fit_bpm],
+                marker='+', color='red', s=5, zorder=5)
+    ax.scatter(zp_spec.wave[fit_rejected], dflux[fit_rejected],
+                marker='x', color='pink', s=5, zorder=4)
+    ax.scatter(zp_bspl.breakpoints, np.zeros(zp_bspl.breakpoints.size),
+                marker= '.', color='cyan', s=8, zorder=10)
+    ax.plot(zp_spec.wave, 1.0 / np.sqrt(zp_spec.ivar), color='orange')
+
+    if ofile is None:
+        plt.show()
+    else:
+        fig.canvas.print_figure(ofile, bbox_inches='tight')
+    fig.clear()
+    plt.close(fig)
+
+
 def load_filter_file(filter):
     """
     Load a system response curve for a given filter.
