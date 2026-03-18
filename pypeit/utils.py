@@ -28,7 +28,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
-import scipy.ndimage
+from scipy import interpolate
+from scipy import ndimage
 from scipy import signal
 
 from pypeit import log
@@ -738,7 +739,7 @@ def boxcar_smooth_rows(img, nave, wgt=None, mode='nearest', replace='original'):
     """
     Boxcar smooth an image along their first axis (rows).
 
-    Constructs a boxcar kernel and uses `scipy.ndimage.convolve` to
+    Constructs a boxcar kernel and uses :func:`scipy.ndimage.convolve` to
     smooth the image.  Smoothing does not account for any masking.
 
     .. note::
@@ -754,7 +755,7 @@ def boxcar_smooth_rows(img, nave, wgt=None, mode='nearest', replace='original'):
             Image providing weights for each pixel in `img`.  Uniform
             weights are used if none are provided.
         mode (:obj:`str`, optional):
-            See `scipy.ndimage.convolve`_.
+            See :func:`scipy.ndimage.convolve`.
 
     Returns:
         `numpy.ndarray`_: The smoothed image
@@ -774,11 +775,11 @@ def boxcar_smooth_rows(img, nave, wgt=None, mode='nearest', replace='original'):
 
     if wgt is None:
         # No weights so just smooth
-        return scipy.ndimage.convolve(img, kernel, mode='nearest')
+        return ndimage.convolve(img, kernel, mode='nearest')
 
     # Weighted smoothing
-    cimg = scipy.ndimage.convolve(img * wgt, kernel, mode='nearest')
-    wimg = scipy.ndimage.convolve(wgt, kernel, mode='nearest')
+    cimg = ndimage.convolve(img * wgt, kernel, mode='nearest')
+    wimg = ndimage.convolve(wgt, kernel, mode='nearest')
     smoothed_img = np.ma.divide(cimg, wimg)
     if replace == 'original':
         smoothed_img[smoothed_img.mask] = img[smoothed_img.mask]
@@ -1149,41 +1150,50 @@ def smooth(x, window_len, window='flat'):
 
 def fast_running_median(seq, window_size):
     """
-
     Compute the median of sequence of numbers with a running window. The
     boundary conditions are identical to the scipy 'reflect' boundary
     codition:
 
-    'reflect' (`d c b a | a b c d | d c b a`)
+        - ``'reflect'``:  For a vector with contencts ``a b c d``, the running
+          median is performed over a sequence that looks like ``d c b a   a b c
+          d d c b a``.
 
     The input is extended by reflecting about the edge of the last pixel.
 
     This code has been confirmed to produce identical results to
-    scipy.ndimage.median_filter with the reflect boundary
-    condition, but is ~ 100 times faster.
+    :func:`scipy.ndimage.median_filter` with the reflect boundary condition, but
+    is ~ 100 times faster.
 
     Code originally contributed by Peter Otten, made to be consistent with
-    scipy.ndimage.median_filter by Joe Hennawi.
+    :func:`scipy.ndimage.median_filter` by Joe Hennawi.
 
-    Now makes use of the Bottleneck library https://pypi.org/project/Bottleneck/.
+    Now makes use of the Bottleneck library: https://pypi.org/project/Bottleneck/.
 
-    Args:
-        seq (list, `numpy.ndarray`_):
-            1D array of values
-        window_size (int):
-            size of running window.
+    Parameters
+    ----------
+    seq : array-like
+        1D array of values
+    window_size : int
+        size of running window
 
-    Returns:
-        `numpy.ndarray`_: median filtered values
+    Returns
+    -------
+    :class:`numpy.ndarray`
+        median filtered values
     """
-    # Enforce that the window_size needs to be smaller than the sequence, otherwise we get arrays of the wrong size
-    # upon return (very bad). Added by JFH. Should we print out an error here?
-
+    # Enforce that the window_size needs to be smaller than the sequence,
+    # otherwise we get arrays of the wrong size upon return (very bad). Added by
+    # JFH.
     if (window_size > (len(seq) - 1)):
-        log.warning('window_size > len(seq)-1. Truncating window_size to len(seq)-1, but something is probably wrong....')
+        log.warning(
+            'window_size > len(seq)-1. Truncating window_size to len(seq)-1, but something is '
+            'probably wrong....'
+        )
     if (window_size < 0):
         log.warning(
-            'window_size is negative. This does not make sense something is probably wrong. Setting window size to 1')
+            'window_size is negative. This does not make sense something is probably wrong. '
+            'Setting window size to 1'
+        )
 
     window_size = int(np.fmax(np.fmin(int(window_size), len(seq) - 1), 1))
     # pad the array for the reflection
@@ -1191,9 +1201,8 @@ def fast_running_median(seq, window_size):
 
     result = move_median.move_median(seq_pad, window_size)
 
-    # This takes care of the offset produced by the original code deducec by trial and error comparison with
-    # scipy.ndimage.medfilt
-
+    # This takes care of the offset produced by the original code deduced by
+    # trial and error comparison with scipy.ndimage.medfilt
     result = np.roll(result, -window_size // 2 + 1)
     return result[window_size:-window_size]
 
@@ -1481,6 +1490,38 @@ def linear_interpolate(x1, y1, x2, y2, x):
     """
     return y1 if np.isclose(x1,x2) else y1 + (x-x1)*(y2-y1)/(x2-x1)
 
+# TODO: Consolidate with `replace_bad`?
+def interpolate_masked_vector(y):
+    """
+    Interpolate over the masked pixels in an input vector using linear
+    interpolation.
+
+    If there are fewer than 2 unmasked values, the function returns a vector of
+    0s.
+
+    Parameters
+    ----------
+    y : :class:`numpy.ma.MaskedArray`
+        Vector to interpolate.
+
+    Returns
+    -------
+    :class:`numpy.ndarray`
+        Original vector with masked pixels replaced by linear interpolation.
+    """
+    if y.ndim != 1:
+        raise ValueError('Array must be 1D!')
+    x = np.arange(y.size)
+    bpm = np.ma.getmaskarray(y)
+    gpm = np.logical_not(bpm)
+    if np.sum(gpm) < 2:
+        return np.zeros(y.size, dtype=y.dtype.name)
+    _y = y.data.copy()
+    _y[bpm] = interpolate.interp1d(
+        x[gpm], y[gpm], bounds_error=False, fill_value='extrapolate'
+    )(x[bpm])
+    return _y
+
 
 def replace_bad(frame, bpm):
     """ Find all bad pixels, and replace the bad pixels with the nearest good pixel
@@ -1503,7 +1544,7 @@ def replace_bad(frame, bpm):
         raise PypeItError("Input frame and BPM have different shapes")
     # Replace bad pixels with the nearest (good) neighbour
     log.info("Replacing bad pixels")
-    ind = scipy.ndimage.distance_transform_edt(bpm, return_distances=False, return_indices=True)
+    ind = ndimage.distance_transform_edt(bpm, return_distances=False, return_indices=True)
     return frame[tuple(ind)]
 
 

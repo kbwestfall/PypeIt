@@ -3,18 +3,15 @@ Implements the objects used to construct sensitivity functions.
 
 .. include:: ../include/links.rst
 """
-import inspect
-
-from IPython import embed
 from pathlib import Path
-
-import numpy as np
-import scipy.interpolate
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 
 from astropy.io import fits
 from astropy import table
+from IPython import embed
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+from scipy import interpolate
 
 from pypeit import datamodel
 from pypeit import io
@@ -87,7 +84,7 @@ class SensFunc(datamodel.DataContainer):
     chk_version (:obj:`bool`, optional):
         Check the version of the data model.
     """
-    version = '1.0.2'
+    version = '1.1.0'
     """Datamodel version."""
 
     # TODO: Add this if we want to set the output float type for the np.ndarray
@@ -106,13 +103,24 @@ class SensFunc(datamodel.DataContainer):
         'std_dec': dict(otype=float, descr='DEC of the standard source'),
         'airmass': dict(otype=float, descr='Airmass of the observation'),
         'exptime': dict(otype=float, descr='Exposure time'),
-        'telluric': dict(otype=telluric.Telluric,
-                         descr='Telluric model; see :class:`~pypeit.core.telluric.Telluric`'),
+        'telluric': dict(
+            otype=telluric.Telluric,
+            descr='Telluric model; see :class:`~pypeit.core.telluric.Telluric`'
+        ),
         'sens': dict(otype=table.Table, descr='Table with the sensitivity function'),
         'wave': dict(otype=np.ndarray, atype=float, descr='Wavelength vectors'),
+#        'model_flat': dict(
+#            otype=np.ndarray, atype=float,
+#            descr=(
+#                'A smooth model of the flat-field spectrum extracted at the location of the '
+#                'standard-star observation'
+#            )
+#        ),
         'zeropoint': dict(otype=np.ndarray, atype=float, descr='Sensitivity function zeropoints'),
-        'throughput': dict(otype=np.ndarray, atype=float,
-                           descr='Spectrograph throughput measurements'),
+        'gpm': dict(otype=np.ndarray, atype=(bool, np.bool), descr='Good-pixel mask for the zeropoint data'),
+        'throughput': dict(
+            otype=np.ndarray, atype=float, descr='Spectrograph throughput measurements'
+        ),
         # TODO: Subclasses overwrite this with a class attribute.  Not sure what
         # to do here.  Maybe just change the _bundle and _parse methods.
         'algorithm': dict(otype=str, descr='Algorithm used for the sensitivity calculation.')
@@ -127,12 +135,14 @@ class SensFunc(datamodel.DataContainer):
         'debug',
         'obs_spec',
         'obs_spec_twk',
+        'model_flat',
+        'relative_throughput',
+        'zp_spec',
         'nspec_in',
         'norderdet',
         'wave_splice',
         'zeropoint_splice',
         'throughput_splice',
-        'steps',
         'splice_multi_det',
         'std_spec',
         'atmext',
@@ -164,30 +174,60 @@ class SensFunc(datamodel.DataContainer):
             function table.
         """
         return table.Table(data=[
-            table.Column(name='SENS_WAVE', dtype=float, length=norders, shape=(nspec,),
-                         description='Wavelength vector'),
-            table.Column(name='SENS_COUNTS_PER_ANG', dtype=float, length=norders, shape=(nspec,),
-                         description='Flux in counts per angstrom'),
-            table.Column(name='SENS_LOG10_BLAZE_FUNCTION', dtype=float, length=norders, shape=(nspec,),
-                         description='Log10 of the blaze function for each slit/order'),
-            table.Column(name='SENS_ZEROPOINT', dtype=float, length=norders, shape=(nspec,),
-                         description='Measured sensitivity zero-point data'),
-            table.Column(name='SENS_ZEROPOINT_GPM', dtype=bool, length=norders, shape=(nspec,),
-                         description='Good-pixel mask for the measured zero points'),
-            table.Column(name='SENS_ZEROPOINT_FIT', dtype=float, length=norders, shape=(nspec,),
-                         description='Best-fit smooth model to the zero points'),
-            table.Column(name='SENS_ZEROPOINT_FIT_GPM', dtype=bool, length=norders, shape=(nspec,),
-                         description='Good-pixel mask for the model zero points'),
+            table.Column(
+                name='WAVE', dtype=float, length=norders, shape=(nspec,),
+                description='Wavelength vector'
+            ),
+            table.Column(
+                name='ZEROPOINT', dtype=float, length=norders, shape=(nspec,),
+                description='Measured sensitivity zero-point data'
+            ),
+            table.Column(
+                name='ZEROPOINT_GPM', dtype=bool, length=norders, shape=(nspec,),
+                description='Good-pixel mask for the measured zero points'
+            ),
+            table.Column(
+                name='ZEROPOINT_FIT', dtype=float, length=norders, shape=(nspec,),
+                description='Best-fit smooth model to the zero points'
+            ),
+            table.Column(
+                name='ZEROPOINT_FIT_GPM', dtype=bool, length=norders, shape=(nspec,),
+                description='Good-pixel mask for the model zero points'
+            ),
+            table.Column(
+                name='MODEL_FLAT', dtype=float, length=norders, shape=(nspec,),
+                description=(
+                    'Model of a spectrum extracted from the flat-field image at the location of '
+                    'the standar-star observation.'
+                )
+            ),
+            table.Column(
+                name='REL_THROUGHPUT', dtype=float, length=norders, shape=(nspec,),
+                description='Ratio of the observed flat-field spectrum to the best-fitting model'
+            ),
+            table.Column(
+                name='THROUGHPUT', dtype=float, length=norders, shape=(nspec,),
+                description=(
+                    'Measurement of the telescope+spectrograph system throughput for the '
+                    'standard-star observation, measured using the zeropoint model '
+                    '(ZEROPOINT_FIT), not the direct measurements.'
+                ),
+            ),
+            table.Column(
+                name='WAVE_MIN', dtype=float, length=norders,
+                description='Minimum wavelength with direct zeropoint measurements'
+            ),
+            table.Column(
+                name='WAVE_MAX', dtype=float, length=norders,
+                description='Maximum wavelength with direct zeropoint measurements'
+            ),
+
             table.Column(name='SENS_COEFF', dtype=float, length=norders, shape=(ncoeff,),
                          description='Coefficients of smooth model fit to zero points'),
             table.Column(name='ECH_ORDERS', dtype=int, length=norders,
                          description='Echelle order for this specrum (echelle data only)'),
             table.Column(name='POLYORDER_VEC', dtype=int, length=norders,
                          description='Polynomial order for each slit/echelle (if applicable)'),
-            table.Column(name='WAVE_MIN', dtype=float, length=norders,
-                         description='Minimum wavelength included in the fit'),
-            table.Column(name='WAVE_MAX', dtype=float, length=norders,
-                         description='Maximum wavelength included in the fit'),
             table.Column(name='SENS_FLUXED_STD_WAVE', dtype=float, length=norders, shape=(nspec_in,),
                          description='The wavelength array for the fluxed standard star spectrum'),
             table.Column(name='SENS_FLUXED_STD_FLAM', dtype=float, length=norders, shape=(nspec_in,),
@@ -241,7 +281,6 @@ class SensFunc(datamodel.DataContainer):
 
         # Other
         self.debug = debug
-        self.steps = []
 
         # Are we splicing together multiple detectors?
         # TODO: Which one do we want?  This or what is returned by load_standard
@@ -249,10 +288,14 @@ class SensFunc(datamodel.DataContainer):
 
         # TODO: Note that by default this gets the unfluxed spectra and tries to
         # include the flat.  The latter will fault for any onespec spectra.
+
+        # NOTE: load_standard *always* returns a list of spectra, even if the
+        # list only has one spectrum.
         self.obs_spec, self.splice_multi_det = loader.load_standard(
             spec1dfiles, extract=self.par['extr'], include_flat=True,
             multi_spec_det=self.par['multi_spec_det'], chk_version=chk_version
         )
+        self.norderdet = len(self.obs_spec)
 
         # TODO: Add wave_range as a parameter?
         self.obs_spec_twk = self.spectrograph.tweak_standard(
@@ -444,6 +487,39 @@ class SensFunc(datamodel.DataContainer):
         # Return the constructed object
         return super().from_dict(d=d)
 
+    def set_model_flat(self):
+        """
+        Construct a model of the flat-field spectrum extracted at the location
+        of the standard-star observations.
+        """
+        if not self.par['use_flat']:
+            self.model_flat = None
+            return
+
+        self.model_flat = []
+        for s in self.obs_spec_twk:
+            try:
+                flat_spec = s.assoc_spectrum('flat', copy_gpm=False)
+            except (PypeItError, KeyError) as e:
+                log.warning(
+                    'Unable to model flat-field spectrum for standard star observation.  '
+                    f'Continuing with calculation but flat-field spectrum will *not* be used.  '
+                    f'Original exception was: {e}'
+                )
+                break
+            flat_fit_gpm, flat_fit_gpm_rej, flat_bspl = spectrum.fit_spectrum_bspline(
+                flat_spec, resolution=self.par['UVIS']['resolution'],
+                nresln=self.par['UVIS']['nresln'], lower=1., upper=1.
+            )
+            if self.debug:
+                spectrum.fit_spectrum_bspline_qa(
+                    flat_spec, flat_fit_gpm, flat_fit_gpm_rej, flat_bspl, ylabel='Flat Flux'
+                )
+            self.model_flat += [flat_bspl.value(flat_spec.wave)[0]]
+
+        if len(self.model_flat) != len(self.obs_spec_twk):
+            self.model_flat = None
+
     def compute_zeropoint(self):
         """
         Dummy method overloaded by subclasses
@@ -457,28 +533,88 @@ class SensFunc(datamodel.DataContainer):
         """
         Execute the sensitivity function calculations.
         """
+        # Get a model of the flat-field spectrum, as used to account for
+        # relative throughput variations.
+        self.set_model_flat()
+
         # Compute the sensitivity function
         self.compute_zeropoint()
 
-        embed()
-        exit()
-
-        # Extrapolate the zeropoint based on par['extrap_blu'], par['extrap_red']
-        self.wave, self.zeropoint = self.extrapolate(samp_fact=self.par['samp_fact'])
-        if self.splice_multi_det:
-            self.wave_splice, self.zeropoint_splice = self.splice()
+        # Regrid the sensitivity function to:
+        #   - Extrapolate the wavelength range so that it can be applied to
+        #     observations with modestly different spectral range
+        #   - Splice together spectra that span multiple detectors or orders
+        self.regrid()
 
         # Flux the standard star with this sensitivity function and add it to the output table
         self.flux_std()
 
+        embed(header='after flux')
+        exit()
+
         # Compute the throughput
         self.throughput, self.throughput_splice = self.compute_throughput()
+
+
+    def regrid(self):
+        """
+        Regrid the sensitivity function, splicing together multi-detector
+        observations and extrapolating to account for modest differences in
+        spectral range for observed spectra.
+        """
+
+        # Initialized using the model fit to the zeropoint data
+        self.wave = self.sens['WAVE'].data
+        self.zeropoint = self.sens['ZEROPOINT_FIT'].data
+        self.gpm = self.sens['ZEROPOINT_FIT_GPM'].data
+        self.model_flat = self.sens['MODEL_FLAT'].data if self.par['use_flat'] else None
+
+        # Splice together the spectra from multiple detectors
+        if self.splice_multi_det:
+            self.splice()
+
+        # Extrapolate the wavelength range
+        self.extrapolate()
 
     def flux_std(self):
         """
         Flux the standard star and add it to the sensitivity function table
 
         """
+        # Construct the relative throughput functions
+        relative_throughput = None
+        if self.par['use_flat']:
+            relative_throughput = []
+            for i in range(ns):
+                try:
+                    flat_spec = self.obs_spec[i].assoc['flat']
+                except KeyError as e:
+                    break
+                relative_throughput += [flat_spec / interpolate.interp1d(
+                    self.wave[i], self.model_flat[i], bounds_error=False,
+                    fill_value='extrapolate'
+                )(self.obs_spec.wave[i])]
+            if len(relative_throughput) != len(self.obs_spec):
+                relative_throughput = None
+
+        ns = len(self.obs_spec)
+        fluxed_spec = [None] * ns
+        for i in range(len(self.obs_spec)):
+            zp_spec = spectrum.Spectrum(
+                self.obs_spec.wave, interpolate.interp1d(
+                    self.wave[i], self.zeropoint[i], bounds_err=False, fill_value='extrapolate'
+                )(self.obs_spec.wave)
+            )
+            fluxed_spec[i] = flux_calib_refactor.flux_calibrate(
+                self.obs_spec[i], zp_spec, exptime=self.exptime, atm_extinction=self.atmext,
+                airmass=self.airmass, relative_throughput=relative_throughput[i]
+            )
+
+#def flux_calibrate(
+    #obs_spec, zp_spec, exptime=1., atm_extinction=None, airmass=1., telluric_model=None,
+    #relative_throughput=None,
+#):
+
         # Now flux the standard star
         self.sobjs_std.apply_flux_calib(self.par_fluxcalib, self.spectrograph, self, tell=self.algorithm=='IR')
         # TODO assign this to the data model
@@ -496,8 +632,7 @@ class SensFunc(datamodel.DataContainer):
         self.sens['SENS_FLUXED_STD_MASK'] = flam_mask.T
 
         #save the model that was used
-        model_interp_func = scipy.interpolate.interp1d(self.std_spec.wave, self.std_spec.flux,
-                                                       bounds_error=False, fill_value='extrapolate')
+        model_interp_func = interpolate.interp1d(self.std_spec.wave, self.std_spec.flux, bounds_error=False, fill_value='extrapolate')
         model_flux_sav = np.zeros_like(self.sens['SENS_FLUXED_STD_FLAM'])
         for iorddet in range(self.sens['SENS_FLUXED_STD_WAVE'].shape[0]):
             wave_gpm = self.sens['SENS_FLUXED_STD_WAVE'][iorddet] > 1.0
@@ -505,28 +640,35 @@ class SensFunc(datamodel.DataContainer):
 
         self.sens['SENS_STD_MODEL_FLAM'] = model_flux_sav
 
-    def eval_zeropoint(self, wave, iorddet):
+    def eval_zeropoint(self, wave, indx):
         """
-        Evaluate at a given wavelength the sensitivity function zeropoint for a given order/detector.
-        This is a dummy method, overloaded by subclasses.
+        Evaluate the sensitivity function zero-points at the input wavelength.
+
+        This base-class method should always be overwridden by subclasses.
 
         Parameters
         ----------
-        wave : `numpy.ndarray`_
-            Wavelength array at which to evaluate the zeropoint
-        iorddet : :obj:`int`
-            The order/detector for which to evaluate the zeropoint
+        wave : :class:`numpy.ndarray`
+            Wavelengths at which to evaluate the zeropoint
+        indx : :obj:`int`, optional
+            For calculations based on multiple spectra (cross-dispersed echelles
+            or spectra across multiple, independently processed detectors), this
+            selects the zeropoint calculation to use.
 
         Returns
         -------
-        zeropoint : `numpy.ndarray`_
-            The zeropoint evaluated given wavelength array and order/detector
+        :class:`numpy.ndarray`
+            Zeropoint data.  Shape is identical to ``wave``.
         """
-        return None
+        raise PypeItError(
+            f'CODING ERROR: This subclass of SensFunc ({self.__class__.__name__}) does not define '
+            'the eval_zeropoint method!'
+        )
 
     def extrapolate(self, samp_fact=1.5):
         """
-        Extrapolates the sensitivity function to cover an extra wavelength range
+        Extrapolates the sensitivity function(s) to cover an extra wavelength range.
+
         set by the ``extrapl_blu`` and ``extrap_red`` parameters. This is
         important for making sure that the sensitivity function can be applied
         to data with slightly different wavelength coverage etc.
@@ -546,88 +688,63 @@ class SensFunc(datamodel.DataContainer):
         """
         # Create a new set of oversampled and padded wavelength grids for the
         # extrapolation
-        wave_extrap_min = self.sens['WAVE_MIN'].data * (1.0 - self.par['extrap_blu'])
-        wave_extrap_max = self.sens['WAVE_MAX'].data * (1.0 + self.par['extrap_red'])
-        nspec_extrap = 0
+        wave_start = np.min(self.wave, axis=1) * (1.0 - self.par['extrap_blu'])
+        wave_end = np.max(self.wave, axis=1) * (1.0 + self.par['extrap_red'])
 
-        # Find the maximum size of the wavelength grids, since we want
-        # everything to have the same
-        for idet in range(self.norderdet):
-            wave = self.wave_cnts if self.wave_cnts.ndim == 1 else self.wave_cnts[:, idet]
-            dwave_data, dloglam_data, resln_guess, pix_per_sigma = wvutils.get_sampling(wave)
-            nspec_now = np.ceil(samp_fact * (wave_extrap_max[idet] - wave_extrap_min[idet])
-                                / dwave_data).astype(int)
-            nspec_extrap = np.max([nspec_now, nspec_extrap])
-
-        # Create the wavelength grid
-        wave_extrap = np.outer(np.arange(nspec_extrap),
-                               (wave_extrap_max - wave_extrap_min) / (nspec_extrap - 1)) \
-                      + np.outer(np.ones(nspec_extrap), wave_extrap_min)
-        zeropoint_extrap = np.zeros_like(wave_extrap)
-
-        # Evaluate extrapolated zeropoint for all orders detectors
-        for iorddet in range(self.norderdet):
-            zeropoint_extrap[:, iorddet] = self.eval_zeropoint(wave_extrap[:,iorddet], iorddet)
-
-        self.steps.append(inspect.stack()[0][3])
-        return wave_extrap, zeropoint_extrap
+        dwave = np.array([np.median(np.diff(w)) for w in self.wave])
+        nspec = np.max(np.ceil(samp_fact * (wave_end - wave_start) / dwave).astype(int))
+        self.wave = np.vstack(tuple(
+            np.linspace(s, e, num=nspec) for s, e in zip(wave_start, wave_end)
+        ))
+        self.zeropoint = np.vstack(tuple(
+            self.eval_zeropoint(w, i) for i, w in enumerate(self.wave)
+        ))
+        if self.par['use_flat']:
+            self.model_flat = np.vstack(tuple(
+                interpolate.interp1d(
+                    self.wave[i], self.model_flat[i], bound_error=False, fill_value='extrapolate'
+                ) for i in range(len(self.wave))
+            ))
+        self.gpm = np.ones(self.wave.shape, dtype=bool)
 
     def splice(self):
         """
         Routine to splice together sensitivity functions into one global
         sensitivity function for spectrographs with multiple detectors extending
         across the wavelength direction.
-
-        Returns
-        -------
-        wave_splice : `numpy.ndarray`_, shape is (nspec_splice, 1)
-            wavelength array
-        zeropoint_splice: `numpy.ndarray`_, shape is (nspec_splice, 1)
-            zero-point array
         """
 
         log.info(f"Merging sensfunc for {self.norderdet} detectors {self.par['multi_spec_det']}")
-        wave_splice_min = self.wave[self.wave > 1.0].min()
-        wave_splice_max = self.wave[self.wave > 1.0].max()
-        wave_splice_1d, _, _ = wvutils.get_wave_grid(waves=self.wave, wave_method='linear',
-                                                     wave_grid_min=wave_splice_min,
-                                                     wave_grid_max=wave_splice_max,
-                                                     spec_samp_fact=1.0)
-        zeropoint_splice_1d = np.zeros_like(wave_splice_1d)
-        for idet in range(self.norderdet):
-            wave_min = self.sens['WAVE_MIN'][idet]
-            wave_max = self.sens['WAVE_MAX'][idet]
-            if idet == 0:
-                # If this is the bluest detector, extrapolate to wave_extrap_min
-                wave_mask_min = wave_splice_min
-                wave_mask_max = wave_max
-            elif idet == (self.norderdet - 1):
-                # If this is the reddest detector, extrapolate to wave_extrap_max
-                wave_mask_min = wave_min
-                wave_mask_max = wave_splice_max
-            else:
-                wave_mask_min = wave_min
-                wave_mask_max = wave_max
-            splice_wave_mask = (wave_splice_1d >= wave_mask_min) & (wave_splice_1d <= wave_mask_max)
-            zeropoint_splice_1d[splice_wave_mask] \
-                    = self.eval_zeropoint(wave_splice_1d[splice_wave_mask], idet)
+        wave, _, _ = wvutils.get_wave_grid(
+            waves=self.wave, wave_method='linear', wave_grid_min=np.amin(self.wave),
+            wave_grid_max=np.amax(self.wave), spec_samp_fact=1.0
+        )
 
-        # Interpolate over gaps
-        zeros = zeropoint_splice_1d == 0.
-        if np.any(zeros):
-            log.info("Interpolating over gaps (and extrapolating with fill_value=1, if need be)")
-            interp_func = scipy.interpolate.interp1d(wave_splice_1d[np.logical_not(zeros)],
-                                                     zeropoint_splice_1d[np.logical_not(zeros)],
-                                                     kind='nearest', fill_value=0.,
-                                                     bounds_error=False) #
-            #kind='nearest', fill_value='extrapoloate', bounds_error=False)
-            #  extrapolate fails for JXP, even on 1.4.1
-            zero_values = interp_func(wave_splice_1d[zeros])
-            zeropoint_splice_1d[zeros] = zero_values
+        # Construct a masked array with all the values initially masked
+        self.zeropoint = np.ma.masked_all(wave.size, dtype=float)
+        _model_flat = np.ma.masked_all(wave.size, dtype=float) if self.par['use_flat'] else None
+        for i in range(self.norderdet):
+            indx = (wave >= self.sens['WAVE_MIN'][i]) & (wave <= self.sens['WAVE_MAX'][i])
+            # This unmasks the relevant data
+            self.zeropoint[indx] = self.eval_zeropoint(wave[indx], i)
+            if self.par['use_flat']:
+                _model_flat[indx] = interpolate.interp1d(
+                    self.wave[i], self.model_flat[i], bounds_error=False,
+                    fill_value='extrapolate'
+                )(wave[indx])
 
-        nspec_splice = wave_splice_1d.size
-        self.steps.append(inspect.stack()[0][3])
-        return wave_splice_1d.reshape(nspec_splice,1), zeropoint_splice_1d.reshape(nspec_splice,1)
+        # Interpolate over remaining masked pixels
+        if np.any(np.ma.getmaskarray(self.zeropoint)):
+            log.info('Interpolating/Extrapolating over gaps')
+            self.zeropoint = utils.interpolate_masked_vector(self.zeropoint)
+
+        if self.par['use_flat'] and np.any(np.ma.getmaskarray(_model_flat)):
+            self.model_flat = utils.interpolate_masked_vector(_model_flat)
+
+        self.wave = np.expand_dims(wave, 0)
+        self.zeropoint = np.expand_dims(self.zeropoint, 0)
+        self.model_flat = np.expand_dims(self.model_flat, 0) if self.par['use_flat'] else None
+        self.gpm = np.ones(self.wave.shape, dtype=bool)
 
     def compute_throughput(self):
         """
@@ -1084,7 +1201,7 @@ class IRSensFunc(SensFunc):
         e = self.telluric.model['IND_UPPER']+1
         # TODO: Not sure what else to do here
         if self.log10_blaze_function is not None:
-            log10_blaze_function = scipy.interpolate.interp1d(
+            log10_blaze_function = interpolate.interp1d(
                 self.sens['SENS_WAVE'][iorddet,s[iorddet]:e[iorddet]],
                 self.sens['SENS_LOG10_BLAZE_FUNCTION'][iorddet,s[iorddet]:e[iorddet]],
                 kind='linear', bounds_error=False, fill_value='extrapolate')(wave)
@@ -1116,100 +1233,85 @@ class UVISSensFunc(SensFunc):
     _algorithm = 'UVIS'
     """Algorithm used for the sensitivity calculation."""
 
-#     def __init__(self, spec1dfiles, par, par_fluxcalib=None, debug=False, chk_version=True):
-#         super().__init__(spec1dfiles, par, par_fluxcalib=par_fluxcalib, debug=debug,
-#                          chk_version=chk_version)
-# 
-#         # Add some cards to the meta spec. These should maybe just be added
-#         # already in unpack object
-#         self.meta_spec['LATITUDE'] = self.spectrograph.telescope['latitude']
-#         self.meta_spec['LONGITUDE'] = self.spectrograph.telescope['longitude']
-
     def compute_zeropoint(self):
         """
         Calls routine to compute the sensitivity function.
         """
-#        if self.wave_cnts.ndim == 2 and self.wave_cnts.shape[1] != 1:
-#            raise PypeItError('Not ready for multiple wavelength vectors.')
-#
-#        # Construct the Spectrum object
-#        obs_spec = spectrum.Spectrum(
-#            self.wave_cnts[:,0], self.counts.squeeze(), ivar=self.counts_ivar.squeeze(),
-#            gpm=self.counts_mask.squeeze()
-#        )
 
         # Get the zeropoints
         # TODO:
-        #   - Missing trans_thresh and polycorrect
-        #   - Make parameters that specifiy the location of the breakpoints (not
+        #   - Need to figure out what to do with trans_thresh and polycorrect
+        #   - Make parameters that specify the location of the breakpoints (not
         #     just resolution based) available to the user?
-        zp_spec, fit_gpm, fit_gpm_rej, zp_bspl = flux_calib_refactor.sensfunc(
-            self.obs_spec, self.std_spec, exptime=self.exptime, atm_extinction=self.atmext,
-            airmass=self.airmass, nresln=self.par['UVIS']['nresln'],
-            resolution=self.par['UVIS']['resolution'], region_mask=self.region_mask
-        )
-
-        embed(header='after sensfunc')
-        exit()
-
-
-        if self.debug:
-            flux_calib_refactor.standard_zeropoint_qa(
-                zp_spec, fit_gpm, fit_gpm_rej, zp_bspl
-            )
-
-        # Copy the relevant metadata
-        self.std_name = self.std_spec.meta['Name']
-        self.std_cal = self.std_spec.meta['File']
-        self.std_ra, self.std_dec \
-            = meta.convert_radec(self.std_spec.meta['RA_2000'], self.std_spec.meta['DEC_2000'])
-        self.airmass = self.meta_spec['AIRMASS']
-        self.exptime = self.meta_spec['EXPTIME']
+        #   - keep the bspline model?
+        #   - revisit construction of the sensfunc table
+        #       - keep the GPM before any rejection iterations?
+        #       - deal with spectra that have different lengths
 
         # Instantiate the main output data table
-        zp_model, zp_model_gpm = zp_bspl.value(zp_spec.wave)
-        nspec = obs_spec.shape[0]
-        norder = 1 if obs_spec.ndim == 1 else obs_spec.shape[1]
-        self.sens = self.empty_sensfunc_table(norder, nspec, self.nspec_in)
+        norder = len(self.obs_spec_twk)
+        nspec = max([s.size for s in self.obs_spec_twk])
+        # TODO: Need to revisit this
+        self.sens = self.empty_sensfunc_table(norder, nspec, nspec)
 
-        # Copy the relevant data
-        # NOTE: SENS_COEFF is empty!
-        self.sens['SENS_WAVE'] = self.wave_cnts.T
-        # TODO:
-        #   - self.counts is counts NOT counts per angstrom
-        #   - keep the bspline model
-        self.sens['SENS_COUNTS_PER_ANG'] = self.counts.T
-        self.sens['SENS_ZEROPOINT'] = np.expand_dims(zp_spec.flux, 0)
-        self.sens['SENS_ZEROPOINT_GPM'] = np.expand_dims(fit_gpm_rej, 0)
-        self.sens['SENS_ZEROPOINT_FIT'] = np.expand_dims(zp_model, 0)
-        self.sens['SENS_ZEROPOINT_FIT_GPM'] = np.expand_dims(zp_model_gpm, 0)
-        if self.meta_spec['ECH_ORDERS'] is not None:
-            self.sens['ECH_ORDERS'] = self.meta_spec['ECH_ORDERS']
-        self.sens['POLYORDER_VEC'] = np.full(norder, self.par['polyorder'])
-        self.sens['WAVE_MIN'] = [np.min(zp_spec.wave)]
-        self.sens['WAVE_MAX'] = [np.max(zp_spec.wave)]
+        # Calculate the zeropoints
+        for i, _spec in enumerate(self.obs_spec_twk):
 
-    def eval_zeropoint(self, wave, iorddet):
+            if self.model_flat is None:
+                self.sens['MODEL_FLAT'][i,:] = 1.
+                self.sens['REL_THROUGHPUT'][i,:] = 1.
+            else:
+                # If the model flat exists, the original flat spectrum *must* exist.
+                # TODO: Perform desired smoothing of the flat (_spec.assoc['flat']) here
+                self.sens['MODEL_FLAT'][i] = self.model_flat[i]
+                self.sens['REL_THROUGHPUT'][i] = _spec.assoc['flat'] / self.model_flat[i]
+
+            zp_spec, fit_gpm, fit_gpm_rej, zp_bspl = flux_calib_refactor.standard_zeropoint(
+                _spec, self.std_spec.resample(_spec.wave), exptime=self.exptime,
+                atm_extinction=self.atmext, airmass=self.airmass,
+                relative_throughput=self.sens['REL_THROUGHPUT'][i],
+                nresln=self.par['UVIS']['nresln'], resolution=self.par['UVIS']['resolution'],
+                region_mask=self.region_mask, qa_plot='show'
+            )
+
+            # Copy the relevant data
+            self.sens['WAVE_MIN'][i], self.sens['WAVE_MAX'][i] = zp_spec.wave[[0,-1]]
+            self.sens['WAVE'][i] = zp_spec.wave
+            self.sens['ZEROPOINT'][i] = zp_spec.flux
+            self.sens['ZEROPOINT_GPM'][i] = fit_gpm_rej
+            self.sens['ZEROPOINT_FIT'][i], self.sens['ZEROPOINT_FIT_GPM'] = zp_bspl.value(
+                zp_spec.wave
+            )
+            self.sens['THROUGHPUT'][i] = flux_calib_refactor.zeropoint_to_throughput(
+                self.sens['WAVE'][i], self.sens['ZEROPOINT_FIT'][i],
+                self.spectrograph.telescope.eff_aperture()
+            )
+
+    def eval_zeropoint(self, wave, indx=0):
         """
-        Evaluate the sensitivity function zero-points  at the input wavelength
+        Evaluate the sensitivity function zero-points at the input wavelength.
+
+        This is a simple linear interpolation/extrapolation of the bspline model
+        fit to the zeropoint data.
 
         Parameters
         ----------
-        wave : `numpy.ndarray`_, shape is (nspec)
-            Wavelength array
-        iorddet : :obj:`int`
-            Order or detector (0-indexed)
+        wave : :class:`numpy.ndarray`
+            Wavelengths at which to evaluate the zeropoint
+        indx : :obj:`int`, optional
+            For calculations based on multiple spectra (cross-dispersed echelles
+            or spectra across multiple, independently processed detectors), this
+            selects the zeropoint calculation to use.
 
         Returns
         -------
-        zeropoint : `numpy.ndarray`_, shape is (nspec,)
-            Zeropoint array evaluated at the input wavelength grid and with the gpm applied.
+        :class:`numpy.ndarray`
+            Interpolated zeropoint data.  Shape is identical to ``wave``.
         """
-        # This routine can extrapolate
-        # TODO: Keep the bspline model so that it can be used here.
-        return scipy.interpolate.interp1d(self.sens['SENS_WAVE'][iorddet,:],
-                                          self.sens['SENS_ZEROPOINT_FIT'][iorddet,:],
-                                          bounds_error=False, fill_value='extrapolate')(wave)
+        return interpolate.interp1d(
+            self.sens['WAVE'][indx], self.sens['ZEROPOINT_FIT'][indx], bounds_error=False,
+            fill_value='extrapolate'
+        )(wave)
 
 
 

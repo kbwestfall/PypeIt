@@ -435,6 +435,38 @@ class Spectrum:
             r.outx, r.outy.T, ivar=ivar, gpm=r.outf.T > pixel_fraction_threshold, meta=self.meta,
         )
 
+    def assoc_spectrum(self, key, copy_gpm=False):
+        """
+        Construct a Spectrum object from one of the associated arrays.
+
+        The returned spectrum will not have any errors, metadata, or associated
+        arrays.
+
+        Parameters
+        ----------
+        key : str
+            The keyword of the array to use.
+        copy_gpm : bool, optional
+            Use a copy of the good-pixel mask for the main flux array as the GPM
+            for the returned spectrum.  If False, the returned spectrum will
+            assume all pixels are good.
+
+        Returns
+        -------
+        :class:`~pypeit.core.spectrum.Spectrum`
+            A spectrum where the main flux array is the selected associated
+            array.
+        """
+        if self.assoc is None:
+            raise PypeItError('This Spectrum has no associated data arrays.')
+        if key not in self.assoc.keys():
+            raise KeyError(f'{key} is not a keyword of the associated data dictionary.')
+        # NOTE:
+        #   - The instantiation *always* copies the provided vectors, so no need
+        #     to do that here.
+        return Spectrum(self.wave, self.assoc[key], gpm=self.gpm if copy_gpm else None)
+
+
 def get_spectrum_list_meta(spec, key):
     """
     Provided one or more spectra, determine the relevant value for a metadata
@@ -453,7 +485,7 @@ def get_spectrum_list_meta(spec, key):
 
     Returns
     -------
-    str
+    object
         The value of the metadata for the provided keyword.  If only one
         spectrum is provided, this is the entry in its metadata dictionary,
         or None if the provided keyword doesn't exist.  If a list of spectra
@@ -609,6 +641,8 @@ def fit_spectrum_bspline_breakpoints(
 
     if bkspace is None:
         if resolution is None or nresln is None:
+            # TODO: Allow the code to default to a certain number of pixels for
+            # the breakpoint spacing.
             raise PypeItError(
                 'If not providing breakpoint spacing when fitting spectra, you must provide the '
                 'resolution and the number of resolution elements between breakpoints (nresln).'
@@ -644,7 +678,8 @@ def fit_spectrum_bspline_breakpoints(
     return init_bspline.breakpoints[msk_bkpt(init_bspline.breakpoints) > 0.999]
 
 
-def fit_spectrum_bspline_qa(spec, fit_gpm, fit_gpm_rej, bspl, ofile=None):
+def fit_spectrum_bspline_qa(
+    spec, fit_gpm, fit_gpm_rej, bspl, ofile=None, ylabel='Flux'):
     """
     Quality assessment plot for the spectrum bspline modeling.
 
@@ -694,20 +729,32 @@ def fit_spectrum_bspline_qa(spec, fit_gpm, fit_gpm_rej, bspl, ofile=None):
     ax.set_xlim(wave_lim)
     ax.set_ylim(flux_lim)
     ax.xaxis.set_major_formatter(ticker.NullFormatter())
-    ax.text(-0.05, 0.5, 'Zeropoint (AB mag)', ha='center', va='center', rotation='vertical',
-            transform=ax.transAxes)
+    ax.text(
+        -0.05, 0.5, ylabel, ha='center', va='center', rotation='vertical', transform=ax.transAxes
+    )
 
-    ax.plot(spec.wave, spec.flux,
-            drawstyle='steps-mid', color='black', label='Zeropoint Data', zorder=2)
-    ax.plot(spec.wave, bspl_model,
-            color='cornflowerblue', label='Bspline fit', linewidth=1.0, zorder=3)
-    ax.scatter(spec.wave[fit_bpm], spec.flux[fit_bpm],
-                marker='+', color='red', s=5, label='masked on input', zorder=5)
-    ax.scatter(spec.wave[fit_rejected], spec.flux[fit_rejected],
-                marker='x', color='pink', s=5, label='rejected by fit', zorder=4)
-    ax.scatter(bspl.breakpoints, bspl_model_bkpt,
-                marker= '.', color='cyan', s=8, label='breakpoints', zorder=10)
-    ax.plot(spec.wave, 1.0 / np.sqrt(spec.ivar), color='orange', label='1-sigma error')
+    ax.plot(
+        spec.wave, spec.flux,
+        drawstyle='steps-mid', color='black', label='Zeropoint Data', zorder=2
+    )
+    ax.plot(
+        spec.wave, bspl_model,
+        color='cornflowerblue', label='Bspline fit', linewidth=1.0, zorder=3
+    )
+    ax.scatter(
+        spec.wave[fit_bpm], spec.flux[fit_bpm],
+        marker='+', color='red', s=5, label='masked on input', zorder=5
+    )
+    ax.scatter(
+        spec.wave[fit_rejected], spec.flux[fit_rejected],
+        marker='x', color='pink', s=5, label='rejected by fit', zorder=4
+    )
+    ax.scatter(
+        bspl.breakpoints, bspl_model_bkpt,
+        marker= '.', color='cyan', s=8, label='breakpoints', zorder=10
+    )
+    if spec.ivar is not None:
+        ax.plot(spec.wave, 1.0 / np.sqrt(spec.ivar), color='orange', label='1-sigma error')
 
     pyplot.legend()
 
@@ -718,10 +765,13 @@ def fit_spectrum_bspline_qa(spec, fit_gpm, fit_gpm_rej, bspl, ofile=None):
     ax.grid(True, which='major', color='0.9', zorder=0, linestyle='-')
     ax.set_xlim(wave_lim)
     ax.set_ylim(dflux_lim)
-    ax.text(-0.05, 0.5, 'Residuals (AB mag)', ha='center', va='center', rotation='vertical',
-            transform=ax.transAxes)
-    ax.text(0.5, -0.25, 'Wavelength (Angstroms)', ha='center', va='center',
-            transform=ax.transAxes)
+    ax.text(
+        -0.05, 0.5, 'Residuals',
+        ha='center', va='center', rotation='vertical', transform=ax.transAxes
+    )
+    ax.text(
+        0.5, -0.25, 'Wavelength (Angstroms)', ha='center', va='center', transform=ax.transAxes
+    )
 
     ax.plot(spec.wave, dflux, drawstyle='steps-mid', color='black', zorder=2)
     ax.scatter(spec.wave[fit_bpm], dflux[fit_bpm],
@@ -730,7 +780,8 @@ def fit_spectrum_bspline_qa(spec, fit_gpm, fit_gpm_rej, bspl, ofile=None):
                 marker='x', color='pink', s=5, zorder=4)
     ax.scatter(bspl.breakpoints, np.zeros(bspl.breakpoints.size),
                 marker= '.', color='cyan', s=8, zorder=10)
-    ax.plot(spec.wave, 1.0 / np.sqrt(spec.ivar), color='orange')
+    if spec.ivar is not None:
+        ax.plot(spec.wave, 1.0 / np.sqrt(spec.ivar), color='orange')
 
     if ofile is None:
         pyplot.show()

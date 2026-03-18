@@ -189,7 +189,7 @@ def load_spectra(inp, extract=None, fluxed=False, include_flat=False, chk_versio
             )
         
     if include_flat:
-        # TODO: Issue a warning instead?
+        # TODO: Issue a warning instead.
         raise PypeItError(
             'Spectra read from OneSpec output files do not contain the flat spectrum.  To '
             'continue, you must set include_flat=False.'

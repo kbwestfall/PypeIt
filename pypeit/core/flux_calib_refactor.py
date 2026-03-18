@@ -77,58 +77,6 @@ Value is: THROUGHPUT_UNIT_CONST = 198644.5857148928.
 """
 
 
-def sensfunc(obs_spec, std_spec, **kwargs):
-    """
-    Calculate the sensitivity functions for one or more observed spectra given
-    the spectrum of the flux standard.
-
-    This is primarily a wrapper for 
-    :func:`~pypeit.core.flux_calib_refactor.standard_zeropoint` that handles:
-
-        - resampling the archived standard star spectrum (``std_spec``) to match
-          the observed spectrum
-
-        - iterating through multiple spectra if ``obs_spec`` provides more than
-          one :class:`~pypeit.core.spectrum.Spectrum` object.
-
-    Parameters
-    ----------
-    obs_spec : array-like, :class:`~pypeit.core.spectrum.Spectrum`
-        One or more observed spectra provided in
-        :class:`~pypeit.core.spectrum.Spectrum` objects.
-    std_spec : :class:`~pypeit.core.spectrum.Spectrum`
-        Flux standard spectrum.
-    **kwargs
-        Passed directly to
-        :func:`~pypeit.core.flux_calib_refactor.standard_zeropoint`.
-
-    Returns
-    -------
-
-    """
-    # There is only one observed spectrum, so this is a simple wrapper for
-    # standard_zeropoint
-    if isinstance(obs_spec, spectrum.Spectrum):
-        return standard_zeropoint(obs_spec, std_spec.resample(obs_spec.wave), **kwargs)
-
-    if not all([isinstance(s, spectrum.Spectrum) for s in obs_spec]):
-        raise PypeItError('Multiple spectra must be provided as a list of pypeit Spectrum objects.')
-    
-    # TODO: HAVE NOT YET TESTED RESULTS WITH MULTIPLE SPECTRA; I've only tested
-    # when a list of one spectrum is provided.
-
-    results = []
-    for _spec in obs_spec:
-        results += [list(standard_zeropoint(_spec, std_spec.resample(_spec.wave), **kwargs))]
-
-    # NOTE: This return statement reformats the results list into a tuple of
-    # lists, where each list contains the relevant returned object from
-    # standard_zeropoint for each spectrum.  See, e.g.,
-    # pypeit.sensfunc.UVISSensFunc.compute_zeropoint.
-
-    return tuple([r.tolist() for r in np.asarray(results, dtype=object).T])
-
-
 def get_sensfunc_factor(wave, wave_zp, zeropoint, exptime, tellmodel=None, delta_wave=None, extinct_correct=False,
                          airmass=None, longitude=None, latitude=None, extinctfilepar=None, extrap_sens=False):
     """
@@ -316,7 +264,7 @@ def zeropoint_to_throughput(wave, zeropoint, eff_aperture):
 def standard_zeropoint(
     obs_spec, std_spec, exptime=1., atm_extinction=None, airmass=1., telluric_model=None,
     relative_throughput=None, bkspace=None, resolution=2700., nresln=20., region_mask=None,
-    maxiter=35, upper=3.0, lower=3.0
+    maxiter=35, upper=3.0, lower=3.0, qa_plot=None
 ):
     r"""
     Generate a sensitivity function based on observed flux and standard spectrum.
@@ -348,7 +296,8 @@ def standard_zeropoint(
         ``telluric_model`` are provided, they are *both* used in the zeropoint
         calculation.
     relative_throughput : :class:`numpy.ndarray`, optional
-        The normalized throughput of the spectrum.
+
+        The throughput of the spectrum relative to a fiducial.
     bkspace : :obj:`float`, optional
         The spacing in angstroms between breakpoints in the bspline used to fit
         the sensitivity function zeropoints; see :func:`zeropoint_breakpoints`.
@@ -372,9 +321,16 @@ def standard_zeropoint(
         Maximum number of fit and rejection iterations for the bspline fitting.
         See :func:`~pypeit.bspline.bspline.iterfit`.
     upper : :obj:`int`, :obj:`float`, optional
-        Number of sigma used for rejecting positive residuals during bspline fitting.
+        Number of sigma used for rejecting positive residuals during bspline
+        fitting.
     lower : :obj:`int`, :obj:`float`, optional
-        Number of sigma used for rejecting negative residuals during bspline fitting.
+        Number of sigma used for rejecting negative residuals during bspline
+        fitting.
+    qa_plot : str, optional
+        If not None, produce a QA plot of the bspline fit to the measured
+        zeropoints.  If ``'show'``, the function opens a blocking matplotlib
+        window; otherwise, ``qa_plot`` is assumed to be a filename for a saved
+        version of the QA plot.
 
     Returns
     -------
@@ -401,6 +357,10 @@ def standard_zeropoint(
         zp_spec, bkspace=bkspace, resolution=resolution, nresln=nresln, region_mask=region_mask,
         maxiter=maxiter, upper=upper, lower=lower
     )
+    if qa_plot is not None:
+        spectrum.fit_spectrum_bspline_qa(
+            zp_spec, fit_gpm, fit_gpm_rej, zp_bspl, ofile=None if qa_plot == 'show' else qa_plot
+        )
     return zp_spec, fit_gpm, fit_gpm_rej, zp_bspl
 
 
@@ -437,7 +397,8 @@ def calculate_zeropoint(
         ``telluric_model`` are provided, they are *both* used in the zeropoint
         calculation.
     relative_throughput : :class:`numpy.ndarray`, optional
-        The normalized throughput of the spectrum.
+        The throughput of the spectrum relative to a fiducial, sampled at the
+        same wavelengths as the observed spectrum.
 
     Returns
     -------
@@ -492,100 +453,80 @@ def calculate_zeropoint(
     return zp_spec
 
 
-def standard_zeropoint_qa(zp_spec, fit_gpm, fit_gpm_rej, zp_bspl, ofile=None):
-    """
-    Quality assessment plot for the zeropoint modeling.
+def flux_calibrate(
+    obs_spec, zp_spec, exptime=1., atm_extinction=None, airmass=1., telluric_model=None,
+    relative_throughput=None,
+):
+    r"""
+    Calibrate the fluxes of the observed spectrum using the sensitivity-function
+    zeropoints.
 
     Parameters
     ----------
+    obs_spec : :class:`~pypeit.core.spectrum.Spectrum`
+        Observed spectrum.  The input wavelength and flux units are expected to
+        be angstroms and counts/electrons per pixel, respectively.  The spectrum
+        is expected to be a single vector.
     zp_spec : :class:`~pypeit.core.spectrum.Spectrum`
-        Measured spectrum of zeropoints.
-    fit_gpm : `numpy.ndarray`_
-        Boolean array (good-pixel mask) selecting pixels that were initially
-        included in the bspline fit.  Shape matches ``zp_spec``.
-    fit_gpm_rej : `numpy.ndarray`_
-        Same as ``fit_gpm``, except that measurements rejected by the iterative
-        fitting procedures have been flagged as bad.  Shape matches ``zp_spec``.
-    zp_bspl : :class:`~pypeit.bspline.bspline.bspline`
-        Best-fitting bspline model.
-    ofile : :obj:`str`, `Path`_, optional
-        If provided, the plot is written to a file.  If None, the plot is shown
-        in a matplotlib window.
+        Sensitivity-function zeropoints in AB magnitude provided as a Spectrum
+        object.
+    exptime : :obj:`float`, optional
+        Exposure time in seconds.
+    atm_extinction : :class:`~pypeit.core.atmextinction.AtmosphericExtinction`, optional
+        Atmospheric extinction profile.  If None, the observed spectrum is
+        assumed to already been corrected for atmospheric extinction.
+    airmass : :obj:`float`, optional
+        The airmass of the observation used to calculate the atmospheric
+        extinction correction factor; see
+        :func:`~pypeit.core.atmextinction.AtmosphericExtinction.correction_factor`.
+    telluric_model : :class:`numpy.ndarray`, optional
+        A model of the telluric spectrum sampled at the same wavelengths as the
+        observed spectrum.  This used to remove the telluric signatures in the
+        observed spectrum.  Note that if both ``atm_extinction`` and
+        ``telluric_model`` are provided, they are *both* used in the zeropoint
+        calculation.
+    relative_throughput : :class:`numpy.ndarray`, optional
+        The throughput of the spectrum relative to a fiducial, sampled at the
+        same wavelengths as the observed spectrum.
+
+    Returns
+    -------
+    :class:`~pypeit.core.spectrum.Spectrum`
+        Flux-calibrated spectrum.
     """
+    # Check the input
+    if not isinstance(obs_spec, spectrum.Spectrum):
+        raise PypeItError('Must provide observed spectrum as a Spectrum object.')
+    if obs_spec.ndim != 1:
+        raise PypeItError('Must provide a single observed spectrum.')
+    if not isinstance(zp_spec, spectrum.Spectrum):
+        raise PypeItError('Must provide the sensitivity-function zeropoints as a Spectrum object.')
+    if not np.allclose(obs_spec.wave, zp_spec.wave):
+        raise PypeItError(
+            'Standard spectrum is expected to be sampled at the same wavelengths as the observed '
+            'spectrum.'
+        )
+    if telluric_model is not None and telluric_model.shape != obs_spec.shape:
+        raise PypeItError(
+            'Telluric model must be sampled at the same wavelengths as the observed spectrum.'
+        )
+    if relative_throughput is not None and relative_throughput.shape != obs_spec.shape:
+        raise PypeItError(
+            'Relative throughput must be sampled at the same wavelengths as the observed spectrum.'
+        )
 
-    zp_model, zp_model_gpm = zp_bspl.value(zp_spec.wave)
-    zp_model = np.ma.MaskedArray(zp_model, mask=np.logical_not(zp_model_gpm))
-    zp_model_bkpt = zp_bspl.value(zp_bspl.breakpoints)[0]
-    fit_bpm = np.logical_not(fit_gpm)
-    # The data rejected during the fit
-    fit_rejected = fit_gpm & np.logical_not(fit_gpm_rej)
+    dw = np.diff(sampling.centers_to_borders(obs_spec.wave))
+    calibration_factor = 10**(0.4*(ZP_UNIT_CONST - zp_spec.flux)) / exptime / dw / obs_spec.wave**2
+    if atm_extinction is not None:
+        calibration_factor *= atm_extinction.correction_factor(obs_spec.wave, airmass=airmass)
+    if telluric_model is not None:
+        calibration_factor /= telluric_model
+    if relative_throughput is not None:
+        calibration_factor /= relative_throughput
 
-    wflux = np.amax(zp_spec.flux) - np.amin(zp_spec.flux)
-    cflux = (np.amax(zp_spec.flux) + np.amin(zp_spec.flux))/2
-    flux_lim = [cflux - 1.1 * wflux / 2, cflux + 1.1 * wflux / 2]
-    wave_lim = [np.amin(zp_spec.wave), np.amax(zp_spec.wave)]
-
-    dflux = zp_spec.flux - zp_model
-    mean_dflux = np.mean(dflux[fit_gpm])
-    sdev_dflux = np.std(dflux[fit_gpm])
-    dflux_lim = [mean_dflux - 5 * sdev_dflux, mean_dflux + 5 * sdev_dflux]
-
-    # Set figure
-    w,h = plt.figaspect(1)
-    fig = plt.figure(figsize=(3*w,1.5*h))
-
-    ax = fig.add_axes([0.08, 0.3, 0.90, 0.68])
-    ax.minorticks_on()
-    ax.tick_params(which='major', length=8, direction='in', top=True, right=True)
-    ax.tick_params(which='minor', length=4, direction='in', top=True, right=True)
-    ax.grid(True, which='major', color='0.9', zorder=0, linestyle='-')
-    ax.set_xlim(wave_lim)
-    ax.set_ylim(flux_lim)
-    ax.xaxis.set_major_formatter(ticker.NullFormatter())
-    ax.text(-0.05, 0.5, 'Zeropoint (AB mag)', ha='center', va='center', rotation='vertical',
-            transform=ax.transAxes)
-
-    ax.plot(zp_spec.wave, zp_spec.flux,
-            drawstyle='steps-mid', color='black', label='Zeropoint Data', zorder=2)
-    ax.plot(zp_spec.wave, zp_model,
-            color='cornflowerblue', label='Bspline fit', linewidth=1.0, zorder=3)
-    ax.scatter(zp_spec.wave[fit_bpm], zp_spec.flux[fit_bpm],
-                marker='+', color='red', s=5, label='masked on input', zorder=5)
-    ax.scatter(zp_spec.wave[fit_rejected], zp_spec.flux[fit_rejected],
-                marker='x', color='pink', s=5, label='rejected by fit', zorder=4)
-    ax.scatter(zp_bspl.breakpoints, zp_model_bkpt,
-                marker= '.', color='cyan', s=8, label='breakpoints', zorder=10)
-    ax.plot(zp_spec.wave, 1.0 / np.sqrt(zp_spec.ivar), color='orange', label='1-sigma error')
-
-    plt.legend()
-
-    ax = fig.add_axes([0.08, 0.1, 0.90, 0.2])
-    ax.minorticks_on()
-    ax.tick_params(which='major', length=8, direction='in', top=True, right=True)
-    ax.tick_params(which='minor', length=4, direction='in', top=True, right=True)
-    ax.grid(True, which='major', color='0.9', zorder=0, linestyle='-')
-    ax.set_xlim(wave_lim)
-    ax.set_ylim(dflux_lim)
-    ax.text(-0.05, 0.5, 'Residuals (AB mag)', ha='center', va='center', rotation='vertical',
-            transform=ax.transAxes)
-    ax.text(0.5, -0.25, 'Wavelength (Angstroms)', ha='center', va='center',
-            transform=ax.transAxes)
-
-    ax.plot(zp_spec.wave, dflux, drawstyle='steps-mid', color='black', zorder=2)
-    ax.scatter(zp_spec.wave[fit_bpm], dflux[fit_bpm],
-                marker='+', color='red', s=5, zorder=5)
-    ax.scatter(zp_spec.wave[fit_rejected], dflux[fit_rejected],
-                marker='x', color='pink', s=5, zorder=4)
-    ax.scatter(zp_bspl.breakpoints, np.zeros(zp_bspl.breakpoints.size),
-                marker= '.', color='cyan', s=8, zorder=10)
-    ax.plot(zp_spec.wave, 1.0 / np.sqrt(zp_spec.ivar), color='orange')
-
-    if ofile is None:
-        plt.show()
-    else:
-        fig.canvas.print_figure(ofile, bbox_inches='tight')
-    fig.clear()
-    plt.close(fig)
+    fluxed_spec = obs_spec.copy()
+    fluxed_spec.multiply(calibration_factor)
+    return fluxed_spec
 
 
 def load_filter_file(filter):
