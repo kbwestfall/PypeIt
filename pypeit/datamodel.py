@@ -1596,3 +1596,9 @@ def obj_is_data_container(obj):
 
 
 
+#class DataContainerList:
+#    version = None
+#
+#    metadatamodel = None
+#
+#    data_type = None

@@ -286,3 +286,71 @@ class Spectrum:
         return Spectrum(
             r.outx, r.outy.T, ivar=ivar, gpm=r.outf.T > pixel_fraction_threshold, meta=self.meta,
         )
+
+
+class SpectrumList(list):
+    """
+    """
+    def __init__(self, iterable=None):
+        if iterable is None:
+            super().__init__()
+            return
+        for value in iterable:
+            self._validate(value)
+        super().__init__(iterable)
+        
+    def _validate(self, value):
+        if not isinstance(value, Spectrum):
+            raise TypeError(
+                f'A {self.__class__.__name__} can only contain Spectrum objects; cannot assign a '
+                f'{type(value).__name__} object.'
+            )
+
+    def append(self, value):
+        self._validate(value)
+        super().append(value)
+
+    def extend(self, iterable):
+        for value in iterable:
+            self._validate(value)
+        super().extend(iterable)
+
+    def __setitem__(self, key, value):
+        # Handle slice assignments (e.g., my_list[1:3] = [4, 5])
+        if isinstance(key, slice):
+            for v in value:
+                self._validate(v)
+        # Handle single item assignments (e.g., my_list[0] = 1)
+        else:
+            self._validate(value)
+        super().__setitem__(key, value)
+
+    def __getitem__(self, key):
+        item = super().__getitem__(key)
+        if isinstance(item, list):
+            return SpectrumList(item)
+        return item
+
+    @property
+    def size(self):
+        """
+        The size of the flux array in each spectrum
+        """
+        return [s.flux.size for s in self]
+    
+    @property
+    def shape(self):
+        """
+        The shape of the flux array in each spectrum
+        """
+        return [s.flux.shape for s in self]
+    
+    @property
+    def ndim(self):
+        """
+        The dimensionality of the flux array in each spectrum
+        """
+        return [s.flux.ndim for s in self]
+    
+    def copy(self):
+        return self.__class__([s.copy() for s in self])
