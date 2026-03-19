@@ -28,10 +28,9 @@ class SpectrumContainer(datamodel.DataContainer, spectrum.Spectrum):
 
     allowed_metadata_types = (int, np.integer, float, np.floating, bool, np.bool, str)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, name=None, **kwargs):
         datamodel.DataContainer.__init__(self)
-        if 'name' in kwargs:
-            self.name = kwargs.pop('name')
+        self.name = name
         spectrum.Spectrum.__init__(self, *args, **kwargs)
 
     def copy(self):
