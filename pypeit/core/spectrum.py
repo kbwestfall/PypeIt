@@ -16,6 +16,8 @@ from pypeit import sampling
 from pypeit import utils
 
 
+# TODO: Change the orientation of 2D flux arrays so that the order is number of
+# spectra by number of pixels per spectrum.
 class Spectrum:
     r"""
     A light-weight container class for a spectrum.

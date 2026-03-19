@@ -1213,6 +1213,7 @@ class DataContainer:
             self.__dict__[item] = value
             return
         # Convert Path objects to string for saving in the datamodel
+        # TODO: This seems like a bad idea!
         if isinstance(value, Path):
             value = str(value)
         # Check data type
