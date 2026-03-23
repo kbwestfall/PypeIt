@@ -8,6 +8,11 @@ class FixedTypeList(list):
     list_type = None
 
     def __init__(self, iterable=None):
+        if self.list_type is None:
+            raise NotImplementedError(
+                f'CODING ERROR: Implementation of {self.__class__.__name__} does not define the '
+                'type for the list elements and cannot be instantiated.'
+            )
         if iterable is None:
             super().__init__()
             return
