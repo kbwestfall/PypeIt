@@ -16,6 +16,7 @@ from astropy.table import Table
 from astropy.io import fits
 
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit.core import arc, qa
 from pypeit.core import fitting
@@ -514,7 +515,7 @@ class BuildWaveCalib:
         # TODO: This should be a stop-gap to avoid instantiation of this with
         # any Nones.
         if None in [msarc, slits, spectrograph, par, lamps]:
-            raise PypeItError('CODING ERROR: Cannot instantiate BuildWaveCalib with Nones.')
+            raise PypeItCodingError('Cannot instantiate BuildWaveCalib with Nones.')
 
         # Required parameters
         self.msarc = msarc

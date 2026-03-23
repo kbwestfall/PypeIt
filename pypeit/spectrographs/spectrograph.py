@@ -913,8 +913,10 @@ class Spectrograph:
                     raise PypeItError(f'Configuration {cfg_id[0]} missing required key, {key}.  Cannot '
                                'determine if configurations are the same!')
                 if key not in self.meta.keys():
-                    raise PypeItError(f'CODING ERROR: {key} is a configuration key but not defined in '
-                               f'the metadata dictionary for {self.__class__.__name__}!')
+                    raise PypeItCodingError(
+                        f'{key} is a configuration key but not defined in the metadata dictionary '
+                        f'for {self.__class__.__name__}!'
+                    )
         else:
             cfg_meta = configs[cfg_id[0]].keys()
 

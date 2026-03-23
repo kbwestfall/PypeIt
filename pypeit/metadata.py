@@ -18,6 +18,7 @@ import numpy as np
 from astropy import table, time
 
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit import inputfiles
 from pypeit.core import framematch
@@ -163,8 +164,9 @@ class PypeItMetaData:
         """
         if 'instrument' in meta_tbl.keys():
             if self.spectrograph.header_name is None:
-                raise PypeItError('CODING ERROR: header_name is not defined for '
-                           f'{self.spectrograph.__class__.__name__}!')
+                raise PypeItCodingError(
+                    f'header_name is not defined for {self.spectrograph.__class__.__name__}!'
+                )
             # Check that there is only one instrument
             #  This could fail if one mixes is much older calibs
             indx = meta_tbl['instrument'].data != None
@@ -344,8 +346,7 @@ class PypeItMetaData:
         if len(existing_keys) > 0 and match_type:
             for key in existing_keys:
                 if len(self.table[key].shape) > 1:  # NOT ALLOWED!!
-                    # TODO: This should be converted to an assert statement...
-                    raise ValueError('CODING ERROR: Found high-dimensional column.')
+                    raise PypeItCodingError('Found high-dimensional column.')
                     #embed(header='372 of metadata')
                 elif key in meta_data_model.keys(): # Is this meta data??
                     dtype = meta_data_model[key]['dtype']
@@ -860,17 +861,21 @@ class PypeItMetaData:
 
                 # TODO: For now, use this assert to check that the
                 # metakey is either not set, or is a string/list
-                assert metakey is None or isinstance(metakey, str) or isinstance(metakey, list), \
-                    'CODING ERROR: metadata keywords set by config_indpendent_frames are not ' \
-                    'correctly defined for {0}; values must be None or a string.'.format(
-                        self.spectrograph.__class__.__name__)
+                if not (metakey is None or isinstance(metakey, str) or isinstance(metakey, list)):
+                    raise PypeItCodingError(
+                        'metadata keywords set by config_indpendent_frames are not correctly '
+                        f'defined for {self.spectrograph.__class__.__name__}; values must be None '
+                        'or a string.'
+                    )
                 # If a list is input, check all elements of the list are strings
                 if isinstance(metakey, list):
                     for ll in metakey:
-                        assert isinstance(ll, str), \
-                            'CODING ERROR: metadata keywords set by config_indpendent_frames are not ' \
-                            'correctly defined for {0}; values must be None or a string.'.format(
-                                self.spectrograph.__class__.__name__)
+                        if not isinstance(ll, str):
+                            raise PypeItCodingError(
+                                'metadata keywords set by config_indpendent_frames are not '
+                                'correctly defined for {self.spectrograph.__class__.__name__}; '
+                                'values must be None or a string.'
+                            )
                 elif isinstance(metakey, str):
                     # If metakey is a string, convert it to a one-element list
                     metakey = [metakey]
@@ -948,9 +953,11 @@ class PypeItMetaData:
             # NOTE: For now, check that the configuration values were
             # correctly assigned in the spectrograph class definition.
             # This should probably go somewhere else or just removed.
-            assert isinstance(cfg_limits[key], list), \
-                'CODING ERROR: valid_configuration_values is not correctly defined ' \
-                'for {0}; values must be a list.'.format(self.spectrograph.__class__.__name__)
+            if not isinstance(cfg_limits[key], list):
+                raise PypeItCodingError(
+                    'valid_configuration_values is not correctly defined for '
+                    f'{self.spectrograph.__class__.__name__}; values must be a list.'
+                )
 
             # Check that the metadata are valid for this column.
             indx = np.isin(self[key], cfg_limits[key])
@@ -1138,8 +1145,9 @@ class PypeItMetaData:
         # The configuration must be present to determine the calibration
         # group
         if 'setup' not in self.keys():
-            raise PypeItError('CODING ERROR: Must have defined \'setup\' column first; try running '
-                       'set_configurations.')
+            raise PypeItCodingError(
+                'Must have defined \'setup\' column first; try running set_configurations.'
+            )
         configs = np.unique(np.concatenate([_setup.split(',') for _setup in self['setup'].data])).tolist()
         if 'None' in configs:
             configs.remove('None')      # Ignore frames with undefined configurations

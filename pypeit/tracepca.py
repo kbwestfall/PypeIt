@@ -14,6 +14,7 @@ import numpy as np
 from astropy.io import fits
 
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit import utils
 from pypeit.io import hdu_iter_by_ext
@@ -269,8 +270,10 @@ class TracePCA(DataContainer):
 
         # This should only ever read one hdu!
         if len(parsed_hdus) > 1:
-            raise PypeItError('CODING ERROR: Parsing saved TracePCA instances should only parse 1 HDU, '
-                       'independently of the PCA PypeItFit models.')
+            raise PypeItCodingError(
+                'Parsing saved TracePCA instances should only parse 1 HDU, independently of the '
+                'PCA PypeItFit models.'
+            )
 
         # Check if any models exist
         if hasattr(hdu, '__len__') \

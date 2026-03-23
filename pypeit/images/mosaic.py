@@ -16,6 +16,7 @@ from pypeit import datamodel
 from pypeit import io
 from pypeit.images.detector_container import DetectorContainer
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 
 
@@ -101,8 +102,9 @@ class Mosaic(datamodel.DataContainer):
             tbl = table.vstack([d._bundle()[0]['DETECTOR'] for d in self.detectors],
                                 join_type='exact')
         except:
-            raise PypeItError('CODING ERROR: Could not stack detector parameter tables when writing '
-                       'mosaic metadata.')
+            raise PypeItCodingError(
+                'Could not stack detector parameter tables when writing mosaic metadata.'
+            )
         if self.shift is not None:
             tbl['shift'] = self.shift
         if self.rot is not None:
@@ -147,7 +149,7 @@ class Mosaic(datamodel.DataContainer):
 
         # This should only ever read one hdu!
         if len(parsed_hdus) > 1:
-            raise PypeItError('CODING ERROR: Parsing saved Mosaic instances should only parse 1 HDU.')
+            raise PypeItCodingError('Parsing saved Mosaic instances should only parse 1 HDU.')
 
         # These are the same as the attributes for the detectors, so we need to
         # get rid of them.  We'll get them back via the _validate function.

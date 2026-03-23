@@ -354,7 +354,7 @@ def trace_tilts_work(arcimg, lines_spec, lines_spat, thismask, slit_cen, inmask=
 
         if gauss:
             raise NotImplementedError(
-                'CODING ERROR: "gauss" option is not implemented correctly in trace_tilts_work.'
+                '"gauss" option is not implemented correctly in trace_tilts_work.'
             )
 #        # If gauss is set, do a Gaussian refinement to the
 #        # flux-weighted tracing

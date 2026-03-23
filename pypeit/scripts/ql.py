@@ -48,6 +48,7 @@ import configobj
 
 from astropy.table import Table
 
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit import log
 from pypeit import pypeitsetup
@@ -161,7 +162,7 @@ def quicklook_regroup(fitstbl):
             # offset are combined.
             if 'bkg_id' in fitstbl.keys() and any(fitstbl['bkg_id'].data[is_type] != -1):
                 if 'dithoff' not in fitstbl.keys():
-                    raise PypeItError('CODING ERROR: Metadata does not include dithoff column!')
+                    raise PypeItCodingError('Metadata does not include dithoff column!')
                 # Group the unique dither positions
                 dith, inv = np.unique(fitstbl['dithoff'].data[is_type], return_inverse=True)
                 if len(dith) == 1:
