@@ -470,6 +470,7 @@ from astropy.table import Table
 
 from pypeit import io
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItDataModelError
 from pypeit.utils import eval_tuple
 from pypeit.core import fixedtypelist
@@ -1395,8 +1396,8 @@ class DataContainer:
             hdr_keys = np.array([k.upper() for k in self.keys()])
             indx = np.isin(hdr_keys, list(_primary_hdr.keys()))
             if np.sum(indx) > 1:
-                raise PypeItDataModelError(
-                    'CODING ERROR: Primary header should not contain keywords that are the same '
+                raise PypeItCodingError(
+                    'Primary header should not contain keywords that are the same '
                     f'as the datamodel for {self.__class__.__name__}.'
                 )
 
@@ -1406,8 +1407,8 @@ class DataContainer:
         # with any datamodel keys.
         if _hdr is not None \
                 and np.any(np.isin([k.upper() for k in self.keys()], list(_hdr.keys()))):
-            raise PypeItDataModelError(
-                'CODING ERROR: Baseline header should not contain keywords that are the same as '
+            raise PypeItCodingError(
+                'Baseline header should not contain keywords that are the same as '
                 f'the datamodel for {self.__class__.__name__}.'
             )
 
@@ -1607,6 +1608,13 @@ class DataContainerList(fixedtypelist.FixedTypeList):
     for all subclasses.
     """
 
+    allowed_metadata_types = (int, np.integer, float, np.floating, bool, np.bool, str)
+    """
+    Allowed types for the metadata.  Any data that does not conform to one of
+    these types will *not* be written to the primary FITS header of an output
+    file meant to store the contents of this object.
+    """
+
     metadatamodel = None
     """
     A dictionary with data relevant to the object as a whole (as opposed to only
@@ -1618,17 +1626,23 @@ class DataContainerList(fixedtypelist.FixedTypeList):
         # NOTE: The base class provides list_type and will check if it is
         # defined
         if self.list_type is not None and not issubclass(self.list_type, DataContainer):
-            raise TypeError(
-                'CODING ERROR: Implementations of DataContainerList should require list element '
-                'types that are subclasses of DataContainer, which is not true for '
-                f'{self.list_type.__name__}.'
+            raise PypeItCodingError(
+                'Implementations of DataContainerList should require list element types that are '
+                f'subclasses of DataContainer, which is not true for {self.list_type.__name__}.'
             )
         # The version must be defined
         if self.version is None:
-            raise ValueError(
-                f'CODING ERROR: The version must be defined for {self.__class__.__name__}.'
-            )
-        # NOTE: the `metadatamodel` is not required
+            raise PypeItCodingError(f'The version must be defined for {self.__class__.__name__}.')
+
+        # A defined `metadatamodel` does not have to be defined, but this checks
+        # the types are allowed when it is defined.
+        if self.metadatamodel is not None:
+            for key, item in self.metadatamodel:
+                if 'otype' not in item:
+                    raise PypeItCodingError(
+                        f'{key} element of metadatamodel for {self.__class__.__name__}'
+                    )
+
         super().__init__(iterable=iterable)
 
     def _primary_header(self, hdr=None):
@@ -1654,7 +1668,6 @@ class DataContainerList(fixedtypelist.FixedTypeList):
         _hdr['DMODCLS'] = (self.__class__.__name__, 'Datamodel class')
         _hdr['DMODVER'] = (self.version, 'Datamodel version')
         _hdr['DMODLEN'] = (len(self), 'Number of elements in the DataContainerList')
-        allowed_metadata_types = (int, np.integer, float, np.floating, bool, np.bool, str)
         ########################
         return _hdr
 
