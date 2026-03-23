@@ -37,6 +37,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit import io
 from pypeit.core import parse
