@@ -2,8 +2,16 @@
 Implements an abstract base class for lists with a fixed type.
 """
 
+from IPython import embed
+
 class FixedTypeList(list):
     """
+
+    .. warning::
+
+        This class *does not* override all the :obj:`list` dunder methods.  This
+        means that some operations may return an instance of :obj:`list` instead
+        of an instance of the original subclass.
     """
     list_type = None
 
@@ -36,6 +44,13 @@ class FixedTypeList(list):
         for value in iterable:
             self._validate(value)
         super().extend(iterable)
+
+    def __iadd__(self, iterable):
+        self.extend(iterable)
+        return self
+    
+    def __add__(self, iterable):
+        return self.__class__([s for s in self] + [s for s in iterable])
 
     def __setitem__(self, key, value):
         # Handle slice assignments (e.g., my_list[1:3] = [4, 5])

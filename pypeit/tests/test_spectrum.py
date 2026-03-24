@@ -235,5 +235,3 @@ def test_list_properties():
     _spec = spec.copy()
     assert isinstance(_spec, spectrum.SpectrumList), 'Copy is the wrong type'
     assert len(spec) == len(_spec), 'Length should match'
-
-

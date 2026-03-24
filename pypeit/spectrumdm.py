@@ -131,3 +131,7 @@ class SpectrumContainer(datamodel.DataContainer, spectrum.Spectrum):
         return spectrum.Spectrum(
             self.wave, self.flux, ivar=self.ivar, gpm=self.gpm, meta=self.meta
         )
+
+
+class SpectrumListContainer(datamodel.ListDataContainer):
+    list_type = SpectrumContainer
