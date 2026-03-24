@@ -1601,13 +1601,16 @@ class Calibrations:
 
         # Iterate through each frame type and add the raw and processed
         # calibration frames
+
         for frametype, calib_classes in frame_calibrations.items():
             indx = fitstbl.find_frames(frametype) & in_grp
             if not any(indx):
                 continue
-            if not (all(fitstbl['calib'][indx] == fitstbl['calib'][indx][0]) or
-                    all([fitstbl['calib'][indx][0] in cc.split(',') for cc in fitstbl['calib'][indx]])):
-                raise PypeItCodingError(
+            if not (
+                all(fitstbl['calib'][indx] == fitstbl['calib'][indx][0]) or
+                all([fitstbl['calib'][indx][0] in cc.split(',') for cc in fitstbl['calib'][indx]])
+            ):
+                log.warning(
                     f'All {frametype} frames in group {calib_ID} are not all associated with the '
                     'same subset of calibration groups; calib for the first file is '
                     f'{fitstbl["calib"][indx][0]}.'
