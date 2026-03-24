@@ -10,7 +10,7 @@ from pypeit import datamodel
 from pypeit import log
 from pypeit.core import spectrum
 
-
+# TODO: Update these data containers to deal with `assoc` attributes of Spectrum.
 class SpectrumContainer(datamodel.DataContainer, spectrum.Spectrum):
     """
     A :class:`~pypeit.datamodel.DataContainer` object that holds data for a

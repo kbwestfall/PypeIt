@@ -331,8 +331,8 @@ class SpecObjs:
     # TODO: Can this replace unpack_object?
     def to_spectrum(self, extract=None, fluxed=False, include_flat=False):
         """
-        Utility function to construct a list of
-        :class:`~pypeit.core.spectrum.Spectrum` objects from data in this 
+        Utility function to construct a 
+        :class:`~pypeit.core.spectrum.SpectrumList` object from data in this 
         :class:`~pypeit.specobjs.SpecObjs` object.
 
         Parameters
@@ -348,9 +348,8 @@ class SpecObjs:
 
         Returns
         -------
-        list
-            List of :class:`~pypeit.core.spectrum.Spectrum` objects with the
-            extracted spectra.
+        :class:`~pypeit.core.spectrum.SpectrumList`
+            Object with all of the extracted spectra.
         """
 
         # Get the metadata
@@ -359,7 +358,7 @@ class SpecObjs:
         # TODO: Add other items included in meta_spec from unpack_object()
 
         # Build up the list of spectra
-        spectra = []
+        spectra = spectrum.SpectrumList()
         for sobj in self.specobjs:
             ext, cal = sobj.best_ext_match(extract=extract, fluxed=fluxed)
             func = sobj.get_box_ext if ext == 'BOX' else sobj.get_opt_ext

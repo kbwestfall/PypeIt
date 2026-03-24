@@ -137,11 +137,11 @@ class SensFunc(scriptbase.ScriptBase):
             args.spec1dfiles, par['sensfunc'], par_fluxcalib=par['fluxcalib'], debug=args.debug,
             chk_version=args.chk_version
         )
-        # Generate the sensfunc
-        sensobj.run()
-
         embed()
         exit()
+
+        # Generate the sensfunc
+        sensobj.run()
 
         # Write it out to a file, including the new primary FITS header
         sensobj.to_file(outfile, primary_hdr=primary_hdr, overwrite=True)

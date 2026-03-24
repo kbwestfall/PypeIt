@@ -122,7 +122,7 @@ def get_pypeitpar(spec1dfile, ifile=None, secondary_ifile_class=None):
 
 def load_spectra(inp, extract=None, fluxed=False, include_flat=False, chk_version=True):
     """
-    Parse the input into a list of :class:`~pypeit.core.spectrum.Spectrum` objects
+    Parse the input into a :class:`~pypeit.core.spectrum.SpectrumList` object.
 
     Parameters
     ----------
@@ -142,6 +142,8 @@ def load_spectra(inp, extract=None, fluxed=False, include_flat=False, chk_versio
         returned in counts.  Only relevant if the input is a spec1d file.
     include_flat : :obj:`bool`, optional
         If True, include the extracted flat spectrum as an associated array.
+        Can only be true if the input is a spec1d file.  If this is True and the
+        input is a onespec file, the function will raise an exception.
     chk_version : :obj:`bool`, optional
         When reading in existing files written by PypeIt, perform strict
         version checking to ensure a valid file.  If False, the code will
@@ -152,7 +154,7 @@ def load_spectra(inp, extract=None, fluxed=False, include_flat=False, chk_versio
     -------
     :class:`astropy.io.fits.Header`
         The primary header of the input file.
-    list
+    :class:`~pypeit.core.spectrum.SpectrumList`
         List of :class:`~pypeit.core.spectrum.Spectrum` objects.
     """
 
@@ -207,7 +209,7 @@ def load_spectra(inp, extract=None, fluxed=False, include_flat=False, chk_versio
             f'({ospec.ext_mode}) and the requested status (extract={extract}).  Unable to proceed.'
         )
     
-    return ospec.head0, ospec.to_spectrum()
+    return ospec.head0, spectrum.SpectrumList([ospec.to_spectrum()])
 
 
 def load_standard(
@@ -247,8 +249,8 @@ def load_standard(
 
     Returns
     -------
-    list
-        List of :class:`~pypeit.spectrum.Spectrum` objects with the standard-star spectra.
+    :class:`~pypeit.spectrum.SpectrumList`
+        Standard-star spectra.
     bool
         Flag that the spectra should be spliced together
     """
@@ -270,7 +272,7 @@ def load_standard(
             'files.'
         )
 
-    spec = []
+    spec = spectrum.SpectrumList()
     dets = []
 
     # TODO: This effectively allows for lists that combine both spec1d files and
@@ -304,6 +306,11 @@ def load_standard(
 
     # Sort by wavelength
     srt = np.argsort(max([np.max(s.wave) for s in spec]), kind='stable')
+
+    embed()
+    exit()
+
+    # TODO: Fix this
     spec = np.asarray(spec)[srt].tolist()
 
     # splice together also mosaic-reduced spectra that have been split
