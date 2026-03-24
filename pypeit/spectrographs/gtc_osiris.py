@@ -492,7 +492,7 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
 
         Parameters
         ----------
-        spec : :class:`~pypeit.core.spectrum.Spectrum`, list
+        spec : :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
             One or more spectra to modify.
         trim_std_pixs: :obj:`list`, :obj:`tuple`, optional
             List or tuple of two integers specifying the number of pixels to
@@ -508,7 +508,7 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
 
         Returns
         -------
-        :class:`~pypeit.spectrum.Spectrum`, list
+        :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
             Modified spectrum/spectra.  Matches the input type.
         """
         if trim_std_pixs is not None:
@@ -516,7 +516,7 @@ class GTCOSIRISPlusSpectrograph(spectrograph.Spectrograph):
 
         if wave_range is None:
             # Try to use the disperser name to set the relevant wavelength range
-            dispname = spectrum.get_spectrum_list_meta(spec, 'DISPNAME')
+            dispname = spec.get_global_meta('DISPNAME')
             # TODO: Check the actual disperser names; i.e., was the use of `in`
             # the correct approach
             if dispname == 'R300R':
@@ -1278,7 +1278,7 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
 
         Parameters
         ----------
-        spec : :class:`~pypeit.core.spectrum.Spectrum`, list
+        spec : :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
             One or more spectra to modify.
         trim_std_pixs: :obj:`list`, :obj:`tuple`, optional
             List or tuple of two integers specifying the number of pixels to
@@ -1294,7 +1294,7 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
 
         Returns
         -------
-        :class:`~pypeit.spectrum.Spectrum`, list
+        :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
             Modified spectrum/spectra.  Matches the input type.
         """
         if trim_std_pixs is not None:
@@ -1302,7 +1302,7 @@ class GTCOSIRISSpectrograph(spectrograph.Spectrograph):
 
         if wave_range is None:
             # Try to use the disperser name to set the relevant wavelength range
-            dispname = spectrum.get_spectrum_list_meta(spec, 'DISPNAME')
+            dispname = spec.get_global_meta('DISPNAME')
             # TODO: Check the actual disperser names; i.e., was the use of `in`
             # the correct approach
             if dispname == 'R300R':

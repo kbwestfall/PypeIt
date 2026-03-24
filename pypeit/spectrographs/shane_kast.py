@@ -594,7 +594,7 @@ class ShaneKastRedSpectrograph(ShaneKastSpectrograph):
 
         Parameters
         ----------
-        spec : :class:`~pypeit.core.spectrum.Spectrum`, list
+        spec : :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
             One or more spectra to modify.
         trim_std_pixs: :obj:`list`, :obj:`tuple`, optional
             List or tuple of two integers specifying the number of pixels to
@@ -610,7 +610,7 @@ class ShaneKastRedSpectrograph(ShaneKastSpectrograph):
 
         Returns
         -------
-        :class:`~pypeit.spectrum.Spectrum`, list
+        :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
             Modified spectrum/spectra.  Matches the input type.
         """
         if trim_std_pixs is not None:
@@ -618,7 +618,7 @@ class ShaneKastRedSpectrograph(ShaneKastSpectrograph):
 
         if wave_range is None:
             # Try to use the disperser name to set the relevant wavelength range
-            dispname = spectrum.get_spectrum_list_meta(spec, 'DISPNAME')
+            dispname = spec.get_global_meta('DISPNAME')
             if dispname == '600/7500':
                 wave_range = (5400.0, 8785.0)
             # TODO: Emit a warning if the dispname is None?

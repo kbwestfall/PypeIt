@@ -654,7 +654,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
 
         Parameters
         ----------
-        spec : :class:`~pypeit.core.spectrum.Spectrum`, list
+        spec : :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
             One or more spectra to modify.
         trim_std_pixs: :obj:`list`, :obj:`tuple`, optional
             List or tuple of two integers specifying the number of pixels to
@@ -670,7 +670,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
 
         Returns
         -------
-        :class:`~pypeit.spectrum.Spectrum`, list
+        :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
             Modified spectrum/spectra.  Matches the input type.
         """
         if trim_std_pixs is not None:
@@ -690,7 +690,7 @@ class LDTDeVenySpectrograph(spectrograph.Spectrograph):
 
         # Next mask out unreasonable wavelengths
         _wave_range = [3000.0, 102000.0]
-        rearfilt = spectrum.get_spectrum_list_meta(spec, 'FILTER1')
+        rearfilt = spec.get_global_meta('FILTER1')
         if rearfilt == "OG570":
             _wave_range[0] = 5700.0
         elif rearfilt == 'GG495':

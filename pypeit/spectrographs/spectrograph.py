@@ -2123,7 +2123,7 @@ class Spectrograph:
 
         Parameters
         ----------
-        spec : :class:`~pypeit.core.spectrum.Spectrum`, list
+        spec : :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
             One or more spectra to modify.
         trim_std_pixs: :obj:`list`, :obj:`tuple`, optional
             List or tuple of two integers specifying the number of pixels to
@@ -2139,16 +2139,16 @@ class Spectrograph:
 
         Returns
         -------
-        :class:`~pypeit.spectrum.Spectrum`, list
+        :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
             Modified spectrum/spectra.  Matches the input type.
         """
-        # Convert spec to a list, just so the rest of the code doesn't have to
-        # repeatedly check the type
+        # Copy the input spectra.  Convert all input to SpectrumList, just so
+        # the remainder of the function doesn't constantly have to check the
+        # type.
         single_spec = isinstance(spec, spectrum.Spectrum)
-        _spec = [spec] if single_spec else spec
-
-        # Create the copy
-        _spec = [s.copy() for s in _spec]
+        if not single_spec and not isinstance(spec, spectrum.SpectrumList):
+            raise TypeError('Must provide a Spectrum or SpectrumList object.')
+        _spec = spectrum.SpectrumList([spec.copy()]) if single_spec else spec.copy()
 
         # Trim pixels
         if trim_std_pixs is not None:
