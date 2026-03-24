@@ -3,6 +3,7 @@ Implements an abstract base class for lists with a fixed type.
 """
 
 from IPython import embed
+import numpy as np
 
 
 class FixedTypeList(list):
@@ -119,6 +120,20 @@ class FixedTypeList(list):
         """
         return self.__class__([s for s in self] + [s for s in iterable])
 
+    @staticmethod 
+    def _get_index(key):
+        """
+        Utility function that converts an index list or array into a set of list indices.
+        """
+        if isinstance(key[0], (int, np.integer)):
+            return key
+        if isinstance(key[0], (bool, np.bool)):
+            return np.where(key)[0]
+        raise ValueError(
+            'Elements of the indexing object used to select list elements must be integers or '
+            f'booleans, not {type(key[0])}.'
+        )
+
     def __setitem__(self, key, value):
         """
         Overrides the base class method to include type checking.
@@ -136,10 +151,22 @@ class FixedTypeList(list):
         if isinstance(key, slice):
             for v in value:
                 self._validate(v)
+            super().__setitem__(key, value)
+        # Handle list or array selections (e.g., my_list[[0,2,1]] = [1,2,3])
+        elif isinstance(key, (list, np.ndarray)):
+            indx = self._get_index(key)
+            if len(indx) != len(value):
+                raise ValueError(
+                    f'Mismatch between selected number of elements to set and the number '
+                    'available to assign.'
+                )
+            for i in range(len(indx)):
+                self._validate(value[i])
+                super().__setitem__(key[indx[i]], value[i])
         # Handle single item assignments (e.g., my_list[0] = 1)
         else:
             self._validate(value)
-        super().__setitem__(key, value)
+            super().__setitem__(key, value)
 
     def __getitem__(self, key):
         """
@@ -147,6 +174,8 @@ class FixedTypeList(list):
         instance of this class, instead of a :obj:`list`, if more than one
         element is selected.
         """
+        if isinstance(key, (list, np.ndarray)):
+            return self.__class__([super().__getitem__(i) for i in self._get_index(key)])
         item = super().__getitem__(key)
         if isinstance(item, list):
             return self.__class__(item)
