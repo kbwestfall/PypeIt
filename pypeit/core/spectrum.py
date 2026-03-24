@@ -290,7 +290,14 @@ class Spectrum:
 
 
 class SpectrumList(FixedTypeList):
+    """
+    A container for a list of :class:`~pypeit.core.spectrum.Spectrum` objects.
+    """
+
     list_type = Spectrum
+    """
+    The type for elements in instances of this list.
+    """
 
     @property
     def size(self):
@@ -314,4 +321,7 @@ class SpectrumList(FixedTypeList):
         return [s.flux.ndim for s in self]
     
     def copy(self):
+        """
+        Return a copy of this instance.
+        """
         return self.__class__([s.copy() for s in self])

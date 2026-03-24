@@ -1600,7 +1600,30 @@ def obj_is_data_container(obj):
     return inspect.isclass(obj) and issubclass(obj, DataContainer)
 
 
+# TODO: Functionality needed to handle DataContainers that write multiple HDUs
+# is not yet tested!
 class ListDataContainer(fixedtypelist.FixedTypeList):
+    """
+    Impementation of an object that manages a list of
+    :class:`~pypeit.datamodel.DataContainer` objects.
+
+    The primarily utility of this class is as an I/O interface.
+
+    Parameters
+    ----------
+    iterable : iterable, optional
+        An iterable object that contains the set of
+        :class:`~pypeit.datamodel.DataContainer` objects to manage.
+    meta : dict, optional
+        A free-form dictionary containing metadata.  The elements of the
+        dictionary must have types consistent with
+        :attr:`allowed_metadata_types`.
+
+    Attributes
+    ----------
+    meta : dict
+        A dictionary with a set of metadata for the instance.
+    """
 
     allowed_metadata_types = (int, np.integer, float, np.floating, bool, np.bool, str)
     """
@@ -1672,14 +1695,13 @@ class ListDataContainer(fixedtypelist.FixedTypeList):
 
     def __add__(self, iterable):
         """
-        Overrides the base class so that :attr:`meta` is saved.  *Any meta in ``iterable`` is lost!*
+        Overrides the base class so that :attr:`meta` is saved.  *Any meta in
+        ``iterable`` is lost!*
         """
         # NOTE: Instantiation always creates a deepcopy of meta
         return self.__class__([s for s in self] + [s for s in iterable], meta=self.meta)
 
-    def to_hdu(
-        self, hdr=None, primary_hdr=None, hdu_names=None
-    ):
+    def to_hdu(self, hdr=None, primary_hdr=None, hdu_names=None):
         """
         Construct an :class:`astropy.io.fits.HDUList` with the data.
 
@@ -1741,18 +1763,18 @@ class ListDataContainer(fixedtypelist.FixedTypeList):
         """
         Write the data to a file.
 
-        Args:
-            ofile (:obj:`str`, `Path`_):
-                Fits file for the data. File names with '.gz'
-                extensions will be gzipped; see
-                :func:`pypeit.io.write_to_fits`.
-            overwrite (:obj:`bool`, optional):
-                Flag to overwrite any existing file.
-            checksum (:obj:`bool`, optional):
-                Passed to `astropy.io.fits.HDUList.writeto`_ to add
-                the DATASUM and CHECKSUM keywords fits header(s).
-            kwargs (:obj:`dict`, optional):
-                Passed directly to :func:`to_hdu`.
+        Parameters
+        ----------
+        ofile : :obj:`str`, `Path`_
+            Fits file for the data. File names with '.gz' extensions will be
+            gzipped; see :func:`~pypeit.io.write_to_fits`.
+        overwrite : :obj:`bool`, optional
+            Flag to overwrite any existing file.
+        checksum : :obj:`bool`, optional
+            Passed to :class:`astropy.io.fits.HDUList.writeto` to add the
+            DATASUM and CHECKSUM keywords fits header(s).
+        kwargs : :obj:`dict`, optional
+            Passed directly to :func:`to_hdu`.
         """
         # NOTE: This call does *not* need to also pass hdr to io.write_to_fits
         # because the first argument of the function is always an
