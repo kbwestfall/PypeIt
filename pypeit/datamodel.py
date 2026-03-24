@@ -1701,6 +1701,14 @@ class ListDataContainer(fixedtypelist.FixedTypeList):
         # NOTE: Instantiation always creates a deepcopy of meta
         return self.__class__([s for s in self] + [s for s in iterable], meta=self.meta)
 
+    def __getitem__(self, key):
+        """
+        Overrides the base class so that :attr:`meta` is saved.
+        """
+        out = super().__getitem__(key)
+        out.meta = copy.deepcopy(self.meta)
+        return out
+    
     def to_hdu(self, hdr=None, primary_hdr=None, hdu_names=None):
         """
         Construct an :class:`astropy.io.fits.HDUList` with the data.

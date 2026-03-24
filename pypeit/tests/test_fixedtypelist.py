@@ -1,4 +1,5 @@
 
+import numpy as np
 from IPython import embed
 import pytest
 
@@ -62,3 +63,45 @@ def test_dunder():
         # Should not be able to append an incorrect type
         l = l + [1]
 
+
+def test_slicing_indexing():
+    l = StrList(['this', 'should', 'work'])
+
+    # Select a single element
+    sub = l[0]
+    assert isinstance(sub, str), 'Should return a string'
+
+    # Select using a slice
+    sub = l[1:3]
+    assert isinstance(sub, StrList), 'Should return a StrList'
+    assert len(sub) == 2, 'Should have 2 elements'
+
+    # Select a single element using a single-element list
+    sub = l[[0]]
+    assert isinstance(sub, StrList), 'Should return a StrList'
+    assert len(sub) == 1, 'Should only have a single element'
+
+    # Select multiple elements by their index number using a list
+    indx = [0,2]
+    sub = l[indx]
+    assert isinstance(sub, StrList), 'Should return a StrList'
+    assert len(sub) == 2, 'Should have 2 elements'
+    assert sub[0] == l[indx[0]], 'Mismatch 0'
+    assert sub[1] == l[indx[1]], 'Mismatch 1'
+
+    # Select multiple elements by their index number using a numpy array
+    indx = np.array([2,1])
+    sub = l[indx]
+    assert isinstance(sub, StrList), 'Should return a StrList'
+    assert len(sub) == 2, 'Should have 2 elements'
+    assert sub[0] == l[indx[0]], 'Mismatch 0'
+    assert sub[1] == l[indx[1]], 'Mismatch 1'
+
+    # Select multiple elements by their index number using a boolean array
+    indx = np.array([True, True, False])
+    sub = l[indx]
+    _indx = np.where(indx)[0]
+    assert isinstance(sub, StrList), 'Should return a StrList'
+    assert len(sub) == 2, 'Should have 2 elements'
+    assert sub[0] == l[_indx[0]], 'Mismatch 0'
+    assert sub[1] == l[_indx[1]], 'Mismatch 1'
