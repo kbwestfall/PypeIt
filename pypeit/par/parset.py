@@ -13,6 +13,7 @@ from IPython import embed
 import numpy as np
 
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import utils
 
 
@@ -139,9 +140,8 @@ class ParSet:
 
     def __init__(self, **kwargs):
         if self.parameters is None:
-            raise AttributeError(
-                f'CODING ERROR: The parameters attribute for {self.__class__.__name__} has not '
-                'been defined!'
+            raise PypeItCodingError(
+                f'The parameters attribute for {self.__class__.__name__} has not been defined!'
             )
         
         # The keys of self.parameters define the allowed keywords.
@@ -170,14 +170,14 @@ class ParSet:
                     f'{e}'
                 ) from e
             except TypeError as e:
-                raise TypeError(
-                    f'CODING ERROR: The object type for the default value of {key} in '
+                raise PypeItCodingError(
+                    f'The object type for the default value of {key} in '
                     f'{self.__class__.__name__} does not adhere to its definition!'
                 ) from e
             except ValueError as e:
-                raise ValueError(
-                    f'CODING ERROR: The default value for {key} in {self.__class__.__name__} is '
-                    'not one of the allowed options!'
+                raise PypeItCodingError(
+                    f'The default value for {key} in {self.__class__.__name__} is not one of the '
+                    'allowed options!'
                 ) from e
 
         # Now set all the user-defined values.
@@ -841,8 +841,8 @@ class ParSet:
             :class:`~pypeit.par.parset.ParSet`.
         """
         if cls.card_prefix is None:
-            raise ValueError(
-                f'CODING ERROR: The card_prefix attribute for {cls.__name__} has not been defined!'
+            raise PypeItCodingError(
+                f'The card_prefix attribute for {cls.__name__} has not been defined!'
             )
         return f'{cls.card_prefix.upper()}C'
     
@@ -865,8 +865,8 @@ class ParSet:
             :class:`~pypeit.par.parset.ParSet`.
         """
         if cls.card_prefix is None:
-            raise ValueError(
-                f'CODING ERROR: The card_prefix attribute for {cls.__name__} has not been defined!'
+            raise PypeItCodingError(
+                f'The card_prefix attribute for {cls.__name__} has not been defined!'
             )
         return f'{cls.card_prefix.upper()}D'
     
@@ -921,8 +921,8 @@ class ParSet:
             expected class.
         """
         if cls.card_prefix is None:
-            raise ValueError(
-                f'CODING ERROR: The card_prefix attribute for {cls.__name__} has not been defined!'
+            raise PypeItCodingError(
+                f'The card_prefix attribute for {cls.__name__} has not been defined!'
             )
         expected_cls = hdr.get(cls.class_header_card())
         if expected_cls is None:

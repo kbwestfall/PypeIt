@@ -14,6 +14,7 @@ import numpy as np
 
 from astropy import stats
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit.core import arc
 from pypeit.core import parse
@@ -621,7 +622,7 @@ class RawImage:
             self._bpm = None                            # This erases the current bpm attribute
             if self.bpm.shape != self.image.shape:      # This recreates it
                 # This should only happen because of a coding error, not a user error
-                raise PypeItError(f'CODING ERROR: From-scratch BPM has incorrect shape!')
+                raise PypeItCodingError('From-scratch BPM has incorrect shape!')
             # If the above was successful, the code can continue, but first warn
             # the user that the code ignored the provided bpm.
             log.warning(f'Bad-pixel mask has incorrect shape: found {bpm_shape}, expected '
@@ -790,8 +791,10 @@ class RawImage:
             log.warning('Spatial flexure shift already calculated.')
             return
         if self.nimg > 1:
-            raise PypeItError('CODING ERROR: Must use a single image (single detector or detector '
-                       'mosaic) to determine spatial flexure.')
+            raise PypeItCodingError(
+                'Must use a single image (single detector or detector mosaic) to determine '
+                'spatial flexure.'
+            )
 
         # get filename for QA
         basename = f'{io.remove_suffix(self.filename)}_{self.spectrograph.get_det_name(self.det)}'
@@ -858,8 +861,9 @@ class RawImage:
         if self.par['use_specillum'] and flatimages.pixelflat_spec_illum is None:
             raise PypeItError("Spectral illumination correction desired but not generated/provided.")
         if self.nimg > 1:
-            raise PypeItError('CODING ERROR: Can only apply flat field to a single image (single '
-                       'detector or detector mosaic).')
+            raise PypeItCodingError(
+                'Can only apply flat field to a single image (single detector or detector mosaic).'
+            )
 
         # Generate the illumination flat, as needed
         illum_flat = 1.0

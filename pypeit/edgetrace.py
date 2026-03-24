@@ -47,6 +47,7 @@ from astropy import table
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import PypeItBitMaskError
+from pypeit import PypeItCodingError
 from pypeit import utils
 from pypeit import sampling
 from pypeit import slittrace
@@ -1212,7 +1213,7 @@ class EdgeTraceSet(calibframe.CalibFrame):
         # Check if there should be any PCAs
         parsed_pcas = np.any(['PCA' in h for h in parsed_hdus]) 
         if d['pcatype'] is not None and not parsed_pcas:
-            raise PypeItError('CODING ERROR: Expect to parse PCA headers if pcatype is present.')
+            raise PypeItCodingError('Expect to parse PCA headers if pcatype is present.')
 
         # Instantiate the TracePCAs using the appropriate hdus.
         if d['pcatype'] is not None:
@@ -5206,7 +5207,7 @@ class EdgeTraceSet(calibframe.CalibFrame):
         if nadd < 2:
             # TODO: The code should not get here!  If it does, we need to
             # figure out why and fix it.
-            raise PypeItError('CODING ERROR: Order bracketing failed!')
+            raise PypeItCodingError('Order bracketing failed!')
         if nadd == 2:
             return None, None
         return add_left[1:-1], add_right[1:-1]

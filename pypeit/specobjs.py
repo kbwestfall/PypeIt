@@ -18,6 +18,7 @@ from astropy.table import Table
 from astropy.time import Time
 
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit import specobj
 from pypeit import io
@@ -1104,8 +1105,10 @@ class SpecObjs:
                 #exit()
             shdul = sobj.to_hdu()
             if len(shdul) not in [1, 2]:
-                raise PypeItError('CODING ERROR: SpecObj datamodel changed.  to_hdu should return 1 or 2 '
-                           'HDUs.  If returned, the 2nd one should be the detector/mosaic.')
+                raise PypeItCodingError(
+                    'SpecObj datamodel changed.  to_hdu should return 1 or 2 HDUs.  If returned, '
+                    'the 2nd one should be the detector/mosaic.'
+                )
             if len(shdul) == 2:
                 detector_hdus[sobj['DET']] = shdul[1]
                 shdu = [shdul[0]]
@@ -1113,7 +1116,7 @@ class SpecObjs:
                 shdu = shdul
 
             if len(shdu) != 1 or not isinstance(shdu[0], fits.hdu.table.BinTableHDU):
-                raise PypeItError('CODING ERROR: SpecObj datamodel changed.')
+                raise PypeItCodingError('SpecObj datamodel changed.')
 
             # Name
             shdu[0].name = sobj.NAME

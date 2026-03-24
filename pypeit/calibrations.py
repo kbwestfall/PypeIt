@@ -16,6 +16,7 @@ import yaml
 
 from pypeit import __version__
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit import alignframe
 from pypeit import flatfield
@@ -280,7 +281,7 @@ class Calibrations:
         # NOTE: This will raise an exception if the frametype is not valid!
         framematch.valid_frametype(frametype, raise_error=True)
         if not issubclass(frameclass, CalibFrame):
-            raise PypeItError(f'CODING ERROR: {frameclass} is not a subclass of CalibFrame.')
+            raise PypeItCodingError(f'{frameclass} is not a subclass of CalibFrame.')
 
         # Grab rows with relevant frames
         detname = self.spectrograph.get_det_name(self.det)
@@ -1600,16 +1601,20 @@ class Calibrations:
 
         # Iterate through each frame type and add the raw and processed
         # calibration frames
+
         for frametype, calib_classes in frame_calibrations.items():
             indx = fitstbl.find_frames(frametype) & in_grp
             if not any(indx):
                 continue
-            if not (all(fitstbl['calib'][indx] == fitstbl['calib'][indx][0]) or
-                    all([fitstbl['calib'][indx][0] in cc.split(',') for cc in fitstbl['calib'][indx]])):
-                raise PypeItError(f'CODING ERROR: All {frametype} frames in group {calib_ID} '
-                           'are not all associated with the same subset of calibration '
-                           'groups; calib for the first file is '
-                           f'{fitstbl["calib"][indx][0]}.')
+            if not (
+                all(fitstbl['calib'][indx] == fitstbl['calib'][indx][0]) or
+                all([fitstbl['calib'][indx][0] in cc.split(',') for cc in fitstbl['calib'][indx]])
+            ):
+                log.warning(
+                    f'All {frametype} frames in group {calib_ID} are not all associated with the '
+                    'same subset of calibration groups; calib for the first file is '
+                    f'{fitstbl["calib"][indx][0]}.'
+                )
             calib_key = CalibFrame.construct_calib_key(setup, fitstbl['calib'][indx][0], detname)
             asn[frametype] = {}
             asn[frametype]['raw'] = fitstbl.frame_paths(indx)

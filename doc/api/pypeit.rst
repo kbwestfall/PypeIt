@@ -44,7 +44,6 @@ Submodules
    pypeit.history
    pypeit.inputfiles
    pypeit.io
-   pypeit.loader
    pypeit.manual_extract
    pypeit.metadata
    pypeit.multislit_flexure
@@ -62,6 +61,7 @@ Submodules
    pypeit.spec2dobj
    pypeit.specobj
    pypeit.specobjs
+   pypeit.spectrumdm
    pypeit.telescopes
    pypeit.tracepca
    pypeit.utils

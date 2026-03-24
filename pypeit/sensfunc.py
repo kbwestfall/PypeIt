@@ -19,6 +19,7 @@ from astropy import table
 from pypeit import datamodel
 from pypeit import io
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit import specobjs
 from pypeit import specobj
@@ -427,8 +428,10 @@ class SensFunc(datamodel.DataContainer):
             # TODO: I added this neurotic check, just to make sure...
             if self.wave_splice is None or self.zeropoint_splice is None \
                     or self.throughput_splice is None:
-                raise PypeItError('CODING ERROR: Assumed if splice_multi_det is True, then the *_splice '
-                           'arrays have all been defined.  Found a case where this is not true!')
+                raise PypeItCodingError(
+                    'Assumed if splice_multi_det is True, then the *_splice arrays have all been '
+                    'defined.  Found a case where this is not true!'
+                )
             # Loop through this list of dictionaries
             for _d in d:
                 if list(_d.keys())[0] not in ['wave', 'zeropoint', 'throughput']:

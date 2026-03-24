@@ -20,7 +20,9 @@ from matplotlib import gridspec
 from IPython import embed
 
 from pypeit import log
-from pypeit import PypeItError, PypeItDataModelError
+from pypeit import PypeItCodingError
+from pypeit import PypeItDataModelError
+from pypeit import PypeItError
 from pypeit import utils
 from pypeit import bspline
 
@@ -2261,9 +2263,9 @@ def illum_profile_spectral(rawimg, waveimg, slits, slit_illum_ref_idx=0, smooth_
                 if (ii == 1) and (slits.spat_id[wvsrt[ss]] == slit_illum_ref_idx):
                     # This must be the first element of the loop by construction, but throw an error just in case
                     if ss != 0:
-                        raise PypeItError(
-                            "CODING ERROR - An error has occurred in the relative spectral "
-                            "illumination.\nPlease contact the developers."
+                        raise PypeItCodingError(
+                            "An error has occurred in the relative spectral "
+                            "illumination.  Please contact the developers."
                         )
                     tmp_cntr = cntr * spec_ref
                     tmp_arr = hist * utils.inverse(tmp_cntr)

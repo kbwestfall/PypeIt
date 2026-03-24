@@ -153,3 +153,85 @@ def test_resample():
     assert np.std(spec.flux[spec.gpm][:-1] - _spec.flux[_spec.gpm]) < 1e-4, 'fluxes too different'
     indx = (_spec.wave < spec.wave[0]) | (_spec.wave > spec.wave[-1])
     assert not np.any(indx & _spec.gpm), 'pixels outside original wavelength range should be masked'
+
+
+def test_list_init():
+
+    # Test empty instantiation
+    spec = spectrum.SpectrumList()
+    assert isinstance(spec, spectrum.SpectrumList), 'Wrong type'
+
+    # Test instantiation with an incorrect type
+    with pytest.raises(TypeError):
+        spectrum.SpectrumList(['test'])
+
+    # Test a valid instantiation
+    wave = np.linspace(4000., 6000., 2001, dtype=float)
+    flux = np.ones(wave.size, dtype=float)
+    spec = spectrum.SpectrumList([spectrum.Spectrum(wave, flux)])
+    assert np.array_equal(spec[0].wave, wave), 'Wavelengths should be identical'
+
+
+def test_list_basics():
+
+    wave = np.linspace(4000., 6000., 2001, dtype=float)
+    flux = np.ones(wave.size, dtype=float)
+    spec = spectrum.SpectrumList([spectrum.Spectrum(wave, flux)])
+
+    # Try getting a single item
+    s1 = spec[0]
+    assert isinstance(s1, spectrum.Spectrum), 'Selection of a single item should return a Spectrum'
+
+    # Try appending
+    spec += [s1.copy()]
+    assert len(spec) == 2, 'Should contain 2 spectra'
+    s2 = s1.copy()
+    s2.multiply(2.)
+    spec.append(s2.copy())
+    assert len(spec) == 3, 'Should contain 3 spectra'
+
+    # Try selection using a slice
+    sub = spec[:2]
+    assert isinstance(sub, spectrum.SpectrumList), 'Slice should return a SpectrumList'
+
+    # Try extending
+    spec += sub
+    assert isinstance(spec, spectrum.SpectrumList), \
+        'Appending a SpectrumList should yield another spectrum list'
+    assert len(spec) == 5, 'Should now contain 5 spectra'
+    spec.extend(sub)
+    assert isinstance(spec, spectrum.SpectrumList), \
+        'Appending a SpectrumList should yield another spectrum list'
+    assert len(spec) == 7, 'Should now contain 5 spectra'
+
+    # Try setting
+    spec[5] = s2
+    # This acts like a list; i.e., items of a list alter their original object
+    # and vice versa
+    assert spec[5] is s2, 'List element and Spectrum should point to the same object'
+    f = spec[5].flux[0]
+    s2.multiply(2.)
+    assert f == 2. and spec[5].flux[0] == 4., 'List element should have been altered'
+    s4 = s2.copy()
+    s2.multiply(1/2)
+    # Set multiple elements using a list
+    spec[1:3] = [s4, s4]
+    assert spec[1] is s4 and spec[2] is s4, 'Setting multiple elements did not work'
+    # Set multiple elements using a SpectrumList
+    spec[1:3] = spectrum.SpectrumList([s2, s4])
+    assert spec[1] is s2 and spec[2] is s4, 'Setting multiple elements did not work'
+
+
+def test_list_properties():
+
+    wave = np.linspace(4000., 6000., 2001, dtype=float)
+    flux = np.ones(wave.size, dtype=float)
+    spec = spectrum.SpectrumList([spectrum.Spectrum(wave, flux), spectrum.Spectrum(wave, 2*flux)])
+
+    assert spec.size == [flux.size, flux.size], 'Size is wrong'
+    assert spec.shape == [flux.shape, flux.shape], 'Shape is wrong'
+    assert spec.ndim == [flux.ndim, flux.ndim], 'N dim is wrong'
+
+    _spec = spec.copy()
+    assert isinstance(_spec, spectrum.SpectrumList), 'Copy is the wrong type'
+    assert len(spec) == len(_spec), 'Length should match'

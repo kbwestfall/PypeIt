@@ -14,6 +14,7 @@ import numpy as np
 from astropy.io import fits
 
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit import datamodel
 from pypeit import io
@@ -76,13 +77,15 @@ class CalibFrame(datamodel.DataContainer):
 
         """
         if self.calib_type is None:
-            raise PypeItError(f'CODING ERROR: Must define calib_type for {self.__class__.__name__}.')
+            raise PypeItCodingError(f'Must define calib_type for {self.__class__.__name__}.')
         if self.datamodel is None:
-            raise PypeItError(f'CODING ERROR: datamodel cannot be None for {self.__class__.__name__}.')
+            raise PypeItCodingError(f'Datamodel cannot be None for {self.__class__.__name__}.')
         for key in CalibFrame.datamodel.keys():
             if key not in self.keys():
-                raise PypeItError(f'CODING ERROR: datamodel for {self.__class__.__name__} must inherit '
-                           'all datamodel components from CalibFrame.datamodel.')
+                raise PypeItCodingError(
+                    f'Datamodel for {self.__class__.__name__} must inherit all datamodel '
+                    'components from CalibFrame.datamodel.'
+                )
 
     def set_paths(self, odir, setup, calib_id, detname):
         """
@@ -429,11 +432,14 @@ class CalibFrame(datamodel.DataContainer):
             otherwise the file name
         """
         if None in [cls.calib_type, cls.calib_file_format]:
-            raise PypeItError(f'CODING ERROR: {cls.__name__} does not have all '
-                       'the attributes needed to construct its filename.')
+            raise PypeItCodingError(
+                f'{cls.__name__} does not have all the attributes needed to construct its '
+                'filename.'
+            )
         if calib_key is None:
-            raise PypeItError('CODING ERROR: calib_key cannot be None when constructing the '
-                       f'{cls.__name__} file name.')
+            raise PypeItCodingError(
+                f'calib_key cannot be None when constructing the {cls.__name__} file name.'
+            )
         filename = f'{cls.calib_type}_{calib_key}.{cls.calib_file_format}'
         return filename if calib_dir is None else Path(calib_dir).absolute() / filename
 

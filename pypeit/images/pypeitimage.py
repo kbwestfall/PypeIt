@@ -12,6 +12,7 @@ import numpy as np
 from astropy.io import fits
 
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit.images.imagebitmask import ImageBitMaskArray
 from pypeit.images.detector_container import DetectorContainer
@@ -214,19 +215,19 @@ class PypeItImage(datamodel.DataContainer):
 
         if bpm is not None:
             if not np.issubdtype(bpm.dtype, np.bool_) and not np.issubdtype(bpm.dtype, bool):
-                raise PypeItError('CODING ERROR: bpm entry in PypeItImage must have boolean type')
+                raise PypeItCodingError('bpm entry in PypeItImage must have boolean type')
             if clean_mask:
                 self.update_mask('BPM', action='turn_off')
             self.update_mask('BPM', indx=bpm)
         if crmask is not None:
             if not np.issubdtype(crmask.dtype, np.bool_) and not np.issubdtype(crmask.dtype, bool):
-                raise PypeItError('CODING ERROR: crmask entry in PypeItImage must have boolean type')
+                raise PypeItCodingError('crmask entry in PypeItImage must have boolean type')
             if clean_mask:
                 self.update_mask('CR', action='turn_off')
             self.update_mask('CR', indx=crmask)
         if usermask is not None:
             if not np.issubdtype(usermask.dtype, np.bool_) and not np.issubdtype(usermask.dtype, bool):
-                raise PypeItError('CODING ERROR: usermask entry in PypeItImage must have boolean type')
+                raise PypeItCodingError('usermask entry in PypeItImage must have boolean type')
             if clean_mask:
                 self.update_mask('USER', action='turn_off')
             self.update_mask('USER', indx=crmask)
@@ -469,7 +470,7 @@ class PypeItImage(datamodel.DataContainer):
             return out
 
         # Should not get here
-        raise PypeItError('CODING ERROR: Bad logic in map_detector_value.')
+        raise PypeItCodingError('Bad logic in map_detector_value.')
 
     def build_mask(self, saturation=None, mincounts=None, slitmask=None, from_scratch=True):
         """

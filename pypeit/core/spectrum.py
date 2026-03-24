@@ -20,8 +20,11 @@ from pypeit import sampling
 from pypeit import utils
 from pypeit.core import fitting
 from pypeit.core import wavemask
+from pypeit.core.fixedtypelist import FixedTypeList
 
 
+# TODO: Change the orientation of 2D flux arrays so that the order is number of
+# spectra by number of pixels per spectrum.
 class Spectrum:
     r"""
     A light-weight container class for a spectrum.
@@ -790,3 +793,40 @@ def fit_spectrum_bspline_qa(
     fig.clear()
     pyplot.close(fig)
 
+
+class SpectrumList(FixedTypeList):
+    """
+    A container for a list of :class:`~pypeit.core.spectrum.Spectrum` objects.
+    """
+
+    list_type = Spectrum
+    """
+    The type for elements in instances of this list.
+    """
+
+    @property
+    def size(self):
+        """
+        The size of the flux array in each spectrum
+        """
+        return [s.flux.size for s in self]
+    
+    @property
+    def shape(self):
+        """
+        The shape of the flux array in each spectrum
+        """
+        return [s.flux.shape for s in self]
+    
+    @property
+    def ndim(self):
+        """
+        The dimensionality of the flux array in each spectrum
+        """
+        return [s.flux.ndim for s in self]
+    
+    def copy(self):
+        """
+        Return a copy of this instance.
+        """
+        return self.__class__([s.copy() for s in self])
