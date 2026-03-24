@@ -46,6 +46,13 @@ Under-the-hood Improvements
   :mod:`~pypeit.core.spatialprofile`.
 - Added a new class, :class:`~pypeit.par.funcpar.FuncPar` that ingests a
   function signature to create a parameter set
+- Adds :class:`~pypeit.core.fixedtypelist.FixedTypeList` to enable definitions
+  of lists where each element is forced to have a specific type.
+- Adds :class:`~pypeit.core.spectrum.SpectrumList` to manage lists of
+  :class:`~pypeit.core.spectrum.Spectrum` objects.
+- Adds :mod:`~pypeit.core.spectrumdm` to provide IO wrappers for 
+  :class:`~pypeit.core.spectrum.Spectrum` and
+  :class:`~pypeit.core.spectrum.SpectrumList` objects.
 
 Bug Fixes
 ---------
