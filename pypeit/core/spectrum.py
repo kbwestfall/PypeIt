@@ -470,51 +470,6 @@ class Spectrum:
         return Spectrum(self.wave, self.assoc[key], gpm=self.gpm if copy_gpm else None)
 
 
-def get_spectrum_list_meta(spec, key):
-    """
-    Provided one or more spectra, determine the relevant value for a metadata
-    keyword.
-
-    This is a convenience function to handle lists of
-    :class:`~pypeit.core.spectrum.Spectrum` objects.  A primary place it is used
-    is :func:`~pypeit.spectrographs.spectrograph.Spectrograph.tweak_standard`.
-
-    Parameters
-    ----------
-    spec : :class:`~pypeit.core.spectrum.Spectrum`, list
-        One or more spectra to evaluate.
-    key : str
-        The metadata keyword to use.
-
-    Returns
-    -------
-    object
-        The value of the metadata for the provided keyword.  If only one
-        spectrum is provided, this is the entry in its metadata dictionary,
-        or None if the provided keyword doesn't exist.  If a list of spectra
-        is provided, this is None unless the metadata are all the same for
-        every spectrum in the list; otherwise, this is the same as if only
-        the first spectrum object was passed to the function.  Beware that
-        the function uses :class:`numpy.ndarray.unique` to determine whether
-        or not the metadata values are all the same; this is risky for
-        floats but should perform well for strings and integers.
-    """
-    # Get the dispnames.  If they are all the same, use that to limit the
-    # wavelength range
-    if isinstance(spec, Spectrum):
-        return spec.meta.get(key, None)
-
-    value = np.unique([s.meta.get(key, None) for s in spec])
-    if None in value or len(value) > 1:
-        log.warning(
-            f'{key} not defined by spectrum metadata, or there are multiple spectra with '
-            f'different {key} values.'
-        )
-        return None
-
-    return value[0]
-
-
 def fit_spectrum_bspline(
     spec, bkspace=None, resolution=2700., nresln=20., region_mask=None, maxiter=35, upper=3.0,
     lower=3.0
@@ -830,3 +785,36 @@ class SpectrumList(FixedTypeList):
         Return a copy of this instance.
         """
         return self.__class__([s.copy() for s in self])
+
+    def get_global_meta(self, key):
+        """
+        Return the metadata for a given keyword that is valid for all spectra in the list.
+
+        This is a convenience function.  A primary place it is used is
+        :func:`~pypeit.spectrographs.spectrograph.Spectrograph.tweak_standard`.
+
+        Parameters
+        ----------
+        key : str
+            The metadata keyword to use.
+
+        Returns
+        -------
+        object
+            The value of the metadata for the provided keyword.  If the keyword
+            doesn't exist for a single spectrum or the value is different for
+            any spectra in the list, the returned value is None.  Otherwise, it
+            is the metadata value that is valid for all spectra in the list.
+            Beware that the function uses :class:`numpy.ndarray.unique` to
+            determine whether or not the metadata values are all the same; this
+            is risky for floats but should perform well for strings and
+            integers.
+        """
+        value = np.unique([s.meta.get(key, None) for s in self])
+        if None in value or len(value) > 1:
+            log.warning(
+                f'{key} not defined by spectrum metadata, or there are multiple spectra with '
+                f'different {key} values.'
+            )
+            return None
+        return value[0]

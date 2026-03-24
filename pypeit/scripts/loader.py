@@ -306,12 +306,7 @@ def load_standard(
 
     # Sort by wavelength
     srt = np.argsort(max([np.max(s.wave) for s in spec]), kind='stable')
-
-    embed()
-    exit()
-
-    # TODO: Fix this
-    spec = np.asarray(spec)[srt].tolist()
+    spec = spec[srt]
 
     # splice together also mosaic-reduced spectra that have been split
     splice_multi_det = len(_specfiles) > 1 or (len(dets) > 0 and np.unique(dets).size > 1)

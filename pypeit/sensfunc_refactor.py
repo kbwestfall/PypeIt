@@ -308,13 +308,13 @@ class SensFunc(datamodel.DataContainer):
         # sobjs.to_spectrum.
 
         # Exptime and airmass are part of the datamodel
-        self.exptime = spectrum.get_spectrum_list_meta(self.obs_spec, 'EXPTIME')
+        self.exptime = self.obs_spec.get_global_meta('EXPTIME')
         if self.exptime is None:
             log.warning(
                 'Exposure time for the standard star observation is not available!  This may '
                 'cause the code to fault.'
             )
-        self.airmass = spectrum.get_spectrum_list_meta(self.obs_spec, 'AIRMASS')
+        self.airmass = self.obs_spec.get_global_meta('AIRMASS')
         if self.airmass is None:
             log.warning(
                 'The airmass during the standard star observation is not available!  This may '
@@ -323,11 +323,11 @@ class SensFunc(datamodel.DataContainer):
 
         # If the user provided RA and DEC use those instead of what is in meta
         star_ra = (
-            spectrum.get_spectrum_list_meta(self.obs_spec, 'RA')
+            self.obs_spec.get_global_meta('RA')
             if self.par['star_ra'] is None else self.par['star_ra']
         )
         star_dec = (
-            spectrum.get_spectrum_list_meta(self.obs_spec, 'DEC')
+            self.obs_spec.get_global_meta('DEC')
             if self.par['star_dec'] is None else self.par['star_dec']
         )
         if star_ra is None or star_dec is None:
