@@ -27,6 +27,7 @@ Submodules
    pypeit.core.extract
    pypeit.core.findobj_skymask
    pypeit.core.fitting
+   pypeit.core.fixedtypelist
    pypeit.core.flat
    pypeit.core.flexure
    pypeit.core.flux_calib
