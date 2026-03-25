@@ -13,7 +13,6 @@ Obj Key            Obj Type  Array Type  Description
 ``mask``           ndarray   integer     Mask array (1=Good,0=Bad)                                                                                                                 
 ``obj_model``      ndarray   floating    Object model for tellurics                                                                                                                
 ``sigma``          ndarray   floating    One sigma noise array, equivalent to 1/sqrt(ivar) (matches units of flux)                                                                 
-``spect_meta``     dict                  header dict                                                                                                                               
 ``telluric``       ndarray   floating    Telluric model                                                                                                                            
 ``wave``           ndarray   floating    Wavelength array (angstroms in vacuum), weighted by pixel contributions                                                                   
 ``wave_grid_mid``  ndarray   floating    Wavelength (angstroms in vacuum) evaluated at the bin centers of a grid that is uniformly spaced in either lambda or log10-lambda/velocity

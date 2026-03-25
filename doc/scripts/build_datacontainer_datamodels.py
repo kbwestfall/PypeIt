@@ -45,10 +45,10 @@ def build_datamodel_tbl(obj):
         # Object Type
         data_table[i+1,1] = type_names(data_model[k]['otype'])
         # Array type
-        if 'atype' in data_model[k].keys():
-            data_table[i+1,2] = type_names(data_model[k]['atype'])
-        else:
+        if data_model[k]['atype'] is None:
             data_table[i+1,2] = ' '
+        else:
+            data_table[i+1,2] = type_names(data_model[k]['atype'])
         # Description
         data_table[i+1,3] = to_string(data_model[k]['descr'])
 

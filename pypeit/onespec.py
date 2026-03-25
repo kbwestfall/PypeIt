@@ -96,14 +96,6 @@ class OneSpec(DataContainer):
         'fluxed': define_datamodel_component(
             otype=bool, descr='Boolean indicating if the spectrum is fluxed.'
         ),
-        # TODO: Needs a better description.  What's in the dictionary?
-        # Why isn't this dictionary expanded into its elements?  I.e.,
-        # shouldn't each element of this dictionary be a component of
-        # the datamodel?
-        # TODO: This is now going to fault...
-        'spect_meta': define_datamodel_component(
-            otype=dict, descr='header dict'
-        )
     }
 
     internals = [

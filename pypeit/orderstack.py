@@ -90,10 +90,6 @@ class OrderStack(DataContainer):
         'fluxed': define_datamodel_component(
             otype=bool, descr='Boolean indicating if the spectrum is fluxed.'
         ),
-        # TODO: this is going to fault
-        'spect_meta': define_datamodel_component(
-            otype=dict, descr='header dict'
-        ), 
         'setup_name': define_datamodel_component(
             otype=str, descr='Echelle spectrograph setup'
         ),

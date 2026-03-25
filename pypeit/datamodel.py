@@ -1729,7 +1729,7 @@ def obj_is_data_container(obj):
 
 # TODO: Functionality needed to handle DataContainers that write multiple HDUs
 # is not yet tested!
-class ListDataContainer(fixedtypelist.FixedTypeList):
+class DataContainerList(fixedtypelist.FixedTypeList):
     """
     Impementation of an object that manages a list of
     :class:`~pypeit.datamodel.DataContainer` objects.
@@ -1764,7 +1764,7 @@ class ListDataContainer(fixedtypelist.FixedTypeList):
         # defined
         if self.list_type is not None and not issubclass(self.list_type, DataContainer):
             raise PypeItCodingError(
-                'Implementations of ListDataContainer require list elements that are subclasses '
+                'Implementations of DataContainerList require list elements that are subclasses '
                 f'of DataContainer; this is not true for {self.list_type.__name__}.'
             )
         # Instantiate the list
@@ -1784,7 +1784,7 @@ class ListDataContainer(fixedtypelist.FixedTypeList):
         Construct a primary header that is included with the primary
         HDU extension produced by :func:`to_hdu`.
 
-        This function adds the datamodel/ListDataContainer details to the header
+        This function adds the datamodel/DataContainerList details to the header
         and all the metadata in :attr:`meta` (if it is not None).
 
         Parameters
@@ -1936,7 +1936,7 @@ class ListDataContainer(fixedtypelist.FixedTypeList):
             raise TypeError(f'The expected input type is HDUList, not {type(hdu).__name__}.')
         if len(hdu) < 2:
             raise PypeItError('There should be at least 2 HDUs in the HDUList object.')
-        # Check the ListDataContainer subclass type
+        # Check the DataContainerList subclass type
         if 'DMODCLS' not in hdu[0].header:
             log.warning(
                 'DMODCLS not defined by primary header; unable to check if this is the correct '
@@ -2001,7 +2001,7 @@ class ListDataContainer(fixedtypelist.FixedTypeList):
         Instantiate the object from the specified fits file.
 
         This is largely a wrapper for
-        :func:`~pypeit.datamodel.ListDataContainer.from_hdu`.
+        :func:`~pypeit.datamodel.DataContainerList.from_hdu`.
         
         Parameters
         ----------
@@ -2011,7 +2011,7 @@ class ListDataContainer(fixedtypelist.FixedTypeList):
             Print informational messages
         kwargs : :obj:`dict`, optional
             Arguments passed directly to
-            :func:`~pypeit.datamodel.ListDataContainer.from_hdu`.
+            :func:`~pypeit.datamodel.DataContainerList.from_hdu`.
 
         Raises
         ------

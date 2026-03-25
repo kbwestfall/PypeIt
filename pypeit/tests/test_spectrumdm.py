@@ -114,21 +114,21 @@ def test_spectrum_list_container_basics():
     wave = np.linspace(4000., 6000., 2001, dtype=float)
     flux = np.ones(wave.size, dtype=float)
 
-    # Should fault because `SpectrumListContainer` should be a list of
+    # Should fault because `SpectrumContainerList` should be a list of
     # `SpectrumContainer` objects
     with pytest.raises(TypeError):
-        spec = spectrumdm.SpectrumListContainer([
+        spec = spectrumdm.SpectrumContainerList([
             spectrum.Spectrum(wave, flux), spectrum.Spectrum(wave, 2*flux)
         ])
 
     # Should fault because `meta` must be a dictionary
     with pytest.raises(TypeError):
-        spec = spectrumdm.SpectrumListContainer([
+        spec = spectrumdm.SpectrumContainerList([
             spectrumdm.SpectrumContainer(wave, flux), spectrumdm.SpectrumContainer(wave, 2*flux)
         ], meta='test')
 
     meta = {'int': 1, 'flt': 3.4, 'str': 'test', 'bool': True}
-    spec = spectrumdm.SpectrumListContainer([
+    spec = spectrumdm.SpectrumContainerList([
         spectrumdm.SpectrumContainer(wave, flux), spectrumdm.SpectrumContainer(wave, 2*flux)
     ], meta=meta)
 
@@ -149,13 +149,13 @@ def test_spectrum_list_container_io():
     flux = np.ones(wave.size, dtype=float)
     meta = {'int': 1, 'flt': 3.4, 'str': 'test', 'bool': True}
 
-    spec = spectrumdm.SpectrumListContainer([
+    spec = spectrumdm.SpectrumContainerList([
         spectrumdm.SpectrumContainer(wave, flux), spectrumdm.SpectrumContainer(wave, 2*flux)
     ], meta=meta)
 
     hdu = spec.to_hdu()
     assert len(hdu) == 3, 'There should be three HDUs, a Primary and one for each spectrum'
-    assert 'DMODCLS' in hdu[0].header and hdu[0].header['DMODCLS'] == 'SpectrumListContainer', \
+    assert 'DMODCLS' in hdu[0].header and hdu[0].header['DMODCLS'] == 'SpectrumContainerList', \
         'Bad datamodel keywords'
     assert 'DMODLEN' in hdu[0].header and hdu[0].header['DMODLEN'] == 2, \
         'Bad list length keywords'
@@ -181,12 +181,12 @@ def test_spectrum_list_container_io():
     hdu = fits.open(ofile)
     assert len(hdu) == 3, 'Should have 3 HDUs'
     assert np.array_equal(spec[0].wave, hdu[1].data['wave']), 'Wavelength vectors changed'
-    assert 'DMODCLS' in hdu[0].header and hdu[0].header['DMODCLS'] == 'SpectrumListContainer', \
+    assert 'DMODCLS' in hdu[0].header and hdu[0].header['DMODCLS'] == 'SpectrumContainerList', \
         'Bad primary datamodel keywords'
     assert 'DMODCLS' in hdu[1].header and hdu[1].header['DMODCLS'] == 'SpectrumContainer', \
         'Bad extension datamodel keywords'
 
-    _spec = spectrumdm.SpectrumListContainer.from_file(ofile)
+    _spec = spectrumdm.SpectrumContainerList.from_file(ofile)
     assert len(_spec) == len(spec), 'Number of elements in the list changed'
     assert np.array_equal(_spec[0].wave, spec[0].wave), 'Wavelength vector changed'
     assert np.array_equal(_spec[0].flux, spec[0].flux), 'Flux array changed'

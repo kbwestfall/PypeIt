@@ -12,6 +12,5 @@ Attribute        Type              Array Type         Description
 ``mask_stack``   `numpy.ndarray`_  `numpy.integer`_   Mask array of coadded orders (1=Good,0=Bad)                                                  
 ``setup_name``   str                                  Echelle spectrograph setup                                                                   
 ``sigma_stack``  `numpy.ndarray`_  `numpy.floating`_  One sigma noise array of coadded orders, equivalent to 1/sqrt(ivar) (matches units of flux)  
-``spect_meta``   dict                                 header dict                                                                                  
 ``wave_stack``   `numpy.ndarray`_  `numpy.floating`_  Wavelength array from individual, coadded orders                                             
 ===============  ================  =================  =============================================================================================

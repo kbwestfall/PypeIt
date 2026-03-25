@@ -9,6 +9,7 @@ import numpy as np
 from pypeit import log
 from pypeit.core import spectrum
 from pypeit.datamodel import DataContainer
+from pypeit.datamodel import DataContainerList
 from pypeit.datamodel import define_datamodel_component
 
 
@@ -191,9 +192,9 @@ class SpectrumContainer(DataContainer, spectrum.Spectrum):
         )
 
 
-class SpectrumListContainer(ListDataContainer):
+class SpectrumContainerList(DataContainerList):
     """
-    A subclass of :class:`~pypeit.datamodel.ListDataContainer` for lists of
+    A subclass of :class:`~pypeit.datamodel.DataContainerList` for lists of
     :class:`~pypeit.core.spectrumdm.SpectrumContainer` objects.
     """
 
