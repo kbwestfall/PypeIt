@@ -75,7 +75,14 @@ If the object type is a `numpy.ndarray`_, you should also provide the
 array. E.g., for a floating point array containing an image, your
 datamodel could be simply::
 
-    datamodel = {'image' : dict(otype=np.ndarray, atype=float, descr='My image')}
+    from pypeit.datamodel import DataContainer
+    from pypeit.datamodel import define_datamodel_component
+
+    datamodel = {
+        'image' : define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='My image'
+        )
+    }
 
 More advanced examples are given below.
 
@@ -89,21 +96,32 @@ holds two arrays and a metadata parameter::
     import inspect
 
     from pypeit.datamodel import DataContainer
+    from pypeit.datamodel import define_datamodel_component
 
     class BasicContainer(DataContainer):
-        datamodel = {'vec1': dict(otype=np.ndarray, atype=float, descr='Test'),
-                     'meta1': dict(otype=str, decr='test'),
-                     'arr1': dict(otype=np.ndarray, atype=float, descr='test')}
+        version = '1.0.0'
+        datamodel = {
+            'vec1': define_datamodel_component(
+                otype=np.ndarray, atype=float, descr='Test'
+            ),
+            'meta1': define_datamodel_component(
+                otype=str, descr='test'
+            ),
+            'arr1': define_datamodel_component(
+                otype=np.ndarray, atype=float, descr='test'
+            )
+        }
+        hdu_prefix = 'TST_'
 
         def __init__(self, vec1, meta1, arr1):
             # All arguments are passed directly to the container
             # instantiation
             args, _, _, values = inspect.getargvalues(inspect.currentframe())
-            super(BasicContainer, self).__init__({k: values[k] for k in args[1:]}) 
+            super().__init__({k: values[k] for k in args[1:]}) 
 
         def _bundle(self):
-            # Use the base class _bundle Specify the extension
-            return super(BasicContainer, self)._bundle(ext='basic')
+            # Specify the extension
+            return super()._bundle(ext='basic')
 
 With this implementation:
 
@@ -206,18 +224,30 @@ one and a bad one::
     from astropy.table import Table
 
     from pypeit.datamodel import DataContainer
+    from pypeit.datamodel import define_datamodel_component
 
     class GoodMixedTypeContainer(DataContainer):
-        datamodel = {'tab1': dict(otype=Table, descr='Test'),
-                     'tab1len': dict(otype=int, descr='test'),
-                     'arr1': dict(otype=np.ndarray, descr='test'),
-                     'arr1shape': dict(otype=tuple, descr='test')}
+        version = '1.0.0'
+        datamodel = {
+            'tab1': define_datamodel_component(
+                otype=Table, descr='Test'
+            ),
+            'tab1len': define_datamodel_component(
+                otype=int, descr='test'
+            ),
+            'arr1': define_datamodel_component(
+                otype=np.ndarray, atype=np.integer, descr='test'
+            ),
+            'arr1shape': define_datamodel_component(
+                otype=tuple, descr='test'
+            )
+        }
 
         def __init__(self, tab1, arr1):
             # All arguments are passed directly to the container
             # instantiation, but the list is incomplete
             args, _, _, values = inspect.getargvalues(inspect.currentframe())
-            super(GoodMixedTypeContainer, self).__init__({k: values[k] for k in args[1:]}) 
+            super().__init__({k: values[k] for k in args[1:]}) 
 
         def _validate(self):
             # Complete the instantiation
@@ -330,21 +360,43 @@ methods, but there are significant limitations to keep in made.
 Consider::
 
     class BadInitContainer(DataContainer):
-        datamodel = {'inp1': dict(otype=np.ndarray, descr='Test'),
-                     'inp2': dict(otype=np.ndarray, descr='test'),
-                     'out': dict(otype=np.ndarray, descr='test'),
-                     'alt': dict(otype=np.ndarray, descr='test')}
+        version = '1.0.0'
+        datamodel = {
+            'inp1': define_datamodel_component(
+                otype=np.ndarray, atype=float, descr='Test'
+            ),
+            'inp2': define_datamodel_component(
+                otype=np.ndarray, atype=float, descr='test'
+            ),
+            'out': define_datamodel_component(
+                otype=np.ndarray, atype=float, descr='test'
+            ),
+            'alt': define_datamodel_component(
+                otype=np.ndarray, atype=float, descr='test'
+            )
+        }
 
         def __init__(self, inp1, inp2, func='add'):
             args, _, _, values = inspect.getargvalues(inspect.currentframe())
-            super(BadInitContainer, self).__init__({k: values[k] for k in args[1:]}) 
+            super().__init__({k: values[k] for k in args[1:]}) 
 
 
     class DubiousInitContainer(DataContainer):
-        datamodel = {'inp1': dict(otype=np.ndarray, descr='Test'),
-                     'inp2': dict(otype=np.ndarray, descr='test'),
-                     'out': dict(otype=np.ndarray, descr='test'),
-                     'alt': dict(otype=np.ndarray, descr='test')}
+        version = '1.0.0'
+        datamodel = {
+            'inp1': define_datamodel_component(
+                otype=np.ndarray, atype=np.integer, descr='Test'
+            ),
+            'inp2': define_datamodel_component(
+                otype=np.ndarray, atype=np.integer, descr='test'
+            ),
+            'out': define_datamodel_component(
+                otype=np.ndarray, atype=np.integer, descr='test'
+            ),
+            'alt': define_datamodel_component(
+                otype=np.ndarray, atype=np.integer, descr='test'
+            )
+        }
 
         def __init__(self, inp1, inp2, func='add'):
             # If any of the arguments of the init method aren't actually
@@ -355,19 +407,17 @@ Consider::
             # I'm not sure you would ever want to do this because it can
             # lead to I/O issues; see the _validate function.
             self.func = func
-            super(DubiousInitContainer, self).__init__({'inp1': inp1, 'inp2':inp2})
+            super().__init__({'inp1': inp1, 'inp2':inp2})
 
-        def _validate(self):
+        def _init_internals(self):
             # Because func isn't part of the data model, it won't be part of
             # self if the object is instantiated from a file.  So I have to
             # add it here.  But I don't know what the value of the attribute
-            # was for the original object that was written to disk.  This is
-            # why you likely always want anything that's critical to setting
-            # up the object to be part of the datamodel so that it gets
-            # written to disk.  See the testing examples for when this will
-            # go haywire.
+            # was for the original object that was written to disk.
             if not hasattr(self, 'func'):
                 self.func = None
+
+        def _validate(self):
             if self.func not in [None, 'add', 'sub']:
                 raise ValueError('Function must be either \'add\' or \'sub\'.')
 
@@ -385,17 +435,30 @@ Consider::
 
 
     class ComplexInitContainer(DataContainer):
-        datamodel = {'inp1': dict(otype=np.ndarray, descr='Test'),
-                     'inp2': dict(otype=np.ndarray, descr='test'),
-                     'out': dict(otype=np.ndarray, descr='test'),
-                     'alt': dict(otype=np.ndarray, descr='test'),
-                     'func': dict(otype=str, descr='test')}
+        version = '1.0.0'
+        datamodel = {
+            'inp1': define_datamodel_component(
+                otype=np.ndarray, atype=float, descr='Test'
+            ),
+            'inp2': define_datamodel_component(
+                otype=np.ndarray, atype=float, descr='test'
+            ),
+            'out': define_datamodel_component(
+                otype=np.ndarray, atype=float, descr='test'
+            ),
+            'alt': define_datamodel_component(
+                otype=np.ndarray, atype=float, descr='test'
+            ),
+            'func': define_datamodel_component(
+                otype=str, descr='test'
+            )
+        }
 
         def __init__(self, inp1, inp2, func='add'):
             # Since func is part of the datamodel now, we can use the normal
             # two intantiation lines.
             args, _, _, values = inspect.getargvalues(inspect.currentframe())
-            super(ComplexInitContainer, self).__init__({k: values[k] for k in args[1:]}) 
+            super().__init__({k: values[k] for k in args[1:]}) 
 
         def _validate(self):
             if self.func not in ['add', 'sub']:
@@ -476,6 +539,62 @@ from pypeit import PypeItDataModelError
 from pypeit import PypeItError
 from pypeit.utils import eval_tuple
 from pypeit.core import fixedtypelist
+
+
+# NOTE: This is very similar to `pypeit.par.parset.set_parameter_definition`.
+def define_datamodel_component(otype=None, atype=None, descr=None):
+    """
+    Define a component of the datamodel dictionary for a
+    :class:`~pypeit.datamodel.DataContainer`.
+
+    This should be used by the ``datamodel`` attribute of
+    :class:`~pypeit.datamodel.DataContainer` subclasses to ensure each component
+    follows a known format.
+
+    Parameters
+    ----------
+    otype : type, tuple, optional
+        One or more types that are allowed for the component.  Although
+        syntactically optional, this is actually required to define the
+        component.  The optional syntax is used to to maintain clarity in the
+        definition.  This **cannot** be :obj:`dict`.
+    atype : type, tuple, optional
+        If the component is a :class:`numpy.ndarray`, this must be provided and
+        sets the allowed data types for the array.
+    descr : str, optional
+        A description of the component.  Similar to ``otype``, this is required.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the component specifications.
+
+    Raises
+    ------
+    ValueError
+        Raised if the parameter definition does not adhere to the rules outlined
+        in the ``dtype`` argument.
+    """
+    if otype is None:
+        raise ValueError('Must provide otype when defining a datamodel component.')
+    if descr is None:
+        raise ValueError('Must provide description when defining a datamodel component.')
+    if otype == np.ndarray and atype is None:
+        raise ValueError(
+            'When setting a datamodel component to a numpy array, you must provide the array '
+            'data type.'
+        )
+    elif atype is not None and otype != np.ndarray:
+        raise ValueError(
+            'When setting the atype of a datamodel component, its otype must be numpy.array.'
+        )
+    elif otype == dict:
+        raise TypeError('DataContainer currently does not support dictionary components.')
+    return {
+        'otype': otype,
+        'atype': atype,
+        'descr': descr
+    }
 
 # TODO: There are methods in, e.g., doc/scripts/build_specobj_rst.py that output
 # datamodels for specific datacontainers.  It would be useful if we had
@@ -609,7 +728,12 @@ class DataContainer:
     within the array. E.g., for a floating point array containing an
     image, your datamodel could be simply::
 
-        datamodel = {'image' : dict(otype=np.ndarray, atype=float, descr='My image')}
+        from pypeit.datamodel import define_datamodel_component
+        datamodel = {
+            'image' : define_datamodel_component(
+                otype=np.ndarray, atype=float, descr='My image'
+            )
+        }
 
     More advanced examples are given in the top-level module documentation.
 
@@ -1225,11 +1349,14 @@ class DataContainer:
             raise TypeError(f'Cannot assign object of type {type(value)} to {item}.\n'
                             f"Allowed type(s) are: {self.datamodel[item]['otype']}")
         # Array?
-        if 'atype' in self.datamodel[item].keys():
-            if not isinstance(value.flat[0], self.datamodel[item]['atype']):
-                raise TypeError(f'Cannot assign array with data type {type(value.flat[0])} to '
-                                f'{item} array.\nAllowed type(s) for the array are: '
-                                f"{self.datamodel[item]['atype']}")
+        if (
+            self.datamodel[item]['atype'] is not None
+            and not isinstance(value.flat[0], self.datamodel[item]['atype'])
+        ):
+            raise TypeError(
+                f'Cannot assign array with data type {type(value.flat[0])} to {item} array.  '
+                f'Allowed type(s) for the array are: {self.datamodel[item]["atype"]}'
+            )
         # Set
         self.__dict__[item] = value
 

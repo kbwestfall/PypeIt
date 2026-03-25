@@ -16,57 +16,83 @@ import numpy as np
 
 from astropy.table import Table
 
+from pypeit import PypeItCodingError
 from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.io import fits_open
 
 #-----------------------------------------------------------------------
 # Example derived classes
 class BasicContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'vec1': dict(otype=np.ndarray, atype=float, descr='Test'),
-                 'meta1': dict(otype=str, decr='test'),
-                 'arr1': dict(otype=np.ndarray, atype=float, descr='test')}
+    datamodel = {
+        'vec1': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='Test'
+        ),
+        'meta1': define_datamodel_component(
+            otype=str, descr='test'
+        ),
+        'arr1': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        )
+    }
     hdu_prefix = 'TST_'
 
     def __init__(self, vec1, meta1, arr1):
         # All arguments are passed directly to the container
         # instantiation
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(BasicContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
     def _bundle(self):
         # Specify the extension
-        return super(BasicContainer, self)._bundle(ext='basic')
+        return super()._bundle(ext='basic')
 
 
 class MixedCaseContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'lowercase': dict(otype=np.ndarray, atype=np.integer, descr='Test'),
-                 'UPPERCASE': dict(otype=int, decr='test'),
-                 'CamelCase': dict(otype=float, decr='test')}
+    datamodel = {
+        'lowercase': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Test'
+        ),
+        'UPPERCASE': define_datamodel_component(
+            otype=int, descr='test'
+        ),
+        'CamelCase': define_datamodel_component(
+            otype=float, descr='test'
+        )
+    }
 
     def __init__(self, lowercase, UPPERCASE, CamelCase):
         # All arguments are passed directly to the container
         # instantiation
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(MixedCaseContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
     def _bundle(self):
         # Specify the extension
-        return super(MixedCaseContainer, self)._bundle(ext='mixedcase')
+        return super()._bundle(ext='mixedcase')
 
 
 class ImageContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'img1': dict(otype=np.ndarray, atype=float, descr='Test'),
-                 'img1_key': dict(otype=str, descr='test'),
-                 'img2': dict(otype=np.ndarray, descr='test')}
+    datamodel = {
+        'img1': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='Test'
+        ),
+        'img1_key': define_datamodel_component(
+            otype=str, descr='test'
+        ),
+        'img2': define_datamodel_component(
+            otype=np.ndarray, atype=(int, np.integer), descr='test'
+        )
+    }
 
     def __init__(self, img1, img2, img1_key=None):
         # All arguments are passed directly to the container
         # instantiation
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(ImageContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
     def _bundle(self):
         # img1 and key are put in the first extension, img2 in the
@@ -76,16 +102,26 @@ class ImageContainer(DataContainer):
 
 class GoodTableContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'tab1': dict(otype=Table, descr='Test'),
-                 'tab1len': dict(otype=int, descr='test'),
-                 'tab2': dict(otype=Table, descr='test'),
-                 'tab2len': dict(otype=int, descr='test')}
+    datamodel = {
+        'tab1': define_datamodel_component(
+            otype=Table, descr='Test'
+        ),
+        'tab1len': define_datamodel_component(
+            otype=int, descr='test'
+        ),
+        'tab2': define_datamodel_component(
+            otype=Table, descr='test'
+        ),
+        'tab2len': define_datamodel_component(
+            otype=int, descr='test'
+        )
+    }
 
     def __init__(self, tab1, tab2):
         # All arguments are passed directly to the container
         # instantiation, but the list is incomplete
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(GoodTableContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
     def _validate(self):
         # Complete the instantiation
@@ -108,16 +144,26 @@ class BadTableContainer(GoodTableContainer):
 
 class GoodMixedTypeContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'tab1': dict(otype=Table, descr='Test'),
-                 'tab1len': dict(otype=int, descr='test'),
-                 'arr1': dict(otype=np.ndarray, atype=np.integer, descr='test'),
-                 'arr1shape': dict(otype=tuple, descr='test')}
+    datamodel = {
+        'tab1': define_datamodel_component(
+            otype=Table, descr='Test'
+        ),
+        'tab1len': define_datamodel_component(
+            otype=int, descr='test'
+        ),
+        'arr1': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='test'
+        ),
+        'arr1shape': define_datamodel_component(
+            otype=tuple, descr='test'
+        )
+    }
 
     def __init__(self, tab1, arr1):
         # All arguments are passed directly to the container
         # instantiation, but the list is incomplete
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(GoodMixedTypeContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
     def _validate(self):
         # Complete the instantiation
@@ -144,22 +190,42 @@ class BadMixedTypeContainer(GoodMixedTypeContainer):
 
 class BadInitContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'inp1': dict(otype=np.ndarray, descr='Test'),
-                 'inp2': dict(otype=np.ndarray, descr='test'),
-                 'out': dict(otype=np.ndarray, descr='test'),
-                 'alt': dict(otype=np.ndarray, descr='test')}
+    datamodel = {
+        'inp1': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='Test'
+        ),
+        'inp2': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        ),
+        'out': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        ),
+        'alt': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        )
+    }
 
     def __init__(self, inp1, inp2, func='add'):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(BadInitContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
 
 class DubiousInitContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'inp1': dict(otype=np.ndarray, atype=np.integer, descr='Test'),
-                 'inp2': dict(otype=np.ndarray, atype=np.integer, descr='test'),
-                 'out': dict(otype=np.ndarray, atype=np.integer, descr='test'),
-                 'alt': dict(otype=np.ndarray, atype=np.integer, descr='test')}
+    datamodel = {
+        'inp1': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Test'
+        ),
+        'inp2': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='test'
+        ),
+        'out': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='test'
+        ),
+        'alt': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='test'
+        )
+    }
 
     def __init__(self, inp1, inp2, func='add'):
         # If any of the arguments of the init method aren't actually
@@ -170,7 +236,7 @@ class DubiousInitContainer(DataContainer):
         # I'm not sure you would ever want to do this because it can
         # lead to I/O issues; see the _validate function.
         self.func = func
-        super(DubiousInitContainer, self).__init__({'inp1': inp1, 'inp2':inp2})
+        super().__init__({'inp1': inp1, 'inp2':inp2})
 
     def _init_internals(self):
         # Because func isn't part of the data model, it won't be part of
@@ -199,17 +265,29 @@ class DubiousInitContainer(DataContainer):
 
 class ComplexInitContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'inp1': dict(otype=np.ndarray, descr='Test'),
-                 'inp2': dict(otype=np.ndarray, descr='test'),
-                 'out': dict(otype=np.ndarray, descr='test'),
-                 'alt': dict(otype=np.ndarray, descr='test'),
-                 'func': dict(otype=str, descr='test')}
+    datamodel = {
+        'inp1': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='Test'
+        ),
+        'inp2': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        ),
+        'out': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        ),
+        'alt': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        ),
+        'func': define_datamodel_component(
+            otype=str, descr='test'
+        )
+    }
 
     def __init__(self, inp1, inp2, func='add'):
         # Since func is part of the datamodel now, we can use the normal
         # two intantiation lines.
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(ComplexInitContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
     def _validate(self):
         if self.func not in ['add', 'sub']:
@@ -457,12 +535,12 @@ def test_init():
 
     # Instantiation of the BadInitContainer should fail because the init
     # arguments all need to be part of the datamodel for it to work.
-    with pytest.raises(AttributeError):
+    with pytest.raises(PypeItCodingError):
         data = BadInitContainer(x,y)
 
     # This instantiation is fine because DubiousInitContainer handles
     # the fact that some of the arguments to __init__ are not part of
-    # the datamodel.
+    # the 
     data = DubiousInitContainer(x,y)
     assert np.array_equal(data.out, data.inp1+data.inp2), 'Bad init'
     # One component of the data model wasn't instantiated, so it will be
@@ -517,7 +595,7 @@ def test_init():
         assert _data.func == DubiousInitContainer(x,y).func
 
     # This is solved by adding func to the datamodel
-    data = ComplexInitContainer(x,y)
+    data = ComplexInitContainer(x.astype(float),y.astype(float))
     _data = ComplexInitContainer.from_hdu(data.to_hdu(add_primary=True))
     assert data.func == _data.func, 'Bad read'
 

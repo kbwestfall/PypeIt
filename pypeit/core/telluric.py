@@ -25,13 +25,14 @@ from pypeit.core.wavecal import wvutils
 from pypeit.core import coadd
 from pypeit.core import fitting
 from pypeit.core import standard
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit import specobjs
 from pypeit import utils
 from pypeit import onespec
 
 from pypeit.spectrographs.util import load_spectrograph
 
-from pypeit import datamodel
 
 ##############################
 #  Telluric model functions  #
@@ -1945,7 +1946,7 @@ def poly_telluric(spec1dfile, telgridfile, telloutfile, outfile, z_obj=0.0, func
 
 
 
-class Telluric(datamodel.DataContainer):
+class Telluric(DataContainer):
     r"""
     Simultaneously fit model object and telluric spectra to an observed
     spectrum.
@@ -2230,108 +2231,156 @@ class Telluric(datamodel.DataContainer):
     version = '1.0.0'
     """Datamodel version."""
 
-    datamodel = {'telgrid': dict(otype=str,
-                                 descr='File containing PCA components or grid of '
-                                       'HITRAN atmosphere models'),
-                 'teltype': dict(otype=str,
-                                 descr='Type of telluric model, `pca` or `grid`'),
-                 'tell_npca': dict(otype=int,
-                                    descr='Number of telluric PCA components used'),
-                 'std_src': dict(otype=str, descr='Name of the standard source'),
-                 'std_name': dict(otype=str, descr='Type of standard source'),
-                 'std_cal': dict(otype=str,
-                                 descr='File name (or shorthand) with the standard flux data'),
-                 'func': dict(otype=str, descr='Polynomial function used'),
-                 'pca_file': dict(otype=str, descr='Name of the QSO PCA file'),
-                 'tol': dict(otype=float,
-                             descr='Relative tolerance for converage of the differential '
-                                   'evolution optimization.'),
-                 'popsize': dict(otype=int,
-                                 descr='A multiplier for setting the total population size for '
-                                       'the differential evolution optimization.'),
-                 'recombination': dict(otype=float,
-                                       descr='The recombination constant for the differential '
-                                             'evolution optimization. Should be in the range '
-                                             '[0, 1].'),
-                 'polish': dict(otype=bool,
-                                descr='Perform a final optimization to tweak the best solution; '
-                                      'see scipy.optimize.differential_evolution.'),
-                 'airmass': dict(otype=float, descr='Airmass of the observation'),
-                 'exptime': dict(otype=float, descr='Exposure time (s)'),
-                 # TODO: Is it possible/useful to force the coordinates to always be floats
-                 'std_ra': dict(otype=float, descr='RA of the standard source'),
-                 'std_dec': dict(otype=float, descr='DEC of the standard source'),
-                 'npca': dict(otype=int, descr='Number of PCA components'),
-                 'z_qso': dict(otype=float, descr='Redshift of the QSO'),
-                 'delta_zqso': dict(otype=float,
-                                    descr='Allowed range for the QSO redshift about z_qso'),
-                 'lbound_norm': dict(otype=float, descr='Flux normalization lower bound'),
-                 'ubound_norm': dict(otype=float, descr='Flux normalization upper bound'),
-                 'tell_norm_thresh': dict(otype=float, descr='??'),
-                 'model': dict(otype=table.Table, descr='Table with the best-fitting model data')}
+    datamodel = {
+        'telgrid': define_datamodel_component(
+            otype=str,
+            descr='File containing PCA components or grid of HITRAN atmosphere models'
+        ),
+        'teltype': define_datamodel_component(
+            otype=str, descr='Type of telluric model, `pca` or `grid`'
+        ),
+        'tell_npca': define_datamodel_component(
+            otype=int, descr='Number of telluric PCA components used'
+        ),
+        'std_src': define_datamodel_component(
+            otype=str, descr='Name of the standard source'
+        ),
+        'std_name': define_datamodel_component(
+            otype=str, descr='Type of standard source'
+        ),
+        'std_cal': define_datamodel_component(
+            otype=str, descr='File name (or shorthand) with the standard flux data'
+        ),
+        'func': define_datamodel_component(
+            otype=str, descr='Polynomial function used'
+        ),
+        'pca_file': define_datamodel_component(
+            otype=str, descr='Name of the QSO PCA file'
+        ),
+        'tol': define_datamodel_component(
+            otype=float,
+            descr='Relative tolerance for converage of the differential evolution optimization.'
+        ),
+        'popsize': define_datamodel_component(
+            otype=int,
+            descr=(
+                'A multiplier for setting the total population size for the differential '
+                'evolution optimization.'
+            )
+        ),
+        'recombination': define_datamodel_component(
+            otype=float,
+            descr=(
+                'The recombination constant for the differential evolution optimization. Should '
+                'be in the range [0, 1].'
+            )
+        ),
+        'polish': define_datamodel_component(
+            otype=bool,
+            descr=(
+                'Perform a final optimization to tweak the best solution; see '
+                ':class:`scipy.optimize.differential_evolution`.'
+            )
+        ),
+        'airmass': define_datamodel_component(
+            otype=float, descr='Airmass of the observation'
+        ),
+        'exptime': define_datamodel_component(
+            otype=float, descr='Exposure time (s)'
+        ),
+        # TODO: Is it possible/useful to force the coordinates to always be floats
+        'std_ra': define_datamodel_component(
+            otype=float, descr='RA of the standard source'
+        ),
+        'std_dec': define_datamodel_component(
+            otype=float, descr='DEC of the standard source'
+        ),
+        'npca': define_datamodel_component(
+            otype=int, descr='Number of PCA components'
+        ),
+        'z_qso': define_datamodel_component(
+            otype=float, descr='Redshift of the QSO'
+        ),
+        'delta_zqso': define_datamodel_component(
+            otype=float, descr='Allowed range for the QSO redshift about z_qso'
+        ),
+        'lbound_norm': define_datamodel_component(
+            otype=float, descr='Flux normalization lower bound'
+        ),
+        'ubound_norm': define_datamodel_component(
+            otype=float, descr='Flux normalization upper bound'
+        ),
+        'tell_norm_thresh': define_datamodel_component(
+            otype=float, descr='??'
+        ),
+        'model': define_datamodel_component(
+            otype=table.Table, descr='Table with the best-fitting model data'
+        ),
+    }
     """DataContainer datamodel."""
 
-    internals = ['obj_params',
-                 'init_obj_model',
-                 'airmass_guess',
-                 'eval_obj_model',
-                 'ech_orders',
-                 'sn_clip',
-                 'resln_frac_bounds',
-                 'pix_shift_bounds',
-                 'pix_stretch_bounds',
-                 'maxiter',
-                 'sticky',
-                 'lower',
-                 'upper',
-                 'seed',
-                 'rng',
-                 'ballsize',
-                 'diff_evol_maxiter',
-                 'disp',
-                 'sensfunc',
-                 'debug',
+    internals = [
+        'obj_params',
+        'init_obj_model',
+        'airmass_guess',
+        'eval_obj_model',
+        'ech_orders',
+        'sn_clip',
+        'resln_frac_bounds',
+        'pix_shift_bounds',
+        'pix_stretch_bounds',
+        'maxiter',
+        'sticky',
+        'lower',
+        'upper',
+        'seed',
+        'rng',
+        'ballsize',
+        'diff_evol_maxiter',
+        'disp',
+        'sensfunc',
+        'debug',
 
-                 'wave_in_arr',
-                 'flux_in_arr',
-                 'ivar_in_arr',
-                 'mask_in_arr',
-                 'log10_blaze_func_in_arr',
-                 'nspec_in',
-                 'norders',
+        'wave_in_arr',
+        'flux_in_arr',
+        'ivar_in_arr',
+        'mask_in_arr',
+        'log10_blaze_func_in_arr',
+        'nspec_in',
+        'norders',
 
-                 'tell_dict',
+        'tell_dict',
         
-                 'wave_grid',
-                 'ngrid',
-                 'resln_guess',
+        'wave_grid',
+        'ngrid',
+        'resln_guess',
 
-                 'tell_guess',
-                 'bounds_tell',
+        'tell_guess',
+        'bounds_tell',
 
-                 'flux_arr',
-                 'ivar_arr',
-                 'mask_arr',
-                 'log10_blaze_func_arr',
-                 'wave_mask_arr',
+        'flux_arr',
+        'ivar_arr',
+        'mask_arr',
+        'log10_blaze_func_arr',
+        'wave_mask_arr',
 
-                 'ind_lower',
-                 'ind_upper',
-                 'srt_order_tell',
+        'ind_lower',
+        'ind_upper',
+        'srt_order_tell',
 
-                 'obj_dict_list',
-                 'bounds_obj_list',
-                 'bounds_list',
-                 'arg_dict_list',
-                 'max_ntheta_obj',
+        'obj_dict_list',
+        'bounds_obj_list',
+        'bounds_list',
+        'arg_dict_list',
+        'max_ntheta_obj',
 
-                 'result_list',
-                 'outmask_list',
-                 'obj_model_list',
-                 'tellmodel_list',
-                 'theta_obj_list',
-                 'theta_tell_list',
-                ]
+        'result_list',
+        'outmask_list',
+        'obj_model_list',
+        'tellmodel_list',
+        'theta_obj_list',
+        'theta_tell_list',
+    ]
 
     @staticmethod
     def empty_model_table(norders, nspec, tell_npca=5, n_obj_par=0):

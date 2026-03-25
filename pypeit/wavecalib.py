@@ -23,7 +23,8 @@ from pypeit.core import fitting
 from pypeit.core import parse
 from pypeit.core.wavecal import autoid, wv_fitting, wvutils
 from pypeit.core.gui.identify import Identify
-from pypeit import datamodel
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit import calibframe
 from pypeit.core.wavecal import echelle
 from pypeit.par import pypeitpar
@@ -56,33 +57,55 @@ class WaveCalib(calibframe.CalibFrame):
 
     internals = calibframe.CalibFrame.internals + ['_par']
 
-    datamodel = {'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name'),
-                 'wv_fits': dict(otype=np.ndarray, atype=wv_fitting.WaveFit,
-                                 descr='WaveFit to each 1D wavelength solution'),
-                 #'wv_fit2d': dict(otype=fitting.PypeItFit,
-                 #                 descr='2D wavelength solution (echelle)'),
-                 'wv_fit2d': dict(otype=np.ndarray, atype=fitting.PypeItFit,
-                                  descr='2D wavelength solution(s) (echelle).  If there is more '
-                                        'than one, they must be aligned to the separate detectors '
-                                        'analyzed'),
-                 'fwhm_map': dict(otype=np.ndarray, atype=fitting.PypeItFit,
-                                  descr='A fit that determines the spectral FWHM at every location of every slit'),
-                 'det_img': dict(otype=np.ndarray, atype=np.integer,
-                                  descr='Detector image which indicates which pixel in the mosaic '
-                                        'corresponds to which detector; used occasionally by '
-                                        'echelle.  Currently only saved if ech_separate_2d=True'),
-                 'arc_spectra': dict(otype=np.ndarray, atype=np.floating,
-                                     descr='2D array: 1D extracted spectra, slit by slit '
-                                           '(nspec, nslits)'),
-                 'nslits': dict(otype=int,
-                                descr='Total number of slits.  This can include masked slits'),
-                 'spat_ids': dict(otype=np.ndarray, atype=np.integer, 
-                                  descr='Slit spat_ids. Named distinctly from that in WaveFit '),
-                 'ech_orders': dict(otype=np.ndarray, atype=np.integer,
-                                   descr='Echelle order ID numbers.  Defined only for echelle.'),
-                 'strpar': dict(otype=str, descr='Parameters as a string'),
-                 'lamps': dict(otype=str,
-                               descr='List of arc lamps used for the wavelength calibration')}
+    datamodel = {
+        'PYP_SPEC': define_datamodel_component(
+            otype=str, descr='PypeIt spectrograph name'
+        ),
+        'wv_fits': define_datamodel_component(
+            otype=np.ndarray, atype=wv_fitting.WaveFit,
+            descr='WaveFit to each 1D wavelength solution'
+        ),
+        'wv_fit2d': define_datamodel_component(
+            otype=np.ndarray, atype=fitting.PypeItFit,
+            descr=(
+                '2D wavelength solution(s) (echelle).  If there is more than one, they must be '
+                'aligned to the separate detectors analyzed'
+            )
+        ),
+        'fwhm_map': define_datamodel_component(
+            otype=np.ndarray, atype=fitting.PypeItFit,
+            descr='A fit that determines the spectral FWHM at every location of every slit'
+        ),
+        'det_img': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer,
+            descr=(
+                'Detector image which indicates which pixel in the mosaic corresponds to which '
+                'detector; used occasionally by echelle.  Currently only saved if '
+                'ech_separate_2d=True'
+            )
+        ),
+        'arc_spectra': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='2D array: 1D extracted spectra, slit by slit (nspec, nslits)'
+        ),
+        'nslits': define_datamodel_component(
+            otype=int, descr='Total number of slits.  This can include masked slits'
+        ),
+        'spat_ids': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer,
+            descr='Slit spat_ids. Named distinctly from that in WaveFit '
+        ),
+        'ech_orders': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer,
+            descr='Echelle order ID numbers.  Defined only for echelle.'
+        ),
+        'strpar': define_datamodel_component(
+            otype=str, descr='Parameters as a string'
+        ),
+        'lamps': define_datamodel_component(
+            otype=str, descr='List of arc lamps used for the wavelength calibration'
+        ),
+    }
 
     def __init__(self, wv_fits=None, fwhm_map=None, nslits=None, spat_ids=None, ech_orders=None,
                  PYP_SPEC=None, strpar=None, wv_fit2d=None, arc_spectra=None, lamps=None,
@@ -91,7 +114,7 @@ class WaveCalib(calibframe.CalibFrame):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        datamodel.DataContainer.__init__(self, d=d)
+        DataContainer.__init__(self, d=d)
 
         self._par = (
             None if strpar is None

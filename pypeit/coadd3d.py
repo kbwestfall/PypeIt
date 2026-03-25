@@ -5,7 +5,6 @@ Module containing routines used by 3D datacubes.
 """
 
 import os
-import copy
 import inspect
 
 from astropy import wcs, units
@@ -16,15 +15,18 @@ import numpy as np
 
 from pypeit import log
 from pypeit import PypeItError
-from pypeit import alignframe, datamodel, flatfield, io, sensfunc, spec2dobj, utils
+from pypeit import alignframe, flatfield, io, sensfunc, spec2dobj, utils
 from pypeit.core.flexure import calculate_image_phase
 from pypeit.core import datacube, extract, flux_calib, parse
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.spectrographs.util import load_spectrograph
+
 
 from IPython import embed
 
 
-class DataCube(datamodel.DataContainer):
+class DataCube(DataContainer):
     """
     DataContainer to hold the products of a datacube
 
@@ -70,32 +72,51 @@ class DataCube(datamodel.DataContainer):
     """
     version = '1.2.0'
 
-    datamodel = {'flux': dict(otype=np.ndarray, atype=np.floating,
-                              descr='Flux datacube in units of counts/s/Ang/arcsec^2 or '
-                                    '10^-17 erg/s/cm^2/Ang/arcsec^2'),
-                 'sig': dict(otype=np.ndarray, atype=np.floating,
-                             descr='Error datacube (matches units of flux)'),
-                 'bpm': dict(otype=np.ndarray, atype=np.uint8,
-                             descr='Bad pixel mask of the datacube (0=good, 1=bad)'),
-                 'wave': dict(otype=np.ndarray, atype=np.floating,
-                              descr='Wavelength of each slice in the spectral direction. '
-                                    'The units are Angstroms.'),
-                 'blaze_wave': dict(otype=np.ndarray, atype=np.floating,
-                                    descr='Wavelength array of the spectral blaze function'),
-                 'blaze_spec': dict(otype=np.ndarray, atype=np.floating,
-                                    descr='The spectral blaze function'),
-                 'sensfunc': dict(otype=np.ndarray, atype=np.floating,
-                                  descr='Sensitivity function 10^-17 erg/(counts/cm^2)'),
-                 'PYP_SPEC': dict(otype=str, descr='PypeIt: Spectrograph name'),
-                 'fluxed': dict(otype=bool, descr='Boolean indicating if the datacube is fluxed.')}
+    datamodel = {
+        'flux': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr=('Flux datacube in units of counts/s/Ang/arcsec^2 or '
+                '10^-17 erg/s/cm^2/Ang/arcsec^2'
+            ),
+        ),
+        'sig': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+                    descr='Error datacube (matches units of flux)'),
+        'bpm': define_datamodel_component(
+            otype=np.ndarray, atype=np.uint8,
+            descr='Bad pixel mask of the datacube (0=good, 1=bad)'
+        ),
+        'wave': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Wavelength of each slice in the spectral direction.  The units are Angstroms.'
+        ),
+        'blaze_wave': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Wavelength array of the spectral blaze function'
+        ),
+        'blaze_spec': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='The spectral blaze function'
+        ),
+        'sensfunc': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Sensitivity function 10^-17 erg/(counts/cm^2)'
+        ),
+        'PYP_SPEC': define_datamodel_component(
+            otype=str, descr='PypeIt: Spectrograph name'
+        ),
+        'fluxed': define_datamodel_component(
+            otype=bool, descr='Boolean indicating if the datacube is fluxed.'
+        )
+    }
 
-    internals = ['head0',
-                 'filename',
-                 'spectrograph',
-                 'spect_meta',
-                 '_ivar',  # This is set internally, and should be accessed with self.ivar
-                 '_wcs'
-                ]
+    internals = [
+        'head0',
+        'filename',
+        'spectrograph',
+        'spect_meta',
+        '_ivar',  # This is set internally, and should be accessed with self.ivar
+        '_wcs'
+    ]
 
     def __init__(self, flux, sig, bpm, wave, PYP_SPEC, blaze_wave, blaze_spec, sensfunc=None,
                  fluxed=None):
@@ -103,7 +124,7 @@ class DataCube(datamodel.DataContainer):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         _d = dict([(k, values[k]) for k in args[1:]])
         # Setup the DataContainer
-        datamodel.DataContainer.__init__(self, d=_d)
+        DataContainer.__init__(self, d=_d)
         # Initialise the internals
         self._ivar = None
         self._wcs = None

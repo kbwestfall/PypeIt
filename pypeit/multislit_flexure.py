@@ -18,6 +18,7 @@ from pypeit import log
 from pypeit import specobjs
 from pypeit.core import fitting
 from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.mosaic import Mosaic
 
@@ -133,48 +134,84 @@ class MultiSlitFlexure(DataContainer):
     # Set the version of this class
     version = '1.1.0'
 
-    datamodel = {'s1dfile': dict(otype=str, descr='spec1d filename'), 
-                 'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name'),
-                 'ndet': dict(otype=int, descr='Number of detectors per spectrum'),
-                 'nslits': dict(otype=int, descr='Number of slits'),
-                 'is_msc': dict(otype=np.ndarray, atype=(int, np.integer),
-                                descr='Flag that the "det" is the mosaic ID (ndet, nslits)'),
-                 'det': dict(otype=np.ndarray, atype=(int, np.integer),
-                             descr='Integer identifiers for the detector or mosaic (ndet, nslits)'),
-                 'SN': dict(otype=np.ndarray, atype=np.floating, descr='S/N (ndet, nslits)'),
-                 'slitid': dict(otype=np.ndarray, atype=np.floating, descr='Slit ID (nslits)'),
-                 'mn_wv': dict(otype=np.ndarray, atype=np.floating,
-                               descr='Mininum wavelength of the slit [Ang] (nslits)'),
-                 'indiv_fit_slope': dict(otype=np.ndarray, atype=np.floating,
-                                         descr='Fits to each slit individually (nslits)'),
-                 'indiv_fit_b': dict(otype=np.ndarray, atype=np.floating,
-                                     descr='Same as above but for b (nslits)'),
-                 'indiv_fit_los': dict(otype=np.ndarray, atype=np.floating,
-                                       descr='Same as above but for line width (nslits)'),
-                 'fit_slope': dict(otype=np.ndarray, atype=np.floating,
-                                   descr='Fitted slope (nslits)'),
-                 'fit_b': dict(otype=np.ndarray, atype=np.floating,
-                               descr='Fitted b value(nslits)'),
-                 'fit_los': dict(otype=np.ndarray, atype=np.floating,
-                                 descr='Fitted line width(nslits)'),
-                 'resid_sky': dict(otype=np.ndarray, atype=np.floating,
-                                   descr='Residuals of flexure model on sky lines (nslits)'),
-                 'objra': dict(otype=np.ndarray, atype=np.floating, descr='Object RA (nslits)'),
-                 'objdec': dict(otype=np.ndarray, atype=np.floating, descr='Object DEC (nslits)'),
-                 'maskdef_id': dict(otype=np.ndarray, atype=np.integer, descr='Mask ID (nslits)'),
-                 'rms_arc': dict(otype=np.ndarray, atype=np.floating,
-                                 descr='RMS of fit (ndet, nslits)')}
+    datamodel = {
+        's1dfile': define_datamodel_component(
+            otype=str, descr='spec1d filename'
+        ), 
+        'PYP_SPEC': define_datamodel_component(
+            otype=str, descr='PypeIt spectrograph name'
+        ),
+        'ndet': define_datamodel_component(
+            otype=int, descr='Number of detectors per spectrum'
+        ),
+        'nslits': define_datamodel_component(
+            otype=int, descr='Number of slits'
+        ),
+        'is_msc': define_datamodel_component(
+            otype=np.ndarray, atype=(int, np.integer),
+            descr='Flag that the "det" is the mosaic ID (ndet, nslits)'
+        ),
+        'det': define_datamodel_component(
+            otype=np.ndarray, atype=(int, np.integer),
+            descr='Integer identifiers for the detector or mosaic (ndet, nslits)'
+        ),
+        'SN': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='S/N (ndet, nslits)'
+        ),
+        'slitid': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Slit ID (nslits)'
+        ),
+        'mn_wv': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Mininum wavelength of the slit [Ang] (nslits)'
+        ),
+        'indiv_fit_slope': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Fits to each slit individually (nslits)'
+        ),
+        'indiv_fit_b': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Same as above but for b (nslits)'
+        ),
+        'indiv_fit_los': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Same as above but for line width (nslits)'
+        ),
+        'fit_slope': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Fitted slope (nslits)'
+        ),
+        'fit_b': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Fitted b value(nslits)'
+        ),
+        'fit_los': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Fitted line width(nslits)'
+        ),
+        'resid_sky': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Residuals of flexure model on sky lines (nslits)'
+        ),
+        'objra': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Object RA (nslits)'
+        ),
+        'objdec': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Object DEC (nslits)'
+        ),
+        'maskdef_id': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Mask ID (nslits)'
+        ),
+        'rms_arc': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='RMS of fit (ndet, nslits)'
+        )
+    }
 
-    internals = ['flex_par',        # Parameters (FlexurePar)
-                 'spectrograph',    # spectrograph
-                 'specobjs',        # SpecObjs object
-                 'sobj_idx',        # (ndet, nslits); Index to specobjs (tuple of arrays)
-                 'sky_table',       # Sky line table
-                 # 2D models
-                 'pmodel_m',
-                 'pmodel_b',
-                 'pmodel_l'
-                ]
+    internals = [
+        'flex_par',        # Parameters (FlexurePar)
+        'spectrograph',    # spectrograph
+        'specobjs',        # SpecObjs object
+        'sobj_idx',        # (ndet, nslits); Index to specobjs (tuple of arrays)
+        'sky_table',       # Sky line table
+        # 2D models
+        'pmodel_m',
+        'pmodel_b',
+        'pmodel_l'
+    ]
 
     def __init__(self, s1dfile=None, PYP_SPEC=None, nslits=None, det=None, 
                  SN=None, slitid=None, mn_wv=None, fit_slope=None, fit_b=None,

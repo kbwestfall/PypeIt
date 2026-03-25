@@ -22,6 +22,7 @@ from pypeit.core import trace
 from pypeit.core import pca
 from pypeit.core.fitting import PypeItFit
 from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 
 # TODO: This is even more general than a "trace" PCA. Rename to
 # "VectorPCA"?
@@ -70,43 +71,71 @@ class TracePCA(DataContainer):
     version = '1.1.0'
     """Datamodel version."""
 
-    datamodel = {'reference_row': dict(otype=(int, np.integer),
-                                       descr='The row (spectral position) used as the reference ' \
-                                             'coordinate system for the PCA.'),
-                 'trace_coo': dict(otype=np.ndarray, atype=(float,np.floating),
-                                   descr='Trace coordinates.  Shape must be '
-                                         r':math:`(N_{\rm spec},N_{\rm trace})`.'),
-                 'nspec': dict(otype=int,
-                               descr='Number of pixels in the image spectral direction.'),
-                 'ntrace': dict(otype=int, descr='Number of traces used to construct the PCA.'),
-                 'input_npca': dict(otype=int,
-                                    descr='Requested number of PCA components if provided.'),
-                 'npca': dict(otype=int, descr='Number of PCA components used.'),
-                 'input_pcav': dict(otype=(float,np.floating),
-                                    descr='Requested variance accounted for by PCA decomposition.'),
-                 'pca_coeffs': dict(otype=np.ndarray, atype=(float,np.floating),
-                                    descr=r'PCA component coefficients. If the PCA decomposition '
-                                          r'used :math:`N_{\rm comp}` components for '
-                                          r':math:`N_{\rm vec}` vectors, the shape of this array '
-                                          r'must be :math:`(N_{\rm vec}, N_{\rm comp})`. The '
-                                          r'array can be 1D with shape :math:`(N_{\rm vec},)` if '
-                                          r'there was only one PCA component.'),
-                 'pca_components': dict(otype=np.ndarray, atype=(float,np.floating),
-                                        descr=r'Vectors with the PCA components.  Shape must be '
-                                              r':math:`(N_{\rm comp}, N_{\rm spec})`.'),
-                 'pca_mean': dict(otype=np.ndarray, atype=(float,np.floating),
-                                  descr=r'The mean offset of the PCA decomposotion for each '
-                                        r' spectral pixel. Shape is :math:`(N_{\rm spec},)`.'),
-                 'pca_coeffs_model': dict(otype=np.ndarray, atype=PypeItFit,
-                                          descr='An array of PypeItFit objects, one per PCA '
-                                                'component, that models the trend of the PCA '
-                                                'component coefficients with the reference '
-                                                'coordinate of each vector.  These models are '
-                                                r'used by :func:`predict` to model the expected '
-                                                'coefficients at a new reference coordinate.')}
+    datamodel = {
+        'reference_row': define_datamodel_component(
+            otype=(int, np.integer),
+            descr=(
+                'The row (spectral position) used as the reference coordinate system for the PCA.'
+            )
+        ),
+        'trace_coo': define_datamodel_component(
+            otype=np.ndarray, atype=(float,np.floating),
+            descr=r'Trace coordinates.  Shape must be :math:`(N_{\rm spec},N_{\rm trace})`.'
+        ),
+        'nspec': define_datamodel_component(
+            otype=int, descr='Number of pixels in the image spectral direction.'
+        ),
+        'ntrace': define_datamodel_component(
+            otype=int, descr='Number of traces used to construct the PCA.'
+        ),
+        'input_npca': define_datamodel_component(
+            otype=int, descr='Requested number of PCA components if provided.'
+        ),
+        'npca': define_datamodel_component(
+            otype=int, descr='Number of PCA components used.'
+        ),
+        'input_pcav': define_datamodel_component(
+            otype=(float,np.floating),
+            descr='Requested variance accounted for by PCA decomposition.'
+        ),
+        'pca_coeffs': define_datamodel_component(
+            otype=np.ndarray, atype=(float,np.floating),
+            descr=(
+                r'PCA component coefficients. If the PCA decomposition used :math:`N_{\rm comp}` '
+                r'components for :math:`N_{\rm vec}` vectors, the shape of this array must be '
+                r':math:`(N_{\rm vec}, N_{\rm comp})`. The array can be 1D with shape '
+                r':math:`(N_{\rm vec},)` if there was only one PCA component.'
+            )
+        ),
+        'pca_components': define_datamodel_component(
+            otype=np.ndarray, atype=(float,np.floating),
+            descr=(
+                'Vectors with the PCA components.  Shape must be '
+                r':math:`(N_{\rm comp}, N_{\rm spec})`.'
+            )
+        ),
+        'pca_mean': define_datamodel_component(
+            otype=np.ndarray, atype=(float,np.floating),
+            descr=(
+                'The mean offset of the PCA decomposotion for each spectral pixel. Shape is '
+                r':math:`(N_{\rm spec},)`.'
+            )
+        ),
+        'pca_coeffs_model': define_datamodel_component(
+            otype=np.ndarray, atype=PypeItFit,
+            descr=(
+                'An array of PypeItFit objects, one per PCA component, that models the trend of '
+                'the PCA component coefficients with the reference coordinate of each vector.  '
+                'These models are used by :func:`predict` to model the expected coefficients at a '
+                'new reference coordinate.'
+            )
+        ),
+    }
     """Object datamodel."""
 
-    internals = ['is_empty']
+    internals = [
+        'is_empty',
+    ]
 
     # TODO: Add a show method that plots the pca coefficients and the
     # current fit, if there is one

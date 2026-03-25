@@ -6,12 +6,13 @@ from astropy.io import fits
 from IPython import embed
 import numpy as np
 
-from pypeit import datamodel
 from pypeit import log
 from pypeit.core import spectrum
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 
 
-class SpectrumContainer(datamodel.DataContainer, spectrum.Spectrum):
+class SpectrumContainer(DataContainer, spectrum.Spectrum):
     """
     A :class:`~pypeit.datamodel.DataContainer` object that holds data for a
     single spectrum.
@@ -36,10 +37,18 @@ class SpectrumContainer(datamodel.DataContainer, spectrum.Spectrum):
     """
 
     datamodel = {
-        'wave' : dict(otype=np.ndarray, atype=np.floating, descr='Wavelength array'),
-        'flux' : dict(otype=np.ndarray, atype=np.floating, descr='Flux array'),
-        'ivar' : dict(otype=np.ndarray, atype=np.floating, descr='Inverse variance in flux'),
-        'gpm' : dict(otype=np.ndarray, atype=(bool, np.bool), descr='Good-pixel mask'),
+        'wave' : define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Wavelength array'
+        ),
+        'flux' : define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Flux array'
+        ),
+        'ivar' : define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Inverse variance in flux'
+        ),
+        'gpm' : define_datamodel_component(
+            otype=np.ndarray, atype=(bool, np.bool), descr='Good-pixel mask'
+        ),
     }
     """
     Components of the data model and their type.  This should essentially match
@@ -48,7 +57,8 @@ class SpectrumContainer(datamodel.DataContainer, spectrum.Spectrum):
     """
 
     internals = [
-        'name', 'meta'
+        'name',
+        'meta'
     ]
     """
     Internals that are not part of the data model.  Note the metadata dictionary held by 
@@ -63,7 +73,7 @@ class SpectrumContainer(datamodel.DataContainer, spectrum.Spectrum):
     """
 
     def __init__(self, *args, name=None, **kwargs):
-        datamodel.DataContainer.__init__(self)
+        DataContainer.__init__(self)
         self.name = name
         spectrum.Spectrum.__init__(self, *args, **kwargs)
 
@@ -181,7 +191,7 @@ class SpectrumContainer(datamodel.DataContainer, spectrum.Spectrum):
         )
 
 
-class SpectrumListContainer(datamodel.ListDataContainer):
+class SpectrumListContainer(ListDataContainer):
     """
     A subclass of :class:`~pypeit.datamodel.ListDataContainer` for lists of
     :class:`~pypeit.core.spectrumdm.SpectrumContainer` objects.
