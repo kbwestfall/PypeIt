@@ -540,6 +540,9 @@ class SensFunc(datamodel.DataContainer):
         # Compute the sensitivity function
         self.compute_zeropoint()
 
+        embed()
+        exit()
+
         # Regrid the sensitivity function to:
         #   - Extrapolate the wavelength range so that it can be applied to
         #     observations with modestly different spectral range

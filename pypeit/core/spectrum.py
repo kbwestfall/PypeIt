@@ -100,12 +100,7 @@ class Spectrum:
         
         self.assoc = {}
         for key, arr in assoc.items():
-            _arr = np.asarray(arr).copy()
-            if _arr.shape != self.flux.shape:
-                raise PypeItError(
-                    f'Associated data array {key} does not match the shape of the flux array.'
-                )
-            self.assoc[key] = _arr
+            self.add_assoc(key, arr)
 
     @property
     def npix(self):
@@ -438,6 +433,49 @@ class Spectrum:
             r.outx, r.outy.T, ivar=ivar, gpm=r.outf.T > pixel_fraction_threshold, meta=self.meta,
         )
 
+    def add_assoc(self, key, arr, overwrite=False):
+        """
+        Add a flux-associated array.
+
+        .. important::
+
+            This method should be used to add arrays to the :attr:`assoc`
+            dictionary to ensure that the associated array correctly matches the
+            spectrum.
+
+        Parameters
+        ----------
+        key : str
+            Name for the array in the :attr:`assoc` dictionary.
+        arr : :class:`numpy.ndarray`
+            The array to include.
+        overwrite : bool, optional
+            If the item already exists in the :attr:`assoc` dictionary,
+            overwrite it.
+
+        Raises
+        ------
+        KeyError
+            Raised if the dictionary already has the associated keyword and
+            ``overwrite`` is False.
+        PypeItError
+            Raised if the size of the array does not match the :attr:`flux`
+            array.
+        """
+        if self.assoc is None:
+            self.assoc = {}
+        if key in self.assoc and not overwrite:
+            raise KeyError(
+                f'Spectrum associated array dictionary already has an entry for {key}.  Set '
+                'overwrite=True to replace it.'
+            )
+        _arr = np.asarray(arr).copy()
+        if _arr.shape != self.flux.shape:
+            raise PypeItError(
+                f'Associated data array {key} does not match the shape of the flux array.'
+            )
+        self.assoc[key] = _arr
+
     def assoc_spectrum(self, key, copy_gpm=False):
         """
         Construct a Spectrum object from one of the associated arrays.
@@ -459,6 +497,13 @@ class Spectrum:
         :class:`~pypeit.core.spectrum.Spectrum`
             A spectrum where the main flux array is the selected associated
             array.
+
+        Raises
+        ------
+        PypeItError
+            Raised if :attr:`assoc` is None.
+        KeyError
+            Raised if the :attr:`assoc` dictionary does not include ``key``.
         """
         if self.assoc is None:
             raise PypeItError('This Spectrum has no associated data arrays.')
