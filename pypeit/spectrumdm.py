@@ -204,3 +204,8 @@ class SpectrumContainerList(DataContainerList):
     """
 
     version = '1.0.0'
+    """
+    Version number
+    """
+
+    # NOTE: This class does not define any global metadata

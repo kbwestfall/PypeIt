@@ -2248,14 +2248,16 @@ class DataContainerList(fixedtypelist.FixedTypeList):
                 **kwargs
             )]
 
-        # Find any metadata
+        if cls.metadatamodel is None:
+            return cls(dcs)
+
+        # Find metadata
         meta = {}
         for i in read_hdu:
             for key in cls.metadatamodel.keys():
                 if key.upper() in _hdu[i].header:
                     meta[key] = _hdu[i].header[key.upper()]
 
-        # Instantiate and return
         return cls(dcs, **meta)
 
     @classmethod
