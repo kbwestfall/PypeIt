@@ -18,13 +18,14 @@ from pypeit.images.imagebitmask import ImageBitMaskArray
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.mosaic import Mosaic
 from pypeit.core import procimg
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.display import display
-from pypeit import datamodel
 from pypeit.calibframe import CalibFrame
 from pypeit import utils
 
 
-class PypeItImage(datamodel.DataContainer):
+class PypeItImage(DataContainer):
     r"""
     Container class for processed PypeIt images and associated data.
 
@@ -99,53 +100,95 @@ class PypeItImage(datamodel.DataContainer):
     version = '1.3.1'
     """Datamodel version number"""
 
-    datamodel = {'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name'),
-                 'image': dict(otype=np.ndarray, atype=np.floating, descr='Primary image data'),
-                 'ivar': dict(otype=np.ndarray, atype=np.floating,
-                              descr='Inverse variance image'),
-                 'nimg': dict(otype=np.ndarray, atype=np.integer,
-                              descr='If a combination of multiple images, this is the number of '
-                                    'images that contributed to each pixel'),
-                 'amp_img': dict(otype=np.ndarray, atype=np.integer,
-                                 descr='Provides the amplifier that contributed to each pixel.  '
-                                       'If this is a detector mosaic, this must be used in '
-                                       'combination with ``det_img`` to select pixels for a '
-                                       'given detector amplifier.'),
-                 'det_img': dict(otype=np.ndarray, atype=np.integer,
-                                 descr='If a detector mosaic, this image provides the detector '
-                                       'that contributed to each pixel.'),
-                 'rn2img': dict(otype=np.ndarray, atype=np.floating,
-                                descr='Read noise squared image'),
-                 'base_var': dict(otype=np.ndarray, atype=np.floating,
-                                  descr='Base-level image variance, excluding count shot-noise'),
-                 'img_scale': dict(otype=np.ndarray, atype=np.floating,
-                                   descr='Image count scaling applied (e.g., 1/flat-field)'),
-                 'fullmask': dict(otype=ImageBitMaskArray, descr='Image mask'),
-                 'detector': dict(otype=(DetectorContainer, Mosaic),
-                                  descr='The detector (see :class:`~pypeit.images.detector_container.DetectorContainer`) '
-                                        'or mosaic (see :class:`~pypeit.images.mosaic.Mosaic`) '
-                                        'parameters'),
-                 'units': dict(otype=str, descr='(Unscaled) Pixel units (e- or ADU)'),
-                 # TODO: Consider forcing exptime to be a float.
-                 'exptime': dict(otype=(int, float), descr='Effective exposure time (s)'),
-                 'noise_floor': dict(otype=float, descr='Noise floor included in variance'),
-                 'shot_noise': dict(otype=bool, descr='Shot-noise included in variance'),
-                 'spat_flexure': dict(otype=float,
-                                      descr='Shift, in spatial pixels, between this image '
-                                            'and SlitTrace'), 
-                 'filename': dict(otype=str, descr='Filename for the image'),
-                 'rel_scaleImg': dict(otype=np.ndarray, atype=np.floating,
-                                  descr='Image used to apply a relative scaling to the science '
-                                        'image to correct its spectral illumination. Currently '
-                                        'only used for IFU reductions. This is calculated and '
-                                        'updated during object finding.'),
-                 'flex_shift': dict(otype=np.ndarray, atype=np.floating,
-                                    descr='Array of global spectral shifts (pixels) of the '
-                                          'wavelength array at the center of each slit to '
-                                          'correct for spectral flexure. This is calculated '
-                                          'using the sky spectrum, therefore, updated during '
-                                          'object finding/extraction.')
-                 }
+    datamodel = {
+        'PYP_SPEC': define_datamodel_component(
+            otype=str, descr='PypeIt spectrograph name'
+        ),
+        'image': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Primary image data'
+        ),
+        'ivar': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Inverse variance image'
+        ),
+        'nimg': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer,
+            descr=(
+                'If a combination of multiple images, this is the number of images that '
+                'contributed to each pixel'
+            )
+        ),
+        'amp_img': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer,
+            descr=(
+                'Provides the amplifier that contributed to each pixel.  If this is a detector '
+                'mosaic, this must be used in combination with ``det_img`` to select pixels for a '
+                'given detector amplifier.'
+            )
+        ),
+        'det_img': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer,
+            descr=(
+                'If a detector mosaic, this image provides the detector that contributed to each '
+                'pixel.'
+            )
+        ),
+        'rn2img': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Read noise squared image'
+        ),
+        'base_var': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Base-level image variance, excluding count shot-noise'
+        ),
+        'img_scale': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Image count scaling applied (e.g., 1/flat-field)'
+        ),
+        'fullmask': define_datamodel_component(
+            otype=ImageBitMaskArray, descr='Image mask'
+        ),
+        'detector': define_datamodel_component(
+            otype=(DetectorContainer, Mosaic),
+            descr=(
+                'The detector (see :class:`~pypeit.images.detector_container.DetectorContainer`) '
+                'or mosaic (see :class:`~pypeit.images.mosaic.Mosaic`) parameters'
+            )
+        ),
+        'units': define_datamodel_component(
+            otype=str, descr='(Unscaled) Pixel units (e- or ADU)'
+        ),
+        # TODO: Consider forcing exptime to be a float.
+        'exptime': define_datamodel_component(
+            otype=(int, float), descr='Effective exposure time (s)'
+        ),
+        'noise_floor': define_datamodel_component(
+            otype=float, descr='Noise floor included in variance'
+        ),
+        'shot_noise': define_datamodel_component(
+            otype=bool, descr='Shot-noise included in variance'
+        ),
+        'spat_flexure': define_datamodel_component(
+            otype=float, descr='Shift, in spatial pixels, between this image and SlitTrace'
+        ),
+        'filename': define_datamodel_component(
+            otype=str, descr='Filename for the image'
+        ),
+        'rel_scaleImg': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr=(
+                'Image used to apply a relative scaling to the science image to correct its '
+                'spectral illumination. Currently only used for IFU reductions. This is '
+                'calculated and updated during object finding.'
+            )
+        ),
+        'flex_shift': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr=(
+                'Array of global spectral shifts (pixels) of the wavelength array at the center '
+                'of each slit to correct for spectral flexure. This is calculated using the sky '
+                'spectrum, therefore, updated during object finding/extraction.'
+            )
+        ),
+    }
     """Data model components."""
 
     internals = ['process_steps', 'files', 'rawheadlist']
@@ -253,7 +296,7 @@ class PypeItImage(datamodel.DataContainer):
                 continue
             # Array?
             if self.datamodel[key]['otype'] == np.ndarray \
-                    or isinstance(self[key], datamodel.DataContainer):
+                    or isinstance(self[key], DataContainer):
                 d.append({key : self[key]})
             else: # Add to header of the primary image
                 d[0][key] = self[key]

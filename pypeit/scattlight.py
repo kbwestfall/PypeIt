@@ -12,8 +12,9 @@ from IPython import embed
 import numpy as np
 
 from pypeit import log
-from pypeit import datamodel
 from pypeit import calibframe
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.display import display
 from pypeit.core import scattlight
 from pypeit.images.buildimage import ScatteredLightImage
@@ -43,21 +44,45 @@ class ScatteredLight(calibframe.CalibFrame):
     """
 
     # Define the data model
-    datamodel = {'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name'),
-                 'pypeline': dict(otype=str, descr='PypeIt pypeline name'),
-                 'detname': dict(otype=str, descr='Identifier for detector or mosaic'),
-                 'nspec': dict(otype=int, descr='Number of pixels in the image spectral direction.'),
-                 'nspat': dict(otype=int, descr='Number of pixels in the image spatial direction.'),
-                 'binning': dict(otype=str, descr='Binning in PypeIt orientation (not the original)'),
-                 'pad': dict(otype=int, descr='Integer number of pixels to mask beyond the slit edges'),
-                 'scattlight_raw': dict(otype=np.ndarray, atype=np.floating,
-                                  descr='Image used to construct the edge traces; see '
-                                        ':class:`~pypeit.images.buildimage.ScatteredLightImage` and '
-                                        ':class:`~pypeit.images.pypeitimage.PypeItImage`.'),
-                 'scattlight_model': dict(otype=np.ndarray, atype=np.floating,
-                                          descr='Model of the scattered light in scattlight_raw'),
-                 'scattlight_param': dict(otype=np.ndarray, atype=np.floating,
-                                          descr='Model parameters that define the scattered light model')}
+    datamodel = {
+        'PYP_SPEC': define_datamodel_component(
+            otype=str, descr='PypeIt spectrograph name'
+        ),
+        'pypeline': define_datamodel_component(
+            otype=str, descr='PypeIt pypeline name'
+        ),
+        'detname': define_datamodel_component(
+            otype=str, descr='Identifier for detector or mosaic'
+        ),
+        'nspec': define_datamodel_component(
+            otype=int, descr='Number of pixels in the image spectral direction.'
+        ),
+        'nspat': define_datamodel_component(
+            otype=int, descr='Number of pixels in the image spatial direction.'
+        ),
+        'binning': define_datamodel_component(
+            otype=str, descr='Binning in PypeIt orientation (not the original)'
+        ),
+        'pad': define_datamodel_component(
+            otype=int, descr='Integer number of pixels to mask beyond the slit edges'
+        ),
+        'scattlight_raw': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr=(
+                'Image used to construct the edge traces; see '
+                ':class:`~pypeit.images.buildimage.ScatteredLightImage` and '
+                ':class:`~pypeit.images.pypeitimage.PypeItImage`.'
+            )
+        ),
+        'scattlight_model': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Model of the scattered light in scattlight_raw'
+        ),
+        'scattlight_param': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Model parameters that define the scattered light model'
+        )
+    }
     """Provides the class data model."""
 
     # TODO: Allow tweaked edges to be arguments?
@@ -73,7 +98,7 @@ class ScatteredLight(calibframe.CalibFrame):
         # contain self.
         # TODO: Does it matter if the calling function passes the
         # keyword arguments in a different order? No.
-        datamodel.DataContainer.__init__(self, d=_d)
+        DataContainer.__init__(self, d=_d)
 
     def _validate(self):
         """

@@ -16,6 +16,7 @@ import numpy as np
 from astropy.io import fits
 
 from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.bitmask import BitMask
 from pypeit import log
 from pypeit import PypeItBitMaskError
@@ -43,7 +44,11 @@ class BitMaskArray(DataContainer):
     DataContainer version.  Must be defined by the subclass.
     """
 
-    datamodel = {'mask': dict(otype=np.ndarray, atype=np.integer, descr='Bitmask values')}
+    datamodel = {
+        'mask': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Bitmask values'
+        ),
+    }
     """
     Datamodel is simple, containing only the mask array.
     """

@@ -11,13 +11,13 @@ from IPython import embed
 
 import numpy as np
 
-from pypeit import utils
-from pypeit import datamodel
 from pypeit import io
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.spectrographs.util import load_spectrograph
 
 
-class OrderStack(datamodel.DataContainer):
+class OrderStack(DataContainer):
     """
     Class to handle the coadded array of orders from a single setup of an Echelle spectrum.
 
@@ -55,29 +55,53 @@ class OrderStack(datamodel.DataContainer):
     Current datamodel version number.
     """
 
-    datamodel = {'wave_stack': dict(otype=np.ndarray, atype=np.floating,
-                              descr='Wavelength array from individual, coadded orders'),
-                 'flux_stack': dict(otype=np.ndarray, atype=np.floating,
-                              descr='Flux array from coadded orders, in units of counts/s or 10^-17 erg/s/cm^2/Ang; '
-                                    'see ``fluxed``'),
-                 'ivar_stack': dict(otype=np.ndarray, atype=np.floating,
-                              descr='Inverse variance array of coadded orders (matches units of flux)'),
-                 'sigma_stack': dict(otype=np.ndarray, atype=np.floating,
-                              descr='One sigma noise array of coadded orders, equivalent to 1/sqrt(ivar) (matches units of flux)'),
-                 'mask_stack': dict(otype=np.ndarray, atype=np.integer,
-                              descr='Mask array of coadded orders (1=Good,0=Bad)'),
-                 'PYP_SPEC': dict(otype=str, descr='``PypeIt`` spectrograph designation'),
-                 'ext_mode': dict(otype=str, descr='Extraction mode (options: BOX, OPT)'),
-                 'fluxed': dict(otype=bool, descr='Boolean indicating if the spectrum is fluxed.'),
-                 'spect_meta': dict(otype=dict, descr='header dict'), 
-                 'setup_name': dict(otype=str, descr='Echelle spectrograph setup'),
-                 }
+    datamodel = {
+        'wave_stack': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Wavelength array from individual, coadded orders'
+        ),
+        'flux_stack': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr=(
+                'Flux array from coadded orders, in units of counts/s or 10^-17 erg/s/cm^2/Ang; '
+                'see ``fluxed``'
+            )
+        ),
+        'ivar_stack': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Inverse variance array of coadded orders (matches units of flux)'
+        ),
+        'sigma_stack': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr=(
+                'One sigma noise array of coadded orders, equivalent to 1/sqrt(ivar) (matches '
+                'units of flux)'
+            )
+        ),
+        'mask_stack': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Mask array of coadded orders (1=Good,0=Bad)'
+        ),
+        'PYP_SPEC': define_datamodel_component(
+            otype=str, descr='``PypeIt`` spectrograph designation'
+        ),
+        'ext_mode': define_datamodel_component(
+            otype=str, descr='Extraction mode (options: BOX, OPT)'
+        ),
+        'fluxed': define_datamodel_component(
+            otype=bool, descr='Boolean indicating if the spectrum is fluxed.'
+        ),
+        'setup_name': define_datamodel_component(
+            otype=str, descr='Echelle spectrograph setup'
+        ),
+    }
 
-    internals = ['head0',
-                 'filename',
-                 'spectrograph',
-                 'spect_meta',
-                 'history']
+    internals = [
+        'head0',
+        'filename',
+        'spectrograph',
+        'spect_meta',
+        'history'
+    ]
 
     """
     Defines the current datmodel.
@@ -89,7 +113,7 @@ class OrderStack(datamodel.DataContainer):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         _d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        datamodel.DataContainer.__init__(self, d=_d)
+        DataContainer.__init__(self, d=_d)
 
     def _bundle(self):
         """

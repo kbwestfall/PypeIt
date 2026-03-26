@@ -16,10 +16,11 @@ from astropy.io import fits
 from pypeit import log
 from pypeit import PypeItCodingError
 from pypeit import PypeItError
-from pypeit import datamodel
 from pypeit import io
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 
-class CalibFrame(datamodel.DataContainer):
+class CalibFrame(DataContainer):
     """
     An abstract class for calibration frames.  The primary purpose of the class
     is to set the naming scheme for all processed calibration files.
@@ -39,7 +40,11 @@ class CalibFrame(datamodel.DataContainer):
 
     # TODO: Add an astropy.Table into the base-class data model that includes
     # the subset of `fitstbl` with the metadata for the raw calibration frames?
-    datamodel = {'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name')}
+    datamodel = {
+        'PYP_SPEC': define_datamodel_component(
+            otype=str, descr='PypeIt spectrograph name'
+        )
+    }
     """
     Default datamodel for any :class:`CalibFrame`.  Derived classes should
     instantiate their datamodels by first inheriting from the base class.  E.g.:

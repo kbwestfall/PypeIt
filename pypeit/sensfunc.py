@@ -16,15 +16,16 @@ from matplotlib.backends.backend_pdf import PdfPages
 from astropy.io import fits
 from astropy import table
 
-from pypeit import datamodel
-from pypeit import io
+from pypeit import flatfield
 from pypeit import log
 from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit import specobjs
 from pypeit import specobj
 from pypeit import utils
-from pypeit.core import atmextinction
+from pypeit import io
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.core import coadd
 from pypeit.core import flux_calib_refactor
 from pypeit.core import telluric
@@ -43,7 +44,7 @@ from pypeit.spectrographs.util import load_spectrograph
 
 # TODO Add some QA plots, and plots to the screen if show is set.
 
-class SensFunc(datamodel.DataContainer):
+class SensFunc(DataContainer):
     r"""
     Base class for generating sensitivity functions from a standard-star
     spectrum.
@@ -84,56 +85,89 @@ class SensFunc(datamodel.DataContainer):
 #    """Regardless of datamodel, output floating-point data have this fixed bit size."""
 
     datamodel = {
-        'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name'),
-        'pypeline': dict(otype=str, descr='PypeIt pipeline reduction path'),
-        'spec1df': dict(otype=str, descr='PypeIt spec1D file(s) used to for sensitivity function'),
-        'extr': dict(otype=str, descr='Extraction method used for the standard star (OPT or BOX)'),
-        'std_name': dict(otype=str, descr='Type of standard source'),
-        'std_cal': dict(otype=str, descr='File name (or shorthand) with the standard flux data'),
-        'std_ra': dict(otype=float, descr='RA of the standard source'),
-        'std_dec': dict(otype=float, descr='DEC of the standard source'),
-        'airmass': dict(otype=float, descr='Airmass of the observation'),
-        'exptime': dict(otype=float, descr='Exposure time'),
-        'telluric': dict(otype=telluric.Telluric,
-                         descr='Telluric model; see :class:`~pypeit.core.telluric.Telluric`'),
-        'sens': dict(otype=table.Table, descr='Table with the sensitivity function'),
-        'wave': dict(otype=np.ndarray, atype=float, descr='Wavelength vectors'),
-        'zeropoint': dict(otype=np.ndarray, atype=float, descr='Sensitivity function zeropoints'),
-        'throughput': dict(otype=np.ndarray, atype=float,
-                           descr='Spectrograph throughput measurements'),
-        'algorithm': dict(otype=str, descr='Algorithm used for the sensitivity calculation.')
+        'PYP_SPEC': define_datamodel_component(
+            otype=str, descr='PypeIt spectrograph name'
+        ),
+        'pypeline': define_datamodel_component(
+            otype=str, descr='PypeIt pipeline reduction path'
+        ),
+        'spec1df': define_datamodel_component(
+            otype=str, descr='PypeIt spec1D file(s) used to for sensitivity function'
+        ),
+        'extr': define_datamodel_component(
+            otype=str, descr='Extraction method used for the standard star (OPT or BOX)'
+        ),
+        'std_name': define_datamodel_component(
+            otype=str, descr='Type of standard source'
+        ),
+        'std_cal': define_datamodel_component(
+            otype=str, descr='File name (or shorthand) with the standard flux data'
+        ),
+        # TODO: Is it possible/useful to force the coordinates to always be floats
+        'std_ra': define_datamodel_component(
+            otype=float, descr='RA of the standard source'
+        ),
+        'std_dec': define_datamodel_component(
+            otype=float, descr='DEC of the standard source'
+        ),
+        'airmass': define_datamodel_component(
+            otype=float, descr='Airmass of the observation'
+        ),
+        'exptime': define_datamodel_component(
+            otype=float, descr='Exposure time'
+        ),
+        'telluric': define_datamodel_component(
+            otype=telluric.Telluric,
+            descr='Telluric model; see :class:`~pypeit.core.telluric.Telluric`'
+        ),
+        'sens': define_datamodel_component(
+            otype=table.Table, descr='Table with the sensitivity function'
+        ),
+        'wave': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='Wavelength vectors'
+        ),
+        'zeropoint': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='Sensitivity function zeropoints'
+        ),
+        'throughput': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='Spectrograph throughput measurements'
+        ),
+        'algorithm': define_datamodel_component(
+            otype=str, descr='Algorithm used for the sensitivity calculation.'
+        )
     }
     """DataContainer datamodel."""
 
-    internals = ['sensfile',
-                 'spec1d_arr',
-                 'spectrograph',
-                 'par',
-                 'par_fluxcalib',
-                 'qafile',
-                 'thrufile',
-                 'fstdfile',
-                 'debug',
-                 'sobjs_std',
-                 'wave_cnts',
-                 'counts',
-                 'counts_ivar',
-                 'counts_mask',
-                 'log10_blaze_function',
-                 'nspec_in',
-                 'norderdet',
-                 'wave_splice',
-                 'zeropoint_splice',
-                 'throughput_splice',
-                 'steps',
-                 'splice_multi_det',
-                 'meta_spec',
-                 'std_spec',
-                 'atmext',
-                 'region_mask',
-                 'write_qa',
-                 'chk_version'
-                ]
+    internals = [
+        'sensfile',
+        'spec1d_arr',
+        'spectrograph',
+        'par',
+        'par_fluxcalib',
+        'qafile',
+        'thrufile',
+        'fstdfile',
+        'debug',
+        'sobjs_std',
+        'wave_cnts',
+        'counts',
+        'counts_ivar',
+        'counts_mask',
+        'log10_blaze_function',
+        'nspec_in',
+        'norderdet',
+        'wave_splice',
+        'zeropoint_splice',
+        'throughput_splice',
+        'steps',
+        'splice_multi_det',
+        'meta_spec',
+        'std_spec',
+        'atmext',
+        'region_mask',
+        'write_qa',
+        'chk_version'
+    ]
 
     _algorithm = None
     """Algorithm used for the sensitivity calculation."""
@@ -405,8 +439,7 @@ class SensFunc(datamodel.DataContainer):
         for key in self.keys():
             if self[key] is None:
                 continue
-            if isinstance(self[key], datamodel.DataContainer) \
-                    or isinstance(self[key], table.Table):
+            if isinstance(self[key], DataContainer) or isinstance(self[key], table.Table):
                 d += [{key: self[key]}]
                 continue
             if self.datamodel[key]['otype'] == np.ndarray:
@@ -451,7 +484,7 @@ class SensFunc(datamodel.DataContainer):
                 continue
             for key in self.keys():
                 if self[key] is None or self.datamodel[key]['otype'] == np.ndarray \
-                        or isinstance(self[key], datamodel.DataContainer) \
+                        or isinstance(self[key], DataContainer) \
                         or isinstance(self[key], table.Table):
                     continue
                 _d[key] = self[key]

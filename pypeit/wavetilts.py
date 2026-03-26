@@ -17,10 +17,13 @@ from matplotlib.lines import Line2D
 from astropy import stats, visualization
 from astropy import table
 
-from pypeit import log, datamodel, utils
+from pypeit import log
 from pypeit import PypeItError
 from pypeit import calibframe
 from pypeit import slittrace, wavecalib
+from pypeit import utils
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.display import display
 from pypeit.core import arc
 from pypeit.core import tracewave
@@ -56,31 +59,62 @@ class WaveTilts(calibframe.CalibFrame):
     #   - Datamodel already contains CalibFrame base elements, so no need to
     #     include it here.
 
-    datamodel = {'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name'),
-                 'coeffs': dict(otype=np.ndarray, atype=np.floating,
-                                descr='2D coefficents for the fit on the initial slits.  One '
-                                      'set per slit/order (3D array).'),
-                 'bpmtilts': dict(otype=np.ndarray, atype=np.integer,
-                                  descr='Bad pixel mask for tilt solutions. Keys are taken from '
-                                        'SlitTraceSetBitmask'),
-                 'nslit': dict(otype=int,
-                               descr='Total number of slits.  This can include masked slits'),
-                 'spat_id': dict(otype=np.ndarray, atype=np.integer, descr='Slit spat_id '),
-                 'spat_order': dict(otype=np.ndarray, atype=np.integer,
-                                    descr='Order for spatial fit (nslit)'),
-                 'spec_order': dict(otype=np.ndarray, atype=np.integer,
-                                    descr='Order for spectral fit (nslit)'),
-                 'func2d': dict(otype=str, descr='Function used for the 2D fit'),
-                 'spat_flexure': dict(otype=float, descr='Flexure shift from the input TiltImage'),
-                 'slits_filename': dict(otype=str, descr='Path to SlitTraceSet file. This helps to '
-                                                         'find the Slits calibration file when running '
-                                                         'pypeit_chk_tilts()'),
-                 'tiltimg_filename': dict(otype=str, descr='Path to Tiltimg file. This helps to '
-                                                          'find Tiltimg file when running pypeit_chk_tilts()'),
-                 'tilt_traces': dict(otype=table.Table, descr='Table with the positions of the '
-                                                              'traced and fitted tilts for all the slits. '
-                                                              'see :func:`~pypeit.wavetilts.BuildWaveTilts.make_tbl_tilt_traces` for more details. ')
-                 }
+    datamodel = {
+        'PYP_SPEC': define_datamodel_component(
+            otype=str, descr='PypeIt spectrograph name'
+        ),
+        'coeffs': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr=(
+                '2D coefficents for the fit on the initial slits.  One set per slit/order (3D '
+                'array).'
+            )
+        ),
+        'bpmtilts': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer,
+            descr='Bad pixel mask for tilt solutions. Keys are taken from SlitTraceSetBitmask'
+        ),
+        'nslit': define_datamodel_component(
+            otype=int, descr='Total number of slits.  This can include masked slits'
+        ),
+        'spat_id': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Slit spat_id '
+        ),
+        'spat_order': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Order for spatial fit (nslit)'
+        ),
+        'spec_order': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Order for spectral fit (nslit)'
+        ),
+        'func2d': define_datamodel_component(
+            otype=str, descr='Function used for the 2D fit'
+        ),
+        'spat_flexure': define_datamodel_component(
+            otype=float, descr='Flexure shift from the input TiltImage'
+        ),
+        'slits_filename': define_datamodel_component(
+            otype=str,
+            descr=(
+                'Path to SlitTraceSet file. This helps to find the Slits calibration file when '
+                'running pypeit_chk_tilts()'
+            )
+        ),
+        'tiltimg_filename': define_datamodel_component(
+            otype=str,
+            descr=(
+                'Path to Tiltimg file. This helps to find Tiltimg file when running '
+                'pypeit_chk_tilts()'
+            )
+        ),
+        'tilt_traces': define_datamodel_component(
+            otype=table.Table,
+            descr=(
+                'Table with the positions of the traced and fitted tilts for all the slits; '
+                'see :func:`~pypeit.wavetilts.BuildWaveTilts.make_tbl_tilt_traces` for more '
+                'details. '
+            )
+        ),
+    }
 
     def __init__(self, coeffs, nslit, spat_id, spat_order, spec_order, func2d, bpmtilts=None,
                  spat_flexure=None, PYP_SPEC=None, slits_filename=None, tiltimg_filename=None,
@@ -90,7 +124,7 @@ class WaveTilts(calibframe.CalibFrame):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        datamodel.DataContainer.__init__(self, d=d)
+        DataContainer.__init__(self, d=d)
 
     def _bundle(self):
         """
