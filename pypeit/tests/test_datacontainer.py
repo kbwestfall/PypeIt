@@ -5,20 +5,20 @@ import sys
 import io
 import os
 import inspect
+from pathlib import Path
 
+from astropy.io import fits
+from astropy.table import Table
 from IPython import embed
-
+import numpy as np
 import pytest
 
-import numpy as np
-
-#import pypeit
-
-from astropy.table import Table
-
 from pypeit import PypeItCodingError
+from pypeit import PypeItError
 from pypeit.datamodel import DataContainer
+from pypeit.datamodel import DataContainerList
 from pypeit.datamodel import define_datamodel_component
+from pypeit.datamodel import define_metadatamodel_component
 from pypeit.io import fits_open
 
 #-----------------------------------------------------------------------
@@ -300,6 +300,98 @@ class ComplexInitContainer(DataContainer):
             if self.func is None:
                 raise ValueError('Do not know how to construct out attribute!')
             self.out = self.inp1 + self.inp2 if self.func == 'add' else self.inp1 - self.inp2
+
+
+class VectorContainer(DataContainer):
+    version = '1.0.0'
+    datamodel = {
+        'flt': define_datamodel_component(otype=float, descr='flt'),
+        'arr': define_datamodel_component(otype=np.ndarray, atype=float, descr='arr')
+    }
+
+class NoTypeContainerList(DataContainerList):
+    # Does not define list_type
+    version = '1.0.0'
+
+class TypeNotDataContainerInList(DataContainerList):
+    # list_type is not a DataContainer
+    list_type = str
+    version = '1.0.0'
+
+class NoVersionContainerList(DataContainerList):
+    # Does not define version
+    list_type = VectorContainer
+
+class BadMetaTypeContainerList(DataContainerList):
+    # Does not define version
+    list_type = VectorContainer
+    version = '1.0.0'
+    # NOTE: use of define_metadatamodel_component would fail here, so I
+    # surreptitiously use a dict here
+    metadatamodel = {'test': dict(otype=dict, descr='test')}
+
+class VectorContainerListKeyConflict(DataContainerList):
+    list_type = VectorContainer
+    version = '1.0.0'
+    metadatamodel = {
+        'name': define_metadatamodel_component(otype=str, descr='test'),
+        'flt': define_metadatamodel_component(otype=float, descr='test'),
+        'integ': define_metadatamodel_component(otype=int, descr='test')
+    }
+
+class VectorContainerListNoMeta(DataContainerList):
+    list_type = VectorContainer
+    version = '1.0.0'
+
+class VectorContainerList(DataContainerList):
+    list_type = VectorContainer
+    version = '1.0.0'
+    metadatamodel = {
+        'name': define_metadatamodel_component(otype=str, descr='test'),
+        'dbl': define_metadatamodel_component(otype=float, descr='test'),
+        'integ': define_metadatamodel_component(otype=int, descr='test')
+    }
+
+
+
+#-----------------------------------------------------------------------
+# Tests
+
+def test_define_components():
+    with pytest.raises(ValueError):
+        # otype must be provided
+        define_datamodel_component(descr='test')
+    with pytest.raises(ValueError):
+        # descr must be provided
+        define_datamodel_component(otype='test')
+    with pytest.raises(ValueError):
+        # if otype is np.ndarray, atype must be provided
+        define_datamodel_component(otype=np.ndarray, descr='test')
+    with pytest.raises(ValueError):
+        # if atype is provided, otype must be np.ndarray
+        define_datamodel_component(otype=list, atype=float, descr='test')
+    with pytest.raises(ValueError):
+        # otype currently cannot be dict
+        define_datamodel_component(otype=dict, descr='test')
+    dmc = define_datamodel_component(otype=float, descr='test')
+    assert 'otype' in dmc.keys(), 'Missing otype'
+    assert 'atype' in dmc.keys(), 'Missing atype'
+    assert 'descr' in dmc.keys(), 'Missing descr'
+
+
+def test_define_metadata():
+    with pytest.raises(ValueError):
+        # otype must be provided
+        define_metadatamodel_component(descr='test')
+    with pytest.raises(ValueError):
+        # descr must be provided
+        define_metadatamodel_component(otype='test')
+    with pytest.raises(TypeError):
+        # metadata cannot be arrays
+        define_metadatamodel_component(otype=np.ndarray)
+    dmc = define_metadatamodel_component(otype=float, descr='test')
+    assert 'otype' in dmc.keys(), 'Missing otype'
+    assert 'descr' in dmc.keys(), 'Missing descr'
 
 
 def test_single_element_array():
@@ -598,4 +690,156 @@ def test_init():
     data = ComplexInitContainer(x.astype(float),y.astype(float))
     _data = ComplexInitContainer.from_hdu(data.to_hdu(add_primary=True))
     assert data.func == _data.func, 'Bad read'
+
+
+
+def test_bad_list_implementation():
+    with pytest.raises(NotImplementedError):
+        l = NoTypeContainerList()
+    with pytest.raises(PypeItCodingError):
+        l = TypeNotDataContainerInList()
+    with pytest.raises(ValueError):
+        l = NoVersionContainerList()
+    with pytest.raises(TypeError):
+        l = BadMetaTypeContainerList()
+    
+
+def test_list_functionality():
+
+    with pytest.raises(TypeError):
+        # class will only accept list elements of a given type
+        vcl = VectorContainerListNoMeta(['test', 2.0])
+
+    # Define some list elements
+    vec1 = VectorContainer(d={'flt': 10.0, 'arr': np.arange(10, dtype=float)})
+    vec2 = VectorContainer(d={'flt': 8.0, 'arr': np.arange(12, dtype=float)})
+    vec3 = VectorContainer(d={'flt': 12.0, 'arr': np.arange(18, dtype=float)})
+    vec4 = VectorContainer(d={'flt': 3.0, 'arr': np.arange(5, dtype=float)})
+
+    # Define a list with two elements and no metadata
+    vcl = VectorContainerListNoMeta([vec1, vec2])
+    assert len(vcl) == 2, 'Number of list elements is wrong'
+    assert vcl[0] is vec1 and vcl[1] is vec2, 'Elements should point to the same address'
+    
+    # Try to get or set an undefined metadata element as an item
+    with pytest.raises(KeyError):
+        t = vcl['test']
+    with pytest.raises(KeyError):
+        vcl['test'] = 3.
+
+    # Try to get or set an undefined metadata element as an attribute
+    with pytest.raises(AttributeError):
+        t = vcl.test
+    with pytest.raises(AttributeError):
+        vcl.test = 3.
+
+    # Should fail because of the metadata key conflicts with the datamodel of
+    # the list elements.
+    with pytest.raises(ValueError):
+        vcl = VectorContainerListKeyConflict([vec1, vec2])
+
+    # Do the same for an implementation that has metadata components
+    vcl = VectorContainerList([vec1, vec2])
+    assert len(vcl) == 2, 'Number of list elements is wrong'
+    assert vcl[0] is vec1 and vcl[1] is vec2, 'Elements should point to the same address'
+    assert vcl.name is None, 'Name should exist but should not be defined'
+
+    # Try setting an attribute
+    vcl.name = 'test'
+    assert vcl.name == 'test', 'Name not set correctly'
+
+    # Should fault because the type is wrong
+    with pytest.raises(TypeError):
+        vcl.dbl = 'test'
+
+    # Try setting as an item
+    vcl['dbl'] = 3.2
+    assert vcl.dbl == 3.2, 'Bad item assignment'
+
+    # Make a longer list
+    vcl = VectorContainerListNoMeta([vec1, vec2, vec3, vec4])
+    # Use of __getitem__ when the item is a string or integer is already tested
+    # above.  Try selecting multiple items.
+    sub = vcl[0:2]
+    assert len(sub) == 2, 'Should only have the first two elements'
+    assert sub[0] is vec1 and sub[1] is vec2, 'Elements should point to the same address'
+    assert sub[0] is vcl[0] and sub[1] is vcl[1], 'Elements should point to the same address'
+
+    # Meta should still fail
+    with pytest.raises(KeyError):
+        t = sub['test']
+
+    # Make sure metadata is transferred to subsets
+    vcl = VectorContainerList([vec1, vec2, vec3, vec4], name='test', dbl=3.2, integ=8)
+    assert vcl.name == 'test', 'metadata not instantiated correctly'
+    sub = vcl[2:4]
+    assert sub.name == vcl.name and sub.integ == vcl.integ, 'metadata not transferred correctly'
+    assert sub[0] is vcl[2] and sub[1] is vcl[3], 'Elements should point to the same address'
+
+
+def test_list_io():
+    # Define some list elements
+    vec1 = VectorContainer(d={'flt': 10.0, 'arr': np.arange(10, dtype=float)})
+    vec2 = VectorContainer(d={'flt': 8.0, 'arr': np.arange(12, dtype=float)})
+    vec3 = VectorContainer(d={'flt': 12.0, 'arr': np.arange(18, dtype=float)})
+    vec4 = VectorContainer(d={'flt': 3.0, 'arr': np.arange(5, dtype=float)})
+
+    # Make sure metadata is transferred to subsets
+    vcl = VectorContainerList([vec1, vec2, vec3, vec4], name='test', dbl=3.2, integ=8)
+
+    hdu = vcl.to_hdu()
+    assert len(hdu) == 4, 'Should be one hdu per list element (no primary should have been added)'
+    assert all(
+        'DLSTCLS' in h.header and h.header['DLSTCLS'] == 'VectorContainerList' for h in hdu
+    ), 'List class not present or not correct'
+    assert all('DLSTVER' in h.header and h.header['DLSTVER'] == '1.0.0' for h in hdu), \
+        'List class version not present or not correct'
+    assert all('DLSTLEN' in h.header and h.header['DLSTLEN'] == 4 for h in hdu), \
+        'List class length not present or not correct'
+    assert all('DLSTINDX' in h.header and h.header['DLSTINDX'] == i for i, h in enumerate(hdu)), \
+        'List class index number not present or not correct'
+    assert all(int(hdu[i].name.split('-')[0]) == i for i in range(len(vcl))), \
+        'Extension name should have index number included (when no names are provided)'
+
+    hdu = vcl.to_hdu(add_primary=True)
+    assert isinstance(hdu, fits.HDUList), 'Should be an hdu list when primary is included'
+    assert len(hdu) == 5, 'Should be 5 extensions'
+
+    hdu = vcl.to_hdu(add_primary=True, hdu_names=[f'VEC{i+1}' for i in range(len(vcl))])
+    assert hdu[1].name == 'VEC1', 'Bad extension name'
+
+    # Should fault if the number of names is not correct
+    with pytest.raises(PypeItError):
+        hdu = vcl.to_hdu(add_primary=True, hdu_names=[f'VEC{i+1}' for i in range(len(vcl)-1)])
+    # Should fault if the names are not unique
+    with pytest.raises(PypeItError):
+        hdu = vcl.to_hdu(add_primary=True, hdu_names=['VEC' for i in range(len(vcl))])
+
+    ofile = Path('test.fits').absolute()
+    if ofile.is_file():
+        ofile.unlink()
+
+    vcl.to_file(ofile, hdu_names=[f'VEC{i+1}' for i in range(len(vcl))])
+    assert ofile.is_file(), 'File not written'
+    _hdu = fits.open(ofile)
+    assert _hdu[1].name == 'VEC1', 'Bad extension name'
+    assert np.array_equal(_hdu[1].data, hdu[1].data), 'Data corrupted'
+
+    _vcl = VectorContainerList.from_hdu(_hdu)
+    for i in range(len(vcl)):
+        assert np.array_equal(vcl[0].arr, _vcl[0].arr), 'Arrays corrupted'
+    assert _vcl.name == vcl.name, 'name corrupted'
+    assert _vcl.dbl == vcl.dbl, 'dbl corrupted'
+    assert _vcl.integ == vcl.integ, 'integ corrupted'
+
+    _vcl = VectorContainerList.from_file(ofile)
+    for i in range(len(vcl)):
+        assert np.array_equal(vcl[0].arr, _vcl[0].arr), 'Arrays corrupted'
+    assert _vcl.name == vcl.name, 'name corrupted'
+    assert _vcl.dbl == vcl.dbl, 'dbl corrupted'
+    assert _vcl.integ == vcl.integ, 'integ corrupted'
+
+    ofile.unlink()
+
+# TODO: Many more tests!!
 

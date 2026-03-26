@@ -202,3 +202,5 @@ class SpectrumContainerList(DataContainerList):
     """
     The type for elements in instances of this list.
     """
+
+    version = '1.0.0'
