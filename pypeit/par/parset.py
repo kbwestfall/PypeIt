@@ -69,8 +69,9 @@ def set_parameter_definition(dtype=None, default=None, options=None, descr=None)
         parameter is a :class:`~pypeit.par.parset.ParSet`, it
         *cannot have any other type* and it must be a single
         :class:`~pypeit.par.parset.ParSet` subclass.
-    default : object, optional
-        The default value for the parameter.
+    default : object, callable, optional
+        The default value for the parameter or a callable function that returns
+        the default value.
     options : object, list, optional
         A list of valid options for the parameter.
     descr : str, optional
@@ -109,11 +110,36 @@ def set_parameter_definition(dtype=None, default=None, options=None, descr=None)
     }
 
 
-# TODO: We might need to define the types that allowed for list parameters.
+# TODO: We might need to define the types that are allowed for list parameters.
 # They should be single element objects (ints, floats, strings), NOT more
 # complex things like dicts or ParSets.  Nested ParSets are allowed.
 class ParSet:
     """
+    An abstract base class used to collect runtime parameters.
+
+    As an abstract base class, it should not be instantiated on its own.
+
+    Parameters for each subclass should be defined by the :attr:`parameters`
+    dictionary.  Generally, parameters are expected to have a restricted set of
+    data types, and possibly a restricted set of value options.  Parameters can
+    be callable functions or parameter sets themselves.  Components of the
+    :attr:`parameters` should be defined using
+    :func:`~pypeit.par.parset.set_parameter_definition` to ensure it has all of
+    the expected components.
+
+    For example implementations of :class:`~pypeit.par.parset.ParSet`
+    subclasses, see :mod:`~pypeit.par.pypeitpar`.
+
+    Parameters
+    ----------
+    **kwargs
+        Initial values for the parameters.  The keywords provided *must* match
+        the name of a parameter defined by the :attr:`parameters` dictionary.
+
+    Attributes
+    ----------
+    npar : int
+        Number of parameters in the set.
     """
 
     default_key = None
@@ -143,7 +169,7 @@ class ParSet:
                 f'CODING ERROR: The parameters attribute for {self.__class__.__name__} has not '
                 'been defined!'
             )
-        
+
         # The keys of self.parameters define the allowed keywords.
         allowed_keys = self.keys()
         badkeys = np.array([key for key in kwargs.keys() if key not in allowed_keys])
@@ -151,7 +177,7 @@ class ParSet:
             raise KeyError(
                 f'One or more unrecognized parameters for {self.__class__.__name__}: {badkeys}'
             )
-        
+
         # The number of parameters is set by the parameters attribute
         self.npar = len(self.parameters)
         # Instantiate the data dictionary with the keys provided by the
@@ -229,12 +255,31 @@ class ParSet:
             self._data[key] = value
             return
 
+        # NOTE: An error occurred where the pypeit file for LDT/DeVeny DV7
+        # included a single lamp name to use for the wavelength calibration.
+        # This was causing the code to fault because WavelengthSolutionPar
+        # requires `lamps` to be a list.  I added this block of code to deal
+        # with that.  But the better solution seems to be to force users to
+        # define the lamps as a list.  In ldt_deveny_dv7.pypeit, this was just a
+        # matter of adding a comma at the end of the lamps list; i.e., changing
+        # `lamps = NeI_DeVeny` to  `lamps = NeI_DeVeny,`.  Admittedly, this is a
+        # bit obscure, so I added some text to the parameters documentation
+        # about this.  I'm leaving the code here for now in case we choose to
+        # adopt this option instead.
+#        # If the only valid dtype is list and the provided object is *not* a
+#        # list, assume that the user wants the object to be a single element
+#        # list with this value
+#        if self.parameters[key]['dtype'] == [list] and not isinstance(value, list):
+#            self.__setitem__(key, [value])
+#            return
+
         # Check that the value has an allowed data type
         if self.parameters[key]['dtype'] is not None \
-                and not any([ isinstance(value, d) for d in self.parameters[key]['dtype']]):
+                and not any([isinstance(value, d) for d in self.parameters[key]['dtype']]):
             raise TypeError(
                 f'Unable to set {key} in {self.__class__.__name__} to an object with type '
-                f'{type(value)}.'
+                f'{type(value).__name__}.  Allowed types are: '
+                f'{", ".join([dt.__name__ for dt in self.parameters[key]["dtype"]])}.'
             )
 
         # If the value is itself a parameter set, create a new instance of the
@@ -275,7 +320,7 @@ class ParSet:
 
     def __repr__(self):
         """Return a string representation of the parameters."""
-        return self._output_string() #header=self.cfg_section)
+        return self._output_string()
 
     def _output_string(self, header=None, value_only=False):
         """
@@ -536,7 +581,33 @@ class ParSet:
                     f'{np.asarray(self.keys())[should_not_be_None].tolist()}'
                 )
 
-    def to_rst_table(self, parsets_listed=[]):
+    def fill_callable(self, recursive=True):
+        """
+        Fill any callable parameters with their output.
+
+        The callable parameter must not take any arguments and the returned
+        object must have a valid data type.
+
+        Subclasses can override this method to only fill a selection (or none)
+        of the callable parameters.
+
+        .. warning::
+
+            This alters the object *in-place*.
+
+        Parameters
+        ----------
+        recursive : bool, optional
+            Also fill the callable functions for any nested
+            :class:`~pypeit.par.parset.ParSet` instances.
+        """
+        for key in self.keys():
+            if isinstance(self[key], ParSet) and recursive:
+                self[key].fill_callable()
+            elif callable(self[key]):
+                self[key] = self[key]()
+
+    def to_rst_table(self, parsets_listed=None, include_keyword_link=True, top_level_only=False):
         """
         Construct a reStructuredText table describing the parameter set.
 
@@ -545,15 +616,26 @@ class ParSet:
         Parameters
         ----------
         parsets_listed : :obj:`list`, optional
-            For nested :class:`~pypeit.par.parset.ParSet` instances, this is the list of
-            :class:`~pypeit.par.parset.ParSet` subclass names that already have already a table in
-            the string list (so that they're not repeated).
+            For nested :class:`~pypeit.par.parset.ParSet` instances, this is the
+            list of :class:`~pypeit.par.parset.ParSet` subclass names that
+            already have a table in the string list (so that they're not
+            repeated).
+        include_keyword_link : :obj:`bool`, optional
+            Include a link in the "Defaults" column of the returned table that
+            provides keywords for a nested :class:`~pypeit.par.parset.ParSet`
+            class.
+        top_level_only : :obj:`bool`, optional
+            If the :class:`~pypeit.par.parset.ParSet` includes other nested
+            parameter sets, only return the rst table for the top level.
         
         Returns
         -------
         list
             A list of lines that can be written to an ``*.rst`` file.
         """
+        if parsets_listed == None:
+            parsets_listed = []
+
         new_parsets = []
         data_table = np.empty((self.npar+1, 5), dtype=object)
         data_table[0,:] = ['Key', 'Type', 'Options', 'Default', 'Description']
@@ -565,7 +647,10 @@ class ParSet:
                     new_parsets += [key]
                 parsets_listed += [ type(self._data[key]).__name__ ]
                 data_table[i+1,1] = type(self._data[key])._rst_class_name()
-                data_table[i+1,3] = f'`{type(self._data[key]).__name__} Keywords`_'
+                data_table[i+1,3] = (
+                    f'`{type(self._data[key]).__name__} Keywords`_'
+                    if include_keyword_link else '..'
+                )
             else: 
                 data_table[i+1,1] = (
                     '..' if self.parameters[key]['dtype'] is None
@@ -589,6 +674,9 @@ class ParSet:
                 '..' if self.parameters[key]['descr'] is None
                 else ParSet._data_string(self.parameters[key]['descr'])
             )
+        
+        if top_level_only:
+            return ParSet._data_table_string(data_table, delimeter='rst')
 
         output = [ f'.. _{self.__class__.__name__.lower()}:']
         output += [ '' ]
@@ -616,7 +704,9 @@ class ParSet:
                 continue
             print(f'{key}' if basekey is None else f'{basekey}:{key}')
             self._wrap_print('        Value: ', self._data[key], tcols)
-            self._wrap_print('      Default: ', self.parameters[key]['default'], tcols)
+            self._wrap_print(
+                '      Default: ', ParSet._data_string(self.parameters[key]['default']), tcols
+            )
             self._wrap_print(
                 '      Options: ',
                 'None' if self.parameters[key]['options'] is None
