@@ -64,6 +64,10 @@ Under-the-hood Improvements
 - Adds :mod:`~pypeit.core.spectrumdm` to provide IO wrappers for 
   :class:`~pypeit.core.spectrum.Spectrum` and
   :class:`~pypeit.core.spectrum.SpectrumList` objects.
+- Adds the :class:`~pypeit.pkg.exceptions.PypeItCodingError` exception.
+- Adds :func:`~pypeit.datamodel.define_datamodel_component` convenience function
+  used to formalize defining components of a
+  :class:`~pypeit.datamodel.DataContainer` subclass.
 
 
 Bug Fixes

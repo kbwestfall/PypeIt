@@ -134,10 +134,6 @@ class SpectrumContainer(DataContainer, spectrum.Spectrum):
         Override :func:`~pypeit.datamodel.DataContainer.from_hdu` method to
         enable parsing header data into the :attr:`meta` dictionary.
         """
-        # This reproduces *all* of the lines in the base class function.  We
-        # need to know which hdus were parsed to setup the metadata dictionary
-        # and name.
-
         # The following three lines are identical to DataContainer.from_hdu
         d, dm_version_passed, dm_type_passed, parsed_hdus = cls._parse(hdu, **kwargs)
         cls._check_parsed(dm_version_passed, dm_type_passed, chk_version=chk_version)
