@@ -280,7 +280,6 @@ class WaveCalib(calibframe.CalibFrame):
         if self._par is None:
             self._par = pypeitpar.WavelengthSolutionPar.from_dict(ast.literal_eval(self.strpar))
         return self._par
-#        return json.loads(self.strpar)
 
     def chk_synced(self, slits):
         """
@@ -703,7 +702,7 @@ class BuildWaveCalib:
                 arcfitter.store_solution(final_fit[str(slit_idx)], "", self.binspectral,
                                          # JTS: Commented out as it seems the
                                          # store solution function does not
-                                         # take these arguments any more.
+                                         # take these arguments anymore.
                                          # specname=self.spectrograph.name,
                                          # gratname="UNKNOWN", dispangl="UNKNOWN"
                                          )
@@ -775,7 +774,7 @@ class BuildWaveCalib:
             raise PypeItError('Unrecognized wavelength calibration method: {:}'.format(method))
 
         # Build the DataContainer
-        if self.par['redo_slits'] is not None:
+        if self.par['redo_slits'] is not None and prev_wvcalib is not None:
             # If we are only redoing slits, we start from the
             #  previous wv_calib and update only the (good) redone slits
             self.wv_calib = prev_wvcalib
@@ -1218,11 +1217,7 @@ class BuildWaveCalib:
                     self.slits.mask[wv_masked], 'BADWVCALIB')
 
         # Pack up
-#        sv_par = self.par.data.copy()
-#        j_par = jsonify(sv_par)
-#        self.wv_calib['strpar'] = json.dumps(j_par)#, sort_keys=True, indent=4, separators=(',', ': '))
         self.wv_calib['strpar'] = str(self.par.to_dict())
-
         return self.wv_calib
 
 

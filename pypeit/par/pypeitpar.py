@@ -4,6 +4,7 @@ functionality.
 
 .. include:: ../include/links.rst
 """
+from collections.abc import Callable
 from pathlib import Path
 
 from configobj import ConfigObj
@@ -28,9 +29,11 @@ from pypeit.par import util
 
 class TelescopePar(parset.ParSet):
     """
-    New-style parameter set for the salient properties of a telescope.
+    Base class for telescope specifications.
 
-    Mirrors the legacy `TelescopePar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_TelescopePar.rst
     """
 
     default_key = 'telescope'
@@ -110,10 +113,11 @@ class TelescopePar(parset.ParSet):
 
 class ScatteredLightPar(parset.ParSet):
     """
-    The parameter set used to hold arguments for modeling the scattered light.
+    The parameters used when modeling scattered light.
 
-    For a table with the current keywords, defaults, and descriptions,
-    see :ref:`parameters`.
+    Parameters are:
+
+    .. include:: ../include/parset_ScatteredLightPar.rst
     """
 
     valid_scattlight_methods = ['model', 'frame', 'archive']
@@ -191,11 +195,11 @@ class ScatteredLightPar(parset.ParSet):
 
 class ProcessImagesPar(parset.ParSet):
     """
-    New-style parameter set for basic image processing using `parset.ParSet`.
+    The parameters used to perform basic image processing.
 
-    This replaces the old instance-driven __init__ with a class-level
-    `parameters` specification. The `parset.ParSet` base class handles defaulting,
-    type/options validation, and instantiation.
+    Parameters are:
+
+    .. include:: ../include/parset_ProcessImagesPar.rst
     """
 
     valid_overscan_methods = ['chebyshev', 'polynomial', 'savgol', 'median', 'odd_even']
@@ -589,6 +593,14 @@ class FrameGroupPar(parset.ParSet):
 
 
 class BiasFramePar(FrameGroupPar):
+    """
+    The parameters used to process bias frames.
+
+    Parameters are:
+
+    .. include:: ../include/parset_BiasFramePar.rst
+    """
+
     frametype = 'bias'
     default_key = f'{frametype}frame'
 
@@ -609,6 +621,14 @@ class BiasFramePar(FrameGroupPar):
 
 
 class DarkFramePar(FrameGroupPar):
+    """
+    The parameters used to process dark frames.
+
+    Parameters are:
+
+    .. include:: ../include/parset_DarkFramePar.rst
+    """
+
     frametype = 'dark'
     default_key = f'{frametype}frame'
 
@@ -627,6 +647,14 @@ class DarkFramePar(FrameGroupPar):
 
 
 class ScatteredLightFramePar(FrameGroupPar):
+    """
+    The parameters used to process scattered-light frames.
+
+    Parameters are:
+
+    .. include:: ../include/parset_ScatteredLightFramePar.rst
+    """
+
     frametype = 'scattlight'
     default_key = f'{frametype}frame'
 
@@ -645,6 +673,14 @@ class ScatteredLightFramePar(FrameGroupPar):
 
 
 class PixelFlatFramePar(FrameGroupPar):
+    """
+    The parameters used to process pixelflat frames.
+
+    Parameters are:
+
+    .. include:: ../include/parset_PixelFlatFramePar.rst
+    """
+
     frametype = 'pixelflat'
     default_key = f'{frametype}frame'
 
@@ -663,6 +699,14 @@ class PixelFlatFramePar(FrameGroupPar):
 
 
 class IllumFlatFramePar(FrameGroupPar):
+    """
+    The parameters used to process illumination-flat frames.
+
+    Parameters are:
+
+    .. include:: ../include/parset_IllumFlatFramePar.rst
+    """
+
     frametype = 'illumflat'
     default_key = f'{frametype}frame'
 
@@ -681,6 +725,14 @@ class IllumFlatFramePar(FrameGroupPar):
 
 
 class LampOffFlatsFramePar(FrameGroupPar):
+    """
+    The parameters used to process flat-field frames taken with the lamps off.
+
+    Parameters are:
+
+    .. include:: ../include/parset_LampOffFlatsFramePar.rst
+    """
+
     frametype = 'lampoffflats'
     default_key = f'{frametype}frame'
 
@@ -699,6 +751,14 @@ class LampOffFlatsFramePar(FrameGroupPar):
 
 
 class SlitlessPixFlatFramePar(FrameGroupPar):
+    """
+    The parameters used to process slitless pixel flat frames.
+
+    Parameters are:
+
+    .. include:: ../include/parset_SlitlessPixFlatFramePar.rst
+    """
+
     frametype = 'slitless_pixflat'
     default_key = f'{frametype}frame'
 
@@ -718,6 +778,14 @@ class SlitlessPixFlatFramePar(FrameGroupPar):
 
 
 class PinholeFramePar(FrameGroupPar):
+    """
+    The parameters used to process pinhole frames.
+
+    Parameters are:
+
+    .. include:: ../include/parset_PinholeFramePar.rst
+    """
+
     frametype = 'pinhole'
     default_key = f'{frametype}frame'
 
@@ -731,6 +799,14 @@ class PinholeFramePar(FrameGroupPar):
 
 
 class AlignFramePar(FrameGroupPar):
+    """
+    The parameters used to process alignment frames.
+
+    Parameters are:
+
+    .. include:: ../include/parset_AlignFramePar.rst
+    """
+
     frametype = 'align'
     default_key = f'{frametype}frame'
 
@@ -749,6 +825,14 @@ class AlignFramePar(FrameGroupPar):
 
 
 class ArcFramePar(FrameGroupPar):
+    """
+    The parameters used to process arc-lamp frames.
+
+    Parameters are:
+
+    .. include:: ../include/parset_ArcFramePar.rst
+    """
+
     frametype = 'arc'
     default_key = f'{frametype}frame'
 
@@ -766,6 +850,14 @@ class ArcFramePar(FrameGroupPar):
 
 
 class TiltFramePar(FrameGroupPar):
+    """
+    The parameters used to process arc tilt frames.
+
+    Parameters are:
+
+    .. include:: ../include/parset_TiltFramePar.rst
+    """
+
     frametype = 'tilt'
     default_key = f'{frametype}frame'
 
@@ -783,6 +875,14 @@ class TiltFramePar(FrameGroupPar):
 
 
 class TraceFramePar(FrameGroupPar):
+    """
+    The parameters used to process trace frames.
+
+    Parameters are:
+
+    .. include:: ../include/parset_TraceFramePar.rst
+    """
+
     frametype = 'trace'
     default_key = f'{frametype}frame'
 
@@ -800,6 +900,14 @@ class TraceFramePar(FrameGroupPar):
 
 
 class StandardFramePar(FrameGroupPar):
+    """
+    The parameters used to process standard-star observations.
+
+    Parameters are:
+
+    .. include:: ../include/parset_StandardFramePar.rst
+    """
+
     frametype = 'standard'
     default_key = f'{frametype}frame'
 
@@ -816,6 +924,14 @@ class StandardFramePar(FrameGroupPar):
 
 
 class SkyFramePar(FrameGroupPar):
+    """
+    The parameters used to process blank sky observations.
+
+    Parameters are:
+
+    .. include:: ../include/parset_SkyFramePar.rst
+    """
+
     frametype = 'sky'
     default_key = f'{frametype}frame'
 
@@ -832,6 +948,14 @@ class SkyFramePar(FrameGroupPar):
 
 
 class ScienceFramePar(FrameGroupPar):
+    """
+    The parameters used to process science observations.
+
+    Parameters are:
+
+    .. include:: ../include/parset_ScienceFramePar.rst
+    """
+
     frametype = 'science'
     default_key = f'{frametype}frame'
 
@@ -849,9 +973,11 @@ class ScienceFramePar(FrameGroupPar):
 
 class FlatFieldPar(parset.ParSet):
     """
-    New-style parameter set for flat-fielding (replacement for FlatFieldPar).
+    The parameters used to construct flat-field calibrations.
 
-    Mirrors the legacy `FlatFieldPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_FlatFieldPar.rst
     """
 
     default_key = 'flatfield'
@@ -1105,9 +1231,11 @@ class FlatFieldPar(parset.ParSet):
 
 class FlexurePar(parset.ParSet):
     """
-    New-style parameter set for flexure correction parameters.
+    The parameters used to correct for spectral and spatial flexure.
 
-    Mirrors the legacy `FlexurePar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_FlexurePar.rst
     """
 
     default_key = 'flexure'
@@ -1186,9 +1314,11 @@ class FlexurePar(parset.ParSet):
 
 class AlignPar(parset.ParSet):
     """
-    New-style parameter set for alignment tracing (replacement for AlignPar).
+    The parameters used for alignment tracing and correction.
 
-    Mirrors the legacy `AlignPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_AlignPar.rst
     """
 
     default_key = 'align'
@@ -1226,9 +1356,11 @@ class AlignPar(parset.ParSet):
 
 class Coadd1DPar(parset.ParSet):
     """
-    New-style parameter set for 1D coaddition (replacement for Coadd1DPar).
+    The parameters used for 1D coadding.
 
-    Mirrors the legacy `Coadd1DPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_Coadd1DPar.rst
     """
 
     valid_extractions = ['BOX', 'OPT']
@@ -1495,9 +1627,11 @@ class Coadd1DPar(parset.ParSet):
 
 class Coadd2DPar(parset.ParSet):
     """
-    New-style parameter set for 2D coaddition (replacement for Coadd2DPar).
+    The parameters used for 2D coadding.
 
-    Mirrors the legacy `Coadd2DPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_Coadd2DPar.rst
     """
 
     default_key = 'coadd2d'
@@ -1571,7 +1705,7 @@ class Coadd2DPar(parset.ParSet):
                 'of the object in each of the exposures. For echelle spectroscopy, '
                 'provide the ``ECH_FRACPOS_ID`` of the object in each exposure. '
                 'These unique object identifiers can be found in the spec1d*.txt '
-                'files for each exposure. See :doc:`out_spec1D` for more info about '
+                'files for each exposure. See :ref:`spec-1d-output` for more info about '
                 '``SPAT_PIXPOS_ID`` and ``ECH_FRACPOS_ID``. This parameter must always '
                 'be a list of the same length as the number of exposures being coadded. '
                 'If this parameter is not ``None``, it will be used to compute the offsets '
@@ -1638,9 +1772,11 @@ class Coadd2DPar(parset.ParSet):
 
 class CubePar(parset.ParSet):
     """
-    New-style parameter set for cube generation (replacement for CubePar).
+    The parameters used for 3D datacube construction.
 
-    Mirrors the legacy `CubePar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_CubePar.rst
     """
 
     default_key = 'cube'
@@ -1921,10 +2057,11 @@ class CubePar(parset.ParSet):
 
 class FluxCalibratePar(parset.ParSet):
     """
-    New-style parameter set holding the arguments for how to perform the flux
-    calibration (replacement for FluxCalibratePar).
+    The parameters used for flux calibration.
 
-    Mirrors the legacy `FluxCalibratePar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_FluxCalibratePar.rst
     """
 
     default_key = 'fluxcalibrate'
@@ -1979,10 +2116,12 @@ class FluxCalibratePar(parset.ParSet):
 
 class SensfuncUVISPar(parset.ParSet):
     """
-    New-style parameter set for sensitivity function computation using the UV algorithm
-    (replacement for SensfuncUVISPar).
+    The parameters used for construction of a sensitivity function in the UV/VIS
+    wavelength range.
 
-    Mirrors the legacy `SensfuncUVISPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_SensfuncUVISPar.rst
     """
 
     default_key = 'sensfunc_uvis'
@@ -2095,9 +2234,11 @@ class SensfuncUVISPar(parset.ParSet):
 
 class TelluricPar(parset.ParSet):
     """
-    New-style parameter set holding telluric-correction arguments (replacement for TelluricPar).
+    The parameters used for modeling the telluric spectrum.
 
-    Mirrors the legacy `TelluricPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_TelluricPar.rst
     """
 
     default_key = 'telluric'
@@ -2453,10 +2594,11 @@ class TelluricPar(parset.ParSet):
 
 class SensFuncPar(parset.ParSet):
     """
-    New-style parameter set holding the arguments for sensitivity function computation
-    using the UV algorithm (replacement for SensFuncPar).
+    The parameters used for measuring the sensitivity function.
 
-    Mirrors the legacy `SensFuncPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_SensFuncPar.rst
     """
 
     default_key = 'sensfunc'
@@ -2621,9 +2763,12 @@ class SensFuncPar(parset.ParSet):
 
 class SlitMaskPar(parset.ParSet):
     """
-    New-style parameter set holding the arguments for slitmask ingestion and object assignment
+    The parameters used for using information used to design the slitmask used
+    during science observations.
 
-    Mirrors the legacy `SlitMaskPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_SlitMaskPar.rst
     """
 
     default_key = 'slitmask'
@@ -2720,9 +2865,11 @@ class SlitMaskPar(parset.ParSet):
 
 class ReduxPar(parset.ParSet):
     """
-    New-style parameter set for global reduction settings (replacement for ReduxPar).
+    The top-level data-reduction parameters.
 
-    Mirrors the legacy `ReduxPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_ReduxPar.rst
     """
 
     default_key = 'redux'
@@ -2801,15 +2948,22 @@ class ReduxPar(parset.ParSet):
         'qadir': parset.set_parameter_definition(
             dtype=str,
             default='QA',
-            descr='Directory relative to calling directory to write quality '
-                  'assessment files.',
+            descr='Directory relative to calling directory to write quality assessment files.',
         ),
+        # NOTE: Class attributes are instantiated *when the module is imported*.
+        # This means we can't set the default below to, e.g., `os.getcwd()`
+        # because that will not reflect the current working directory when the
+        # parameter group was instantiated in the code.  Generally this isn't an
+        # issue, but having the code use the current directory when the object
+        # is instantiated is the right thing to do; and we have some tests that
+        # change directories and this approach is required for those tests to
+        # pass.
         'redux_path': parset.set_parameter_definition(
-            dtype=str,
-            default=os.getcwd(),
+            dtype=[str, Path, Callable],
+            default=Path.cwd,
             descr=(
-                'Path to folder for performing reductions.  Default is the '
-                'current working directory.'
+                'Path to folder for performing reductions.  By default, this is a callable '
+                'function that returns the current working directory.'
             ),
         ),
         'chk_version': parset.set_parameter_definition(
@@ -2841,10 +2995,11 @@ class ReduxPar(parset.ParSet):
 
 class WavelengthSolutionPar(parset.ParSet):
     """
-    New-style parameter set for wavelength solution settings (replacement for
-    WavelengthSolutionPar).
+    The parameters used to perform wavelength calibration.
 
-    Mirrors the legacy `WavelengthSolutionPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_WavelengthSolutionPar.rst
     """
     
     valid_methods = ['holy-grail', 'identify', 'reidentify', 'echelle', 'full_template']
@@ -3247,9 +3402,11 @@ class WavelengthSolutionPar(parset.ParSet):
 
 class EdgeTracePar(parset.ParSet):
     """
-    New-style parameter set for slit edge tracing (replacement for EdgeTracePar).
+    The parameters used to detect and trace the slit edges.
 
-    Mirrors the legacy `EdgeTracePar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_EdgeTracePar.rst
     """
 
     default_key = 'edgetrace'
@@ -4021,9 +4178,11 @@ class EdgeTracePar(parset.ParSet):
 
 class WaveTiltsPar(parset.ParSet):
     """
-    New-style parameter set for tracing the monochromatic tilt along the slit
+    The parameters used to trace the spatial tilt in the wavelengths.
 
-    Mirrors the legacy `WaveTiltsPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_WaveTiltsPar.rst
     """
 
     default_key = 'wavetilts'
@@ -4167,9 +4326,11 @@ class WaveTiltsPar(parset.ParSet):
 
 class FindObjPar(parset.ParSet):
     """
-    New-style parameter set for finding and tracing objects (replacement for FindObjPar).
+    The parameters used to detect objects.
 
-    Mirrors the legacy `FindObjPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_FindObjPar.rst
     """
 
     default_key = 'findobj'
@@ -4392,9 +4553,11 @@ class FindObjPar(parset.ParSet):
 
 class SkySubPar(parset.ParSet):
     """
-    New-style parameter set for sky subtraction (replacement for SkySubPar).
+    The parameters used to perform sky subtraction.
 
-    Mirrors the legacy `SkySubPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_SkySubPar.rst
     """
 
     default_key = 'skysub'
@@ -4487,9 +4650,11 @@ class SkySubPar(parset.ParSet):
 
 class ExtractionPar(parset.ParSet):
     """
-    New-style parameter set for extraction (replacement for ExtractionPar).
+    The parameters used to perform 1d spectral extraction.
 
-    Mirrors the legacy `ExtractionPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_ExtractionPar.rst
     """
 
     default_key = 'extraction'
@@ -4575,9 +4740,12 @@ class ExtractionPar(parset.ParSet):
 
 class Collate1DPar(parset.ParSet):
     """
-    New-style parameter set for collating, coadding, and archiving 1D spectra.
+    The parameters used to collate 1D spectra of the same object across multiple
+    observations.
 
-    Mirrors the legacy `Collate1DPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_Collate1DPar.rst
     """
 
     default_key = 'collate1d'
@@ -4621,11 +4789,20 @@ class Collate1DPar(parset.ParSet):
                 "If set, the script will flux calibrate using archived sensfuncs before coadding."
             ),
         ),
+        # NOTE: Class attributes are instantiated *when the module is imported*.
+        # This means we can't set the default below to, e.g., `os.getcwd()`
+        # because that will not reflect the current working directory when the
+        # parameter group was instantiated in the code.  Generally this isn't an
+        # issue, but having the code use the current directory when the object
+        # is instantiated is the right thing to do; and we have some tests that
+        # change directories and this approach is required for those tests to
+        # pass.
         'outdir': parset.set_parameter_definition(
-            dtype=str,
-            default=os.getcwd(),
+            dtype=[str, Path, Callable],
+            default=Path.cwd,
             descr=(
-                "The path where all coadded output files and report files will be placed."
+                'The path where all coadded output files and report files will be placed.  By '
+                'default, this is a callable function that returns the current working directory.'
             ),
         ),
         'spec1d_outdir': parset.set_parameter_definition(
@@ -4678,9 +4855,12 @@ class Collate1DPar(parset.ParSet):
 
 class ReducePar(parset.ParSet):
     """
-    New-style parameter set for sky subtraction, object finding and extraction.
+    The collection of parameter sets used to detect, trace, and extract
+    sky-subtracted object spectra.
 
-    Mirrors the legacy `ReducePar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_ReducePar.rst
     """
 
     default_key = 'reduce'
@@ -4723,9 +4903,11 @@ class ReducePar(parset.ParSet):
 
 class CalibrationsPar(parset.ParSet):
     """
-    New-style parameter set for calibration frame groups and related settings.
+    The collection of parameter sets used to perform calibrations.
 
-    Mirrors the legacy `CalibrationsPar` in :mod:`pypeit.par.pypeitpar`.
+    Parameters are:
+
+    .. include:: ../include/parset_CalibrationsPar.rst
     """
 
     default_key = 'calibrations'
@@ -4864,10 +5046,11 @@ class CalibrationsPar(parset.ParSet):
 
 class PypeItPar(parset.ParSet):
     """
-    New-style superset of parameters used by PypeIt.
+    The collection of all parameter sets used to PypeIt.
 
-    This is a single object used as a container for all the
-    user-specified arguments used by PypeIt.
+    Parameters are:
+
+    .. include:: ../include/parset_PypeItPar.rst
     """
 
     default_key = 'pypeit'
@@ -4949,6 +5132,10 @@ class PypeItPar(parset.ParSet):
             ),
         ),
     }
+
+    def validate(self):
+        # Fill the paths
+        self.fill_callable()
 
     @classmethod
     def from_dict(cls, cfg):

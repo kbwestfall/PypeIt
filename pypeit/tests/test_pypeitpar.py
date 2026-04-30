@@ -12,7 +12,7 @@ from pypeit.par import pypeitpar
 from pypeit.par import parset
 from pypeit.par import funcpar
 from pypeit.spectrographs.util import load_spectrograph
-
+from pypeit.tests import tstutils
 
 # NOTE: FrameGroupPar is now an abstract class that faults when you try to
 # instantiate it on its own.
@@ -54,12 +54,6 @@ def test_sensfuncuvis():
 
 def test_telluric():
     pypeitpar.TelluricPar()
-
-# TODO: Valid spectrographs are not longer read by pypeit.pypeitpar; it causes
-# a circular import.
-#def test_spectrographs():
-#    s = pypeitpar.ReduxPar.valid_spectrographs()
-#    assert 'keck_lris_blue' in s, 'Expected to find keck_lris_blue as a spectrograph!'
 
 def test_redux():
     pypeitpar.ReduxPar()
@@ -143,19 +137,30 @@ def diff_pars(par1, name1, par2, name2):
         if isinstance(first_value, parset.ParSet) and isinstance(second_value, parset.ParSet):
             if not diff_pars(first_value, f"{name1}->{key}", second_value, f"{name2}->{key}"):
                 result=False
-        else:
-            if not first_value == second_value:
-                result = False
-                if not printed_header:
-                    print_diff_header(name1, name2)
-                    printed_header=True
-                else:
-                    print("\n")
-                print(f"{name1}->{key} differs from {name2}->{key}")
-                print(f"{name1}->{key} is type {type(first_value)}, value {first_value}")
-                print(f"{name2}->{key} is type {type(second_value)}, value {second_value}")
+        elif not first_value == second_value:
+            # NOTE: The 6 lines below are a hack to make sure that the test
+            # passes when the default is a callable function that sets the path.
+            # Or one value is a Path object and the other is a string.  This
+            # will likely fault in any other case...
+            if callable(first_value):
+                first_value = first_value()
+            if callable(second_value):
+                second_value = second_value()
+            if str(first_value) == str(second_value):
+                continue
+
+            result = False
+            if not printed_header:
+                print_diff_header(name1, name2)
+                printed_header=True
+            else:
+                print("\n")
+            print(f"{name1}->{key} differs from {name2}->{key}")
+            print(f"{name1}->{key} is type {type(first_value)}, value {first_value}")
+            print(f"{name2}->{key} is type {type(second_value)}, value {second_value}")
     
     return result
+
 
 def test_readwritecfg():
     # Test writing and re-reading a file results in the same
@@ -171,6 +176,7 @@ def test_readwritecfg():
     # Comparison that produces nice output when they differ
     assert diff_pars(default_par, "Default", read_par, "Read")
     os.remove(default_file) 
+
 
 def test_mergecfg():
     # Create a file with the defaults
@@ -260,6 +266,51 @@ def test_lists():
     with pytest.raises(TypeError):
         p['calibrations']['alignment']['locations'] = 0.0
         _p = pypeitpar.PypeItPar.from_cfg_lines(cfg_lines=p.to_config())  # Once as tuple
+
+
+def test_dir():
+    path = tstutils.data_output_path([])
+
+    # Test an instance of ReduxPar, which has no defaults that are also ParSets themselves
+    start_cwd = os.getcwd()
+    p = pypeitpar.ReduxPar()
+    assert callable(p['redux_path']), 'redux_path should be callable before it is filled in'
+    p.fill_callable()
+    assert str(p['redux_path']) == start_cwd, 'Bad default directory'
+
+    os.chdir(path)
+
+    _p = pypeitpar.ReduxPar()
+    _p.fill_callable()
+    assert str(_p['redux_path']) == os.getcwd(), 'Should track directory at instantiation'
+
+    _p = pypeitpar.ReduxPar(redux_path=start_cwd)
+    assert str(_p['redux_path']) == start_cwd, 'Directory not set correctly'
+
+    os.chdir(start_cwd)
+
+    _p = pypeitpar.ReduxPar()
+    _p.fill_callable()
+    assert str(_p['redux_path']) == start_cwd, 'Should track directory at instantiation'
+
+    # Perform the ame tests when instantiating the full PypeItPar set, which
+    # uses an instance of ReduxPar to set the defaults for the 'rdx' parameter.
+    p = pypeitpar.PypeItPar()
+    assert str(p['rdx']['redux_path']) == start_cwd, 'Bad default rdx directory'
+    assert str(p['collate1d']['outdir']) == start_cwd, 'Bad default collate1d directory'
+
+    os.chdir(path)
+
+    _p = pypeitpar.PypeItPar()
+    assert str(_p['rdx']['redux_path']) == os.getcwd(), 'Should track directory at instantiation'
+
+    _p = pypeitpar.PypeItPar(rdx=pypeitpar.ReduxPar(redux_path=start_cwd))
+    assert str(_p['rdx']['redux_path']) == start_cwd, 'Directory not set correctly'
+
+    os.chdir(start_cwd)
+
+    _p = pypeitpar.PypeItPar()
+    assert str(_p['rdx']['redux_path']) == start_cwd, 'Should track directory at instantiation'
 
 
 class UnlimitedDEPar(funcpar.FuncPar, metaclass=funcpar.FuncParMetaClass):
