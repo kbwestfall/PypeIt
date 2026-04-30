@@ -64,12 +64,12 @@
       --par_outfile PAR_OUTFILE
                             Output to save the parameters
       --outdir OUTDIR       The path where all coadded output files and report files
-                            will be placed. Defaults to the current directory.
+                            will be placed. By default, this is a callable function
+                            that returns the current working directory.
       --spec1d_outdir SPEC1D_OUTDIR
                             The path where all modified spec1d files are placed.
                             These are only created if flux calibration or refframe
-                            correction are asked for. Defaults to overwriting
-                            existing spec1ds.
+                            correction are asked for.
       --tolerance TOLERANCE
                             The tolerance used when comparing the coordinates of
                             objects. If two objects are within this distance from
@@ -91,7 +91,7 @@
                             sensfuncs before coadding.
       --exclude_slit_trace_bm EXCLUDE_SLIT_TRACE_BM
                             A list of slit trace bitmask bits that should be
-                            excluded. Comma separated.
+                            excluded.
       --exclude_serendip    Whether to exclude SERENDIP objects from collating.
       --wv_rms_thresh WV_RMS_THRESH
                             If set, any objects with a wavelength RMS > this value
