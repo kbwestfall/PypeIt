@@ -517,8 +517,6 @@ With this implementation:
 .. include:: ../include/links.rst
 
 """
-import copy
-import itertools
 from pathlib import Path
 
 from IPython import embed
@@ -533,9 +531,7 @@ from pypeit import io
 from pypeit import log
 from pypeit import PypeItCodingError
 from pypeit import PypeItDataModelError
-from pypeit import PypeItError
 from pypeit.utils import eval_tuple
-from pypeit.core import fixedtypelist
 
 
 # NOTE: This is very similar to `pypeit.par.parset.set_parameter_definition`.
