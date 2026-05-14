@@ -367,7 +367,7 @@ def test_define_components():
     with pytest.raises(ValueError):
         # if atype is provided, otype must be np.ndarray
         datamodel.define_datamodel_component(otype=list, atype=float, descr='test')
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         # otype currently cannot be dict
         datamodel.define_datamodel_component(otype=dict, descr='test')
     dmc = datamodel.define_datamodel_component(otype=float, descr='test')
@@ -385,7 +385,7 @@ def test_define_metadata():
         datamodel.define_metadatamodel_component(otype='test')
     with pytest.raises(TypeError):
         # metadata cannot be arrays
-        datamodel.define_metadatamodel_component(otype=np.ndarray)
+        datamodel.define_metadatamodel_component(otype=np.ndarray, descr='test')
     dmc = datamodel.define_metadatamodel_component(otype=float, descr='test')
     assert 'otype' in dmc.keys(), 'Missing otype'
     assert 'descr' in dmc.keys(), 'Missing descr'
