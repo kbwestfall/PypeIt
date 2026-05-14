@@ -74,6 +74,10 @@ Under-the-hood Improvements
   all its subclasses.
 - Added a new class, :class:`~pypeit.par.funcpar.FuncPar` that ingests a
   function signature to create a parameter set
+- Adds the :class:`~pypeit.pkg.exceptions.PypeItCodingError` exception.
+- Adds :func:`~pypeit.datamodel.define_datamodel_component` convenience function
+  used to formalize defining components of a
+  :class:`~pypeit.datamodel.DataContainer` subclass.
 - Adds :class:`~pypeit.core.fixedtypelist.FixedTypeList` to enable definitions
   of lists where each element is forced to have a specific type.
 - Adds :class:`~pypeit.core.spectrum.SpectrumList` to manage lists of
@@ -81,11 +85,6 @@ Under-the-hood Improvements
 - Adds :mod:`~pypeit.core.spectrumdm` to provide IO wrappers for 
   :class:`~pypeit.core.spectrum.Spectrum` and
   :class:`~pypeit.core.spectrum.SpectrumList` objects.
-- Adds the :class:`~pypeit.pkg.exceptions.PypeItCodingError` exception.
-- Adds :func:`~pypeit.datamodel.define_datamodel_component` convenience function
-  used to formalize defining components of a
-  :class:`~pypeit.datamodel.DataContainer` subclass.
-
 
 Bug Fixes
 ---------

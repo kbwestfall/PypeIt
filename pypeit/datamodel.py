@@ -531,6 +531,8 @@ from pypeit import io
 from pypeit import log
 from pypeit import PypeItCodingError
 from pypeit import PypeItDataModelError
+from pypeit import PypeItError
+from pypeit.core import fixedtypelist
 from pypeit.utils import eval_tuple
 
 
