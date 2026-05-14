@@ -6,14 +6,12 @@ from astropy.io import fits
 from IPython import embed
 import numpy as np
 
+from pypeit import datamodel
 from pypeit import log
 from pypeit.core import spectrum
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import DataContainerList
-from pypeit.datamodel import define_datamodel_component
 
 
-class SpectrumContainer(DataContainer, spectrum.Spectrum):
+class SpectrumContainer(datamodel.DataContainer, spectrum.Spectrum):
     """
     A :class:`~pypeit.datamodel.DataContainer` object that holds data for a
     single spectrum.
@@ -38,16 +36,16 @@ class SpectrumContainer(DataContainer, spectrum.Spectrum):
     """
 
     datamodel = {
-        'wave' : define_datamodel_component(
+        'wave' : datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Wavelength array'
         ),
-        'flux' : define_datamodel_component(
+        'flux' : datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Flux array'
         ),
-        'ivar' : define_datamodel_component(
+        'ivar' : datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Inverse variance in flux'
         ),
-        'gpm' : define_datamodel_component(
+        'gpm' : datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(bool, np.bool), descr='Good-pixel mask'
         ),
     }
@@ -74,7 +72,7 @@ class SpectrumContainer(DataContainer, spectrum.Spectrum):
     """
 
     def __init__(self, *args, name=None, **kwargs):
-        DataContainer.__init__(self)
+        datamodel.DataContainer.__init__(self)
         self.name = name
         spectrum.Spectrum.__init__(self, *args, **kwargs)
 
@@ -188,7 +186,7 @@ class SpectrumContainer(DataContainer, spectrum.Spectrum):
         )
 
 
-class SpectrumContainerList(DataContainerList):
+class SpectrumContainerList(datamodel.DataContainerList):
     """
     A subclass of :class:`~pypeit.datamodel.DataContainerList` for lists of
     :class:`~pypeit.core.spectrumdm.SpectrumContainer` objects.
