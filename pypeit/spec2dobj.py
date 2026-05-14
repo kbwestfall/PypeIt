@@ -5,34 +5,30 @@ Module for the Spec2DObj class
 .. include:: ../include/links.rst
 
 """
-from pathlib import Path
-import os
-import inspect
-import datetime
-
 from copy import deepcopy
-
-import numpy as np
+import datetime
+import inspect
+import os
+from pathlib import Path
 
 from astropy.io import fits
 from astropy.stats import mad_std
 from astropy import table
+from IPython import embed
+import numpy as np
 
+from pypeit import datamodel
+from pypeit import io
 from pypeit import log
 from pypeit import PypeItError
-from pypeit import io
 from pypeit import slittrace
 from pypeit.core import parse
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 from pypeit.images import imagebitmask
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.mosaic import Mosaic
 
-from IPython import embed
 
-
-class Spec2DObj(DataContainer):
+class Spec2DObj(datamodel.DataContainer):
     """Class to handle 2D spectral image outputs of PypeIt
 
     One generates one of these Objects for each detector in the exposure.
@@ -60,62 +56,62 @@ class Spec2DObj(DataContainer):
     # Because we are including nested DataContainers, be careful not to
     # duplicate variable names!!
     datamodel = {
-        'sciimg': define_datamodel_component(
+        'sciimg': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='2D processed science image (float32)'
         ),
-        'ivarraw': define_datamodel_component(
+        'ivarraw': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='2D processed inverse variance image (float32)'
         ),
-        'skymodel': define_datamodel_component(
+        'skymodel': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='2D sky model image (float32)'
         ),
-        'bkg_redux_skymodel': define_datamodel_component(
+        'bkg_redux_skymodel': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='2D sky model image without the background subtraction (float32)'
         ),
-        'objmodel': define_datamodel_component(
+        'objmodel': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='2D object model image (float32)'
         ),
-        'ivarmodel': define_datamodel_component(
+        'ivarmodel': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='2D ivar model image (float32)'
         ),
-        'tilts': define_datamodel_component(
+        'tilts': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='2D tilts image (float64)'
         ),
-        'scaleimg': define_datamodel_component(
+        'scaleimg': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 '2D multiplicative scale image [or a single scalar as an array] that has been '
                 'applied to the science image (float32)'
             )
         ),
-        'waveimg': define_datamodel_component(
+        'waveimg': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='2D wavelength image in vacuum (float64)'
         ),
-        'bpmmask': define_datamodel_component(
+        'bpmmask': datamodel.define_datamodel_component(
             otype=imagebitmask.ImageBitMaskArray, descr='2D bad-pixel mask for the image'
         ),
-        'slits': define_datamodel_component(
+        'slits': datamodel.define_datamodel_component(
             otype=slittrace.SlitTraceSet, descr='SlitTraceSet defining the slits'
         ),
-        'wavesol': define_datamodel_component(
+        'wavesol': datamodel.define_datamodel_component(
             otype=table.Table, descr='Table with WaveCalib diagnostic info'
         ),
-        'maskdef_designtab': define_datamodel_component(
+        'maskdef_designtab': datamodel.define_datamodel_component(
             otype=table.Table, descr='Table with slitmask design and object info'
         ),
-        'sci_spat_flexure': define_datamodel_component(
+        'sci_spat_flexure': datamodel.define_datamodel_component(
             otype=float, descr='Shift, in spatial pixels, between this image and SlitTrace'
         ),
-        'sci_spec_flexure': define_datamodel_component(
+        'sci_spec_flexure': datamodel.define_datamodel_component(
             otype=table.Table,
             descr=(
                 'Global shift of the spectrum to correct for spectral flexure (pixels). This is '
                 'based on the sky spectrum at the center of each slit'
             )
         ),
-        'vel_type': define_datamodel_component(
+        'vel_type': datamodel.define_datamodel_component(
             otype=str,
             descr=(
                 'Type of reference frame correction (if any). Options are listed in the routine: '
@@ -123,20 +119,20 @@ class Spec2DObj(DataContainer):
                 'heliocentric, barycentric'
             )
         ),
-        'vel_corr': define_datamodel_component(
+        'vel_corr': datamodel.define_datamodel_component(
             otype=float, descr='Relativistic velocity correction for wavelengths'
         ),
-        'med_chis': define_datamodel_component(
+        'med_chis': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Median of the chi image for each slit/order'
         ),
-        'std_chis': define_datamodel_component(
+        'std_chis': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='std of the chi image for each slit/order'
         ),
-        'det': define_datamodel_component(
+        'det': datamodel.define_datamodel_component(
             otype=int, descr='Detector index'
         ),
-        'detector': define_datamodel_component(
+        'detector': datamodel.define_datamodel_component(
             otype=(DetectorContainer, Mosaic), descr='Detector or Mosaic metadata'
         ),
     }
@@ -230,7 +226,7 @@ class Spec2DObj(DataContainer):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         _d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        DataContainer.__init__(self, d=_d)
+        datamodel.DataContainer.__init__(self, d=_d)
 
     def _validate(self):
         """

@@ -12,10 +12,9 @@ from scipy.interpolate import interp1d, RegularGridInterpolator
 from pypeit.display import display
 from pypeit.core import findobj_skymask
 from pypeit import calibframe
+from pypeit import datamodel
 from pypeit import log
 from pypeit import PypeItError
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 
 
 class Alignments(calibframe.CalibFrame):
@@ -38,25 +37,25 @@ class Alignments(calibframe.CalibFrame):
     # Datamodel already includes PYP_SPEC, so no need to combine it with the
     # CalibFrame base datamodel.
     datamodel = {
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt spectrograph name'
         ),
-        'alignframe': define_datamodel_component(
+        'alignframe': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Processed, combined alignment frames'
         ),
-        'nspec': define_datamodel_component(
+        'nspec': datamodel.define_datamodel_component(
             otype=int, descr='The number of spectral elements'
         ),
-        'nalign': define_datamodel_component(
+        'nalign': datamodel.define_datamodel_component(
             otype=int, descr='Number of alignment traces in each slit'
         ),
-        'nslits': define_datamodel_component(
+        'nslits': datamodel.define_datamodel_component(
             otype=int, descr='The number of slits'
         ),
-        'traces': define_datamodel_component(
+        'traces': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Traces of the alignment frame'
         ),
-        'spat_id': define_datamodel_component(
+        'spat_id': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='Slit spat_id '
         )
     }
@@ -67,7 +66,7 @@ class Alignments(calibframe.CalibFrame):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        DataContainer.__init__(self, d=d)
+        datamodel.DataContainer.__init__(self, d=d)
 
     def _validate(self):
         # TBC - need to check that all alignment traces have been correctly traced

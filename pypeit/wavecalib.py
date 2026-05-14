@@ -13,17 +13,19 @@ from IPython import embed
 from matplotlib import pyplot as plt
 import numpy as np
 
+from pypeit import calibframe
+from pypeit import datamodel
 from pypeit import log
 from pypeit import PypeItCodingError
 from pypeit import PypeItError
-from pypeit.core import arc, qa
+from pypeit.core import arc
 from pypeit.core import fitting
 from pypeit.core import parse
-from pypeit.core.wavecal import autoid, wv_fitting, wvutils
+from pypeit.core import qa
 from pypeit.core.gui.identify import Identify
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
-from pypeit import calibframe
+from pypeit.core.wavecal import autoid
+from pypeit.core.wavecal import wv_fitting
+from pypeit.core.wavecal import wvutils
 from pypeit.core.wavecal import echelle
 from pypeit.par import pypeitpar
 
@@ -54,25 +56,25 @@ class WaveCalib(calibframe.CalibFrame):
     internals = calibframe.CalibFrame.internals + ['_par']
 
     datamodel = {
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt spectrograph name'
         ),
-        'wv_fits': define_datamodel_component(
+        'wv_fits': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=wv_fitting.WaveFit,
             descr='WaveFit to each 1D wavelength solution'
         ),
-        'wv_fit2d': define_datamodel_component(
+        'wv_fit2d': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=fitting.PypeItFit,
             descr=(
                 '2D wavelength solution(s) (echelle).  If there is more than one, they must be '
                 'aligned to the separate detectors analyzed'
             )
         ),
-        'fwhm_map': define_datamodel_component(
+        'fwhm_map': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=fitting.PypeItFit,
             descr='A fit that determines the spectral FWHM at every location of every slit'
         ),
-        'det_img': define_datamodel_component(
+        'det_img': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr=(
                 'Detector image which indicates which pixel in the mosaic corresponds to which '
@@ -80,25 +82,25 @@ class WaveCalib(calibframe.CalibFrame):
                 'ech_separate_2d=True'
             )
         ),
-        'arc_spectra': define_datamodel_component(
+        'arc_spectra': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='2D array: 1D extracted spectra, slit by slit (nspec, nslits)'
         ),
-        'nslits': define_datamodel_component(
+        'nslits': datamodel.define_datamodel_component(
             otype=int, descr='Total number of slits.  This can include masked slits'
         ),
-        'spat_ids': define_datamodel_component(
+        'spat_ids': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr='Slit spat_ids. Named distinctly from that in WaveFit '
         ),
-        'ech_orders': define_datamodel_component(
+        'ech_orders': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr='Echelle order ID numbers.  Defined only for echelle.'
         ),
-        'strpar': define_datamodel_component(
+        'strpar': datamodel.define_datamodel_component(
             otype=str, descr='Parameters as a string'
         ),
-        'lamps': define_datamodel_component(
+        'lamps': datamodel.define_datamodel_component(
             otype=str, descr='List of arc lamps used for the wavelength calibration'
         ),
     }
@@ -110,7 +112,7 @@ class WaveCalib(calibframe.CalibFrame):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        DataContainer.__init__(self, d=d)
+        datamodel.DataContainer.__init__(self, d=d)
 
         self._par = (
             None if strpar is None

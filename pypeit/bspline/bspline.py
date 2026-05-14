@@ -12,13 +12,10 @@ Implements the bspline class
 import warnings
 
 from IPython import embed
-
 import numpy as np
 
+from pypeit import datamodel
 from pypeit.core import basis
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
-
 from pypeit.bspline.util import (
     cholesky_band, cholesky_solve, solution_arrays, intrv, bspline_model
 )
@@ -26,7 +23,7 @@ from pypeit.bspline.util import (
 # TODO: This whole module needs to be cleaned up.
 
 
-class bspline(DataContainer):
+class bspline(datamodel.DataContainer):
     """Bspline class.
 
     Functions in the bspline library are implemented as methods on this
@@ -85,32 +82,32 @@ class bspline(DataContainer):
     """
 
     datamodel = {
-        'breakpoints': define_datamodel_component(
+        'breakpoints': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Breakpoint locations'
         ),
-        'nord': define_datamodel_component(
+        'nord': datamodel.define_datamodel_component(
             otype=int, descr='Order of the bspline fit'
         ),
-        'npoly': define_datamodel_component(
+        'npoly': datamodel.define_datamodel_component(
             otype=int, descr='Order of polynomial to fit over 2nd variable (when x2 is specified)'
         ),
-        'mask': define_datamodel_component(
+        'mask': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.bool_, descr='Output mask'
         ),
-        'coeff': define_datamodel_component(
+        'coeff': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Output fit coefficients'
         ),
-        'icoeff': define_datamodel_component(
+        'icoeff': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Cholesky band matrix used to solve for the bspline coefficients'
         ),
-        'xmin': define_datamodel_component(
+        'xmin': datamodel.define_datamodel_component(
             otype=float, descr='Normalization minimum for x2'
         ),
-        'xmax': define_datamodel_component(
+        'xmax': datamodel.define_datamodel_component(
             otype=float, descr='Normalization maximum for x2'
         ),
-        'funcname': define_datamodel_component(
+        'funcname': datamodel.define_datamodel_component(
             otype=str, descr='Function type for the 2nd variable (when x2 is specified)'
         ),
     }
@@ -122,7 +119,7 @@ class bspline(DataContainer):
                  bkspace=None, nbkpts=None, everyn=None, funcname='legendre'):
 
         # Instantiate the base class
-        DataContainer.__init__(self)
+        datamodel.DataContainer.__init__(self)
 
         # Instantiate empty if neither fullbkpt or x is set
         if x is None and fullbkpt is None:

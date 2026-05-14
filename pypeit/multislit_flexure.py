@@ -13,12 +13,11 @@ import matplotlib
 from matplotlib import pyplot as plt
 import numpy as np
 
+from pypeit import datamodel
 from pypeit import dataPaths
 from pypeit import log
 from pypeit import specobjs
 from pypeit.core import fitting
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.mosaic import Mosaic
 
@@ -120,7 +119,7 @@ def sky_em_residuals(
 
 
 # TODO -- Consider separating the methods from the DataContainer as per calibrations
-class MultiSlitFlexure(DataContainer):
+class MultiSlitFlexure(datamodel.DataContainer):
     """
     Class to perform multi-detector flexure analysis.
 
@@ -135,68 +134,68 @@ class MultiSlitFlexure(DataContainer):
     version = '1.1.0'
 
     datamodel = {
-        's1dfile': define_datamodel_component(
+        's1dfile': datamodel.define_datamodel_component(
             otype=str, descr='spec1d filename'
         ), 
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt spectrograph name'
         ),
-        'ndet': define_datamodel_component(
+        'ndet': datamodel.define_datamodel_component(
             otype=int, descr='Number of detectors per spectrum'
         ),
-        'nslits': define_datamodel_component(
+        'nslits': datamodel.define_datamodel_component(
             otype=int, descr='Number of slits'
         ),
-        'is_msc': define_datamodel_component(
+        'is_msc': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(int, np.integer),
             descr='Flag that the "det" is the mosaic ID (ndet, nslits)'
         ),
-        'det': define_datamodel_component(
+        'det': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(int, np.integer),
             descr='Integer identifiers for the detector or mosaic (ndet, nslits)'
         ),
-        'SN': define_datamodel_component(
+        'SN': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='S/N (ndet, nslits)'
         ),
-        'slitid': define_datamodel_component(
+        'slitid': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Slit ID (nslits)'
         ),
-        'mn_wv': define_datamodel_component(
+        'mn_wv': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Mininum wavelength of the slit [Ang] (nslits)'
         ),
-        'indiv_fit_slope': define_datamodel_component(
+        'indiv_fit_slope': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Fits to each slit individually (nslits)'
         ),
-        'indiv_fit_b': define_datamodel_component(
+        'indiv_fit_b': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Same as above but for b (nslits)'
         ),
-        'indiv_fit_los': define_datamodel_component(
+        'indiv_fit_los': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Same as above but for line width (nslits)'
         ),
-        'fit_slope': define_datamodel_component(
+        'fit_slope': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Fitted slope (nslits)'
         ),
-        'fit_b': define_datamodel_component(
+        'fit_b': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Fitted b value(nslits)'
         ),
-        'fit_los': define_datamodel_component(
+        'fit_los': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Fitted line width(nslits)'
         ),
-        'resid_sky': define_datamodel_component(
+        'resid_sky': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Residuals of flexure model on sky lines (nslits)'
         ),
-        'objra': define_datamodel_component(
+        'objra': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Object RA (nslits)'
         ),
-        'objdec': define_datamodel_component(
+        'objdec': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Object DEC (nslits)'
         ),
-        'maskdef_id': define_datamodel_component(
+        'maskdef_id': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='Mask ID (nslits)'
         ),
-        'rms_arc': define_datamodel_component(
+        'rms_arc': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='RMS of fit (ndet, nslits)'
         )
     }

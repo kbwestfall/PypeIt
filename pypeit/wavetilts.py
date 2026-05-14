@@ -5,30 +5,28 @@ Module for guiding Arc/Sky line tracing
 .. include:: ../include/links.rst
 
 """
-import inspect
-
-from IPython import embed
-from pathlib import Path
 import gc
-
-import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib.lines import Line2D
+import inspect
+from pathlib import Path
 
 from astropy import stats, visualization
 from astropy import table
+from IPython import embed
+from matplotlib import pyplot as plt
+from matplotlib.lines import Line2D
+import numpy as np
 
+from pypeit import calibframe
+from pypeit import datamodel
 from pypeit import log
 from pypeit import PypeItError
-from pypeit import calibframe
-from pypeit import slittrace, wavecalib
+from pypeit import slittrace
 from pypeit import utils
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
-from pypeit.display import display
+from pypeit import wavecalib
 from pypeit.core import arc
 from pypeit.core import tracewave
 from pypeit.core.wavecal import autoid
+from pypeit.display import display
 from pypeit.images import buildimage
 
 
@@ -61,53 +59,53 @@ class WaveTilts(calibframe.CalibFrame):
     #     include it here.
 
     datamodel = {
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt spectrograph name'
         ),
-        'coeffs': define_datamodel_component(
+        'coeffs': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 '2D coefficents for the fit on the initial slits.  One set per slit/order (3D '
                 'array).'
             )
         ),
-        'bpmtilts': define_datamodel_component(
+        'bpmtilts': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr='Bad pixel mask for tilt solutions. Keys are taken from SlitTraceSetBitmask'
         ),
-        'nslit': define_datamodel_component(
+        'nslit': datamodel.define_datamodel_component(
             otype=int, descr='Total number of slits.  This can include masked slits'
         ),
-        'spat_id': define_datamodel_component(
+        'spat_id': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='Slit spat_id '
         ),
-        'spat_order': define_datamodel_component(
+        'spat_order': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='Order for spatial fit (nslit)'
         ),
-        'spec_order': define_datamodel_component(
+        'spec_order': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='Order for spectral fit (nslit)'
         ),
-        'func2d': define_datamodel_component(
+        'func2d': datamodel.define_datamodel_component(
             otype=str, descr='Function used for the 2D fit'
         ),
-        'spat_flexure': define_datamodel_component(
+        'spat_flexure': datamodel.define_datamodel_component(
             otype=float, descr='Flexure shift from the input TiltImage'
         ),
-        'slits_filename': define_datamodel_component(
+        'slits_filename': datamodel.define_datamodel_component(
             otype=str,
             descr=(
                 'Path to SlitTraceSet file. This helps to find the Slits calibration file when '
                 'running pypeit_chk_tilts()'
             )
         ),
-        'tiltimg_filename': define_datamodel_component(
+        'tiltimg_filename': datamodel.define_datamodel_component(
             otype=str,
             descr=(
                 'Path to Tiltimg file. This helps to find Tiltimg file when running '
                 'pypeit_chk_tilts()'
             )
         ),
-        'tilt_traces': define_datamodel_component(
+        'tilt_traces': datamodel.define_datamodel_component(
             otype=table.Table,
             descr=(
                 'Table with the positions of the traced and fitted tilts for all the slits; '
@@ -125,7 +123,7 @@ class WaveTilts(calibframe.CalibFrame):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        DataContainer.__init__(self, d=d)
+        datamodel.DataContainer.__init__(self, d=d)
 
     def _bundle(self):
         """

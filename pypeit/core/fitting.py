@@ -5,22 +5,18 @@
 
 """
 # TODO -- Consider moving the Object out of core
-
-import numpy as np
 import inspect
-from matplotlib import pyplot as plt
-
-
-from scipy.optimize import curve_fit
-
-from pypeit.core import pydl
-from pypeit import bspline
-from pypeit import log
-from pypeit import PypeItError
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 
 from IPython import embed
+from matplotlib import pyplot as plt
+import numpy as np
+from scipy.optimize import curve_fit
+
+from pypeit import bspline
+from pypeit import datamodel
+from pypeit import log
+from pypeit import PypeItError
+from pypeit.core import pydl
 
 
 class PypeItFitCollection:
@@ -199,7 +195,7 @@ class PypeItFitCollection:
         return _xpos, np.vstack([self.pypeitFits[i].eval(_xnorm[i]) for i in range(self.nfit)])
 
 
-class PypeItFit(DataContainer):
+class PypeItFit(datamodel.DataContainer):
     """
     General fitting class used by PypeIt.
 
@@ -218,64 +214,64 @@ class PypeItFit(DataContainer):
     version = '1.0.0'
 
     datamodel = {
-        'xval': define_datamodel_component(
+        'xval': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='x inputs'
         ),
-        'yval': define_datamodel_component(
+        'yval': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='y inputs'
         ),
-        'order': define_datamodel_component(
+        'order': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr=(
                 'The order of the polynomial to be used in the fitting.  This is a 2d array for '
                 '2d fits.'
             )
         ),
-        'x2': define_datamodel_component(
+        'x2': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='x2 inputs, second independent variable'
         ),
-        'weights': define_datamodel_component(
+        'weights': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Weights.  Often the same as invvar.'
         ),
-        'fitc': define_datamodel_component(
+        'fitc': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Fit coefficients'
         ),
-        'fitcov': define_datamodel_component(
+        'fitcov': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Covariance of the coefficients'
         ),
         # TODO: Can we make this boolean?
-        'gpm': define_datamodel_component(
+        'gpm': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='Mask (1=good)'
         ),
-        'success': define_datamodel_component(
+        'success': datamodel.define_datamodel_component(
             otype=int,
             descr=(
                 'Flag indicating whether fit was successful (success=1) or if it failed '
                 '(success=0)'
             )
         ),
-        'func': define_datamodel_component(
+        'func': datamodel.define_datamodel_component(
             otype=str,
             descr='Fit function (polynomial, legendre, chebyshev, polynomial2d, legendre2d)'
         ),
-        'minx': define_datamodel_component(
+        'minx': datamodel.define_datamodel_component(
             otype=float,
             descr=(
                 'minimum value in the array (or the left limit for a legendre / chebyshev '
                 'polynomial)'
             )
         ),
-        'maxx': define_datamodel_component(
+        'maxx': datamodel.define_datamodel_component(
             otype=float,
             descr=(
                 'maximum value in the array (or the right limit for a legendre / chebyshev '
                 'polynomial)'
             )
         ),
-        'minx2': define_datamodel_component(
+        'minx2': datamodel.define_datamodel_component(
             otype=float, descr='Same as minx for the second independent variable x2'
         ),
-        'maxx2': define_datamodel_component(
+        'maxx2': datamodel.define_datamodel_component(
             otype=float, descr='Same as maxx for the second independent variable x2'
         ),
     }

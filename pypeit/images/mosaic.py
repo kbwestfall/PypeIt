@@ -5,23 +5,21 @@
 .. include:: ../include/links.rst
 """
 import inspect
-from IPython import embed
-
-import numpy as np
 
 from astropy import table
 from astropy.io import fits
+from IPython import embed
+import numpy as np
 
+from pypeit import datamodel
 from pypeit import io
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
-from pypeit.images.detector_container import DetectorContainer
 from pypeit import log
 from pypeit import PypeItCodingError
 from pypeit import PypeItError
+from pypeit.images.detector_container import DetectorContainer
 
 
-class Mosaic(DataContainer):
+class Mosaic(datamodel.DataContainer):
     """
     Class to hold mosaic parameters and the details of the detectors used to
     construct the mosaic.
@@ -42,38 +40,38 @@ class Mosaic(DataContainer):
     # beware of adding new datamodel components with the same names as those in
     # DetectorContainer!
     datamodel = {
-        'id': define_datamodel_component(
+        'id': datamodel.define_datamodel_component(
             otype=int, descr='Mosaic ID number'
         ),
-        'detectors': define_datamodel_component(
+        'detectors': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=DetectorContainer,
             descr='List of objects with detector parameters.'
         ),
-        'binning': define_datamodel_component(
+        'binning': datamodel.define_datamodel_component(
             otype=str, descr='On-chip binning'
         ),
-        'platescale': define_datamodel_component(
+        'platescale': datamodel.define_datamodel_component(
             otype=float, descr='Detector platescale in arcsec/pixel'
         ),
-        'shape': define_datamodel_component(
+        'shape': datamodel.define_datamodel_component(
             otype=tuple, descr='Shape of each processed detector image'
         ),
-        'shift': define_datamodel_component(
+        'shift': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Raw, hard-coded pixel shifts for each unbinned detector'
         ),
-        'rot': define_datamodel_component(
+        'rot': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr=(
                 'Raw, hard-coded rotations (counter-clockwise in degrees) for each unbinned '
                 'detector'
             )
         ),
-        'tform': define_datamodel_component(
+        'tform': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='The full transformation matrix for each detector used to construct the mosaic.'
         ),
-        'msc_ord': define_datamodel_component(
+        'msc_ord': datamodel.define_datamodel_component(
             otype=int, descr='Order of the interpolation used to construct the mosaic.'
         ),
     }
@@ -89,7 +87,7 @@ class Mosaic(DataContainer):
         d = dict([(k,values[k]) for k in args[1:]])
 
         # Setup the DataContainer
-        DataContainer.__init__(self, d=d)
+        datamodel.DataContainer.__init__(self, d=d)
 
     def _validate(self):
         """

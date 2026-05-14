@@ -4,29 +4,34 @@ Module containing routines used by 3D datacubes.
 .. include:: ../include/links.rst
 """
 
-import os
 import inspect
+import os
 
 from astropy import wcs, units
 from astropy.io import fits
 import erfa
-from scipy.interpolate import interp1d
+from IPython import embed
 import numpy as np
+from scipy.interpolate import interp1d
 
+from pypeit import alignframe
+from pypeit import datamodel
+from pypeit import flatfield
+from pypeit import io
 from pypeit import log
 from pypeit import PypeItError
-from pypeit import alignframe, flatfield, io, sensfunc, spec2dobj, utils
+from pypeit import sensfunc
+from pypeit import spec2dobj
+from pypeit import utils
+from pypeit.core import datacube
+from pypeit.core import extract
+from pypeit.core import flux_calib
+from pypeit.core import parse
 from pypeit.core.flexure import calculate_image_phase
-from pypeit.core import datacube, extract, flux_calib, parse
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 from pypeit.spectrographs.util import load_spectrograph
 
 
-from IPython import embed
-
-
-class DataCube(DataContainer):
+class DataCube(datamodel.DataContainer):
     """
     DataContainer to hold the products of a datacube
 
@@ -73,38 +78,38 @@ class DataCube(DataContainer):
     version = '1.2.0'
 
     datamodel = {
-        'flux': define_datamodel_component(
+        'flux': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=('Flux datacube in units of counts/s/Ang/arcsec^2 or '
                 '10^-17 erg/s/cm^2/Ang/arcsec^2'
             ),
         ),
-        'sig': define_datamodel_component(
+        'sig': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
                     descr='Error datacube (matches units of flux)'),
-        'bpm': define_datamodel_component(
+        'bpm': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.uint8,
             descr='Bad pixel mask of the datacube (0=good, 1=bad)'
         ),
-        'wave': define_datamodel_component(
+        'wave': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Wavelength of each slice in the spectral direction.  The units are Angstroms.'
         ),
-        'blaze_wave': define_datamodel_component(
+        'blaze_wave': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Wavelength array of the spectral blaze function'
         ),
-        'blaze_spec': define_datamodel_component(
+        'blaze_spec': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='The spectral blaze function'
         ),
-        'sensfunc': define_datamodel_component(
+        'sensfunc': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Sensitivity function 10^-17 erg/(counts/cm^2)'
         ),
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt: Spectrograph name'
         ),
-        'fluxed': define_datamodel_component(
+        'fluxed': datamodel.define_datamodel_component(
             otype=bool, descr='Boolean indicating if the datacube is fluxed.'
         )
     }
@@ -124,7 +129,7 @@ class DataCube(DataContainer):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         _d = dict([(k, values[k]) for k in args[1:]])
         # Setup the DataContainer
-        DataContainer.__init__(self, d=_d)
+        datamodel.DataContainer.__init__(self, d=_d)
         # Initialise the internals
         self._ivar = None
         self._wcs = None

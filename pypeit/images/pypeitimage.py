@@ -5,27 +5,24 @@
 """
 import inspect
 
+from astropy.io import fits
 from IPython import embed
-
 import numpy as np
 
-from astropy.io import fits
-
+from pypeit import datamodel
 from pypeit import log
 from pypeit import PypeItCodingError
 from pypeit import PypeItError
+from pypeit import utils
+from pypeit.core import procimg
+from pypeit.display import display
+from pypeit.calibframe import CalibFrame
 from pypeit.images.imagebitmask import ImageBitMaskArray
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.mosaic import Mosaic
-from pypeit.core import procimg
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
-from pypeit.display import display
-from pypeit.calibframe import CalibFrame
-from pypeit import utils
 
 
-class PypeItImage(DataContainer):
+class PypeItImage(datamodel.DataContainer):
     r"""
     Container class for processed PypeIt images and associated data.
 
@@ -101,23 +98,23 @@ class PypeItImage(DataContainer):
     """Datamodel version number"""
 
     datamodel = {
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt spectrograph name'
         ),
-        'image': define_datamodel_component(
+        'image': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Primary image data'
         ),
-        'ivar': define_datamodel_component(
+        'ivar': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Inverse variance image'
         ),
-        'nimg': define_datamodel_component(
+        'nimg': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr=(
                 'If a combination of multiple images, this is the number of images that '
                 'contributed to each pixel'
             )
         ),
-        'amp_img': define_datamodel_component(
+        'amp_img': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr=(
                 'Provides the amplifier that contributed to each pixel.  If this is a detector '
@@ -125,54 +122,54 @@ class PypeItImage(DataContainer):
                 'given detector amplifier.'
             )
         ),
-        'det_img': define_datamodel_component(
+        'det_img': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr=(
                 'If a detector mosaic, this image provides the detector that contributed to each '
                 'pixel.'
             )
         ),
-        'rn2img': define_datamodel_component(
+        'rn2img': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Read noise squared image'
         ),
-        'base_var': define_datamodel_component(
+        'base_var': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Base-level image variance, excluding count shot-noise'
         ),
-        'img_scale': define_datamodel_component(
+        'img_scale': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Image count scaling applied (e.g., 1/flat-field)'
         ),
-        'fullmask': define_datamodel_component(
+        'fullmask': datamodel.define_datamodel_component(
             otype=ImageBitMaskArray, descr='Image mask'
         ),
-        'detector': define_datamodel_component(
+        'detector': datamodel.define_datamodel_component(
             otype=(DetectorContainer, Mosaic),
             descr=(
                 'The detector (see :class:`~pypeit.images.detector_container.DetectorContainer`) '
                 'or mosaic (see :class:`~pypeit.images.mosaic.Mosaic`) parameters'
             )
         ),
-        'units': define_datamodel_component(
+        'units': datamodel.define_datamodel_component(
             otype=str, descr='(Unscaled) Pixel units (e- or ADU)'
         ),
         # TODO: Consider forcing exptime to be a float.
-        'exptime': define_datamodel_component(
+        'exptime': datamodel.define_datamodel_component(
             otype=(int, float), descr='Effective exposure time (s)'
         ),
-        'noise_floor': define_datamodel_component(
+        'noise_floor': datamodel.define_datamodel_component(
             otype=float, descr='Noise floor included in variance'
         ),
-        'shot_noise': define_datamodel_component(
+        'shot_noise': datamodel.define_datamodel_component(
             otype=bool, descr='Shot-noise included in variance'
         ),
-        'spat_flexure': define_datamodel_component(
+        'spat_flexure': datamodel.define_datamodel_component(
             otype=float, descr='Shift, in spatial pixels, between this image and SlitTrace'
         ),
-        'filename': define_datamodel_component(
+        'filename': datamodel.define_datamodel_component(
             otype=str, descr='Filename for the image'
         ),
-        'rel_scaleImg': define_datamodel_component(
+        'rel_scaleImg': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'Image used to apply a relative scaling to the science image to correct its '
@@ -180,7 +177,7 @@ class PypeItImage(DataContainer):
                 'calculated and updated during object finding.'
             )
         ),
-        'flex_shift': define_datamodel_component(
+        'flex_shift': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'Array of global spectral shifts (pixels) of the wavelength array at the center '
@@ -296,7 +293,7 @@ class PypeItImage(DataContainer):
                 continue
             # Array?
             if self.datamodel[key]['otype'] == np.ndarray \
-                    or isinstance(self[key], DataContainer):
+                    or isinstance(self[key], datamodel.DataContainer):
                 d.append({key : self[key]})
             else: # Add to header of the primary image
                 d[0][key] = self[key]

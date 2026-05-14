@@ -31,18 +31,16 @@ import inspect
 from pathlib import Path
 from collections import OrderedDict
 
+from astropy import table
 from IPython import embed
-
-import numpy as np
-
-from scipy import ndimage
-
 import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib import ticker, rc
+import numpy as np
+from scipy import ndimage
 
-from astropy import table
-
+from pypeit import calibframe
+from pypeit import datamodel
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import PypeItBitMaskError
@@ -50,10 +48,7 @@ from pypeit import PypeItCodingError
 from pypeit import utils
 from pypeit import sampling
 from pypeit import slittrace
-from pypeit import calibframe
 from pypeit.bitmask import BitMask
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 from pypeit.display import display
 from pypeit.par import pypeitpar
 from pypeit.core import parse, procimg, trace, slitdesign_matching
@@ -365,13 +360,13 @@ class EdgeTraceSet(calibframe.CalibFrame):
     """
 
     datamodel = {
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt spectrograph name'
         ),
-        'dispname': define_datamodel_component(
+        'dispname': datamodel.define_datamodel_component(
             otype=str, descr='Spectrograph disperser name.'
         ),
-        'traceimg': define_datamodel_component(
+        'traceimg': datamodel.define_datamodel_component(
             otype=TraceImage,
             descr=(
                 'Image used to construct the edge traces; see '
@@ -379,60 +374,60 @@ class EdgeTraceSet(calibframe.CalibFrame):
                 ':class:`~pypeit.images.pypeitimage.PypeItImage`.'
             )
         ),
-        'nspec': define_datamodel_component(
+        'nspec': datamodel.define_datamodel_component(
             otype=int, descr='Image pixels in the spectral direction.'
         ),
-        'nspat': define_datamodel_component(
+        'nspat': datamodel.define_datamodel_component(
             otype=int, descr='Image pixels in the spatial direction.'
         ),
-        'tracebpm': define_datamodel_component(
+        'tracebpm': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(bool, np.bool_), descr='Bad-pixel mask for trace image'
         ),
-        'sobelsig': define_datamodel_component(
+        'sobelsig': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(float, np.floating),
             descr='Sobel-filtered image used to detect edges'
         ),
-        'traceid': define_datamodel_component(
+        'traceid': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(int, np.integer),
             descr=(
                 'ID number for the edge traces.  Negative and positive IDs are for, respectively, '
                 'left and right edges.'
             )
         ),
-        'maskdef_id': define_datamodel_component(
+        'maskdef_id': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(int, np.integer),
             descr=(
                 'slitmask ID number for the edge traces. IDs are for, respectively, left and '
                 'right edges.  Only defined if mask-design metadata is available.'
             )
         ),
-        'orderid': define_datamodel_component(
+        'orderid': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(int, np.integer),
             descr=(
                 'For echelle spectrographs, this is the order ID number for the edge traces.  '
                 'Negative and positive IDs are for, respectively, left and right edges.'
             )
         ),
-        'edge_cen': define_datamodel_component(
+        'edge_cen': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(float, np.floating),
             descr=(
                 '(Floating-point) Measured spatial coordinate of the edge traces for each '
                 'spectral pixel.  Shape is (Nspec,Ntrace).'
             )
         ),
-        'edge_err': define_datamodel_component(
+        'edge_err': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(float, np.floating),
             descr='Error in the measured spatial coordinate edge traces.'
         ),
-        'edge_msk': define_datamodel_component(
+        'edge_msk': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=bitmask.minimum_dtype(),
             descr='Bitmask for the edge trace positions.'
         ),
-        'edge_fit': define_datamodel_component(
+        'edge_fit': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(float, np.floating),
             descr='The best-fit model result for the trace edge.'
         ),
-        'fittype': define_datamodel_component(
+        'fittype': datamodel.define_datamodel_component(
             otype=str,
             descr=(
                 'An informational string identifying the type of model used to fit the trace '
@@ -440,7 +435,7 @@ class EdgeTraceSet(calibframe.CalibFrame):
                 'and order'
             )
         ),
-        'pca': define_datamodel_component(
+        'pca': datamodel.define_datamodel_component(
             otype=TracePCA,
             descr=(
                 'The PCA decomposition of all edge traces.  Not defined if PCA separated between '
@@ -448,7 +443,7 @@ class EdgeTraceSet(calibframe.CalibFrame):
                 ':class:`~pypeit.tracepca.TracePCA`.'
             )
         ),
-        'left_pca': define_datamodel_component(
+        'left_pca': datamodel.define_datamodel_component(
             otype=TracePCA,
             descr=(
                 'The PCA decomposition of the left-edge traces.  Not defined if PCA performed on '
@@ -456,7 +451,7 @@ class EdgeTraceSet(calibframe.CalibFrame):
                 'False).  See :class:`~pypeit.tracepca.TracePCA`.'
             )
         ),
-        'right_pca': define_datamodel_component(
+        'right_pca': datamodel.define_datamodel_component(
             otype=TracePCA,
             descr=(
                 'The PCA decomposition of the right-edge traces.  Not defined if PCA performed '
@@ -464,7 +459,7 @@ class EdgeTraceSet(calibframe.CalibFrame):
                 'False).  See :class:`~pypeit.tracepca.TracePCA`.'
             )
         ),
-        'pcatype': define_datamodel_component(
+        'pcatype': datamodel.define_datamodel_component(
             otype=str,
             descr=(
                 'String identifier for the measurements used to construct the PCA (center or '
@@ -1154,7 +1149,7 @@ class EdgeTraceSet(calibframe.CalibFrame):
         for key in self.keys():
             if self[key] is None:
                 continue
-            if isinstance(self[key], DataContainer):
+            if isinstance(self[key], datamodel.DataContainer):
                 d += [{key: self[key]}]
                 continue
             if self.datamodel[key]['otype'] == np.ndarray:
@@ -1180,7 +1175,7 @@ class EdgeTraceSet(calibframe.CalibFrame):
                 continue
             for key in self.keys():
                 if self[key] is None or self.datamodel[key]['otype'] == np.ndarray \
-                        or isinstance(self[key], DataContainer):
+                        or isinstance(self[key], datamodel.DataContainer):
                     continue
                 _d[key] = self[key]
 

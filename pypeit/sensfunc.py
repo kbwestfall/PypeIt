@@ -16,6 +16,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from astropy.io import fits
 from astropy import table
 
+from pypeit import datamodel
 from pypeit import flatfield
 from pypeit import log
 from pypeit import PypeItCodingError
@@ -24,8 +25,6 @@ from pypeit import specobjs
 from pypeit import specobj
 from pypeit import utils
 from pypeit import io
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 from pypeit.core import coadd
 from pypeit.core import flux_calib
 from pypeit.core import standard
@@ -42,7 +41,7 @@ from pypeit.spectrographs.util import load_spectrograph
 
 # TODO Add some QA plots, and plots to the screen if show is set.
 
-class SensFunc(DataContainer):
+class SensFunc(datamodel.DataContainer):
     r"""
     Base class for generating sensitivity functions from a standard-star
     spectrum.
@@ -83,54 +82,54 @@ class SensFunc(DataContainer):
 #    """Regardless of datamodel, output floating-point data have this fixed bit size."""
 
     datamodel = {
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt spectrograph name'
         ),
-        'pypeline': define_datamodel_component(
+        'pypeline': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt pipeline reduction path'
         ),
-        'spec1df': define_datamodel_component(
+        'spec1df': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt spec1D file(s) used to for sensitivity function'
         ),
-        'extr': define_datamodel_component(
+        'extr': datamodel.define_datamodel_component(
             otype=str, descr='Extraction method used for the standard star (OPT or BOX)'
         ),
-        'std_name': define_datamodel_component(
+        'std_name': datamodel.define_datamodel_component(
             otype=str, descr='Type of standard source'
         ),
-        'std_cal': define_datamodel_component(
+        'std_cal': datamodel.define_datamodel_component(
             otype=str, descr='File name (or shorthand) with the standard flux data'
         ),
         # TODO: Is it possible/useful to force the coordinates to always be floats
-        'std_ra': define_datamodel_component(
+        'std_ra': datamodel.define_datamodel_component(
             otype=float, descr='RA of the standard source'
         ),
-        'std_dec': define_datamodel_component(
+        'std_dec': datamodel.define_datamodel_component(
             otype=float, descr='DEC of the standard source'
         ),
-        'airmass': define_datamodel_component(
+        'airmass': datamodel.define_datamodel_component(
             otype=float, descr='Airmass of the observation'
         ),
-        'exptime': define_datamodel_component(
+        'exptime': datamodel.define_datamodel_component(
             otype=float, descr='Exposure time'
         ),
-        'telluric': define_datamodel_component(
+        'telluric': datamodel.define_datamodel_component(
             otype=telluric.Telluric,
             descr='Telluric model; see :class:`~pypeit.core.telluric.Telluric`'
         ),
-        'sens': define_datamodel_component(
+        'sens': datamodel.define_datamodel_component(
             otype=table.Table, descr='Table with the sensitivity function'
         ),
-        'wave': define_datamodel_component(
+        'wave': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Wavelength vectors'
         ),
-        'zeropoint': define_datamodel_component(
+        'zeropoint': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Sensitivity function zeropoints'
         ),
-        'throughput': define_datamodel_component(
+        'throughput': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Spectrograph throughput measurements'
         ),
-        'algorithm': define_datamodel_component(
+        'algorithm': datamodel.define_datamodel_component(
             otype=str, descr='Algorithm used for the sensitivity calculation.'
         )
     }
@@ -412,7 +411,10 @@ class SensFunc(DataContainer):
         for key in self.keys():
             if self[key] is None:
                 continue
-            if isinstance(self[key], DataContainer) or isinstance(self[key], table.Table):
+            if (
+                isinstance(self[key], datamodel.DataContainer)
+                or isinstance(self[key], table.Table)
+            ):
                 d += [{key: self[key]}]
                 continue
             if self.datamodel[key]['otype'] == np.ndarray:
@@ -456,9 +458,11 @@ class SensFunc(DataContainer):
             if list(_d.keys()) != ['sens']:
                 continue
             for key in self.keys():
-                if self[key] is None or self.datamodel[key]['otype'] == np.ndarray \
-                        or isinstance(self[key], DataContainer) \
-                        or isinstance(self[key], table.Table):
+                if (
+                    self[key] is None or self.datamodel[key]['otype'] == np.ndarray
+                    or isinstance(self[key], datamodel.DataContainer)
+                    or isinstance(self[key], table.Table)
+                ):
                     continue
                 _d[key] = self[key]
 

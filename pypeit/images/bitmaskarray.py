@@ -9,21 +9,19 @@ Class usage examples
 .. include common links, assuming primary doc root is up one directory
 .. include:: ../include/links.rst
 """
+from astropy.io import fits
 from IPython import embed
-
 import numpy as np
 
-from astropy.io import fits
-
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
-from pypeit.bitmask import BitMask
+from pypeit import datamodel
 from pypeit import log
 from pypeit import PypeItBitMaskError
 from pypeit import PypeItCodingError
 from pypeit import PypeItError
+from pypeit.bitmask import BitMask
 
-class BitMaskArray(DataContainer):
+
+class BitMaskArray(datamodel.DataContainer):
     """
     Object that holds both the mask data and the mask interpretation object.
 
@@ -45,7 +43,7 @@ class BitMaskArray(DataContainer):
     """
 
     datamodel = {
-        'mask': define_datamodel_component(
+        'mask': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='Bitmask values'
         ),
     }
@@ -208,7 +206,7 @@ class BitMaskArray(DataContainer):
     def copy(self):
         """Create a deep copy."""
         _self = super().__new__(self.__class__)
-        DataContainer.__init__(_self)
+        datamodel.DataContainer.__init__(_self)
         _self._set_keys()
         _self.mask = self.mask.copy()
         return _self

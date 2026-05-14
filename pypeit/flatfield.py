@@ -28,10 +28,9 @@ from pypeit import utils
 from pypeit import bspline
 
 from pypeit import calibframe
+from pypeit import datamodel
 from pypeit import edgetrace
 from pypeit import io
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 from pypeit.display import display
 from pypeit.images import buildimage
 from pypeit.core import qa
@@ -68,58 +67,58 @@ class FlatImages(calibframe.CalibFrame):
     # Datamodel already includes PYP_SPEC, so no need to combine it with the
     # CalibFrame base datamodel.
     datamodel = {
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt spectrograph name'
         ),
-        'pixelflat_raw': define_datamodel_component(
+        'pixelflat_raw': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Processed, combined pixel flats'
         ),
-        'pixelflat_norm': define_datamodel_component(
+        'pixelflat_norm': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Normalized pixel flat'
         ),
-        'pixelflat_model': define_datamodel_component(
+        'pixelflat_model': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Model flat'
         ),
-        'pixelflat_spat_bsplines': define_datamodel_component(
+        'pixelflat_spat_bsplines': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=bspline.bspline,
             descr='B-spline models for pixel flat; see :class:`~pypeit.bspline.bspline.bspline`'
         ),
-        'pixelflat_finecorr': define_datamodel_component(
+        'pixelflat_finecorr': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=fitting.PypeItFit,
             descr=(
                 'PypeIt 2D polynomial fits to the fine correction of the spatial illumination '
                 'profile'
             )
         ),
-        'pixelflat_bpm': define_datamodel_component(
+        'pixelflat_bpm': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr='Mirrors SlitTraceSet mask for flat-specific flags'
         ),
-        'pixelflat_spec_illum': define_datamodel_component(
+        'pixelflat_spec_illum': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Relative spectral illumination'
         ),
-        'pixelflat_waveimg': define_datamodel_component(
+        'pixelflat_waveimg': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Waveimage for pixel flat'
         ),
-        'illumflat_raw': define_datamodel_component(
+        'illumflat_raw': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Processed, combined illum flats'
         ),
-        'illumflat_spat_bsplines': define_datamodel_component(
+        'illumflat_spat_bsplines': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=bspline.bspline,
             descr='B-spline models for illum flat; see :class:`~pypeit.bspline.bspline.bspline`'
         ),
-        'illumflat_finecorr': define_datamodel_component(
+        'illumflat_finecorr': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=fitting.PypeItFit,
             descr=(
                 'PypeIt 2D polynomial fits to the fine correction of the spatial illumination '
                 'profile'
             )
         ),
-        'illumflat_bpm': define_datamodel_component(
+        'illumflat_bpm': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr='Mirrors SlitTraceSet mask for flat-specific flags'
         ),
-        'spat_id': define_datamodel_component(
+        'spat_id': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='Slit spat_id'
         )
     }
@@ -133,7 +132,7 @@ class FlatImages(calibframe.CalibFrame):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        DataContainer.__init__(self, d=d)
+        datamodel.DataContainer.__init__(self, d=d)
 
     def _validate(self):
         """

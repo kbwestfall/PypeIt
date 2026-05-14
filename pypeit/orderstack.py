@@ -11,13 +11,12 @@ from IPython import embed
 
 import numpy as np
 
+from pypeit import datamodel
 from pypeit import io
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 from pypeit.spectrographs.util import load_spectrograph
 
 
-class OrderStack(DataContainer):
+class OrderStack(datamodel.DataContainer):
     """
     Class to handle the coadded array of orders from a single setup of an Echelle spectrum.
 
@@ -56,41 +55,41 @@ class OrderStack(DataContainer):
     """
 
     datamodel = {
-        'wave_stack': define_datamodel_component(
+        'wave_stack': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Wavelength array from individual, coadded orders'
         ),
-        'flux_stack': define_datamodel_component(
+        'flux_stack': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'Flux array from coadded orders, in units of counts/s or 10^-17 erg/s/cm^2/Ang; '
                 'see ``fluxed``'
             )
         ),
-        'ivar_stack': define_datamodel_component(
+        'ivar_stack': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Inverse variance array of coadded orders (matches units of flux)'
         ),
-        'sigma_stack': define_datamodel_component(
+        'sigma_stack': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'One sigma noise array of coadded orders, equivalent to 1/sqrt(ivar) (matches '
                 'units of flux)'
             )
         ),
-        'mask_stack': define_datamodel_component(
+        'mask_stack': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='Mask array of coadded orders (1=Good,0=Bad)'
         ),
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='``PypeIt`` spectrograph designation'
         ),
-        'ext_mode': define_datamodel_component(
+        'ext_mode': datamodel.define_datamodel_component(
             otype=str, descr='Extraction mode (options: BOX, OPT)'
         ),
-        'fluxed': define_datamodel_component(
+        'fluxed': datamodel.define_datamodel_component(
             otype=bool, descr='Boolean indicating if the spectrum is fluxed.'
         ),
-        'setup_name': define_datamodel_component(
+        'setup_name': datamodel.define_datamodel_component(
             otype=str, descr='Echelle spectrograph setup'
         ),
     }
@@ -113,7 +112,7 @@ class OrderStack(DataContainer):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         _d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        DataContainer.__init__(self, d=_d)
+        datamodel.DataContainer.__init__(self, d=_d)
 
     def _bundle(self):
         """

@@ -7,25 +7,22 @@ Implements the objects used to hold slit edge data.
 """
 import inspect
 
-from IPython import embed
-
-import numpy as np
-
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
 from astropy import units
 from astropy.stats import sigma_clipped_stats
 from astropy.io import fits
+from IPython import embed
+import numpy as np
 
-from pypeit import PypeItBitMaskError
-from pypeit import log
-from pypeit import PypeItError
 from pypeit import calibframe
+from pypeit import datamodel
+from pypeit import log
+from pypeit import PypeItBitMaskError
+from pypeit import PypeItError
 from pypeit import specobj
 from pypeit.bitmask import BitMask
 from pypeit.core import parse
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 
 
 class SlitTraceBitMask(BitMask):
@@ -111,115 +108,115 @@ class SlitTraceSet(calibframe.CalibFrame):
 
     # Define the data model
     datamodel = {
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt spectrograph name'
         ),
-        'pypeline': define_datamodel_component(
+        'pypeline': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt pypeline name'
         ),
-        'detname': define_datamodel_component(
+        'detname': datamodel.define_datamodel_component(
             otype=str, descr='Identifier for detector or mosaic'
         ),
-        'nspec': define_datamodel_component(
+        'nspec': datamodel.define_datamodel_component(
             otype=int, descr='Number of pixels in the image spectral direction.'
         ),
-        'nspat': define_datamodel_component(
+        'nspat': datamodel.define_datamodel_component(
             otype=int, descr='Number of pixels in the image spatial direction.'
         ),
-        'binspec': define_datamodel_component(
+        'binspec': datamodel.define_datamodel_component(
             otype=int, descr='Number of pixels binned in the spectral direction.'
         ),
-        'binspat': define_datamodel_component(
+        'binspat': datamodel.define_datamodel_component(
             otype=int, descr='Number of pixels binned in the spatial direction.'
         ),
-        'pad': define_datamodel_component(
+        'pad': datamodel.define_datamodel_component(
             otype=int, descr='Integer number of pixels to consider beyond the slit edges.'
         ),
-        'spat_id': define_datamodel_component(
+        'spat_id': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(int,np.integer),
             descr='Slit ID number from SPAT measured at half way point.'
         ),
-        'maskdef_id': define_datamodel_component(
+        'maskdef_id': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(int,np.integer), descr='Slit ID number slitmask'
         ),
-        'maskdef_designtab': define_datamodel_component(
+        'maskdef_designtab': datamodel.define_datamodel_component(
             otype=Table, descr='Table with slitmask design and object info'
         ),
-        'maskfile': define_datamodel_component(
+        'maskfile': datamodel.define_datamodel_component(
             otype=str, descr='Data file that yielded the slitmask info'
         ),
-        'maskdef_posx_pa': define_datamodel_component(
+        'maskdef_posx_pa': datamodel.define_datamodel_component(
             otype=float, descr='PA that aligns with spatial dimension of the detector'
         ),
-        'maskdef_offset': define_datamodel_component(
+        'maskdef_offset': datamodel.define_datamodel_component(
             otype=float,
             descr='Slitmask offset (pixels) from position expected by the slitmask design'
         ),
-        'maskdef_objpos': define_datamodel_component(
+        'maskdef_objpos': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Object positions expected by the slitmask design [relative pixels]'
         ),
-        'maskdef_slitcen': define_datamodel_component(
+        'maskdef_slitcen': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Slit centers expected by the slitmask design'
         ),
-        'ech_order': define_datamodel_component(
+        'ech_order': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(int,np.integer), descr='Slit ID number echelle order'
         ),
-        'nslits': define_datamodel_component(
+        'nslits': datamodel.define_datamodel_component(
             otype=int, descr='Total number of slits, derived from shape of left_init.'
         ),
-        'left_init': define_datamodel_component(
+        'left_init': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'Spatial coordinates (pixel indices) of all left edges, one per slit.  Derived '
                 'from the TraceImage. Shape is Nspec by Nslits.'
             )
         ),
-        'right_init': define_datamodel_component(
+        'right_init': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'Spatial coordinates (pixel indices) of all right edges, one per slit.  Derived '
                 'from the TraceImage. Shape is Nspec by Nslits.'
             )
         ),
-        'left_tweak': define_datamodel_component(
+        'left_tweak': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'Spatial coordinates (pixel indices) of all left edges, one per slit.  These '
                 'traces have been adjusted by the flat-field.  Shape is Nspec by Nslits.'
             )
         ),
-        'right_tweak': define_datamodel_component(
+        'right_tweak': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'Spatial coordinates (pixel indices) of all right edges, one per slit.  These '
                 'traces have been adjusted by the flat-field.  Shape is Nspec by Nslits.'
             )
         ),
-        'center': define_datamodel_component(
+        'center': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'Spatial coordinates of the slit centers from left_init, right_init.  Shape is '
                 'Nspec by Nslits.'
             )
         ),
-        'mask_init': define_datamodel_component(
+        'mask_init': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr='Bit mask for slits at instantiation.  Used to reset'
         ),
-        'mask': define_datamodel_component(
+        'mask': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr='Bit mask for slits (fully good slits have 0 value).  Shape is Nslits.'
         ),
-        'specmin': define_datamodel_component(
+        'specmin': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'Minimum spectral position (pixel units) allowed for each slit/order.  Shape is '
                 'Nslits.'
             )
         ),
-        'specmax': define_datamodel_component(
+        'specmax': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'Maximum spectral position (pixel units) allowed for each slit/order.  Shape is '
@@ -246,7 +243,7 @@ class SlitTraceSet(calibframe.CalibFrame):
         # contain self.
         # TODO: Does it matter if the calling function passes the
         # keyword arguments in a different order? No.
-        DataContainer.__init__(self, d=_d)
+        datamodel.DataContainer.__init__(self, d=_d)
 
     def _validate(self):
         """

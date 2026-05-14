@@ -7,7 +7,7 @@ from importlib import resources
 import numpy
 
 from pypeit.utils import to_string, string_table
-from pypeit.datamodel import DataContainer
+from pypeit import datamodel
 from pypeit.images import buildimage
 
 from IPython import embed
@@ -53,12 +53,16 @@ def basic_pypeitimage_datamodel(obj):
             _k = obj.hdu_prefix+_k
         alternate_keys.append(_k)
         data_table[j,0] = to_string(_k, use_repr=False, verbatim=True)
-        if isinstance(data_model[k]['otype'], (list, tuple)) \
-                and any([issubclass(otype, DataContainer) for otype in data_model[k]['otype']]):
+        if (
+            isinstance(data_model[k]['otype'], (list, tuple))
+            and any([
+                issubclass(otype, datamodel.DataContainer) for otype in data_model[k]['otype']
+            ])
+        ):
             data_table[j,1] = '`astropy.io.fits.BinTableHDU`_'
             data_table[j,2] = ''
         elif not isinstance(data_model[k]['otype'], (list, tuple)) \
-                and issubclass(data_model[k]['otype'], DataContainer):
+                and issubclass(data_model[k]['otype'], datamodel.DataContainer):
             data_table[j,1] = '`astropy.io.fits.BinTableHDU`_'
             data_table[j,2] = ''
         elif data_model[k]['otype'] is numpy.ndarray:

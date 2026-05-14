@@ -7,15 +7,13 @@
 import inspect
 
 from IPython import embed
-
 import numpy as np
 
+from pypeit import datamodel
 from pypeit.core import procimg
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 
 
-class DetectorContainer(DataContainer):
+class DetectorContainer(datamodel.DataContainer):
     """
     Class to hold a detector properties.
 
@@ -30,17 +28,17 @@ class DetectorContainer(DataContainer):
     one_row_table = True
     # Be careful.  None of these can match default FITS header cards
     datamodel = {
-        'dataext': define_datamodel_component(
+        'dataext': datamodel.define_datamodel_component(
             otype=int, descr='Index of fits extension containing data'
         ),
-        'specaxis': define_datamodel_component(
+        'specaxis': datamodel.define_datamodel_component(
             otype=int,
             descr=(
                 'Spectra are dispersed along this axis. Allowed values are 0 (first dimension for '
                 'a numpy array shape) or 1 (second dimension for numpy array shape).'
             )
         ),
-        'specflip': define_datamodel_component(
+        'specflip': datamodel.define_datamodel_component(
             otype=bool,
             descr=(
                 'If this is True then the dispersion dimension (specified by the specaxis) will '
@@ -48,7 +46,7 @@ class DetectorContainer(DataContainer):
                 'number.  If this is not the case for this instrument, set specflip to True.'
             )
         ),
-        'spatflip': define_datamodel_component(
+        'spatflip': datamodel.define_datamodel_component(
             otype=bool,
             descr=(
                 'If this is True then the spatial dimension will be flipped.  PypeIt expects '
@@ -57,32 +55,32 @@ class DetectorContainer(DataContainer):
                 'orders on the right.'
             )
         ),
-        'xgap': define_datamodel_component(
+        'xgap': datamodel.define_datamodel_component(
             otype=(int, float),
             descr=(
                 'Gap between the square detector pixels (expressed as a fraction of the x pixel '
                 'size -- x is predominantly the spatial axis)'
             )
         ),
-        'ygap': define_datamodel_component(
+        'ygap': datamodel.define_datamodel_component(
             otype=(int, float),
             descr=(
                 'Gap between the square detector pixels (expressed as a fraction of the y pixel '
                 'size -- y is predominantly the spectral axis)'
             )
         ),
-        'ysize': define_datamodel_component(
+        'ysize': datamodel.define_datamodel_component(
             otype=(int, float),
             descr=(
                 'The size of a pixel in the y-direction as a multiple of the x pixel size (i.e. '
                 'xsize = 1.0 -- x is predominantly the dispersion axis)'
             )
         ),
-        'platescale': define_datamodel_component(
+        'platescale': datamodel.define_datamodel_component(
             otype=(int, float),
             descr='arcsec per pixel in the spatial dimension for an unbinned pixel'
         ),
-        'darkcurr': define_datamodel_component(
+        'darkcurr': datamodel.define_datamodel_component(
             otype=(int, float), descr='Dark current (e-/pixel/hour)'
         ),
         # TODO: There are actually two types of "saturation": (1) the
@@ -95,31 +93,31 @@ class DetectorContainer(DataContainer):
         # detection of the latter should be done using counts in the
         # *bias-subtracted* frame.  Looking across all our instruments,
         # it looks like we're mixing how we define this number...
-        'saturation': define_datamodel_component(
+        'saturation': datamodel.define_datamodel_component(
             otype=(int, float), descr='The detector saturation level in ADU/DN'
         ),
-        'mincounts': define_datamodel_component(
+        'mincounts': datamodel.define_datamodel_component(
             otype=(int, float),
             descr='Counts (e-) in a pixel below this value will be ignored as being unphysical.'
         ),
-        'nonlinear': define_datamodel_component(
+        'nonlinear': datamodel.define_datamodel_component(
             otype=(int, float),
             descr=(
                 'Percentage of detector range which is linear (i.e. everything above '
                 '``nonlinear*saturation`` will be flagged as saturated)'
             )
         ),
-        'numamplifiers': define_datamodel_component(
+        'numamplifiers': datamodel.define_datamodel_component(
             otype=int, descr='Number of amplifiers'
         ),
-        'gain': define_datamodel_component(
+        'gain': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'Inverse gain (e-/ADU). A list should be provided if a detector contains more '
                 'than one amplifier.'
             )
         ),
-        'ronoise': define_datamodel_component(
+        'ronoise': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr=(
                 'Read-out noise (e-). A list should be provided if a detector contains more than '
@@ -127,7 +125,7 @@ class DetectorContainer(DataContainer):
                 'determined from the overscan regions defined by oscansec.'
             )
         ),
-        'datasec': define_datamodel_component(
+        'datasec': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=str,
             descr=(
                 'Either the data sections or the header keyword where the valid data sections '
@@ -135,7 +133,7 @@ class DetectorContainer(DataContainer):
                 'format (e.g., [1:2048,10:4096]).'
             )
         ),
-        'oscansec': define_datamodel_component(
+        'oscansec': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=str,
             descr=(
                 'Either the overscan section or the header keyword where the valid data sections '
@@ -143,10 +141,10 @@ class DetectorContainer(DataContainer):
                 'format (e.g., [1:2048,10:4096]).'
             )
         ),
-        'det': define_datamodel_component(
+        'det': datamodel.define_datamodel_component(
             otype=int, descr='PypeIt designation for detector number (1-based).'
         ),
-        'binning': define_datamodel_component(
+        'binning': datamodel.define_datamodel_component(
             otype=str, descr='Binning in PypeIt orientation (not the original)'
         ),
     }
@@ -166,7 +164,7 @@ class DetectorContainer(DataContainer):
         d = dict([(k,values[k]) for k in args[1:]])
 
         # Setup the DataContainer
-        DataContainer.__init__(self, d=d)
+        datamodel.DataContainer.__init__(self, d=d)
         if self.darkcurr is None:
             # Use of darkcurr in RawImage means that it cannot be None.
             self.darkcurr = 0.

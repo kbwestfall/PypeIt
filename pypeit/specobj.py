@@ -11,6 +11,7 @@ from IPython import embed
 
 import numpy as np
 
+from pypeit import datamodel
 from pypeit import log
 from pypeit import onespec
 from pypeit import PypeItError
@@ -18,14 +19,12 @@ from pypeit.core import extract
 from pypeit.core import flexure
 from pypeit.core import flux_calib
 from pypeit.core import parse
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.mosaic import Mosaic
 from pypeit.spectrographs.util import load_spectrograph
 
 
-class SpecObj(DataContainer):
+class SpecObj(datamodel.DataContainer):
     """
     Class to handle single spectra from a single exposure.
 
@@ -61,169 +60,169 @@ class SpecObj(DataContainer):
     """
 
     datamodel = {
-        'TRACE_SPAT': define_datamodel_component(
+        'TRACE_SPAT': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Object trace along the spec (spatial pixel)'
         ),
-        'FWHM': define_datamodel_component(
+        'FWHM': datamodel.define_datamodel_component(
             otype=float, descr='Spatial FWHM of the object (pixels)'
         ),
-        'FWHMFIT': define_datamodel_component(
+        'FWHMFIT': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Spatial FWHM across the detector (pixels)'
         ),
-        'SPAT_FWHM': define_datamodel_component(
+        'SPAT_FWHM': datamodel.define_datamodel_component(
             otype=float, descr='Spatial FWHM of the object (arcsec)'
         ),
-        'smash_peakflux': define_datamodel_component(
+        'smash_peakflux': datamodel.define_datamodel_component(
             otype=float, descr='Peak value of the spectral direction collapsed spatial profile'
         ),
-        'smash_snr': define_datamodel_component(
+        'smash_snr': datamodel.define_datamodel_component(
             otype=float, descr='Peak S/N ratio of the spectral direction collapsed patial profile'
         ),
-        'sign': define_datamodel_component(
+        'sign': datamodel.define_datamodel_component(
             otype=float,
             descr=(
                 'Sign of the object profile (+1 or -1).  + is a positive profile above the sky '
                 'background.'
             )
         ),
-        'SPEC_DET': define_datamodel_component(
+        'SPEC_DET': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer,
             descr=(
                 'Array of detector indices for each pixel in the spectral direction.  This is '
                 'only available for mosaic reductions.'
             )
         ),
-        'OPT_WAVE': define_datamodel_component(
+        'OPT_WAVE': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Optimal Wavelengths in vacuum (Angstroms)'
         ),
-        'OPT_FLAM': define_datamodel_component(
+        'OPT_FLAM': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Optimal flux (1e-17 erg/s/cm^2/Ang)'
         ),
-        'OPT_FLAM_SIG': define_datamodel_component(
+        'OPT_FLAM_SIG': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Optimal flux uncertainty (1e-17 erg/s/cm^2/Ang)'
         ),
-        'OPT_FLAM_IVAR': define_datamodel_component(
+        'OPT_FLAM_IVAR': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Optimal flux inverse variance (1e-17 erg/s/cm^2/Ang)^-2'
         ),
-        'OPT_COUNTS': define_datamodel_component(
+        'OPT_COUNTS': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Optimal flux (counts)'
         ),
-        'OPT_COUNTS_IVAR': define_datamodel_component(
+        'OPT_COUNTS_IVAR': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr=(
                 'Inverse variance of optimally extracted flux using modelivar image (counts^2)'
             )
         ),
-        'OPT_COUNTS_SIG': define_datamodel_component(
+        'OPT_COUNTS_SIG': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Optimally extracted noise from IVAR (counts)'
         ),
-        'OPT_COUNTS_NIVAR': define_datamodel_component(
+        'OPT_COUNTS_NIVAR': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Optimally extracted noise variance, sky+read noise only (counts^2)'
         ),
-        'OPT_FLAT': define_datamodel_component(
+        'OPT_FLAT': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Optimally extracted flatfield spectrum, normalised to the peak value.'
         ),
-        'OPT_MASK': define_datamodel_component(
+        'OPT_MASK': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.bool_, descr='Mask for optimally extracted flux. True=good'
         ),
-        'OPT_FWHM': define_datamodel_component(
+        'OPT_FWHM': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Spectral FWHM (in Angstroms) at every pixel of the optimally extracted flux.'
         ),
-        'OPT_COUNTS_SKY': define_datamodel_component(
+        'OPT_COUNTS_SKY': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Optimally extracted sky (counts)'
         ),
-        'OPT_COUNTS_SIG_DET': define_datamodel_component(
+        'OPT_COUNTS_SIG_DET': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Optimally extracted detector noise (counts)'
         ),
-        'OPT_FRAC_USE': define_datamodel_component(
+        'OPT_FRAC_USE': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Fraction of pixels in the object profile subimage used for this extraction'
         ),
-        'OPT_CHI2': define_datamodel_component(
+        'OPT_CHI2': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Reduced chi2 of the model fit for this spectral pixel'
         ),
-        'BOX_NPIX': define_datamodel_component(
+        'BOX_NPIX': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Number of pixels used for the boxcar extraction; can be fractional'
         ),
-        'BOX_WAVE': define_datamodel_component(
+        'BOX_WAVE': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Boxcar Wavelengths in vacuum (Angstroms)'
         ),
-        'BOX_FLAM': define_datamodel_component(
+        'BOX_FLAM': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Boxcar flux (erg/s/cm^2/Ang)'
         ),
-        'BOX_FLAM_SIG': define_datamodel_component(
+        'BOX_FLAM_SIG': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Boxcar flux uncertainty (1e-17 erg/s/cm^2/Ang)'
         ),
-        'BOX_FLAM_IVAR': define_datamodel_component(
+        'BOX_FLAM_IVAR': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Boxcar flux inverse variance (1e-17 erg/s/cm^2/Ang)^-2'
         ),
-        'BOX_COUNTS': define_datamodel_component(
+        'BOX_COUNTS': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Boxcar flux (counts)'
         ),
-        'BOX_COUNTS_IVAR': define_datamodel_component(
+        'BOX_COUNTS_IVAR': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Inverse variance of optimally extracted flux using modelivar image (counts^2)'
         ),
-        'BOX_COUNTS_SIG': define_datamodel_component(
+        'BOX_COUNTS_SIG': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Boxcar extracted noise from IVAR (counts)'
         ),
-        'BOX_COUNTS_NIVAR': define_datamodel_component(
+        'BOX_COUNTS_NIVAR': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Boxcar extracted noise variance, sky+read noise only (counts^2)'
         ),
-        'BOX_FLAT': define_datamodel_component(
+        'BOX_FLAT': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Boxcar extracted flatfield spectrum, normalized to the peak value.'
         ),
-        'BOX_MASK': define_datamodel_component(
+        'BOX_MASK': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.bool_, descr='Mask for boxcar extracted flux. True=good'
         ),
-        'BOX_FWHM': define_datamodel_component(
+        'BOX_FWHM': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Spectral FWHM (in Angstroms) at every pixel of the boxcar extracted flux.'
         ),
-        'BOX_COUNTS_SKY': define_datamodel_component(
+        'BOX_COUNTS_SKY': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Boxcar extracted sky (counts)'
         ),
-        'BOX_COUNTS_SIG_DET': define_datamodel_component(
+        'BOX_COUNTS_SIG_DET': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Boxcar extracted detector noise (counts)'
         ),
-        'BOX_FRAC_USE': define_datamodel_component(
+        'BOX_FRAC_USE': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Fraction of pixels in the object profile subimage used for this extraction'
         ),
-        'BOX_CHI2': define_datamodel_component(
+        'BOX_CHI2': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float,
             descr='Reduced chi2 of the model fit for this spectral pixel'
         ),
-        'BOX_R_PIX': define_datamodel_component(
+        'BOX_R_PIX': datamodel.define_datamodel_component(
             otype=float, descr='Size of boxcar radius (pixels)'
         ),
-        'BOX_R_ASEC': define_datamodel_component(
+        'BOX_R_ASEC': datamodel.define_datamodel_component(
             otype=float, descr='Size of boxcar radius (arcsec)'
         ),
-        'S2N': define_datamodel_component(
+        'S2N': datamodel.define_datamodel_component(
             otype=float,
             descr=(
                 'Median signal to noise ratio of the extracted spectrum (OPT if available, '
                 'otherwise BOX)'
             )
         ),
-        'FLEX_SHIFT_GLOBAL': define_datamodel_component(
+        'FLEX_SHIFT_GLOBAL': datamodel.define_datamodel_component(
             otype=float,
             descr=(
                 'Global shift of the spectrum to correct for spectral flexure (pixels). This is '
                 'based on the sky spectrum at the center of the slit.'
             )
         ),
-        'FLEX_SHIFT_LOCAL': define_datamodel_component(
+        'FLEX_SHIFT_LOCAL': datamodel.define_datamodel_component(
             otype=float,
             descr=(
                 'Local shift of the spectrum to correct for spectral flexure (pixels). This '
@@ -231,113 +230,113 @@ class SpecObj(DataContainer):
                 'spectrum extracted near the object.'
             )
         ),
-        'FLEX_SHIFT_TOTAL': define_datamodel_component(
+        'FLEX_SHIFT_TOTAL': datamodel.define_datamodel_component(
             otype=float,
             descr=(
                 'Total shift of the spectrum to correct for spectral flexure (pixels). This is '
                 'the sum of the global and local FLEX_SHIFT.'
             )
         ),
-        'VEL_TYPE': define_datamodel_component(
+        'VEL_TYPE': datamodel.define_datamodel_component(
             otype=str, descr='Type of heliocentric correction (if any)'
         ),
-        'VEL_CORR': define_datamodel_component(
+        'VEL_CORR': datamodel.define_datamodel_component(
             otype=float, descr='Relativistic velocity correction for wavelengths'
         ),
         # Detector
         # TODO: Change this to DETNAME?
         # NOTE: DET (or DETNAME) is needed in the case when DETECTOR is None.
-        'DET': define_datamodel_component(
+        'DET': datamodel.define_datamodel_component(
             otype=str, descr='A string identifier for the reduced detector or mosaic.'
         ),
-        'DETECTOR': define_datamodel_component(
+        'DETECTOR': datamodel.define_datamodel_component(
             otype=(DetectorContainer, Mosaic),
             descr='Object with the detector or mosaic metadata'
         ),
-        'PYPELINE': define_datamodel_component(
+        'PYPELINE': datamodel.define_datamodel_component(
             otype=str, descr='Name of the PypeIt pipeline mode'
         ),
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt spectrograph name'
         ),
         # TODO: It's unclear if OBJTYPE has to be one among a set of
         # specific keywords.
-        'OBJTYPE': define_datamodel_component(
+        'OBJTYPE': datamodel.define_datamodel_component(
             otype=str, descr='Object type (e.g., standard, science)'
         ),
-        'SPAT_PIXPOS': define_datamodel_component(
+        'SPAT_PIXPOS': datamodel.define_datamodel_component(
             otype=(float, np.floating),
             descr='Spatial location of the trace on detector (pixel) at half-way'
         ),
-        'SPAT_PIXPOS_ID': define_datamodel_component(
+        'SPAT_PIXPOS_ID': datamodel.define_datamodel_component(
             otype=(int, np.integer),
             descr=(
                 'Nearest integer spatial location of the trace on detector (pixel) at half-way '
                 'used as a unique identifier for the naming model'
             )
         ),
-        'SPAT_FRACPOS': define_datamodel_component(
+        'SPAT_FRACPOS': datamodel.define_datamodel_component(
             otype=(float, np.floating), descr='Fractional location of the object on the slit'
         ),
-        'trace_spec': define_datamodel_component(
+        'trace_spec': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=(int,np.integer),
             descr='Array of pixels along the spectral direction'
         ),
-        'maskwidth': define_datamodel_component(
+        'maskwidth': datamodel.define_datamodel_component(
             otype=(float, np.floating),
             descr='Size (in units of spatial fwhm) of the region used for local sky subtraction'
         ),
         # Slit and Object
-        'WAVE_RMS': define_datamodel_component(
+        'WAVE_RMS': datamodel.define_datamodel_component(
             otype=(float, np.floating),
             descr='RMS (pix) for the wavelength solution for this slit.'
         ),
-        'SLITID': define_datamodel_component(
+        'SLITID': datamodel.define_datamodel_component(
             otype=(int, np.integer), descr='PypeIt slit ID (aka SPAT_ID).'
         ),
-        'OBJID': define_datamodel_component(
+        'OBJID': datamodel.define_datamodel_component(
             otype=(int, np.integer),
             descr=(
                 'Object ID for multislit data. Each object is given an index for the slit it '
                 'appears increasing from from left to right. These are one based.'
             )
         ),
-        'NAME': define_datamodel_component(
+        'NAME': datamodel.define_datamodel_component(
             otype=str, descr='Name of the object following the naming model'
         ),
-        'RA': define_datamodel_component(
+        'RA': datamodel.define_datamodel_component(
             otype=float, descr='Right Ascension (J2000) decimal degree'
         ),
-        'DEC': define_datamodel_component(
+        'DEC': datamodel.define_datamodel_component(
             otype=float, descr='Declination (J2000) decimal degree'
         ),
-        'MASKDEF_ID': define_datamodel_component(
+        'MASKDEF_ID': datamodel.define_datamodel_component(
             otype=(int, np.integer), descr='Slitmask definition ID'
         ),
-        'MASKDEF_OBJNAME': define_datamodel_component(
+        'MASKDEF_OBJNAME': datamodel.define_datamodel_component(
             otype=str, descr='Name of the object from the slitmask definition'
         ),
-        'MASKDEF_OBJMAG': define_datamodel_component(
+        'MASKDEF_OBJMAG': datamodel.define_datamodel_component(
             otype=float, descr='Magnitude of the object from the slitmask definition'
         ),
-        'MASKDEF_OBJMAG_BAND': define_datamodel_component(
+        'MASKDEF_OBJMAG_BAND': datamodel.define_datamodel_component(
             otype=str, descr='Magnitude band of the object from the slitmask definition'
         ),
-        'MASKDEF_EXTRACT': define_datamodel_component(
+        'MASKDEF_EXTRACT': datamodel.define_datamodel_component(
             otype=bool,
             descr=(
                 'Boolean indicating if this is a forced extraction at the expected location from '
                 'slitmask design.'
             )
         ),
-        'hand_extract_flag': define_datamodel_component(
+        'hand_extract_flag': datamodel.define_datamodel_component(
             otype=bool,
             descr=(
                 'Boolean indicating if this is a forced extraction at the location provided by '
                 'the user.'
             )
         ),
-        'ECH_OBJID': define_datamodel_component(
+        'ECH_OBJID': datamodel.define_datamodel_component(
             otype=(int, np.integer),
             descr=(
                 'Object ID for echelle data. Each object is given an index in the order it '
@@ -346,32 +345,32 @@ class SpecObj(DataContainer):
         ),
         # TODO: ECH_ORDERINDX should be purged. It is not reliable for anything
         # given masking. Instead one needs to use SLITID or ECH_ORDER
-        'ECH_ORDERINDX': define_datamodel_component(
+        'ECH_ORDERINDX': datamodel.define_datamodel_component(
             otype=(int, np.integer),
             descr='Order indx, analogous to SLITID for echelle. Zero based.'
         ),
-        'ECH_FRACPOS': define_datamodel_component(
+        'ECH_FRACPOS': datamodel.define_datamodel_component(
             otype=(float, np.floating),
             descr='Synced echelle fractional location of the object on the slit'
         ),
-        'ECH_FRACPOS_ID': define_datamodel_component(
+        'ECH_FRACPOS_ID': datamodel.define_datamodel_component(
             otype=(int, np.integer),
             descr=(
                 'Echelle fractional location of the object on the slit multiplied by 1000 used as '
                 'a unique identifier for the naming model'
             )
         ), 
-        'ECH_ORDER': define_datamodel_component(
+        'ECH_ORDER': datamodel.define_datamodel_component(
             otype=(int, np.integer), descr='Physical echelle order'
         ),
-        'ECH_NAME': define_datamodel_component(
+        'ECH_NAME': datamodel.define_datamodel_component(
             otype=str,
             descr=(
                 'Name of the object for echelle data. Same as NAME above but order numbers are '
                 'omitted giving a unique name per object.'
             )
         ),
-        'ech_snr': define_datamodel_component(
+        'ech_snr': datamodel.define_datamodel_component(
             otype=(float, np.floating), descr='Median S/N of the echelle of the spectrum'
         ),
     }

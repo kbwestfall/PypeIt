@@ -10,15 +10,14 @@ import inspect
 from astropy.io import fits
 from IPython import embed
 
+from pypeit import datamodel
 from pypeit import log
 from pypeit import PypeItError
 from pypeit.core.wavecal import defs
 from pypeit.core import fitting
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 
 
-class WaveFit(DataContainer):
+class WaveFit(datamodel.DataContainer):
     """
     DataContainer for the output from BuildWaveCalib
 
@@ -41,54 +40,54 @@ class WaveFit(DataContainer):
     version = '1.1.1'
 
     datamodel = {
-        'spat_id': define_datamodel_component(
+        'spat_id': datamodel.define_datamodel_component(
             otype=(int,np.integer),
             descr='Spatial position of slit/order for this fit. Required for I/O'
         ),
-        'ech_order': define_datamodel_component(
+        'ech_order': datamodel.define_datamodel_component(
             otype=(int,np.integer), descr='Echelle order number.'
         ),
-        'pypeitfit': define_datamodel_component(
+        'pypeitfit': datamodel.define_datamodel_component(
             otype=fitting.PypeItFit, descr='Fit to 1D wavelength solutions'
         ),
-        'pixel_fit': define_datamodel_component(
+        'pixel_fit': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Pixel values of arc lines'
         ),
-        'wave_fit': define_datamodel_component(
+        'wave_fit': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Wavelength IDs assigned'
         ),
-        'xnorm': define_datamodel_component(
+        'xnorm': datamodel.define_datamodel_component(
             otype=float, descr='Normalization for fit'
         ),
-        'fwhm': define_datamodel_component(
+        'fwhm': datamodel.define_datamodel_component(
             otype=float,
             descr='Estimate FWHM of arc lines in binned pixels of the input arc frame'
         ),
-        'ion_bits': define_datamodel_component(
+        'ion_bits': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='Ion bit values for the Ion names'
         ),
-        'cen_wave': define_datamodel_component(
+        'cen_wave': datamodel.define_datamodel_component(
             otype=float, descr='Central wavelength'
         ),
-        'cen_disp': define_datamodel_component(
+        'cen_disp': datamodel.define_datamodel_component(
             otype=float, descr='Approximate wavelength dispersion'
         ),
-        'spec': define_datamodel_component(
+        'spec': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Arc spectrum'
         ),
-        'wave_soln': define_datamodel_component(
+        'wave_soln': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Evaluated wavelengths at pixel_fit'
         ),
-        'sigrej': define_datamodel_component(
+        'sigrej': datamodel.define_datamodel_component(
             otype=float, descr='Final sigma rejection applied'
         ),
-        'shift': define_datamodel_component(
+        'shift': datamodel.define_datamodel_component(
             otype=float, descr='Shift applied'
         ),
-        'tcent': define_datamodel_component(
+        'tcent': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='Pixel centroids of all arc lines found'
         ),
-        'rms': define_datamodel_component(
+        'rms': datamodel.define_datamodel_component(
             otype=float, descr='RMS of the solution'
         ),
     }
@@ -135,7 +134,7 @@ class WaveFit(DataContainer):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        DataContainer.__init__(self, d=d)
+        datamodel.DataContainer.__init__(self, d=d)
 
     def _bundle(self, **kwargs):
         """

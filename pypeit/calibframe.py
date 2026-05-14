@@ -7,20 +7,18 @@ Implements the calibration frame base class.
 """
 from pathlib import Path
 
+from astropy.io import fits
 from IPython import embed
-
 import numpy as np
 
-from astropy.io import fits
-
+from pypeit import datamodel
+from pypeit import io
 from pypeit import log
 from pypeit import PypeItCodingError
 from pypeit import PypeItError
-from pypeit import io
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 
-class CalibFrame(DataContainer):
+
+class CalibFrame(datamodel.DataContainer):
     """
     An abstract class for calibration frames.  The primary purpose of the class
     is to set the naming scheme for all processed calibration files.
@@ -41,7 +39,7 @@ class CalibFrame(DataContainer):
     # TODO: Add an astropy.Table into the base-class data model that includes
     # the subset of `fitstbl` with the metadata for the raw calibration frames?
     datamodel = {
-        'PYP_SPEC': define_datamodel_component(
+        'PYP_SPEC': datamodel.define_datamodel_component(
             otype=str, descr='PypeIt spectrograph name'
         )
     }

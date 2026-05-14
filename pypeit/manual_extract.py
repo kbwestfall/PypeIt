@@ -9,13 +9,13 @@ from IPython import embed
 
 import numpy as np
 
+from pypeit import datamodel
 from pypeit import log
 from pypeit import PypeItError
 from pypeit.core import parse
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
 
-class ManualExtractionObj(DataContainer):
+
+class ManualExtractionObj(datamodel.DataContainer):
     """
     A data container holding the arguments for how to perform the
     manual extraction of a spectrum.
@@ -50,26 +50,26 @@ class ManualExtractionObj(DataContainer):
     version = '1.1.0'
 
     datamodel = {
-        'frame': define_datamodel_component(
+        'frame': datamodel.define_datamodel_component(
             otype=str, descr='The name of the fits file for a manual extraction'
         ),
-        'detname': define_datamodel_component(
+        'detname': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=str, descr='detectors name for hand extraction.'
         ),
-        'spec': define_datamodel_component(
+        'spec': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='spectral positions to hand extract'
         ),
-        'spat': define_datamodel_component(
+        'spat': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='spatial positions to hand extract'
         ),
-        'fwhm': define_datamodel_component(
+        'fwhm': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating, descr='FWHMs for hand extractions'
         ),
-        'neg': define_datamodel_component(
+        'neg': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.bool_,
             descr='Flags indicating which hand extract is a negative trace'
         ),
-        'boxcar_rad': define_datamodel_component(
+        'boxcar_rad': datamodel.define_datamodel_component(
             otype=np.ndarray, atype=np.floating,
             descr='Boxcar radius for hand extractions (optional)'
         ),
@@ -130,7 +130,7 @@ class ManualExtractionObj(DataContainer):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        DataContainer.__init__(self, d=d)
+        datamodel.DataContainer.__init__(self, d=d)
 
     def _validate(self):
         """Validate

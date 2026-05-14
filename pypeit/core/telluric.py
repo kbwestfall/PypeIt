@@ -4,8 +4,9 @@
 .. include:: ../include/links.rst
 """
 
+from astropy import table
+from astropy.io import fits
 from IPython import embed
-
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate
@@ -13,24 +14,19 @@ import scipy.optimize
 import scipy.signal
 import scipy.special
 
-from astropy import table
-from astropy.io import fits
-
-from pypeit import log
-from pypeit import PypeItError
+from pypeit import datamodel
 from pypeit import dataPaths
 from pypeit import io
+from pypeit import log
+from pypeit import onespec
+from pypeit import PypeItError
+from pypeit import specobjs
+from pypeit import utils
 from pypeit.core import flux_calib
 from pypeit.core.wavecal import wvutils
 from pypeit.core import coadd
 from pypeit.core import fitting
 from pypeit.core import standard
-from pypeit.datamodel import DataContainer
-from pypeit.datamodel import define_datamodel_component
-from pypeit import specobjs
-from pypeit import utils
-from pypeit import onespec
-
 from pypeit.spectrographs.util import load_spectrograph
 
 
@@ -1946,7 +1942,7 @@ def poly_telluric(spec1dfile, telgridfile, telloutfile, outfile, z_obj=0.0, func
 
 
 
-class Telluric(DataContainer):
+class Telluric(datamodel.DataContainer):
     r"""
     Simultaneously fit model object and telluric spectra to an observed
     spectrum.
@@ -2232,88 +2228,88 @@ class Telluric(DataContainer):
     """Datamodel version."""
 
     datamodel = {
-        'telgrid': define_datamodel_component(
+        'telgrid': datamodel.define_datamodel_component(
             otype=str,
             descr='File containing PCA components or grid of HITRAN atmosphere models'
         ),
-        'teltype': define_datamodel_component(
+        'teltype': datamodel.define_datamodel_component(
             otype=str, descr='Type of telluric model, `pca` or `grid`'
         ),
-        'tell_npca': define_datamodel_component(
+        'tell_npca': datamodel.define_datamodel_component(
             otype=int, descr='Number of telluric PCA components used'
         ),
-        'std_src': define_datamodel_component(
+        'std_src': datamodel.define_datamodel_component(
             otype=str, descr='Name of the standard source'
         ),
-        'std_name': define_datamodel_component(
+        'std_name': datamodel.define_datamodel_component(
             otype=str, descr='Type of standard source'
         ),
-        'std_cal': define_datamodel_component(
+        'std_cal': datamodel.define_datamodel_component(
             otype=str, descr='File name (or shorthand) with the standard flux data'
         ),
-        'func': define_datamodel_component(
+        'func': datamodel.define_datamodel_component(
             otype=str, descr='Polynomial function used'
         ),
-        'pca_file': define_datamodel_component(
+        'pca_file': datamodel.define_datamodel_component(
             otype=str, descr='Name of the QSO PCA file'
         ),
-        'tol': define_datamodel_component(
+        'tol': datamodel.define_datamodel_component(
             otype=float,
             descr='Relative tolerance for converage of the differential evolution optimization.'
         ),
-        'popsize': define_datamodel_component(
+        'popsize': datamodel.define_datamodel_component(
             otype=int,
             descr=(
                 'A multiplier for setting the total population size for the differential '
                 'evolution optimization.'
             )
         ),
-        'recombination': define_datamodel_component(
+        'recombination': datamodel.define_datamodel_component(
             otype=float,
             descr=(
                 'The recombination constant for the differential evolution optimization. Should '
                 'be in the range [0, 1].'
             )
         ),
-        'polish': define_datamodel_component(
+        'polish': datamodel.define_datamodel_component(
             otype=bool,
             descr=(
                 'Perform a final optimization to tweak the best solution; see '
                 ':class:`scipy.optimize.differential_evolution`.'
             )
         ),
-        'airmass': define_datamodel_component(
+        'airmass': datamodel.define_datamodel_component(
             otype=float, descr='Airmass of the observation'
         ),
-        'exptime': define_datamodel_component(
+        'exptime': datamodel.define_datamodel_component(
             otype=float, descr='Exposure time (s)'
         ),
         # TODO: Is it possible/useful to force the coordinates to always be floats
-        'std_ra': define_datamodel_component(
+        'std_ra': datamodel.define_datamodel_component(
             otype=float, descr='RA of the standard source'
         ),
-        'std_dec': define_datamodel_component(
+        'std_dec': datamodel.define_datamodel_component(
             otype=float, descr='DEC of the standard source'
         ),
-        'npca': define_datamodel_component(
+        'npca': datamodel.define_datamodel_component(
             otype=int, descr='Number of PCA components'
         ),
-        'z_qso': define_datamodel_component(
+        'z_qso': datamodel.define_datamodel_component(
             otype=float, descr='Redshift of the QSO'
         ),
-        'delta_zqso': define_datamodel_component(
+        'delta_zqso': datamodel.define_datamodel_component(
             otype=float, descr='Allowed range for the QSO redshift about z_qso'
         ),
-        'lbound_norm': define_datamodel_component(
+        'lbound_norm': datamodel.define_datamodel_component(
             otype=float, descr='Flux normalization lower bound'
         ),
-        'ubound_norm': define_datamodel_component(
+        'ubound_norm': datamodel.define_datamodel_component(
             otype=float, descr='Flux normalization upper bound'
         ),
-        'tell_norm_thresh': define_datamodel_component(
+        'tell_norm_thresh': datamodel.define_datamodel_component(
             otype=float, descr='??'
         ),
-        'model': define_datamodel_component(
+        'model': datamodel.define_datamodel_component(
             otype=table.Table, descr='Table with the best-fitting model data'
         ),
     }
