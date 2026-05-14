@@ -13,23 +13,26 @@ from IPython import embed
 import numpy as np
 import pytest
 
-from pypeit import datamodel
 from pypeit import PypeItCodingError
 from pypeit import PypeItError
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import DataContainerList
+from pypeit.datamodel import define_datamodel_component
+from pypeit.datamodel import define_metadatamodel_component
 from pypeit.io import fits_open
 
 #-----------------------------------------------------------------------
 # Example derived classes
-class BasicContainer(datamodel.DataContainer):
+class BasicContainer(DataContainer):
     version = '1.0.0'
     datamodel = {
-        'vec1': datamodel.define_datamodel_component(
+        'vec1': define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Test'
         ),
-        'meta1': datamodel.define_datamodel_component(
+        'meta1': define_datamodel_component(
             otype=str, descr='test'
         ),
-        'arr1': datamodel.define_datamodel_component(
+        'arr1': define_datamodel_component(
             otype=np.ndarray, atype=float, descr='test'
         )
     }
@@ -46,16 +49,16 @@ class BasicContainer(datamodel.DataContainer):
         return super()._bundle(ext='basic')
 
 
-class MixedCaseContainer(datamodel.DataContainer):
+class MixedCaseContainer(DataContainer):
     version = '1.0.0'
     datamodel = {
-        'lowercase': datamodel.define_datamodel_component(
+        'lowercase': define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='Test'
         ),
-        'UPPERCASE': datamodel.define_datamodel_component(
+        'UPPERCASE': define_datamodel_component(
             otype=int, descr='test'
         ),
-        'CamelCase': datamodel.define_datamodel_component(
+        'CamelCase': define_datamodel_component(
             otype=float, descr='test'
         )
     }
@@ -71,16 +74,16 @@ class MixedCaseContainer(datamodel.DataContainer):
         return super()._bundle(ext='mixedcase')
 
 
-class ImageContainer(datamodel.DataContainer):
+class ImageContainer(DataContainer):
     version = '1.0.0'
     datamodel = {
-        'img1': datamodel.define_datamodel_component(
+        'img1': define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Test'
         ),
-        'img1_key': datamodel.define_datamodel_component(
+        'img1_key': define_datamodel_component(
             otype=str, descr='test'
         ),
-        'img2': datamodel.define_datamodel_component(
+        'img2': define_datamodel_component(
             otype=np.ndarray, atype=(int, np.integer), descr='test'
         )
     }
@@ -97,19 +100,19 @@ class ImageContainer(datamodel.DataContainer):
         return [ {'img1_key':self['img1_key'], 'img1': self['img1']}, {'img2':self['img2']} ]
 
 
-class GoodTableContainer(datamodel.DataContainer):
+class GoodTableContainer(DataContainer):
     version = '1.0.0'
     datamodel = {
-        'tab1': datamodel.define_datamodel_component(
+        'tab1': define_datamodel_component(
             otype=Table, descr='Test'
         ),
-        'tab1len': datamodel.define_datamodel_component(
+        'tab1len': define_datamodel_component(
             otype=int, descr='test'
         ),
-        'tab2': datamodel.define_datamodel_component(
+        'tab2': define_datamodel_component(
             otype=Table, descr='test'
         ),
-        'tab2len': datamodel.define_datamodel_component(
+        'tab2len': define_datamodel_component(
             otype=int, descr='test'
         )
     }
@@ -136,22 +139,22 @@ class BadTableContainer(GoodTableContainer):
         # Use default _bundle method, which will try to put both tables
         # in the same extension.  NOTE: Can't use super here because
         # GoodTableContainer doesn't have an 'ext' argument
-        return datamodel.DataContainer._bundle(self, ext='bad')
+        return DataContainer._bundle(self, ext='bad')
 
 
-class GoodMixedTypeContainer(datamodel.DataContainer):
+class GoodMixedTypeContainer(DataContainer):
     version = '1.0.0'
     datamodel = {
-        'tab1': datamodel.define_datamodel_component(
+        'tab1': define_datamodel_component(
             otype=Table, descr='Test'
         ),
-        'tab1len': datamodel.define_datamodel_component(
+        'tab1len': define_datamodel_component(
             otype=int, descr='test'
         ),
-        'arr1': datamodel.define_datamodel_component(
+        'arr1': define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='test'
         ),
-        'arr1shape': datamodel.define_datamodel_component(
+        'arr1shape': define_datamodel_component(
             otype=tuple, descr='test'
         )
     }
@@ -182,22 +185,22 @@ class BadMixedTypeContainer(GoodMixedTypeContainer):
         # Use default _bundle method, which will try to put both tables
         # in the same extension.  NOTE: Can't use super here because
         # GoodMixedTypeContainer doesn't have an 'ext' argument
-        return datamodel.DataContainer._bundle(self, ext='bad')
+        return DataContainer._bundle(self, ext='bad')
 
 
-class BadInitContainer(datamodel.DataContainer):
+class BadInitContainer(DataContainer):
     version = '1.0.0'
     datamodel = {
-        'inp1': datamodel.define_datamodel_component(
+        'inp1': define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Test'
         ),
-        'inp2': datamodel.define_datamodel_component(
+        'inp2': define_datamodel_component(
             otype=np.ndarray, atype=float, descr='test'
         ),
-        'out': datamodel.define_datamodel_component(
+        'out': define_datamodel_component(
             otype=np.ndarray, atype=float, descr='test'
         ),
-        'alt': datamodel.define_datamodel_component(
+        'alt': define_datamodel_component(
             otype=np.ndarray, atype=float, descr='test'
         )
     }
@@ -207,19 +210,19 @@ class BadInitContainer(datamodel.DataContainer):
         super().__init__({k: values[k] for k in args[1:]}) 
 
 
-class DubiousInitContainer(datamodel.DataContainer):
+class DubiousInitContainer(DataContainer):
     version = '1.0.0'
     datamodel = {
-        'inp1': datamodel.define_datamodel_component(
+        'inp1': define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='Test'
         ),
-        'inp2': datamodel.define_datamodel_component(
+        'inp2': define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='test'
         ),
-        'out': datamodel.define_datamodel_component(
+        'out': define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='test'
         ),
-        'alt': datamodel.define_datamodel_component(
+        'alt': define_datamodel_component(
             otype=np.ndarray, atype=np.integer, descr='test'
         )
     }
@@ -260,22 +263,22 @@ class DubiousInitContainer(datamodel.DataContainer):
     # is used.
 
 
-class ComplexInitContainer(datamodel.DataContainer):
+class ComplexInitContainer(DataContainer):
     version = '1.0.0'
     datamodel = {
-        'inp1': datamodel.define_datamodel_component(
+        'inp1': define_datamodel_component(
             otype=np.ndarray, atype=float, descr='Test'
         ),
-        'inp2': datamodel.define_datamodel_component(
+        'inp2': define_datamodel_component(
             otype=np.ndarray, atype=float, descr='test'
         ),
-        'out': datamodel.define_datamodel_component(
+        'out': define_datamodel_component(
             otype=np.ndarray, atype=float, descr='test'
         ),
-        'alt': datamodel.define_datamodel_component(
+        'alt': define_datamodel_component(
             otype=np.ndarray, atype=float, descr='test'
         ),
-        'func': datamodel.define_datamodel_component(
+        'func': define_datamodel_component(
             otype=str, descr='test'
         )
     }
@@ -299,12 +302,57 @@ class ComplexInitContainer(datamodel.DataContainer):
             self.out = self.inp1 + self.inp2 if self.func == 'add' else self.inp1 - self.inp2
 
 
-class VectorContainer(datamodel.DataContainer):
+class VectorContainer(DataContainer):
     version = '1.0.0'
     datamodel = {
-        'flt': datamodel.define_datamodel_component(otype=float, descr='flt'),
-        'arr': datamodel.define_datamodel_component(otype=np.ndarray, atype=float, descr='arr')
+        'flt': define_datamodel_component(otype=float, descr='flt'),
+        'arr': define_datamodel_component(otype=np.ndarray, atype=float, descr='arr')
     }
+
+class NoTypeContainerList(DataContainerList):
+    # Does not define list_type
+    version = '1.0.0'
+
+class TypeNotDataContainerInList(DataContainerList):
+    # list_type is not a DataContainer
+    list_type = str
+    version = '1.0.0'
+
+class NoVersionContainerList(DataContainerList):
+    # Does not define version
+    list_type = VectorContainer
+
+class BadMetaTypeContainerList(DataContainerList):
+    # Does not define version
+    list_type = VectorContainer
+    version = '1.0.0'
+    # NOTE: use of define_metadatamodel_component would fail here, so I
+    # surreptitiously use a dict here
+    metadatamodel = {'test': dict(otype=dict, descr='test')}
+
+class VectorContainerListKeyConflict(DataContainerList):
+    list_type = VectorContainer
+    version = '1.0.0'
+    metadatamodel = {
+        'name': define_metadatamodel_component(otype=str, descr='test'),
+        'flt': define_metadatamodel_component(otype=float, descr='test'),
+        'integ': define_metadatamodel_component(otype=int, descr='test')
+    }
+
+class VectorContainerListNoMeta(DataContainerList):
+    list_type = VectorContainer
+    version = '1.0.0'
+
+class VectorContainerList(DataContainerList):
+    list_type = VectorContainer
+    version = '1.0.0'
+    metadatamodel = {
+        'name': define_metadatamodel_component(otype=str, descr='test'),
+        'dbl': define_metadatamodel_component(otype=float, descr='test'),
+        'integ': define_metadatamodel_component(otype=int, descr='test')
+    }
+
+
 
 #-----------------------------------------------------------------------
 # Tests
@@ -312,22 +360,37 @@ class VectorContainer(datamodel.DataContainer):
 def test_define_components():
     with pytest.raises(ValueError):
         # otype must be provided
-        datamodel.define_datamodel_component(descr='test')
+        define_datamodel_component(descr='test')
     with pytest.raises(ValueError):
         # descr must be provided
-        datamodel.define_datamodel_component(otype='test')
+        define_datamodel_component(otype='test')
     with pytest.raises(ValueError):
         # if otype is np.ndarray, atype must be provided
-        datamodel.define_datamodel_component(otype=np.ndarray, descr='test')
+        define_datamodel_component(otype=np.ndarray, descr='test')
     with pytest.raises(ValueError):
         # if atype is provided, otype must be np.ndarray
-        datamodel.define_datamodel_component(otype=list, atype=float, descr='test')
+        define_datamodel_component(otype=list, atype=float, descr='test')
     with pytest.raises(ValueError):
         # otype currently cannot be dict
-        datamodel.define_datamodel_component(otype=dict, descr='test')
-    dmc = datamodel.define_datamodel_component(otype=float, descr='test')
+        define_datamodel_component(otype=dict, descr='test')
+    dmc = define_datamodel_component(otype=float, descr='test')
     assert 'otype' in dmc.keys(), 'Missing otype'
     assert 'atype' in dmc.keys(), 'Missing atype'
+    assert 'descr' in dmc.keys(), 'Missing descr'
+
+
+def test_define_metadata():
+    with pytest.raises(ValueError):
+        # otype must be provided
+        define_metadatamodel_component(descr='test')
+    with pytest.raises(ValueError):
+        # descr must be provided
+        define_metadatamodel_component(otype='test')
+    with pytest.raises(TypeError):
+        # metadata cannot be arrays
+        define_metadatamodel_component(otype=np.ndarray)
+    dmc = define_metadatamodel_component(otype=float, descr='test')
+    assert 'otype' in dmc.keys(), 'Missing otype'
     assert 'descr' in dmc.keys(), 'Missing descr'
 
 
@@ -627,3 +690,156 @@ def test_init():
     data = ComplexInitContainer(x.astype(float),y.astype(float))
     _data = ComplexInitContainer.from_hdu(data.to_hdu(add_primary=True))
     assert data.func == _data.func, 'Bad read'
+
+
+
+def test_bad_list_implementation():
+    with pytest.raises(NotImplementedError):
+        l = NoTypeContainerList()
+    with pytest.raises(PypeItCodingError):
+        l = TypeNotDataContainerInList()
+    with pytest.raises(ValueError):
+        l = NoVersionContainerList()
+    with pytest.raises(TypeError):
+        l = BadMetaTypeContainerList()
+    
+
+def test_list_functionality():
+
+    with pytest.raises(TypeError):
+        # class will only accept list elements of a given type
+        vcl = VectorContainerListNoMeta(['test', 2.0])
+
+    # Define some list elements
+    vec1 = VectorContainer(d={'flt': 10.0, 'arr': np.arange(10, dtype=float)})
+    vec2 = VectorContainer(d={'flt': 8.0, 'arr': np.arange(12, dtype=float)})
+    vec3 = VectorContainer(d={'flt': 12.0, 'arr': np.arange(18, dtype=float)})
+    vec4 = VectorContainer(d={'flt': 3.0, 'arr': np.arange(5, dtype=float)})
+
+    # Define a list with two elements and no metadata
+    vcl = VectorContainerListNoMeta([vec1, vec2])
+    assert len(vcl) == 2, 'Number of list elements is wrong'
+    assert vcl[0] is vec1 and vcl[1] is vec2, 'Elements should point to the same address'
+    
+    # Try to get or set an undefined metadata element as an item
+    with pytest.raises(KeyError):
+        t = vcl['test']
+    with pytest.raises(KeyError):
+        vcl['test'] = 3.
+
+    # Try to get or set an undefined metadata element as an attribute
+    with pytest.raises(AttributeError):
+        t = vcl.test
+    with pytest.raises(AttributeError):
+        vcl.test = 3.
+
+    # Should fail because of the metadata key conflicts with the datamodel of
+    # the list elements.
+    with pytest.raises(ValueError):
+        vcl = VectorContainerListKeyConflict([vec1, vec2])
+
+    # Do the same for an implementation that has metadata components
+    vcl = VectorContainerList([vec1, vec2])
+    assert len(vcl) == 2, 'Number of list elements is wrong'
+    assert vcl[0] is vec1 and vcl[1] is vec2, 'Elements should point to the same address'
+    assert vcl.name is None, 'Name should exist but should not be defined'
+
+    # Try setting an attribute
+    vcl.name = 'test'
+    assert vcl.name == 'test', 'Name not set correctly'
+
+    # Should fault because the type is wrong
+    with pytest.raises(TypeError):
+        vcl.dbl = 'test'
+
+    # Try setting as an item
+    vcl['dbl'] = 3.2
+    assert vcl.dbl == 3.2, 'Bad item assignment'
+
+    # Make a longer list
+    vcl = VectorContainerListNoMeta([vec1, vec2, vec3, vec4])
+    # Use of __getitem__ when the item is a string or integer is already tested
+    # above.  Try selecting multiple items.
+    sub = vcl[0:2]
+    assert len(sub) == 2, 'Should only have the first two elements'
+    assert sub[0] is vec1 and sub[1] is vec2, 'Elements should point to the same address'
+    assert sub[0] is vcl[0] and sub[1] is vcl[1], 'Elements should point to the same address'
+
+    # Meta should still fail
+    with pytest.raises(KeyError):
+        t = sub['test']
+
+    # Make sure metadata is transferred to subsets
+    vcl = VectorContainerList([vec1, vec2, vec3, vec4], name='test', dbl=3.2, integ=8)
+    assert vcl.name == 'test', 'metadata not instantiated correctly'
+    sub = vcl[2:4]
+    assert sub.name == vcl.name and sub.integ == vcl.integ, 'metadata not transferred correctly'
+    assert sub[0] is vcl[2] and sub[1] is vcl[3], 'Elements should point to the same address'
+
+
+def test_list_io():
+    # Define some list elements
+    vec1 = VectorContainer(d={'flt': 10.0, 'arr': np.arange(10, dtype=float)})
+    vec2 = VectorContainer(d={'flt': 8.0, 'arr': np.arange(12, dtype=float)})
+    vec3 = VectorContainer(d={'flt': 12.0, 'arr': np.arange(18, dtype=float)})
+    vec4 = VectorContainer(d={'flt': 3.0, 'arr': np.arange(5, dtype=float)})
+
+    # Make sure metadata is transferred to subsets
+    vcl = VectorContainerList([vec1, vec2, vec3, vec4], name='test', dbl=3.2, integ=8)
+
+    hdu = vcl.to_hdu()
+    assert len(hdu) == 4, 'Should be one hdu per list element (no primary should have been added)'
+    assert all(
+        'DLSTCLS' in h.header and h.header['DLSTCLS'] == 'VectorContainerList' for h in hdu
+    ), 'List class not present or not correct'
+    assert all('DLSTVER' in h.header and h.header['DLSTVER'] == '1.0.0' for h in hdu), \
+        'List class version not present or not correct'
+    assert all('DLSTLEN' in h.header and h.header['DLSTLEN'] == 4 for h in hdu), \
+        'List class length not present or not correct'
+    assert all('DLSTINDX' in h.header and h.header['DLSTINDX'] == i for i, h in enumerate(hdu)), \
+        'List class index number not present or not correct'
+    assert all(int(hdu[i].name.split('-')[0]) == i for i in range(len(vcl))), \
+        'Extension name should have index number included (when no names are provided)'
+
+    hdu = vcl.to_hdu(add_primary=True)
+    assert isinstance(hdu, fits.HDUList), 'Should be an hdu list when primary is included'
+    assert len(hdu) == 5, 'Should be 5 extensions'
+
+    hdu = vcl.to_hdu(add_primary=True, hdu_names=[f'VEC{i+1}' for i in range(len(vcl))])
+    assert hdu[1].name == 'VEC1', 'Bad extension name'
+
+    # Should fault if the number of names is not correct
+    with pytest.raises(PypeItError):
+        hdu = vcl.to_hdu(add_primary=True, hdu_names=[f'VEC{i+1}' for i in range(len(vcl)-1)])
+    # Should fault if the names are not unique
+    with pytest.raises(PypeItError):
+        hdu = vcl.to_hdu(add_primary=True, hdu_names=['VEC' for i in range(len(vcl))])
+
+    ofile = Path('test.fits').absolute()
+    if ofile.is_file():
+        ofile.unlink()
+
+    vcl.to_file(ofile, hdu_names=[f'VEC{i+1}' for i in range(len(vcl))])
+    assert ofile.is_file(), 'File not written'
+    _hdu = fits.open(ofile)
+    assert _hdu[1].name == 'VEC1', 'Bad extension name'
+    assert np.array_equal(_hdu[1].data, hdu[1].data), 'Data corrupted'
+
+    _vcl = VectorContainerList.from_hdu(_hdu)
+    for i in range(len(vcl)):
+        assert np.array_equal(vcl[0].arr, _vcl[0].arr), 'Arrays corrupted'
+    assert _vcl.name == vcl.name, 'name corrupted'
+    assert _vcl.dbl == vcl.dbl, 'dbl corrupted'
+    assert _vcl.integ == vcl.integ, 'integ corrupted'
+
+    _vcl = VectorContainerList.from_file(ofile)
+    for i in range(len(vcl)):
+        assert np.array_equal(vcl[0].arr, _vcl[0].arr), 'Arrays corrupted'
+    assert _vcl.name == vcl.name, 'name corrupted'
+    assert _vcl.dbl == vcl.dbl, 'dbl corrupted'
+    assert _vcl.integ == vcl.integ, 'integ corrupted'
+
+    ofile.unlink()
+
+# TODO: Many more tests!!
+
