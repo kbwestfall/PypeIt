@@ -144,7 +144,7 @@ class DetectorContainer(DataContainer):
             )
         ),
         'det': define_datamodel_component(
-            otype=(int, np.integer), descr='PypeIt designation for detector number (1-based).'
+            otype=int, descr='PypeIt designation for detector number (1-based).'
         ),
         'binning': define_datamodel_component(
             otype=str, descr='Binning in PypeIt orientation (not the original)'
