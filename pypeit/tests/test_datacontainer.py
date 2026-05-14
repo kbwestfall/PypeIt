@@ -322,7 +322,7 @@ def test_define_components():
     with pytest.raises(ValueError):
         # if atype is provided, otype must be np.ndarray
         datamodel.define_datamodel_component(otype=list, atype=float, descr='test')
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         # otype currently cannot be dict
         datamodel.define_datamodel_component(otype=dict, descr='test')
     dmc = datamodel.define_datamodel_component(otype=float, descr='test')
