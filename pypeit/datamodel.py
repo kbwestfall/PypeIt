@@ -1972,13 +1972,13 @@ class DataContainerList(fixedtypelist.FixedTypeList):
 
         This adds the following to header:
 
-        - DLSTCLS: The subclass of this
-          :class:`~pypeit.datamodel.DataContainerList` object.
+            - DLSTCLS: The subclass of this
+              :class:`~pypeit.datamodel.DataContainerList` object.
 
-        - DLSTVER: The version of this
-        :class:`~pypeit.datamodel.DataContainerList` subclass.
+            - DLSTVER: The version of this
+              :class:`~pypeit.datamodel.DataContainerList` subclass.
 
-        - DLSTLEN: The length of this list.
+            - DLSTLEN: The length of this list.
 
         It also adds all of the metadata that is not None.
 

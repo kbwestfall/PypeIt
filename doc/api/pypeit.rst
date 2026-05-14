@@ -60,6 +60,7 @@ Submodules
    pypeit.spec2dobj
    pypeit.specobj
    pypeit.specobjs
+   pypeit.spectrumdm
    pypeit.telescopes
    pypeit.tracepca
    pypeit.utils
