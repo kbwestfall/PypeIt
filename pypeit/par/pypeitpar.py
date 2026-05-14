@@ -109,7 +109,6 @@ class TelescopePar(parset.ParSet):
         )
 
 
-
 class ScatteredLightPar(parset.ParSet):
     """
     The parameters used when modeling scattered light.
@@ -3331,6 +3330,11 @@ class WavelengthSolutionPar(parset.ParSet):
                 'number is best)'
             ),
         ),
+        'boxcar_radius': parset.set_parameter_definition(
+            dtype=int,
+            default=3,
+            descr='Boxcar radius when extracting the arc spectrum',
+        ),
         'refframe': parset.set_parameter_definition(
             dtype=str,
             default='heliocentric',
@@ -3344,6 +3348,19 @@ class WavelengthSolutionPar(parset.ParSet):
             dtype=[int, list],
             descr=(
                 'Redo the input slit(s) [multislit] or order(s) [echelle]'
+            ),
+        ),
+        'reference_slit': parset.set_parameter_definition(
+            dtype=int,
+            descr=(
+                'Primarily for multi-object or IFU data where all slits cover a very similar '
+                'wavelength range. If the wavelength calibration does not work for some slits, '
+                'you can attempt to repeat the wavelength calibration for all slits using the '
+                'slit that has the best wavelength calibration.  An excellent choice for a '
+                '``reference_slit`` is one that has (in order of priority): (1) the correct '
+                'wavelength solution; (2) the greatest wavelength overlap with all slits; (3) '
+                'the most lines correctly identified; and (4) the lowest RMS.  This parameter is '
+                'the spatial ID of the slit to use as a reference for this process.'
             ),
         ),
         'qa_log': parset.set_parameter_definition(
@@ -3395,8 +3412,6 @@ class WavelengthSolutionPar(parset.ParSet):
             ),
         ),
     }
-
-    
 
 
 class EdgeTracePar(parset.ParSet):
