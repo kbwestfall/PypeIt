@@ -12,6 +12,7 @@ from IPython import embed
 
 import numpy as np
 
+from pypeit import PypeItCodingError
 from pypeit.scripts import scriptbase
 from pypeit.spectrographs.util import available_spectrographs
 
@@ -145,7 +146,7 @@ class ObsLog(scriptbase.ScriptBase):
         elif args.bad_types == 'only':
             indx = ps.fitstbl['frametype'] == 'None'
         else:
-            raise ValueError('CODING ERROR: Should never get here.')
+            raise PypeItCodingError('Should never get here.')
         fitstbl = ps.fitstbl.write(output='table' if args.interact else _file, rows=indx,
                                    columns=args.columns, sort_col=args.sort,
                                    overwrite=args.overwrite, header=header)

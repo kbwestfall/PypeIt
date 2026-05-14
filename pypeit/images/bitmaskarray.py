@@ -16,8 +16,11 @@ import numpy as np
 from astropy.io import fits
 
 from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.bitmask import BitMask
 from pypeit import log
+from pypeit import PypeItBitMaskError
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 
 class BitMaskArray(DataContainer):
@@ -41,7 +44,11 @@ class BitMaskArray(DataContainer):
     DataContainer version.  Must be defined by the subclass.
     """
 
-    datamodel = {'mask': dict(otype=np.ndarray, atype=np.integer, descr='Bitmask values')}
+    datamodel = {
+        'mask': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Bitmask values'
+        ),
+    }
     """
     Datamodel is simple, containing only the mask array.
     """
@@ -76,13 +83,15 @@ class BitMaskArray(DataContainer):
         # Check the bitmask
         keys = self.bit_keys()
         if any([not isinstance(k, str) for k in keys]):
-            raise PypeItError(f'CODING ERROR: {self.bitmask.__class__.__name__} must only contain '
-                       'string bit flags.')
+            raise PypeItCodingError(
+                f'{self.bitmask.__class__.__name__} must only contain string bit flags.'
+            )
 
         self.lower_keys = [k.lower() for k in keys]
         if len(np.unique(self.lower_keys)) != len(keys):
-            raise PypeItError('CODING ERROR: All bitmask keys must be case-insensitive and unique: '
-                       f'{keys}')
+            raise PypeItCodingError(
+                f'All bitmask keys must be case-insensitive and unique: {keys}'
+            )
 
     def __getattr__(self, item):
         """

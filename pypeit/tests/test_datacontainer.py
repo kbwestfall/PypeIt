@@ -5,68 +5,94 @@ import sys
 import io
 import os
 import inspect
+from pathlib import Path
 
+from astropy.io import fits
+from astropy.table import Table
 from IPython import embed
-
+import numpy as np
 import pytest
 
-import numpy as np
-
-#import pypeit
-
-from astropy.table import Table
-
+from pypeit import PypeItCodingError
+from pypeit import PypeItError
 from pypeit.datamodel import DataContainer
+from pypeit.datamodel import DataContainerList
+from pypeit.datamodel import define_datamodel_component
+from pypeit.datamodel import define_metadatamodel_component
 from pypeit.io import fits_open
 
 #-----------------------------------------------------------------------
 # Example derived classes
 class BasicContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'vec1': dict(otype=np.ndarray, atype=float, descr='Test'),
-                 'meta1': dict(otype=str, decr='test'),
-                 'arr1': dict(otype=np.ndarray, atype=float, descr='test')}
+    datamodel = {
+        'vec1': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='Test'
+        ),
+        'meta1': define_datamodel_component(
+            otype=str, descr='test'
+        ),
+        'arr1': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        )
+    }
     hdu_prefix = 'TST_'
 
     def __init__(self, vec1, meta1, arr1):
         # All arguments are passed directly to the container
         # instantiation
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(BasicContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
     def _bundle(self):
         # Specify the extension
-        return super(BasicContainer, self)._bundle(ext='basic')
+        return super()._bundle(ext='basic')
 
 
 class MixedCaseContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'lowercase': dict(otype=np.ndarray, atype=np.integer, descr='Test'),
-                 'UPPERCASE': dict(otype=int, decr='test'),
-                 'CamelCase': dict(otype=float, decr='test')}
+    datamodel = {
+        'lowercase': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Test'
+        ),
+        'UPPERCASE': define_datamodel_component(
+            otype=int, descr='test'
+        ),
+        'CamelCase': define_datamodel_component(
+            otype=float, descr='test'
+        )
+    }
 
     def __init__(self, lowercase, UPPERCASE, CamelCase):
         # All arguments are passed directly to the container
         # instantiation
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(MixedCaseContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
     def _bundle(self):
         # Specify the extension
-        return super(MixedCaseContainer, self)._bundle(ext='mixedcase')
+        return super()._bundle(ext='mixedcase')
 
 
 class ImageContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'img1': dict(otype=np.ndarray, atype=float, descr='Test'),
-                 'img1_key': dict(otype=str, descr='test'),
-                 'img2': dict(otype=np.ndarray, descr='test')}
+    datamodel = {
+        'img1': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='Test'
+        ),
+        'img1_key': define_datamodel_component(
+            otype=str, descr='test'
+        ),
+        'img2': define_datamodel_component(
+            otype=np.ndarray, atype=(int, np.integer), descr='test'
+        )
+    }
 
     def __init__(self, img1, img2, img1_key=None):
         # All arguments are passed directly to the container
         # instantiation
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(ImageContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
     def _bundle(self):
         # img1 and key are put in the first extension, img2 in the
@@ -76,16 +102,26 @@ class ImageContainer(DataContainer):
 
 class GoodTableContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'tab1': dict(otype=Table, descr='Test'),
-                 'tab1len': dict(otype=int, descr='test'),
-                 'tab2': dict(otype=Table, descr='test'),
-                 'tab2len': dict(otype=int, descr='test')}
+    datamodel = {
+        'tab1': define_datamodel_component(
+            otype=Table, descr='Test'
+        ),
+        'tab1len': define_datamodel_component(
+            otype=int, descr='test'
+        ),
+        'tab2': define_datamodel_component(
+            otype=Table, descr='test'
+        ),
+        'tab2len': define_datamodel_component(
+            otype=int, descr='test'
+        )
+    }
 
     def __init__(self, tab1, tab2):
         # All arguments are passed directly to the container
         # instantiation, but the list is incomplete
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(GoodTableContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
     def _validate(self):
         # Complete the instantiation
@@ -108,16 +144,26 @@ class BadTableContainer(GoodTableContainer):
 
 class GoodMixedTypeContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'tab1': dict(otype=Table, descr='Test'),
-                 'tab1len': dict(otype=int, descr='test'),
-                 'arr1': dict(otype=np.ndarray, atype=np.integer, descr='test'),
-                 'arr1shape': dict(otype=tuple, descr='test')}
+    datamodel = {
+        'tab1': define_datamodel_component(
+            otype=Table, descr='Test'
+        ),
+        'tab1len': define_datamodel_component(
+            otype=int, descr='test'
+        ),
+        'arr1': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='test'
+        ),
+        'arr1shape': define_datamodel_component(
+            otype=tuple, descr='test'
+        )
+    }
 
     def __init__(self, tab1, arr1):
         # All arguments are passed directly to the container
         # instantiation, but the list is incomplete
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(GoodMixedTypeContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
     def _validate(self):
         # Complete the instantiation
@@ -144,22 +190,42 @@ class BadMixedTypeContainer(GoodMixedTypeContainer):
 
 class BadInitContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'inp1': dict(otype=np.ndarray, descr='Test'),
-                 'inp2': dict(otype=np.ndarray, descr='test'),
-                 'out': dict(otype=np.ndarray, descr='test'),
-                 'alt': dict(otype=np.ndarray, descr='test')}
+    datamodel = {
+        'inp1': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='Test'
+        ),
+        'inp2': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        ),
+        'out': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        ),
+        'alt': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        )
+    }
 
     def __init__(self, inp1, inp2, func='add'):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(BadInitContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
 
 class DubiousInitContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'inp1': dict(otype=np.ndarray, atype=np.integer, descr='Test'),
-                 'inp2': dict(otype=np.ndarray, atype=np.integer, descr='test'),
-                 'out': dict(otype=np.ndarray, atype=np.integer, descr='test'),
-                 'alt': dict(otype=np.ndarray, atype=np.integer, descr='test')}
+    datamodel = {
+        'inp1': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Test'
+        ),
+        'inp2': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='test'
+        ),
+        'out': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='test'
+        ),
+        'alt': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='test'
+        )
+    }
 
     def __init__(self, inp1, inp2, func='add'):
         # If any of the arguments of the init method aren't actually
@@ -170,7 +236,7 @@ class DubiousInitContainer(DataContainer):
         # I'm not sure you would ever want to do this because it can
         # lead to I/O issues; see the _validate function.
         self.func = func
-        super(DubiousInitContainer, self).__init__({'inp1': inp1, 'inp2':inp2})
+        super().__init__({'inp1': inp1, 'inp2':inp2})
 
     def _init_internals(self):
         # Because func isn't part of the data model, it won't be part of
@@ -199,17 +265,29 @@ class DubiousInitContainer(DataContainer):
 
 class ComplexInitContainer(DataContainer):
     version = '1.0.0'
-    datamodel = {'inp1': dict(otype=np.ndarray, descr='Test'),
-                 'inp2': dict(otype=np.ndarray, descr='test'),
-                 'out': dict(otype=np.ndarray, descr='test'),
-                 'alt': dict(otype=np.ndarray, descr='test'),
-                 'func': dict(otype=str, descr='test')}
+    datamodel = {
+        'inp1': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='Test'
+        ),
+        'inp2': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        ),
+        'out': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        ),
+        'alt': define_datamodel_component(
+            otype=np.ndarray, atype=float, descr='test'
+        ),
+        'func': define_datamodel_component(
+            otype=str, descr='test'
+        )
+    }
 
     def __init__(self, inp1, inp2, func='add'):
         # Since func is part of the datamodel now, we can use the normal
         # two intantiation lines.
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
-        super(ComplexInitContainer, self).__init__({k: values[k] for k in args[1:]}) 
+        super().__init__({k: values[k] for k in args[1:]}) 
 
     def _validate(self):
         if self.func not in ['add', 'sub']:
@@ -222,6 +300,98 @@ class ComplexInitContainer(DataContainer):
             if self.func is None:
                 raise ValueError('Do not know how to construct out attribute!')
             self.out = self.inp1 + self.inp2 if self.func == 'add' else self.inp1 - self.inp2
+
+
+class VectorContainer(DataContainer):
+    version = '1.0.0'
+    datamodel = {
+        'flt': define_datamodel_component(otype=float, descr='flt'),
+        'arr': define_datamodel_component(otype=np.ndarray, atype=float, descr='arr')
+    }
+
+class NoTypeContainerList(DataContainerList):
+    # Does not define list_type
+    version = '1.0.0'
+
+class TypeNotDataContainerInList(DataContainerList):
+    # list_type is not a DataContainer
+    list_type = str
+    version = '1.0.0'
+
+class NoVersionContainerList(DataContainerList):
+    # Does not define version
+    list_type = VectorContainer
+
+class BadMetaTypeContainerList(DataContainerList):
+    # Does not define version
+    list_type = VectorContainer
+    version = '1.0.0'
+    # NOTE: use of define_metadatamodel_component would fail here, so I
+    # surreptitiously use a dict here
+    metadatamodel = {'test': dict(otype=dict, descr='test')}
+
+class VectorContainerListKeyConflict(DataContainerList):
+    list_type = VectorContainer
+    version = '1.0.0'
+    metadatamodel = {
+        'name': define_metadatamodel_component(otype=str, descr='test'),
+        'flt': define_metadatamodel_component(otype=float, descr='test'),
+        'integ': define_metadatamodel_component(otype=int, descr='test')
+    }
+
+class VectorContainerListNoMeta(DataContainerList):
+    list_type = VectorContainer
+    version = '1.0.0'
+
+class VectorContainerList(DataContainerList):
+    list_type = VectorContainer
+    version = '1.0.0'
+    metadatamodel = {
+        'name': define_metadatamodel_component(otype=str, descr='test'),
+        'dbl': define_metadatamodel_component(otype=float, descr='test'),
+        'integ': define_metadatamodel_component(otype=int, descr='test')
+    }
+
+
+
+#-----------------------------------------------------------------------
+# Tests
+
+def test_define_components():
+    with pytest.raises(ValueError):
+        # otype must be provided
+        define_datamodel_component(descr='test')
+    with pytest.raises(ValueError):
+        # descr must be provided
+        define_datamodel_component(otype='test')
+    with pytest.raises(ValueError):
+        # if otype is np.ndarray, atype must be provided
+        define_datamodel_component(otype=np.ndarray, descr='test')
+    with pytest.raises(ValueError):
+        # if atype is provided, otype must be np.ndarray
+        define_datamodel_component(otype=list, atype=float, descr='test')
+    with pytest.raises(ValueError):
+        # otype currently cannot be dict
+        define_datamodel_component(otype=dict, descr='test')
+    dmc = define_datamodel_component(otype=float, descr='test')
+    assert 'otype' in dmc.keys(), 'Missing otype'
+    assert 'atype' in dmc.keys(), 'Missing atype'
+    assert 'descr' in dmc.keys(), 'Missing descr'
+
+
+def test_define_metadata():
+    with pytest.raises(ValueError):
+        # otype must be provided
+        define_metadatamodel_component(descr='test')
+    with pytest.raises(ValueError):
+        # descr must be provided
+        define_metadatamodel_component(otype='test')
+    with pytest.raises(TypeError):
+        # metadata cannot be arrays
+        define_metadatamodel_component(otype=np.ndarray)
+    dmc = define_metadatamodel_component(otype=float, descr='test')
+    assert 'otype' in dmc.keys(), 'Missing otype'
+    assert 'descr' in dmc.keys(), 'Missing descr'
 
 
 def test_single_element_array():
@@ -457,12 +627,12 @@ def test_init():
 
     # Instantiation of the BadInitContainer should fail because the init
     # arguments all need to be part of the datamodel for it to work.
-    with pytest.raises(AttributeError):
+    with pytest.raises(PypeItCodingError):
         data = BadInitContainer(x,y)
 
     # This instantiation is fine because DubiousInitContainer handles
     # the fact that some of the arguments to __init__ are not part of
-    # the datamodel.
+    # the 
     data = DubiousInitContainer(x,y)
     assert np.array_equal(data.out, data.inp1+data.inp2), 'Bad init'
     # One component of the data model wasn't instantiated, so it will be
@@ -517,7 +687,159 @@ def test_init():
         assert _data.func == DubiousInitContainer(x,y).func
 
     # This is solved by adding func to the datamodel
-    data = ComplexInitContainer(x,y)
+    data = ComplexInitContainer(x.astype(float),y.astype(float))
     _data = ComplexInitContainer.from_hdu(data.to_hdu(add_primary=True))
     assert data.func == _data.func, 'Bad read'
+
+
+
+def test_bad_list_implementation():
+    with pytest.raises(NotImplementedError):
+        l = NoTypeContainerList()
+    with pytest.raises(PypeItCodingError):
+        l = TypeNotDataContainerInList()
+    with pytest.raises(ValueError):
+        l = NoVersionContainerList()
+    with pytest.raises(TypeError):
+        l = BadMetaTypeContainerList()
+    
+
+def test_list_functionality():
+
+    with pytest.raises(TypeError):
+        # class will only accept list elements of a given type
+        vcl = VectorContainerListNoMeta(['test', 2.0])
+
+    # Define some list elements
+    vec1 = VectorContainer(d={'flt': 10.0, 'arr': np.arange(10, dtype=float)})
+    vec2 = VectorContainer(d={'flt': 8.0, 'arr': np.arange(12, dtype=float)})
+    vec3 = VectorContainer(d={'flt': 12.0, 'arr': np.arange(18, dtype=float)})
+    vec4 = VectorContainer(d={'flt': 3.0, 'arr': np.arange(5, dtype=float)})
+
+    # Define a list with two elements and no metadata
+    vcl = VectorContainerListNoMeta([vec1, vec2])
+    assert len(vcl) == 2, 'Number of list elements is wrong'
+    assert vcl[0] is vec1 and vcl[1] is vec2, 'Elements should point to the same address'
+    
+    # Try to get or set an undefined metadata element as an item
+    with pytest.raises(KeyError):
+        t = vcl['test']
+    with pytest.raises(KeyError):
+        vcl['test'] = 3.
+
+    # Try to get or set an undefined metadata element as an attribute
+    with pytest.raises(AttributeError):
+        t = vcl.test
+    with pytest.raises(AttributeError):
+        vcl.test = 3.
+
+    # Should fail because of the metadata key conflicts with the datamodel of
+    # the list elements.
+    with pytest.raises(ValueError):
+        vcl = VectorContainerListKeyConflict([vec1, vec2])
+
+    # Do the same for an implementation that has metadata components
+    vcl = VectorContainerList([vec1, vec2])
+    assert len(vcl) == 2, 'Number of list elements is wrong'
+    assert vcl[0] is vec1 and vcl[1] is vec2, 'Elements should point to the same address'
+    assert vcl.name is None, 'Name should exist but should not be defined'
+
+    # Try setting an attribute
+    vcl.name = 'test'
+    assert vcl.name == 'test', 'Name not set correctly'
+
+    # Should fault because the type is wrong
+    with pytest.raises(TypeError):
+        vcl.dbl = 'test'
+
+    # Try setting as an item
+    vcl['dbl'] = 3.2
+    assert vcl.dbl == 3.2, 'Bad item assignment'
+
+    # Make a longer list
+    vcl = VectorContainerListNoMeta([vec1, vec2, vec3, vec4])
+    # Use of __getitem__ when the item is a string or integer is already tested
+    # above.  Try selecting multiple items.
+    sub = vcl[0:2]
+    assert len(sub) == 2, 'Should only have the first two elements'
+    assert sub[0] is vec1 and sub[1] is vec2, 'Elements should point to the same address'
+    assert sub[0] is vcl[0] and sub[1] is vcl[1], 'Elements should point to the same address'
+
+    # Meta should still fail
+    with pytest.raises(KeyError):
+        t = sub['test']
+
+    # Make sure metadata is transferred to subsets
+    vcl = VectorContainerList([vec1, vec2, vec3, vec4], name='test', dbl=3.2, integ=8)
+    assert vcl.name == 'test', 'metadata not instantiated correctly'
+    sub = vcl[2:4]
+    assert sub.name == vcl.name and sub.integ == vcl.integ, 'metadata not transferred correctly'
+    assert sub[0] is vcl[2] and sub[1] is vcl[3], 'Elements should point to the same address'
+
+
+def test_list_io():
+    # Define some list elements
+    vec1 = VectorContainer(d={'flt': 10.0, 'arr': np.arange(10, dtype=float)})
+    vec2 = VectorContainer(d={'flt': 8.0, 'arr': np.arange(12, dtype=float)})
+    vec3 = VectorContainer(d={'flt': 12.0, 'arr': np.arange(18, dtype=float)})
+    vec4 = VectorContainer(d={'flt': 3.0, 'arr': np.arange(5, dtype=float)})
+
+    # Make sure metadata is transferred to subsets
+    vcl = VectorContainerList([vec1, vec2, vec3, vec4], name='test', dbl=3.2, integ=8)
+
+    hdu = vcl.to_hdu()
+    assert len(hdu) == 4, 'Should be one hdu per list element (no primary should have been added)'
+    assert all(
+        'DLSTCLS' in h.header and h.header['DLSTCLS'] == 'VectorContainerList' for h in hdu
+    ), 'List class not present or not correct'
+    assert all('DLSTVER' in h.header and h.header['DLSTVER'] == '1.0.0' for h in hdu), \
+        'List class version not present or not correct'
+    assert all('DLSTLEN' in h.header and h.header['DLSTLEN'] == 4 for h in hdu), \
+        'List class length not present or not correct'
+    assert all('DLSTINDX' in h.header and h.header['DLSTINDX'] == i for i, h in enumerate(hdu)), \
+        'List class index number not present or not correct'
+    assert all(int(hdu[i].name.split('-')[0]) == i for i in range(len(vcl))), \
+        'Extension name should have index number included (when no names are provided)'
+
+    hdu = vcl.to_hdu(add_primary=True)
+    assert isinstance(hdu, fits.HDUList), 'Should be an hdu list when primary is included'
+    assert len(hdu) == 5, 'Should be 5 extensions'
+
+    hdu = vcl.to_hdu(add_primary=True, hdu_names=[f'VEC{i+1}' for i in range(len(vcl))])
+    assert hdu[1].name == 'VEC1', 'Bad extension name'
+
+    # Should fault if the number of names is not correct
+    with pytest.raises(PypeItError):
+        hdu = vcl.to_hdu(add_primary=True, hdu_names=[f'VEC{i+1}' for i in range(len(vcl)-1)])
+    # Should fault if the names are not unique
+    with pytest.raises(PypeItError):
+        hdu = vcl.to_hdu(add_primary=True, hdu_names=['VEC' for i in range(len(vcl))])
+
+    ofile = Path('test.fits').absolute()
+    if ofile.is_file():
+        ofile.unlink()
+
+    vcl.to_file(ofile, hdu_names=[f'VEC{i+1}' for i in range(len(vcl))])
+    assert ofile.is_file(), 'File not written'
+    _hdu = fits.open(ofile)
+    assert _hdu[1].name == 'VEC1', 'Bad extension name'
+    assert np.array_equal(_hdu[1].data, hdu[1].data), 'Data corrupted'
+
+    _vcl = VectorContainerList.from_hdu(_hdu)
+    for i in range(len(vcl)):
+        assert np.array_equal(vcl[0].arr, _vcl[0].arr), 'Arrays corrupted'
+    assert _vcl.name == vcl.name, 'name corrupted'
+    assert _vcl.dbl == vcl.dbl, 'dbl corrupted'
+    assert _vcl.integ == vcl.integ, 'integ corrupted'
+
+    _vcl = VectorContainerList.from_file(ofile)
+    for i in range(len(vcl)):
+        assert np.array_equal(vcl[0].arr, _vcl[0].arr), 'Arrays corrupted'
+    assert _vcl.name == vcl.name, 'name corrupted'
+    assert _vcl.dbl == vcl.dbl, 'dbl corrupted'
+    assert _vcl.integ == vcl.integ, 'integ corrupted'
+
+    ofile.unlink()
+
+# TODO: Many more tests!!
 

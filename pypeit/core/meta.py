@@ -14,6 +14,8 @@ from astropy import units, coordinates
 
 from IPython import embed
 
+from pypeit import PypeItCodingError
+
 
 def convert_radec(ra, dec):
     """
@@ -226,7 +228,7 @@ def get_meta_data_model(nlamps=20):
     core = define_core_meta()
     add = define_additional_meta(nlamps=nlamps)
     if np.any(np.isin(list(core.keys()), list(add.keys()))):
-        raise ValueError('CODING ERROR: Keys in core and additional meta data are not unique!')
+        raise PypeItCodingError('Keys in core and additional meta data are not unique!')
     core.update(add)
     return core
 

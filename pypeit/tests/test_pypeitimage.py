@@ -12,6 +12,7 @@ import numpy as np
 from astropy.io import fits
 
 from pypeit import PypeItError
+from pypeit.datamodel import define_datamodel_component
 from pypeit.images import pypeitimage
 from pypeit.images import imagebitmask
 from pypeit.tests.tstutils import data_output_path
@@ -178,7 +179,7 @@ class NewDMComponentPypeItCalibrationImage(pypeitimage.PypeItCalibrationImage):
     calib_type = 'NewDMComponent'
 
     datamodel = {**pypeitimage.PypeItCalibrationImage.datamodel,
-                 'newdmcomponent': dict(otype=str, help='test')}
+                 'newdmcomponent': define_datamodel_component(otype=str, descr='test')}
 
 
 def test_calib_instantiation():

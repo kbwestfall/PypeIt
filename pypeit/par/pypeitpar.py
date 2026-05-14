@@ -14,6 +14,7 @@ import os
 
 from pypeit import dataPaths
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit.core import parse
 from pypeit.core.framematch import FrameTypeBitMask
@@ -582,7 +583,7 @@ class FrameGroupPar(parset.ParSet):
             raise ValueError('exprng must be a list with two items.')
 
         if self.frametype is None:
-            raise ValueError('CODING ERROR: Subclasses of FrameGroupPar must define the frametype')
+            raise PypeItCodingError('Subclasses of FrameGroupPar must define the frametype')
         valid_frametypes = FrameTypeBitMask().keys()
         if self.frametype not in valid_frametypes:
             raise ValueError(

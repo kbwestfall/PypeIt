@@ -11,15 +11,16 @@ from IPython import embed
 import numpy as np
 from scipy.interpolate import interp1d
 
-from pypeit import datamodel
 from pypeit import io
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import utils
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.spectrographs.util import load_spectrograph
 
 
-class OneSpec(datamodel.DataContainer):
+class OneSpec(DataContainer):
     """
     DataContainer to hold single spectra, e.g., from
     :class:`~pypeit.coadd1d.CoAdd1D`.
@@ -51,41 +52,59 @@ class OneSpec(datamodel.DataContainer):
     """
     version = '1.0.2'
 
-    datamodel = {'wave': dict(otype=np.ndarray, atype=np.floating,
-                              # TODO: The "weighted by pixel contributions" part
-                              # should be better explained.
-                              descr='Wavelength array (angstroms in vacuum), weighted by pixel '
-                                    'contributions'),
-                 'wave_grid_mid': dict(otype=np.ndarray, atype=np.floating,
-                                       descr='Wavelength (angstroms in vacuum) evaluated at the '
-                                             'bin centers of a grid that is uniformly spaced '
-                                             'in either lambda or log10-lambda/velocity'),
-                 'flux': dict(otype=np.ndarray, atype=np.floating,
-                              descr='Flux array in units of counts/s or 10^-17 erg/s/cm^2/Ang; '
-                                    'see ``fluxed``'),
-                 'ivar': dict(otype=np.ndarray, atype=np.floating,
-                              descr='Inverse variance array (matches units of flux)'),
-                 'sigma': dict(otype=np.ndarray, atype=np.floating,
-                              descr='One sigma noise array, equivalent to 1/sqrt(ivar) (matches units of flux)'),
-                 'mask': dict(otype=np.ndarray, atype=np.integer,
-                              descr='Mask array (1=Good,0=Bad)'),
-                 'telluric': dict(otype=np.ndarray, atype=np.floating, descr='Telluric model'),
-                 'PYP_SPEC': dict(otype=str, descr='``PypeIt`` spectrograph designation'),
-                 'obj_model': dict(otype=np.ndarray, atype=np.floating,
-                                   descr='Object model for tellurics'),
-                 'ext_mode': dict(otype=str, descr='Extraction mode (options: BOX, OPT)'),
-                 'fluxed': dict(otype=bool, descr='Boolean indicating if the spectrum is fluxed.'),
-                 # TODO: Needs a better description.  What's in the dictionary?
-                 # Why isn't this dictionary expanded into its elements?  I.e.,
-                 # shouldn't each element of this dictionary be a component of
-                 # the datamodel?
-                 'spect_meta': dict(otype=dict, descr='header dict')}
+    datamodel = {
+        'wave': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+                    # TODO: The "weighted by pixel contributions" part
+                    # should be better explained.
+            descr='Wavelength array (angstroms in vacuum), weighted by pixel contributions'
+        ),
+        'wave_grid_mid': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr=(
+                'Wavelength (angstroms in vacuum) evaluated at the bin centers of a grid that is '
+                'uniformly spaced in either lambda or log10-lambda/velocity'
+            )
+        ),
+        'flux': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Flux array in units of counts/s or 10^-17 erg/s/cm^2/Ang; see ``fluxed``'
+        ),
+        'ivar': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Inverse variance array (matches units of flux)'
+        ),
+        'sigma': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='One sigma noise array, equivalent to 1/sqrt(ivar) (matches units of flux)'
+        ),
+        'mask': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Mask array (1=Good,0=Bad)'
+        ),
+        'telluric': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Telluric model'
+        ),
+        'PYP_SPEC': define_datamodel_component(
+            otype=str, descr='``PypeIt`` spectrograph designation'
+        ),
+        'obj_model': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Object model for tellurics'
+        ),
+        'ext_mode': define_datamodel_component(
+            otype=str, descr='Extraction mode (options: BOX, OPT)'
+        ),
+        'fluxed': define_datamodel_component(
+            otype=bool, descr='Boolean indicating if the spectrum is fluxed.'
+        ),
+    }
 
-    internals = ['head0',
-                 'filename',
-                 'spectrograph',
-                 'spect_meta',
-                 'history']
+    internals = [
+        'head0',
+        'filename',
+        'spectrograph',
+        'spect_meta',
+        'history'
+    ]
 
     @classmethod
     def from_file(cls, ifile, verbose=True, chk_version=True, **kwargs):
@@ -136,7 +155,7 @@ class OneSpec(datamodel.DataContainer):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         _d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        datamodel.DataContainer.__init__(self, d=_d)
+        DataContainer.__init__(self, d=_d)
 
     def _bundle(self):
         """

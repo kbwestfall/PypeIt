@@ -11,6 +11,7 @@ import pytest
 
 from pypeit import PypeItError
 from pypeit.calibframe import CalibFrame
+from pypeit.datamodel import define_datamodel_component
 from pypeit import io
 from pypeit.tests.tstutils import data_output_path
 
@@ -22,7 +23,7 @@ class NoTypeCalibFrame(CalibFrame):
 class MissingPYPSPECCalibFrame(CalibFrame):
     version = '1.0.0'
     calib_type = 'Junk'
-    datamodel = {'Junk': dict(otype=str)}
+    datamodel = {'Junk': define_datamodel_component(otype=str, descr='None')}
 
 
 class MinimalCalibFrame(CalibFrame):

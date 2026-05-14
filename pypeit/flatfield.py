@@ -21,14 +21,17 @@ from matplotlib import gridspec
 from IPython import embed
 
 from pypeit import log
-from pypeit import PypeItError, PypeItDataModelError
+from pypeit import PypeItCodingError
+from pypeit import PypeItDataModelError
+from pypeit import PypeItError
 from pypeit import utils
 from pypeit import bspline
 
-from pypeit import datamodel
 from pypeit import calibframe
 from pypeit import edgetrace
 from pypeit import io
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.display import display
 from pypeit.images import buildimage
 from pypeit.core import qa
@@ -64,35 +67,62 @@ class FlatImages(calibframe.CalibFrame):
 
     # Datamodel already includes PYP_SPEC, so no need to combine it with the
     # CalibFrame base datamodel.
-    datamodel = {'PYP_SPEC': dict(otype=str, descr='PypeIt spectrograph name'),
-                 'pixelflat_raw': dict(otype=np.ndarray, atype=np.floating,
-                                       descr='Processed, combined pixel flats'),
-                 'pixelflat_norm': dict(otype=np.ndarray, atype=np.floating,
-                                        descr='Normalized pixel flat'),
-                 'pixelflat_model': dict(otype=np.ndarray, atype=np.floating, descr='Model flat'),
-                 'pixelflat_spat_bsplines': dict(otype=np.ndarray, atype=bspline.bspline,
-                                                 descr='B-spline models for pixel flat; see '
-                                                       ':class:`~pypeit.bspline.bspline.bspline`'),
-                 'pixelflat_finecorr': dict(otype=np.ndarray, atype=fitting.PypeItFit,
-                                       descr='PypeIt 2D polynomial fits to the fine correction of '
-                                             'the spatial illumination profile'),
-                 'pixelflat_bpm': dict(otype=np.ndarray, atype=np.integer,
-                                       descr='Mirrors SlitTraceSet mask for flat-specific flags'),
-                 'pixelflat_spec_illum': dict(otype=np.ndarray, atype=np.floating,
-                                              descr='Relative spectral illumination'),
-                 'pixelflat_waveimg': dict(otype=np.ndarray, atype=np.floating,
-                                           descr='Waveimage for pixel flat'),
-                 'illumflat_raw': dict(otype=np.ndarray, atype=np.floating,
-                                       descr='Processed, combined illum flats'),
-                 'illumflat_spat_bsplines': dict(otype=np.ndarray, atype=bspline.bspline,
-                                                 descr='B-spline models for illum flat; see '
-                                                       ':class:`~pypeit.bspline.bspline.bspline`'),
-                 'illumflat_finecorr': dict(otype=np.ndarray, atype=fitting.PypeItFit,
-                                       descr='PypeIt 2D polynomial fits to the fine correction of '
-                                             'the spatial illumination profile'),
-                 'illumflat_bpm': dict(otype=np.ndarray, atype=np.integer,
-                                       descr='Mirrors SlitTraceSet mask for flat-specific flags'),
-                 'spat_id': dict(otype=np.ndarray, atype=np.integer, descr='Slit spat_id')}
+    datamodel = {
+        'PYP_SPEC': define_datamodel_component(
+            otype=str, descr='PypeIt spectrograph name'
+        ),
+        'pixelflat_raw': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Processed, combined pixel flats'
+        ),
+        'pixelflat_norm': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Normalized pixel flat'
+        ),
+        'pixelflat_model': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Model flat'
+        ),
+        'pixelflat_spat_bsplines': define_datamodel_component(
+            otype=np.ndarray, atype=bspline.bspline,
+            descr='B-spline models for pixel flat; see :class:`~pypeit.bspline.bspline.bspline`'
+        ),
+        'pixelflat_finecorr': define_datamodel_component(
+            otype=np.ndarray, atype=fitting.PypeItFit,
+            descr=(
+                'PypeIt 2D polynomial fits to the fine correction of the spatial illumination '
+                'profile'
+            )
+        ),
+        'pixelflat_bpm': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer,
+            descr='Mirrors SlitTraceSet mask for flat-specific flags'
+        ),
+        'pixelflat_spec_illum': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Relative spectral illumination'
+        ),
+        'pixelflat_waveimg': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Waveimage for pixel flat'
+        ),
+        'illumflat_raw': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='Processed, combined illum flats'
+        ),
+        'illumflat_spat_bsplines': define_datamodel_component(
+            otype=np.ndarray, atype=bspline.bspline,
+            descr='B-spline models for illum flat; see :class:`~pypeit.bspline.bspline.bspline`'
+        ),
+        'illumflat_finecorr': define_datamodel_component(
+            otype=np.ndarray, atype=fitting.PypeItFit,
+            descr=(
+                'PypeIt 2D polynomial fits to the fine correction of the spatial illumination '
+                'profile'
+            )
+        ),
+        'illumflat_bpm': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer,
+            descr='Mirrors SlitTraceSet mask for flat-specific flags'
+        ),
+        'spat_id': define_datamodel_component(
+            otype=np.ndarray, atype=np.integer, descr='Slit spat_id'
+        )
+    }
 
     def __init__(self, pixelflat_raw=None, pixelflat_norm=None, pixelflat_bpm=None,
                  pixelflat_model=None, pixelflat_spat_bsplines=None, pixelflat_finecorr=None,
@@ -103,7 +133,7 @@ class FlatImages(calibframe.CalibFrame):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        datamodel.DataContainer.__init__(self, d=d)
+        DataContainer.__init__(self, d=d)
 
     def _validate(self):
         """
@@ -2280,9 +2310,9 @@ def illum_profile_spectral(rawimg, waveimg, slits, slit_illum_ref_idx=0, smooth_
                 if (ii == 1) and (slits.spat_id[wvsrt[ss]] == slit_illum_ref_idx):
                     # This must be the first element of the loop by construction, but throw an error just in case
                     if ss != 0:
-                        raise PypeItError(
-                            "CODING ERROR - An error has occurred in the relative spectral "
-                            "illumination.\nPlease contact the developers."
+                        raise PypeItCodingError(
+                            "An error has occurred in the relative spectral "
+                            "illumination.  Please contact the developers."
                         )
                     tmp_cntr = cntr * spec_ref
                     tmp_arr = hist * utils.inverse(tmp_cntr)

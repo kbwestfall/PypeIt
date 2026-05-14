@@ -8,6 +8,7 @@ from IPython import embed
 import pytest
 from scipy.optimize import differential_evolution
 
+from pypeit import PypeItCodingError
 from pypeit.par import funcpar
 from pypeit.par import pypeitpar
 from pypeit.par import parset
@@ -53,7 +54,7 @@ def test_detnum_mixed_tuple():
 # NOTE: FrameGroupPar is now an abstract class that faults when you try to
 # instantiate it on its own.
 def test_framegroup():
-    with pytest.raises(ValueError):
+    with pytest.raises(PypeItCodingError):
         pypeitpar.FrameGroupPar()
 
 # NOTE: frametypes are defined and checked at the class level now
@@ -370,7 +371,7 @@ def test_func_par():
     # case
 
     # The base class cannot be instantiated directly
-    with pytest.raises(AttributeError):
+    with pytest.raises(PypeItCodingError):
         p = funcpar.FuncPar()
 
     # Test the unrestricted set of keywords

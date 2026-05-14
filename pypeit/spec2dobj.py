@@ -21,9 +21,10 @@ from astropy import table
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import io
-from pypeit import datamodel
 from pypeit import slittrace
-from pypeit.core import parse 
+from pypeit.core import parse
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.images import imagebitmask
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.mosaic import Mosaic
@@ -31,7 +32,7 @@ from pypeit.images.mosaic import Mosaic
 from IPython import embed
 
 
-class Spec2DObj(datamodel.DataContainer):
+class Spec2DObj(DataContainer):
     """Class to handle 2D spectral image outputs of PypeIt
 
     One generates one of these Objects for each detector in the exposure.
@@ -58,59 +59,93 @@ class Spec2DObj(datamodel.DataContainer):
 
     # Because we are including nested DataContainers, be careful not to
     # duplicate variable names!!
-    datamodel = {'sciimg': dict(otype=np.ndarray, atype=np.floating,
-                                descr='2D processed science image (float32)'),
-                 'ivarraw': dict(otype=np.ndarray, atype=np.floating,
-                                 descr='2D processed inverse variance image (float32)'),
-                 'skymodel': dict(otype=np.ndarray, atype=np.floating,
-                                  descr='2D sky model image (float32)'),
-                 'bkg_redux_skymodel': dict(otype=np.ndarray, atype=np.floating,
-                                  descr='2D sky model image without the background subtraction (float32)'),
-                 'objmodel': dict(otype=np.ndarray, atype=np.floating,
-                                  descr='2D object model image (float32)'),
-                 'ivarmodel': dict(otype=np.ndarray, atype=np.floating,
-                                   descr='2D ivar model image (float32)'),
-                 'tilts': dict(otype=np.ndarray, atype=np.floating,
-                               descr='2D tilts image (float64)'),
-                 'scaleimg': dict(otype=np.ndarray, atype=np.floating,
-                                  descr='2D multiplicative scale image [or a single scalar as an array] that has been applied to '
-                                        'the science image (float32)'),
-                 'waveimg': dict(otype=np.ndarray, atype=np.floating,
-                                 descr='2D wavelength image in vacuum (float64)'),
-                 'bpmmask': dict(otype=imagebitmask.ImageBitMaskArray,
-                                 descr='2D bad-pixel mask for the image'),
-#                 'imgbitm': dict(otype=str, descr='List of BITMASK keys from ImageBitMask'),
-                 'slits': dict(otype=slittrace.SlitTraceSet,
-                               descr='SlitTraceSet defining the slits'),
-                 'wavesol': dict(otype=table.Table,
-                               descr='Table with WaveCalib diagnostic info'),
-                 'maskdef_designtab': dict(otype=table.Table,
-                                           descr='Table with slitmask design and object info'),
-                 'sci_spat_flexure': dict(otype=float,
-                                          descr='Shift, in spatial pixels, between this image '
-                                                'and SlitTrace'),
-                 'sci_spec_flexure': dict(otype=table.Table,
-                                          descr='Global shift of the spectrum to correct for spectral'
-                                                'flexure (pixels). This is based on the sky spectrum at'
-                                                'the center of each slit'),
-                 'vel_type': dict(otype=str, descr='Type of reference frame correction (if any). '
-                                                   'Options are listed in the routine: '
-                                                   'WavelengthSolutionPar.valid_reference_frames() '
-                                                   'Current list: observed, heliocentric, barycentric'),
-                 'vel_corr': dict(otype=float,
-                                  descr='Relativistic velocity correction for wavelengths'),
-                 'med_chis': dict(otype=np.ndarray, atype=np.floating,
-                               descr='Median of the chi image for each slit/order'),
-                 'std_chis': dict(otype=np.ndarray, atype=np.floating,
-                               descr='std of the chi image for each slit/order'),
-                 'det': dict(otype=int, descr='Detector index'),
-                 'detector': dict(otype=(DetectorContainer, Mosaic),
-                                  descr='Detector or Mosaic metadata') }
+    datamodel = {
+        'sciimg': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='2D processed science image (float32)'
+        ),
+        'ivarraw': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='2D processed inverse variance image (float32)'
+        ),
+        'skymodel': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='2D sky model image (float32)'
+        ),
+        'bkg_redux_skymodel': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='2D sky model image without the background subtraction (float32)'
+        ),
+        'objmodel': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='2D object model image (float32)'
+        ),
+        'ivarmodel': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='2D ivar model image (float32)'
+        ),
+        'tilts': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='2D tilts image (float64)'
+        ),
+        'scaleimg': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr=(
+                '2D multiplicative scale image [or a single scalar as an array] that has been '
+                'applied to the science image (float32)'
+            )
+        ),
+        'waveimg': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='2D wavelength image in vacuum (float64)'
+        ),
+        'bpmmask': define_datamodel_component(
+            otype=imagebitmask.ImageBitMaskArray, descr='2D bad-pixel mask for the image'
+        ),
+        'slits': define_datamodel_component(
+            otype=slittrace.SlitTraceSet, descr='SlitTraceSet defining the slits'
+        ),
+        'wavesol': define_datamodel_component(
+            otype=table.Table, descr='Table with WaveCalib diagnostic info'
+        ),
+        'maskdef_designtab': define_datamodel_component(
+            otype=table.Table, descr='Table with slitmask design and object info'
+        ),
+        'sci_spat_flexure': define_datamodel_component(
+            otype=float, descr='Shift, in spatial pixels, between this image and SlitTrace'
+        ),
+        'sci_spec_flexure': define_datamodel_component(
+            otype=table.Table,
+            descr=(
+                'Global shift of the spectrum to correct for spectral flexure (pixels). This is '
+                'based on the sky spectrum at the center of each slit'
+            )
+        ),
+        'vel_type': define_datamodel_component(
+            otype=str,
+            descr=(
+                'Type of reference frame correction (if any). Options are listed in the routine: '
+                'WavelengthSolutionPar.valid_reference_frames().  The current list: observed, '
+                'heliocentric, barycentric'
+            )
+        ),
+        'vel_corr': define_datamodel_component(
+            otype=float, descr='Relativistic velocity correction for wavelengths'
+        ),
+        'med_chis': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating,
+            descr='Median of the chi image for each slit/order'
+        ),
+        'std_chis': define_datamodel_component(
+            otype=np.ndarray, atype=np.floating, descr='std of the chi image for each slit/order'
+        ),
+        'det': define_datamodel_component(
+            otype=int, descr='Detector index'
+        ),
+        'detector': define_datamodel_component(
+            otype=(DetectorContainer, Mosaic), descr='Detector or Mosaic metadata'
+        ),
+    }
 
-    internals = ['calibs',              # Dictionary containing the processed calibration frames
-                 'process_steps',       # List of image processing steps
-                 'head0'                # Raw header
-                ]
+    internals = [
+        'calibs',              # Dictionary containing the processed calibration frames
+        'process_steps',       # List of image processing steps
+        'head0'                # Raw header
+    ]
 
     @classmethod
     def from_file(cls, ifile, detname, chk_version=True):
@@ -195,7 +230,7 @@ class Spec2DObj(datamodel.DataContainer):
         args, _, _, values = inspect.getargvalues(inspect.currentframe())
         _d = dict([(k,values[k]) for k in args[1:]])
         # Setup the DataContainer
-        datamodel.DataContainer.__init__(self, d=_d)
+        DataContainer.__init__(self, d=_d)
 
     def _validate(self):
         """

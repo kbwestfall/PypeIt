@@ -12,14 +12,16 @@ import numpy as np
 from astropy import table
 from astropy.io import fits
 
-from pypeit import datamodel
 from pypeit import io
+from pypeit.datamodel import DataContainer
+from pypeit.datamodel import define_datamodel_component
 from pypeit.images.detector_container import DetectorContainer
 from pypeit import log
+from pypeit import PypeItCodingError
 from pypeit import PypeItError
 
 
-class Mosaic(datamodel.DataContainer):
+class Mosaic(DataContainer):
     """
     Class to hold mosaic parameters and the details of the detectors used to
     construct the mosaic.
@@ -39,23 +41,42 @@ class Mosaic(datamodel.DataContainer):
     # code.  But this requires special treatment for I/O (see _parse()), so
     # beware of adding new datamodel components with the same names as those in
     # DetectorContainer!
-    datamodel = {'id': dict(otype=int, descr='Mosaic ID number'),
-                 'detectors': dict(otype=np.ndarray, atype=DetectorContainer,
-                                   descr='List of objects with detector parameters.'),
-                 'binning': dict(otype=str, descr='On-chip binning'),
-                 'platescale': dict(otype=float, descr='Detector platescale in arcsec/pixel'),
-                 'shape': dict(otype=tuple,
-                               descr='Shape of each processed detector image'),
-                 'shift': dict(otype=np.ndarray, atype=float,
-                               descr='Raw, hard-coded pixel shifts for each unbinned detector'),
-                 'rot': dict(otype=np.ndarray, atype=float,
-                             descr='Raw, hard-coded rotations (counter-clockwise in degrees) for '
-                                   'each unbinned detector'),
-                 'tform': dict(otype=np.ndarray, atype=float,
-                               descr='The full transformation matrix for each detector used to '
-                                     'construct the mosaic.'),
-                 'msc_ord': dict(otype=int,
-                                 descr='Order of the interpolation used to construct the mosaic.')}
+    datamodel = {
+        'id': define_datamodel_component(
+            otype=int, descr='Mosaic ID number'
+        ),
+        'detectors': define_datamodel_component(
+            otype=np.ndarray, atype=DetectorContainer,
+            descr='List of objects with detector parameters.'
+        ),
+        'binning': define_datamodel_component(
+            otype=str, descr='On-chip binning'
+        ),
+        'platescale': define_datamodel_component(
+            otype=float, descr='Detector platescale in arcsec/pixel'
+        ),
+        'shape': define_datamodel_component(
+            otype=tuple, descr='Shape of each processed detector image'
+        ),
+        'shift': define_datamodel_component(
+            otype=np.ndarray, atype=float,
+            descr='Raw, hard-coded pixel shifts for each unbinned detector'
+        ),
+        'rot': define_datamodel_component(
+            otype=np.ndarray, atype=float,
+            descr=(
+                'Raw, hard-coded rotations (counter-clockwise in degrees) for each unbinned '
+                'detector'
+            )
+        ),
+        'tform': define_datamodel_component(
+            otype=np.ndarray, atype=float,
+            descr='The full transformation matrix for each detector used to construct the mosaic.'
+        ),
+        'msc_ord': define_datamodel_component(
+            otype=int, descr='Order of the interpolation used to construct the mosaic.'
+        ),
+    }
 
     name_prefix = 'MSC'
     """
@@ -68,7 +89,7 @@ class Mosaic(datamodel.DataContainer):
         d = dict([(k,values[k]) for k in args[1:]])
 
         # Setup the DataContainer
-        datamodel.DataContainer.__init__(self, d=d)
+        DataContainer.__init__(self, d=d)
 
     def _validate(self):
         """
@@ -101,8 +122,9 @@ class Mosaic(datamodel.DataContainer):
             tbl = table.vstack([d._bundle()[0]['DETECTOR'] for d in self.detectors],
                                 join_type='exact')
         except:
-            raise PypeItError('CODING ERROR: Could not stack detector parameter tables when writing '
-                       'mosaic metadata.')
+            raise PypeItCodingError(
+                'Could not stack detector parameter tables when writing mosaic metadata.'
+            )
         if self.shift is not None:
             tbl['shift'] = self.shift
         if self.rot is not None:
@@ -147,7 +169,7 @@ class Mosaic(datamodel.DataContainer):
 
         # This should only ever read one hdu!
         if len(parsed_hdus) > 1:
-            raise PypeItError('CODING ERROR: Parsing saved Mosaic instances should only parse 1 HDU.')
+            raise PypeItCodingError('Parsing saved Mosaic instances should only parse 1 HDU.')
 
         # These are the same as the attributes for the detectors, so we need to
         # get rid of them.  We'll get them back via the _validate function.
