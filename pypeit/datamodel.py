@@ -75,11 +75,10 @@ If the object type is a `numpy.ndarray`_, you should also provide the
 array. E.g., for a floating point array containing an image, your
 datamodel could be simply::
 
-    from pypeit.datamodel import DataContainer
-    from pypeit.datamodel import define_datamodel_component
+    from pypeit import datamodel
 
     datamodel = {
-        'image' : define_datamodel_component(
+        'image' : datamodel.define_datamodel_component(
             otype=np.ndarray, atype=float, descr='My image'
         )
     }
@@ -95,19 +94,18 @@ holds two arrays and a metadata parameter::
     import numpy as np
     import inspect
 
-    from pypeit.datamodel import DataContainer
-    from pypeit.datamodel import define_datamodel_component
+    from pypeit import datamodel
 
-    class BasicContainer(DataContainer):
+    class BasicContainer(datamodel.DataContainer):
         version = '1.0.0'
         datamodel = {
-            'vec1': define_datamodel_component(
+            'vec1': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=float, descr='Test'
             ),
-            'meta1': define_datamodel_component(
+            'meta1': datamodel.define_datamodel_component(
                 otype=str, descr='test'
             ),
-            'arr1': define_datamodel_component(
+            'arr1': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=float, descr='test'
             )
         }
@@ -223,22 +221,21 @@ one and a bad one::
 
     from astropy.table import Table
 
-    from pypeit.datamodel import DataContainer
-    from pypeit.datamodel import define_datamodel_component
+    from pypeit import datamodel
 
-    class GoodMixedTypeContainer(DataContainer):
+    class GoodMixedTypeContainer(datamodel.DataContainer):
         version = '1.0.0'
         datamodel = {
-            'tab1': define_datamodel_component(
+            'tab1': datamodel.define_datamodel_component(
                 otype=Table, descr='Test'
             ),
-            'tab1len': define_datamodel_component(
+            'tab1len': datamodel.define_datamodel_component(
                 otype=int, descr='test'
             ),
-            'arr1': define_datamodel_component(
+            'arr1': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=np.integer, descr='test'
             ),
-            'arr1shape': define_datamodel_component(
+            'arr1shape': datamodel.define_datamodel_component(
                 otype=tuple, descr='test'
             )
         }
@@ -269,7 +266,7 @@ one and a bad one::
             # Use default _bundle method, which will try to put both tables
             # in the same extension.  NOTE: Can't use super here because
             # GoodMixedTypeContainer doesn't have an 'ext' argument
-            return DataContainer._bundle(self, ext='bad')
+            return datamodel.DataContainer._bundle(self, ext='bad')
 
 With this implementation:
 
@@ -359,19 +356,19 @@ methods. :class:`DataContainer` can have more complex instantiation
 methods, but there are significant limitations to keep in made.
 Consider::
 
-    class BadInitContainer(DataContainer):
+    class BadInitContainer(datamodel.DataContainer):
         version = '1.0.0'
         datamodel = {
-            'inp1': define_datamodel_component(
+            'inp1': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=float, descr='Test'
             ),
-            'inp2': define_datamodel_component(
+            'inp2': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=float, descr='test'
             ),
-            'out': define_datamodel_component(
+            'out': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=float, descr='test'
             ),
-            'alt': define_datamodel_component(
+            'alt': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=float, descr='test'
             )
         }
@@ -381,19 +378,19 @@ Consider::
             super().__init__({k: values[k] for k in args[1:]}) 
 
 
-    class DubiousInitContainer(DataContainer):
+    class DubiousInitContainer(datamodel.DataContainer):
         version = '1.0.0'
         datamodel = {
-            'inp1': define_datamodel_component(
+            'inp1': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=np.integer, descr='Test'
             ),
-            'inp2': define_datamodel_component(
+            'inp2': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=np.integer, descr='test'
             ),
-            'out': define_datamodel_component(
+            'out': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=np.integer, descr='test'
             ),
-            'alt': define_datamodel_component(
+            'alt': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=np.integer, descr='test'
             )
         }
@@ -434,22 +431,22 @@ Consider::
         # is used.
 
 
-    class ComplexInitContainer(DataContainer):
+    class ComplexInitContainer(datamodel.DataContainer):
         version = '1.0.0'
         datamodel = {
-            'inp1': define_datamodel_component(
+            'inp1': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=float, descr='Test'
             ),
-            'inp2': define_datamodel_component(
+            'inp2': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=float, descr='test'
             ),
-            'out': define_datamodel_component(
+            'out': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=float, descr='test'
             ),
-            'alt': define_datamodel_component(
+            'alt': datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=float, descr='test'
             ),
-            'func': define_datamodel_component(
+            'func': datamodel.define_datamodel_component(
                 otype=str, descr='test'
             )
         }
@@ -501,7 +498,7 @@ With this implementation:
 
     - The problem with ``DubiousInitContainer`` is that it has
       attributes that cannot be reinstantiated from what's written to
-      disk. That is, :class:`DataContainers` aren't really fully
+      disk. That is, :class:`DataContainer` objects aren't really fully
       formed objects unless all of its relevant attributes are
       components of the data model::
 
@@ -520,8 +517,6 @@ With this implementation:
 .. include:: ../include/links.rst
 
 """
-import copy
-import itertools
 from pathlib import Path
 
 from IPython import embed
@@ -536,9 +531,7 @@ from pypeit import io
 from pypeit import log
 from pypeit import PypeItCodingError
 from pypeit import PypeItDataModelError
-from pypeit import PypeItError
 from pypeit.utils import eval_tuple
-from pypeit.core import fixedtypelist
 
 
 # NOTE: This is very similar to `pypeit.par.parset.set_parameter_definition`.
@@ -725,9 +718,9 @@ class DataContainer:
     within the array. E.g., for a floating point array containing an
     image, your datamodel could be simply::
 
-        from pypeit.datamodel import define_datamodel_component
+        from pypeit import datamodel
         datamodel = {
-            'image' : define_datamodel_component(
+            'image' : datamodel.define_datamodel_component(
                 otype=np.ndarray, atype=float, descr='My image'
             )
         }
@@ -1724,572 +1717,3 @@ def obj_is_data_container(obj):
     """
     return inspect.isclass(obj) and issubclass(obj, DataContainer)
 
-
-def define_metadatamodel_component(otype=None, descr=None):
-    """
-    Define a component of the metadata model dictionary for a
-    :class:`~pypeit.datamodel.DataContainerList`.
-
-    This should be used by the ``metadatamodel`` attribute of
-    :class:`~pypeit.datamodel.DataContainerList` subclasses to ensure each
-    component follows a known format.
-
-    Parameters
-    ----------
-    otype : type, tuple, optional
-        One or more types that are allowed for the component.  Although
-        syntactically optional, this is actually required to define the
-        component.  The optional syntax is used to to maintain clarity in the
-        definition.  This **cannot** be :obj:`dict`.
-    descr : str, optional
-        A description of the component.  Similar to ``otype``, this is required.
-
-    Returns
-    -------
-    dict
-        A dictionary containing the component specifications.
-
-    Raises
-    ------
-    ValueError
-        Raised if the parameter definition does not adhere to the rules outlined
-        in the ``dtype`` argument.
-    """
-    if otype is None:
-        raise ValueError('Must provide otype when defining a datamodel component.')
-    if descr is None:
-        raise ValueError('Must provide description when defining a datamodel component.')
-    if not any(otype is allowed_type for allowed_type in DataContainerList.allowed_metadata_types):
-        raise TypeError(
-            f'Metadata elements are not allowed to have type {otype.__name__} in a '
-            'DataContainerList subclass.'
-        )
-    return {
-        'otype': otype,
-        'descr': descr
-    }
-
-
-# TODO: Functionality needed to handle DataContainers that write multiple HDUs
-# is not yet tested!
-class DataContainerList(fixedtypelist.FixedTypeList):
-    """
-    Impementation of an object that manages a list of
-    :class:`~pypeit.datamodel.DataContainer` objects.
-
-    The primarily utility of this class is as an I/O interface.
-
-    Parameters
-    ----------
-    iterable : iterable, optional
-        An iterable object that contains the set of
-        :class:`~pypeit.datamodel.DataContainer` objects to manage.  This will
-        generally be passed as a positional argument, not a keyword argument.
-    **kwargs
-        Used to instantiate elements of the :attr:`metadatamodel`.
-    """
-
-    allowed_metadata_types = (int, np.integer, float, np.floating, bool, np.bool, str)
-    """
-    Allowed types for metadata.
-    """
-
-    version = None
-    """
-    Provides the string representation of the class version.
-
-    Each derived class should provide a version to guard against data
-    model changes during development.
-    """
-
-    metadatamodel = None
-    """
-    Provides the class metadata model. This is undefined in the abstract class,
-    and can also be undefined in any subclass.  The dictionary is defined
-    similarly to the ``datamodel`` attribute of
-    :class:`~pypeit.datamodel.DataContainer`, except that the components can
-    only have the types defined by :attr:`allowed_metadata_types`.  See
-    :func:`~pypeit.datamodel.define_metadatamodel_component`.
-    """
-
-    def __init__(self, iterable=None, **kwargs):
-
-        # NOTE: The base class provides list_type and will check if it is
-        # defined
-        if self.list_type is not None and not issubclass(self.list_type, DataContainer):
-            raise PypeItCodingError(
-                'Implementations of DataContainerList require list elements that are subclasses '
-                f'of DataContainer; this is not true for {self.list_type.__name__}.'
-            )
-
-        # Validate the version string
-        if self.version is None:
-            raise ValueError('Must define a version for the class.')
-        # Validate the metadata model
-        self.__class__._validate_metadatamodel()
-
-        # Instantiate the list base class
-        super().__init__(iterable=iterable)
-
-        if self.metadatamodel is not None:
-            # Ensure the internal dictionary has all the expected keys
-            self.__dict__.update(dict.fromkeys(self.metadatamodel.keys()))
-
-        # Finalize the instantiation.
-        # NOTE: The key added to `__dict__` by this call is always
-        # `_DataContainerList__initialised`, regardless of whether or not the
-        # call to this `__init__` is from the derived class. This is why I can
-        # check for `_DataContainerList__initialised` is in `self.__dict__`,
-        # even for derived classes. But is there a way we could just check a
-        # boolean instead?
-        self._init_key = '_DataContainerList__initialised'
-        self.__initialised = True
-
-        # No metadata were passed, so we're done
-        if len(kwargs) == 0:
-            return
-
-        # Assign the values provided by the input dictionary
-        for key in kwargs.keys():
-            setattr(self, key, kwargs[key])
-
-    @classmethod
-    def _validate_metadatamodel(cls):
-        """
-        Validate that the metadata model is defined an does not includes disallowed types.
-        """
-        if cls.metadatamodel is None:
-            # It is not necessary to define the metadatamodel
-            return
-        for key in cls.metadatamodel.keys():
-            if cls.metadatamodel[key]['otype'] not in cls.allowed_metadata_types:
-                raise TypeError(
-                    'Metadata in DataContainerList subclasses cannot have type '
-                    f'{cls.metadatamodel[key]["otype"].__name__}; allowed types are '
-                    f'{", ".join([t.__name__ for t in cls.allowed_metadata_types])}.  Revisit '
-                    f'definition of metadata element {key}.'
-                )
-            if key in cls.list_type.datamodel.keys():
-                raise ValueError(
-                    f'Metadata model key {key} will conflict with identical key in the datamodel '
-                    f'for the {cls.list_type.__name__} list elements.'
-                )
-
-    def __add__(self, iterable):
-        """
-        Overrides the base class so that :attr:`meta` is saved.  *Any meta in
-        ``iterable`` is lost!*
-        """
-        # NOTE: Instantiation always creates a deepcopy of meta
-        lst = [s for s in self] + [s for s in iterable]
-        if self.metadatamodel is None:
-            return self.__class__(lst)
-        return self.__class__(
-            lst, 
-            **{key : self[key] for key in self.metadatamodel.key() if self[key] is not None}
-        )
-
-    def __getattr__(self, item):
-        """
-        Maps values to attributes.
-        Only called if there *isn't* an attribute with this name
-        """
-        try:
-            return self.__getitem__(item)
-        except KeyError as e:
-            raise AttributeError(f'{item} not an attribute of {self.__class__.__name__}!') from e
-
-    def __setattr__(self, item, value):
-        """
-        Set the attribute value.
-
-        Attributes are restricted to those defined by the datamodel.
-        """
-        # version is immutable
-        if item == 'version':
-            raise TypeError('Internal version does not support assignment.')
-
-        # TODO: It seems like it would be faster to check a boolean
-        # attribute. Is that possible?
-        if '_DataContainerList__initialised' not in self.__dict__:
-            # Allow new attributes to be added before object is
-            # initialized
-            dict.__setattr__(self, item, value)
-        else:
-            # Otherwise, set as an item
-            try:
-                self.__setitem__(item, value)
-            except KeyError as e:
-                # Raise attribute error instead of key error
-                raise AttributeError(f'{item} not an internal or metadatamodel component!') from e
-
-    def __setitem__(self, item, value):
-        """
-        Access and set an attribute identically to a dictionary item.
-
-        Items are restricted to those defined by the datamodel.
-        """
-        if not isinstance(item, str):
-            super().__setitem__(item, value)
-            return
-
-        if item not in self.__dict__.keys():
-            raise KeyError(f'Key {item} not part of the internals nor the metadatamodel')
-        # Internal?
-        if self.metadatamodel is None or item not in self.metadatamodel.keys():
-            self.__dict__[item] = value
-            return
-        # Set metadatamodel item to None?
-        if value is None:
-            self.__dict__[item] = value
-            return
-        # Check data type
-        if (
-            self.metadatamodel is not None
-            and not isinstance(value, self.metadatamodel[item]['otype'])
-        ):
-            raise TypeError(f'Cannot assign object of type {type(value)} to {item}.\n'
-                            f"Allowed type(s) are: {self.metadatamodel[item]['otype']}")
-        # Set
-        self.__dict__[item] = value
-
-    def __getitem__(self, item):
-        """
-        Overrides the base class so that :attr:`meta` is saved.
-        """
-        if isinstance(item, str):
-            try:
-                return self.__dict__[item]
-            except KeyError as e:
-                raise KeyError(f'{item} is not an item in {self.__class__.__name__}.') from e
-        out = super().__getitem__(item)
-        if not isinstance(out, self.__class__) or self.metadatamodel is None:
-            return out
-        return self.__class__(
-            [o for o in out],
-            **{key : self[key] for key in self.metadatamodel.keys() if self[key] is not None}
-        )
-    
-    def _base_header(self, hdr=None):
-        """
-        Construct a base header that is included with all HDU
-        extensions produced by :func:`to_hdu`.
-
-        This adds the following to header:
-
-        - DLSTCLS: The subclass of this
-          :class:`~pypeit.datamodel.DataContainerList` object.
-
-        - DLSTVER: The version of this
-        :class:`~pypeit.datamodel.DataContainerList` subclass.
-
-        - DLSTLEN: The length of this list.
-
-        It also adds all of the metadata that is not None.
-
-        Parameters
-        ----------
-        hdr : :class:`astropy.io.fits.Header`, optional
-            Baseline header.  If None, set by
-            :func:`pypeit.io.initialize_header()`.
-
-        Returns
-        -------
-        :class:`astropy.io.fits.Header`
-            Header object to include in all HDU extensions.
-        """
-        # Get the baseline header
-        _hdr = io.initialize_header() if hdr is None else hdr.copy()
-
-        # Add DataContainerList class name and datamodel version number.
-        _hdr['DLSTCLS'] = (self.__class__.__name__, 'DataContainerList class')
-        _hdr['DLSTVER'] = (self.version, 'DataContainerList version')
-        _hdr['DLSTLEN'] = (len(self), 'Length of DataContainerList when written')
-
-        # If there is not metadata, we're done
-        if self.metadatamodel is None:
-            return _hdr
-
-        # Add the metadata
-        for key in self.metadatamodel.keys():
-            if self[key] is None:
-                continue
-            _hdr[key.upper()] = self[key]
-
-        return _hdr
-    
-    def to_hdu(self, hdr=None, add_primary=False, primary_hdr=None, hdu_names=None):
-        """
-        Construct an :class:`astropy.io.fits.HDUList` with the data.
-
-        .. warning::
-
-            Each :class:`~pypeit.datamodel.DataContainer` in the list must
-            produce the same number of HDUs using its ``to_hdu`` function.
-
-        Parameters
-        ----------
-        hdr : :class:`astropy.io.fits.Header`, optional
-            Baseline header to add to all returned HDUs. If None, set by
-            :func:`~pypeit.io.initialize_header`.
-        add_primary : bool, optional
-            If False, the returned object is a simple :obj:`list`, with a list
-            of HDU objects. If True, the method constructs an
-            :class:`astropy.io.fits.HDUList` with a primary HDU.
-        primary_hdr : :class:`astropy.io.fits.Header`, optional
-            Baseline header for the primary extension.  Ignored if
-            ``add_primary`` is False.
-        hdu_names : :obj:`list`, optional
-            The list of names to use for the HDUs.  If the
-            :class:`~pypeit.datamodel.DataContainer` type in the list produces
-            more than one HDU, this is the prefix used for each HDU, otherwise
-            these are the exact names for each HDU.  In either case, the number
-            of strings provided must match the length of this list.  If None and
-            the :class:`~pypeit.datamodel.DataContainer` list elements produce 
-            more than one HDU, the prefix is set to the index number of the item
-            in the list.
-
-        Returns
-        -------
-        list, :class:`astropy.io.fits.HDUList`
-            The HDUs with the data.  The output type depends on ``add_primary``.
-            This will be None (not an empyt list) if this object has not list
-            elements.
-        """
-
-        if len(self) == 0:
-            log.warning(f'This {self.__class__.__name__} is empty!')
-            return None
-
-        if hdu_names is not None:
-            if np.unique(hdu_names).size != len(hdu_names):
-                raise PypeItError('All of the provided HDU names must be unique!')
-            elif len(hdu_names) != len(self):
-                raise PypeItError(
-                    'Number of HDU name strings must match the length of this list.  Expected '
-                    f'{len(self)} strings, got {len(hdu_names)}.'
-                )
-            
-        # Get the baseline header
-        _base_hdr = self._base_header(hdr=hdr)
-        
-        # Get the list of hdus
-        hdus = []
-        for i in range(len(self)):
-            # Construct the HDU
-            _hdus = self[i].to_hdu(hdr=_base_hdr)
-            # Add the index
-            for h in _hdus:
-                h.header['DLSTINDX'] = (i, 'Index in DataContainerList')
-            # Adjust the HDU names
-            if hdu_names is None:
-                for h in _hdus:
-                    self.__class__._reset_hdu_name(
-                        h, f'{i}' if h.name is None else f'{i}-{h.name}'
-                    )
-            else:
-                if len(_hdus) == 1:
-                    self.__class__._reset_hdu_name(_hdus[0], hdu_names[i])
-                if len(_hdus) > 1:
-                    for j, h in enumerate(_hdus):
-                        self.__class__._reset_hdu_name(
-                            h,
-                            f'{hdu_names[i]}-{j}' if h.name is None else f'{hdu_names[i]}-{h.name}'
-                        )
-            # Add them to the total
-            hdus += _hdus
-
-        if not add_primary:
-            return hdus
-        
-        return fits.HDUList([fits.PrimaryHDU(header=self._base_header(hdr=primary_hdr))] + hdus)
-
-    @staticmethod
-    def _reset_hdu_name(hdu, name):
-        if hdu.name is not None:
-            hdu.header['SUDOEXT'] = (hdu.name, 'Extension name expected by datamodel')
-        hdu.name = name
-
-    def to_file(self, ofile, overwrite=False, checksum=True, **kwargs):
-        """
-        Write the data to a file.
-
-        This is a convenience wrapper for :func:`to_hdu` and
-        :func:`pypeit.io.write_to_fits`.  The ``add_primary`` parameter of
-        :func:`to_hdu` is *always* true such that the first extension of the
-        written fits file is *always* an empty primary header.
-
-        Parameters
-        ----------
-        ofile : str, `Path`_
-            Fits file for the data. File names with '.gz' extensions will be
-            gzipped; see :func:`~pypeit.io.write_to_fits`.
-        overwrite : :obj:`bool`, optional
-            Flag to overwrite any existing file.
-        checksum : :obj:`bool`, optional
-            Passed to `astropy.io.fits.HDUList.writeto`_ to add the DATASUM and
-            CHECKSUM keywords fits header(s).
-        **kwargs
-            Passed directly to
-            :func:`~pypeit.datamodel.DataContainerList.to_hdu`.  Note that
-            ``add_primary`` *cannot* be provided because it is always set to
-            true.
-        """
-        # NOTE: This call does *not* need to also pass hdr to io.write_to_fits
-        # because the first argument of the function is always an
-        # astropy.io.fits.HDUList.
-        io.write_to_fits(
-            self.to_hdu(add_primary=True, **kwargs), str(ofile), overwrite=overwrite,
-            checksum=checksum
-        )
-
-    @classmethod
-    def from_hdu(cls, hdu, chk_version=True, **kwargs):
-        """
-        Instantiate the object from an HDU extension.
-
-        Parameters
-        ----------
-        hdu : list, `astropy.io.fits.HDUList`_, `astropy.io.fits.ImageHDU`_, `astropy.io.fits.BinTableHDU`_
-            A container with the FITS data to use for instantiation.
-        chk_version : :obj:`bool`, optional
-            Check the version of each element in the list, as they're read.
-        **kwargs:
-            Passed directly to the
-            :func:`~pypeit.datamodel.DataContainer.from_hdu` method specific to
-            the type of element in this list.  Beware that this should *not*
-            include the ``ext_pseudo`` keyword.
-        """
-        # Ensure that ``hdu`` can be treated as a list
-        _hdu = [hdu] if isinstance(hdu, (fits.ImageHDU, fits.BinTableHDU)) else hdu
-
-        # Find the extensions written by this DataContainerList subclass type.
-        dlst_cls = np.array([
-            h.header['DLSTCLS'] == cls.__name__ if 'DLSTCLS' in h.header else False for h in _hdu
-        ])
-        if not np.any(dlst_cls):
-            log.warning(
-                'DLSTCLS not defined for any HDU in the provided set.  Trying to read any '
-                'extensions in the set that match the expected datatype.'
-            )
-            dlst_cls = None
-
-        # Find the hdus that match the expected DataContainer subclass
-        dc_cls = np.array([
-            h.header['DMODCLS'] == cls.list_type.__name__
-            if 'DMODCLS' in h.header else False
-            for h in _hdu
-        ])
-        if not np.any(dc_cls):
-            raise PypeItDataModelError(
-                f'Unable to find any extensions in the provided set that match the datamodel '
-                f'type ({cls.list_type.__name__}) specific to this list subclass ({cls.__name__}).'
-            )
-        
-        # Find the hdus that have the correct list and datamodel class
-        read_hdu = dc_cls
-        if dlst_cls is not None:
-            read_hdu &= dlst_cls
-        if not np.any(read_hdu):
-            raise PypeItDataModelError(
-                f'Unable to find any extensions in the provided set that both match the datamodel '
-                f'type ({cls.list_type.__name__}) and the list subclass ({cls.__name__}).'
-            )
-        read_hdu = np.where(read_hdu)[0]
-
-        # Determine the number of HDUs per list element and the number of elements
-        ndc = None
-        dc_indx = []
-        for i in read_hdu:
-            if ndc is None and 'DLSTLEN' in _hdu[i].header:
-                ndc = _hdu[i].header['DLSTLEN']
-            dc_indx += [_hdu[i].header['DLSTINDX'] if 'DLSTINDX' in _hdu[i].header else None]
-        if any(i is None for i in dc_indx):
-            log.warning('Unable to determine initial indexing of list elements.')
-            if ndc is None:
-                ndc = len(read_hdu)
-            dc_indx = np.arange(ndc)
-            unique_dc_indx = dc_indx
-            n_ext_per_dc = 1
-        else:
-            dc_indx = np.asarray(dc_indx)
-            unique_dc_indx, n_ext_per_dc = np.unique(dc_indx, return_counts=True)
-            if not np.all(n_ext_per_dc == n_ext_per_dc[0]):
-                raise PypeItDataModelError(
-                    'Found that the number of extensions per datamodel instance in the list is '
-                    'not consistent.  Unable to proceed.'
-                )
-            n_ext_per_dc = n_ext_per_dc[0]
-            if not np.array_equal(unique_dc_indx, np.arange(len(read_hdu))):
-                log.warning(
-                    'Index ordering is currupted; there will be a mismatch between the old and '
-                    'new indices.'
-                )
-
-        if ndc != len(unique_dc_indx)*n_ext_per_dc:
-            raise PypeItDataModelError(
-                'Mismatch between the number of extensions with the correct datamodel class and '
-                'the expected length of the list.'
-            )
-        if not np.array_equal(np.repeat(unique_dc_indx, n_ext_per_dc), dc_indx):
-            raise PypeItDataModelError(
-                'Datamodels that produce multiple extensions must order those extensions '
-                'sequentially when writing a datamodel list to an output file.'
-
-            )
-
-        # Instantiate the datacontainers
-        dcs = []
-        for i in unique_dc_indx:
-            s = read_hdu[np.sort(np.where(dc_indx == i)[0])[0]]
-            ext_pseudo = [h.header['SUDOEXT'] for h in _hdu[s:s+n_ext_per_dc]]
-            dcs += [cls.list_type.from_hdu(
-                _hdu[s:s+n_ext_per_dc], chk_version=chk_version, ext_pseudo=ext_pseudo,
-                **kwargs
-            )]
-
-        if cls.metadatamodel is None:
-            return cls(dcs)
-
-        # Find metadata
-        meta = {}
-        for i in read_hdu:
-            for key in cls.metadatamodel.keys():
-                if key.upper() in _hdu[i].header:
-                    meta[key] = _hdu[i].header[key.upper()]
-
-        return cls(dcs, **meta)
-
-    @classmethod
-    def from_file(cls, ifile, verbose=True, **kwargs):
-        """
-        Instantiate the object from the specified fits file.
-
-        This is largely a wrapper for
-        :func:`~pypeit.datamodel.DataContainerList.from_hdu`.
-        
-        Parameters
-        ----------
-        ifile : :obj:`str`, `Path`_
-            Fits file with the data to read
-        verbose : :obj:`bool`, optional
-            Print informational messages
-        kwargs : :obj:`dict`, optional
-            Arguments passed directly to
-            :func:`~pypeit.datamodel.DataContainerList.from_hdu`.
-
-        Raises
-        ------
-        FileNotFoundError
-            Raised if the specified file does not exist.
-        """
-        _ifile = Path(ifile).absolute()
-        if not _ifile.is_file():
-            raise FileNotFoundError(f'{_ifile} does not exist!')
-
-        if verbose:
-            log.info(f'Loading {cls.__name__} from {_ifile}')
-
-        # Do it
-        with io.fits_open(_ifile) as hdu:
-            return cls.from_hdu(hdu, **kwargs)
