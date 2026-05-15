@@ -171,29 +171,29 @@ class Show2DSpec(scriptbase.ScriptBase):
                 file_pypeit_version = fits.getval(args.file, 'VERSPYP', 0)
             except KeyError:
                 file_pypeit_version = '*unknown*'
-            if chk_version:
-                addendum = 'To allow the script to attempt to read the data anyway, use the ' \
-                           '--try_old command-line option.  This will first try to simply ' \
-                           'ignore the version number.  If the datamodels are incompatible ' \
-                           '(e.g., the new datamodel contains components not in a previous ' \
-                           'version), this may not be enough and the script will continue by ' \
-                           'trying to parse only the components necessary for use by this ' \
-                           'script. In either case, BEWARE that the displayed data may be in ' \
-                           'error!'
-            else:
-                addendum = 'The datamodels are sufficiently different that the script will now ' \
-                           'try to parse only the components necessary for use by this ' \
-                           'script.  BEWARE that the displayed data may be in error!'
             message = (
                 f'Your installed version of PypeIt ({__version__}) cannot be used to parse '
                 f'{args.file}, which was reduced using version {file_pypeit_version}.  You '
                 'are strongly encouraged to re-reduce your data using this (or, better yet, '
-                'the most recent) version of PypeIt.  ' + addendum
+                'the most recent) version of PypeIt.  '
             )
-            if check_version:
+            if chk_version:
+                message += (
+                    'To allow the script to attempt to read the data anyway, use the --try_old ' 
+                    'command-line option.  This will first try to simply ignore the version '
+                    'number.  If the datamodels are incompatible (e.g., the new datamodel '
+                    'contains components not in a previous version), this may not be enough and '
+                    'the script will continue by trying to parse only the components necessary '
+                    'for use by this script. In either case, BEWARE that the displayed data may '
+                    'be in error!'
+                )
                 raise PypeItError(message)
-            else:
-                log.warning(message)
+            message += (
+                'The datamodels are sufficiently different that the script will now try to parse '
+                'only the components necessary for use by this script.  BEWARE that the displayed '
+                'data may be in error!'
+            )
+            log.warning(message)
             spec2DObj = None
 
         if spec2DObj is None:
