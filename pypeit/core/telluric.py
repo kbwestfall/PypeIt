@@ -679,8 +679,9 @@ def tellfit(flux, thismask, arg_dict, init_from_last=None):
 
     # Name of function for title in case QA requested
     obj_model_func_name = getattr(obj_model_func, '__name__', repr(obj_model_func))
-    sigma_corr, maskchi = coadd.renormalize_errors(chi_vec, mask=totalmask, title = obj_model_func_name,
-                                                   debug=debug)
+    sigma_corr, maskchi = coadd.renormalize_errors(
+        chi_vec, gpm=totalmask, title=obj_model_func_name, debug=debug
+    )
     ivartot = flux_ivar/sigma_corr**2
 
     return result, tell_model*obj_model, ivartot
