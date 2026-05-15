@@ -13,6 +13,7 @@ import scipy.interpolate
 import scipy.optimize
 import scipy.signal
 import scipy.special
+import scipy.stats
 
 from pypeit import datamodel
 from pypeit import dataPaths
@@ -652,7 +653,8 @@ def tellfit(flux, thismask, arg_dict, init_from_last=None):
         init_obj = np.array([[np.clip(param + ballsize*(bounds_obj[i][1] - bounds_obj[i][0]) * rng.standard_normal(1)[0],
                                       bounds_obj[i][0], bounds_obj[i][1]) for i, param in enumerate(arg_dict['obj_dict']['init_obj_opt_theta'])]
                              for jsamp in range(nsamples)])
-        tell_lhs = utils.lhs(ntheta_tell, samples=nsamples)
+#        tell_lhs = utils.lhs(ntheta_tell, samples=nsamples)
+        tell_lhs = scipy.stats.qmc.LatinHypercube(d=ntheta_tell, seed=rng).random(nsamples)
         init_tell = np.array([[bounds[-idim][0] + tell_lhs[isamp, idim] * (bounds[-idim][1] - bounds[-idim][0])
                                for idim in range(ntheta_tell)] for isamp in range(nsamples)])
         init = np.hstack((init_obj, init_tell))
