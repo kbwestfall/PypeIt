@@ -8,6 +8,42 @@ from pypeit.core import coadd
 from pypeit.core import standard
 from pypeit.core import meta
 
+
+def test_renormalize_errors():
+    # Build a test chi array
+    rng = np.random.default_rng(99)
+    npoints = 1000
+    known_sigma_corr = 2.0
+    chi = rng.normal(size=npoints) * known_sigma_corr
+    gpm = np.ones(chi.size, dtype=bool)
+
+    # Run the function
+    clip = 6.
+    sigma_corr, chi_gpm = coadd.renormalize_errors(chi, gpm=gpm, clip=clip)
+    assert np.absolute(sigma_corr - known_sigma_corr) < 0.1, \
+        'Error renormalization factor incorrect'
+
+    # Set some extreme outliers
+    outlier_index = rng.integers(0, npoints, size=100)
+    chi[outlier_index] = 10.
+    sigma_corr, chi_gpm = coadd.renormalize_errors(chi, gpm=gpm, clip=clip)
+    # Correction factor should still be good
+    assert np.absolute(sigma_corr - known_sigma_corr) < 0.1, \
+        'Error renormalization factor incorrect'
+    assert not np.any(chi_gpm[outlier_index]), 'All outliers should be rejected'
+
+    # Set the maximum correction factor to be below the known value
+    max_corr = 1.5
+    sigma_corr, chi_gpm = coadd.renormalize_errors(chi, gpm=gpm, clip=clip, max_corr=max_corr)
+    assert sigma_corr == max_corr, 'Error renormalization factor should be exactly at limit'
+
+    # Reset the data so that that the errors are underestimated
+    known_sigma_corr = 0.5
+    chi = rng.normal(size=npoints) * known_sigma_corr
+    sigma_corr, chi_gpm = coadd.renormalize_errors(chi, gpm=gpm, clip=clip)
+    assert sigma_corr == 1.0, 'Overestimated errors should yield correction factor of 1'
+
+
 def test_robust_median():
     # Build some test spectra
     ra, dec = meta.convert_radec('00:31:18.49', '-43:36:23')

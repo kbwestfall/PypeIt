@@ -29,25 +29,27 @@ from pypeit.core.wavecal import wvutils
 from pypeit.core import pydl
 
 
-def renormalize_errors_qa(chi, maskchi, sigma_corr, sig_range = 6.0,
-                          title:str='', qafile:str=None):
-    '''
-    Generate a histogram QA plot of the input chi distribution.
+def renormalize_errors_qa(chi, chi_gpm, sigma_corr, sig_range=6.0, title='', qafile=None):
+    r"""
+    Generate a QA plot for the error-renormalization calculation.
 
-    Args:
-        chi (`numpy.ndarray`_):
-            your chi values
-        maskchi (`numpy.ndarray`_):
-            True = good, mask for your chi array of type bool
-        sigma_corr (float):
-            corrected sigma
-        sig_range (float):
-            used to set binsize, default +- 6-sigma
-        title (str, optional):
-            plot title
-        qafile (str, optional):
-            Write figure to this output QA file, if provided
-    '''
+    Parameters
+    ----------
+    chi : `numpy.ndarray`_
+        The :math:`\chi` values.
+    chi_gpm : `numpy.ndarray`_
+        Good-pixel mask for the :math:`\chi` array.
+    sigma_corr : float
+        Calculated error correction factor.
+    sig_range : float
+        Used to set the histogram bin size; 50 bins cover :math:`\pm n\sigma`,
+        where ``sig_range`` sets :math:`n`.
+    title : str, optional
+        Plot title
+    qafile : str, optional
+        If provided, the figure is written to this file.  If None, the figure is
+        shown to the screen only.
+    """
     # Prep
     n_bins = 50
     binsize = 2.0*sig_range/n_bins
@@ -59,82 +61,104 @@ def renormalize_errors_qa(chi, maskchi, sigma_corr, sig_range = 6.0,
 
     # Plot
     plt.figure(figsize=(12, 8))
-    plt.hist(chi[maskchi],bins=bins_histo,density=True,histtype='step', align='mid',color='k',linewidth=3,label='Chi distribution')
-    plt.plot(xvals,gauss.pdf(xvals),'c-',lw=3,label='sigma=1')
-    plt.plot(xvals,gauss_corr.pdf(xvals),'m--',lw=2,label='new sigma={:4.2f}'.format(round(sigma_corr,2)))
+    plt.hist(
+        chi[chi_gpm], bins=bins_histo, density=True, histtype='step', align='mid', color='k',
+        linewidth=3, label='Chi distribution'
+    )
+    plt.plot(xvals, gauss.pdf(xvals), 'c-', lw=3, label='sigma=1')
+    plt.plot(
+        xvals, gauss_corr.pdf(xvals), 'm--', lw=2, label=f'new sigma={round(sigma_corr,2):4.2f}'
+    )
     plt.ylabel('Residual distribution')
     plt.xlabel('chi')
     plt.xlim([-6.05,6.05])
-    plt.legend(fontsize=13,loc=2)
+    plt.legend(fontsize=13, loc=2)
     plt.title(title, fontsize=16, color='red')
     if qafile is not None:
-        if len(qafile.split('.'))==1:
+        if len(qafile.split('.')) == 1:
             log.info("No fomat given for the qafile, save to PDF format.")
             qafile = qafile+'.pdf'
-        plt.savefig(qafile,dpi=300)
-        log.info("Wrote QA: {:s}".format(qafile))
+        plt.savefig(qafile, dpi=300)
+        log.info(f'Wrote QA: {qafile}')
     plt.show()
     plt.close()
 
 
-def renormalize_errors(chi, mask, clip=6.0, max_corr=5.0, title = '', debug=False):
+def renormalize_errors(chi, gpm=None, clip=6.0, max_corr=5.0, title='', debug=False):
+    r"""
+    Renormalize errors such that the provided vector of error-normalized
+    residuals matches a normal distribution.
+
+    The distribution of input :math`chi` values (defined by :math:`\chi_i = (d_i
+    - m_i)/\sigma_i`, where :math:`d` is the data, :math`m` is the model, and
+    :math:`\sigma` is the error) is analyzed, and a correction factor to the
+    standard deviation is returned. When the errors are multiplied by this
+    correction factor, a rejection threshold of i.e. 3-sigma, will always
+    correspond to roughly the same percentile.  This renormalization guarantees
+    that rejection is not too aggressive in cases where the empirical errors
+    determined from the :math:`\chi`-distribution differ significantly from the
+    noise model.
+
+    Parameters
+    ----------
+    chi : `numpy.ndarray`_
+        :math:`\chi` values.
+    gpm : `numpy.ndarray`_, optional
+        Good-pixel mask of the :math:`\chi` array; shape must match ``chi``.  If
+        None, all measurements are considered valid.
+    clip : float, optional
+        Threshold for clipping outliers.  A value of 6.0 means the (absolute
+        value of the) residual between the data and the model is 6 times the
+        error.
+    max_corr : float, optional
+        Maximum correction factor returned.
+    title : str, optional
+        Title for QA plot, passed to :func:`renormalize_errors_qa`
+    debug : bool, optional
+        If True, show the QA plot created by :func:`renormalize_errors_qa`
+
+    Returns
+    -------
+    sigma_corr : float
+        Error correction factor.
+    chi_gpm : `numpy.ndarray`
+        Good-pixel mask for the :math:`\chi` array after clipping outliers, used
+        to generate the error correction factor.
     """
-    Function for renormalizing errors. The distribution of input chi (defined by chi = (data - model)/sigma) values is
-    analyzed, and a correction factor to the standard deviation sigma_corr is returned. This should be multiplied into
-    the errors. In this way, a rejection threshold of i.e. 3-sigma, will always correspond to roughly the same percentile.
-    This renormalization guarantees that rejection is not too agressive in cases where the empirical errors determined
-    from the chi-distribution differ significantly from the noise model which was used to determine chi.
+    chi_gpm = (np.absolute(chi) < clip)
+    if gpm is not None:
+        chi_gpm &= gpm
 
-    Args:
-        chi (`numpy.ndarray`_):
-            input chi values
-        mask (`numpy.ndarray`_):
-            True = good, mask for your chi array of type bool
-        mask (`numpy.ndarray`_):
-            True = good, mask for your chi array of type bool
-        clip (float, optional):
-            threshold for outliers which will be clipped for the purpose of computing the renormalization factor
-        max_corr (float, optional):
-            maximum corrected sigma allowed.
-        title (str, optional):
-            title for QA plot, passed to renormalize_errors_qa
-        debug (bool, optional):
-            If True, show the QA plot created by renormalize_errors_qa
+    if not np.any(chi_gpm):
+        log.warning(
+            'No good pixels when calculating error renormalization!  The clipping level may be '
+            'too low.'
+        )
+        return 1.0, chi_gpm
 
-    Returns:
-        tuple: (1) sigma_corr (float), corrected new sigma; (2) maskchi
-        (`numpy.ndarray`_, bool): new mask (True=good) which indicates the values
-        used to compute the correction (i.e it includes clipping)
-
-    """
-    chi2 = chi**2
-    maskchi = (chi2 < clip**2) & mask
-    if (np.sum(maskchi) > 0):
-        gauss_prob = 1.0 - 2.0 * scipy.stats.norm.cdf(-1.0)
-        chi2_sigrej = np.percentile(chi2[maskchi], 100.0*gauss_prob)
-        sigma_corr = np.sqrt(chi2_sigrej)
-        if sigma_corr < 1.0:
-            log.warning(
-                f"Error renormalization found correction factor sigma_corr = {sigma_corr} < 1.\n"
-                "Errors are overestimated so not applying correction."
-            )
-            sigma_corr = 1.0
-        if sigma_corr > max_corr:
-            log.warning(
-                f"Error renormalization found sigma_corr/sigma = {sigma_corr} > {max_corr}.\n"
-                "Errors are severely underestimated.\nSetting correction to sigma_corr = "
-                f"{max_corr:4.2f}"
-            )
-            sigma_corr = max_corr
-
-        if debug:
-            renormalize_errors_qa(chi, maskchi, sigma_corr, title=title)
-
-    else:
-        log.warning('No good pixels in error_renormalize. There are probably issues with your data')
+    gauss_prob = 1.0 - 2.0 * scipy.stats.norm.cdf(-1.0)
+    sigma_corr = np.sqrt(np.percentile(chi[chi_gpm]**2, 100.0*gauss_prob))
+    if sigma_corr < 1.0:
+        log.warning(
+            'Errors are overestimated or the model is over-fitting the data; measured '
+            f'correction factor is {sigma_corr}.  Errors will not be adjusted.'
+        )
         sigma_corr = 1.0
+    if sigma_corr > max_corr:
+        log.warning(
+            'Errors are severely underestimated or the model is a poor representation of the '
+            f'data; measured correction factor is {sigma_corr}.  Correct set to the maximum '
+            f'value of {max_corr}.'
+        )
+        sigma_corr = max_corr
 
-    return sigma_corr, maskchi
+    # TODO: All of the objects needed for the QA plot will be available
+    # *outside* of this function.  Move the debug stuff to the calling
+    # functions.
+    if debug:
+        renormalize_errors_qa(chi, chi_gpm, sigma_corr, title=title)
+    return sigma_corr, chi_gpm
+
 
 def poly_model_eval(theta, func, model, wave, wave_min, wave_max):
     """
@@ -216,11 +240,18 @@ def poly_ratio_fitfunc_chi2(theta, gpm, arg_dict):
 
     # The errors are rescaled at every function evaluation, but we only allow the errors to get smaller by up to a
     # factor of 1e4, and we only allow them to get larger slowly (as the square root).  This should very strongly
-    # constrain the flux-corrrection vectors from going too small (or negative), or too large.
+    # constrain the flux-correction vectors from going too small (or negative), or too large.
     ## Schlegel's version here
-    vmult = np.fmax(ymult,1e-4)*(ymult <= 1.0) + np.sqrt(ymult)*(ymult > 1.0)
+    # TODO: In my opinion (KBW), we need to stop treating boolean arrays as 1/0
+    # arrays.  I'm not sure if this is true in IDL, but NaN * 0 = NaN in Python,
+    # and we don't want NaNs anywhere.
+#    vmult = np.fmax(ymult,1e-4)*(ymult <= 1.0) + np.sqrt(ymult)*(ymult > 1.0)
+    vmult = np.fmax(ymult,1e-4)
+    indx = ymult > 1.
+    vmult[indx] = np.sqrt(ymult[indx])
     ivarfit = mask_both/(1.0/(ivar_med + np.logical_not(mask_both)) + np.square(vmult)/(ivar_ref_med + np.logical_not(mask_both)))
     chi_vec = mask_both * (flux_ref_med - flux_scale) * np.sqrt(ivarfit)
+
     # Changing the Huber loss parameter from step to step results in instability during optimization --MSR.
     # Robustly characterize the dispersion of this distribution
     #chi_mean, chi_median, chi_std = stats.sigma_clipped_stats(
@@ -304,7 +335,9 @@ def poly_ratio_fitfunc(flux_ref, gpm, arg_dict, init_from_last=None, **kwargs_op
     except KeyError:
         debug = False
 
-    sigma_corr, maskchi = renormalize_errors(chi, mask=mask_both, title = 'poly_ratio_fitfunc', debug=debug)
+    sigma_corr, maskchi = renormalize_errors(
+        chi, gpm=mask_both, title='poly_ratio_fitfunc', debug=debug
+    )
     ivartot = ivartot1/sigma_corr**2
 
     return result, flux_scale, ivartot
@@ -441,7 +474,7 @@ def solve_poly_ratio(wave, flux, ivar, flux_ref, ivar_ref, norder, mask=None, ma
     # Now compute median filtered versions of the spectra which we will actually
     # operate on for the fitting. Note that rejection will however work on the
     # non-filtered spectra.
-    med_width = (2.0*np.ceil(median_frac/2.0*nspec) + 1).astype(int)
+    med_width = int(2.0*np.ceil(median_frac/2.0*nspec) + 1)
     flux_med, ivar_med = median_filt_spec(flux, ivar, mask, med_width)
     flux_ref_med, ivar_ref_med = median_filt_spec(flux_ref, ivar_ref, mask_ref, med_width)
 
@@ -464,10 +497,12 @@ def solve_poly_ratio(wave, flux, ivar, flux_ref, ivar_ref, norder, mask=None, ma
         flux_ref, poly_ratio_fitfunc, arg_dict, inmask=mask_ref, maxiter=maxiter, lower=lower,
         upper=upper, sticky=sticky
     )
+        
     ymult1 = poly_model_eval(result.x, func, model, wave, wave_min, wave_max)
     ymult = np.fmin(np.fmax(ymult1, scale_min), scale_max)
     flux_rescale = ymult*flux
     ivar_rescale = ivar/ymult**2
+
     if debug:
         # Determine the y-range for the QA plots
         scale_spec_qa(
@@ -985,7 +1020,6 @@ def robust_median_ratio(
 
     nspec = flux.size
     snr_ref = flux_ref * np.sqrt(ivar_ref)
-    
     snr_ref_best = np.fmax(np.percentile(snr_ref[mask_ref], ref_percentile),snr_do_not_rescale)
     # NOTE: In the case where the S/N is artificially set to a specific number
     # for the entire spectrum, selecting "snr_ref > snr_ref_best" cuts out most
@@ -1323,6 +1357,10 @@ def get_ylim(flux, ivar, mask):
     med_width = (2.0 * np.ceil(0.1 / 2.0 * np.size(flux[mask])) + 1).astype(int)
     flux_med, ivar_med = median_filt_spec(flux, ivar, mask, med_width)
     mask_lim = ivar_med > np.percentile(ivar_med, 20)
+    if not np.any(mask_lim):
+        # All are masked! So just use the original mask.  This can happen for
+        # synthetic data when the ivar is the same for all pixels.
+        mask_lim = mask
     ymax = 2.5 * np.max(flux_med[mask_lim])
     ymin = -0.15 * ymax
     return ymin, ymax
@@ -1722,7 +1760,9 @@ def update_errors(fluxes, ivars, masks, fluxes_stack, ivars_stack, masks_stack,
         chi = np.sqrt(ivar_clip)*(thisflux - thisflux_stack)
         # Adjust errors to reflect the statistics of the distribution of errors. This fixes cases where the
         # the noise model is not quite right
-        this_sigma_corr, igood = renormalize_errors(chi, mask_tot, clip=6.0, max_corr=5.0, title=title, debug=debug)
+        this_sigma_corr, igood = renormalize_errors(
+            chi, gpm=mask_tot, clip=6.0, max_corr=5.0, title=title, debug=debug
+        )
         ivar_tot_corr = ivar_clip/this_sigma_corr ** 2
         # TODO is this correct below? JFH Thinks no
         #ivar_cap = utils.clip_ivar(thisflux_stack, ivar_tot_corr, sn_clip, mask=mask_tot)
