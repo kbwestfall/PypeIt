@@ -875,6 +875,9 @@ class ParSet:
                 and len(cls.parameters[key]['dtype']) == 1
                 and cls.parameters[key]['dtype'][0] is tuple
             ):
+                # TODO: Part of the reason this is here is because of how
+                # configobj parses tuples.  It would be nice if our
+                # configuration parser could natively interpret tuples.
                 values[i] = tuple_force(values[i])
         return cls(**dict(zip(pars, values)))
     
