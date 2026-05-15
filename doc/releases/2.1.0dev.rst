@@ -87,6 +87,10 @@ Under-the-hood Improvements
 - Adds :mod:`~pypeit.core.spectrumdm` to provide IO wrappers for 
   :class:`~pypeit.core.spectrum.Spectrum` and
   :class:`~pypeit.core.spectrum.SpectrumList` objects.
+- Replace Latin Hypercube Sampling code with version from
+  :mod:`scipy.stats.qmc`.
+- Refactor :func:`~pypeit.wavemodel.conv2res` and
+  :func:`~pypeit.core.coadd.renormlize_errors` and add some tests.
 
 Bug Fixes
 ---------
