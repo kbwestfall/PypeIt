@@ -53,6 +53,7 @@ Submodules
    pypeit.core.tracewave
    pypeit.core.transform
    pypeit.core.wave
+   pypeit.core.wavemask
 
 Module contents
 ---------------

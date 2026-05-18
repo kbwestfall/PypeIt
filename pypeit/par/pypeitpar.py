@@ -2577,6 +2577,18 @@ class TelluricPar(parset.ParSet):
                 'with ``bal_wv_min_max``, but this mask is good pixel masks.'
             ),
         ),
+        # TODO: Consolidate this with fit_wv_min_max
+        'spectral_region_mask': parset.set_parameter_definition(
+            dtype=[str, list],
+            default=['atm.toml', 'hydrogen.toml'],
+            descr=(
+                'A set of spectral regions to mask during the model (source + telluric) fit to '
+                'the observed spectrum.  This can be one or more spectral ranges defined '
+                'directly or strings pointing to TOML files defining the masked regions.  When '
+                'provided via TOML files, the files can be local or provided by the pypeit '
+                'package.  See :ref:`telluric_masks` for more information.'
+            ),
+        ),
     }
 
     def validate(self):
