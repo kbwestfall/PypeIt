@@ -369,6 +369,7 @@ class PypeItDataPaths:
                      'sky_spec': {'path': 'sky_spec', 'host': None},
                      'static_calibs': {'path': 'static_calibs', 'host': None},
                      'spectrographs': {'path': 'spectrographs', 'host': None},
+                     'masks': {'path': 'masks', 'host': None},
                      # Known lists of interesting lines for data analysis
                      'line_lists': {'path': 'line_lists', 'host': None},
                     }
