@@ -1,5 +1,3 @@
 [atm]
 
-range = [
-    ['None', 3000.0],
-]
+range = ['None', 3000.0]

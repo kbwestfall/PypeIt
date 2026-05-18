@@ -20,7 +20,49 @@ from pypeit.sampling import Resample
 from pypeit.wavemodel import conv2res
 
 
-def read_wavelength_masks(files, tables=None):
+def parse_wavelength_range_strings(inp):
+    r"""
+    Parse one or more strings into a set of wavelength ranges.
+
+    Strings are expected to have a starting and ending wavelength separated by a
+    colon.  Either wavelength may be missing such that it is undefined.
+
+    Parameters
+    ----------
+    inp : str, list
+        One or more strings to parse
+
+    Returns
+    -------
+    :class:`numpy.ndarray`
+        An array with size :math:`(N_{\rm reg},2)`, where :math:`N_{\rm reg}` is
+        the number of regions with a starting and ending wavelength.
+    """
+    # Convert to list
+    _inp = inp if isinstance(inp, list) else [inp]
+    regions = []
+    for s in _inp:
+        # Entries must be strings
+        if not isinstance(s, str):
+            raise TypeError('Entries must be a string or list.')
+        # Split by the colon and remove any whitespace
+        ss = [_s.strip() for _s in s.split(':')]
+        # Must lead to two entries
+        if len(ss) != 2:
+            raise ValueError(f'Entry {s} not split into two entries by a colon.')
+        # Convert to float; use None for empty strings
+        ss = [float(_s) if len(_s) > 0 else None for _s in ss]
+        # If the entry is ':', both elements will be None, which is not allowed
+        if ss[0] is None and ss[1] is None:
+            log.warning(f'{s} must contain at least one float value.')
+            continue
+        # Append to the list
+        regions += [ss]
+    # Return an array
+    return np.asarray(regions, dtype=object)
+
+
+def parse_wavelength_range_files(files, tables=None):
     r"""
     Read one or more TOML files with wavelength mask definitions.
 
@@ -58,8 +100,10 @@ def read_wavelength_masks(files, tables=None):
                 continue
             # Check if the mask set has already been read
             if key in mask_keys:
-                log.warning(f'{key} mask set in {f} already parsed by previous file.  '
-                          'Concatenated masks may have repeated regions.')
+                log.warning(
+                    f'Mask defined by table {key} in {f} already parsed by previous file.  '
+                    'Concatenated masks may have repeated regions.'
+                )
             else:
                 mask_keys += [key]
 
@@ -70,17 +114,29 @@ def read_wavelength_masks(files, tables=None):
 
             # Generate the regions to mask    
             if 'range' in data[key].keys():
-                regions += data[key]['range']
+                # Allow range entries to be a single wavelength pair or a list of pairs
+                regions += (
+                    data[key]['range'] if isinstance(data[key]['range'][0], list)
+                    else [data[key]['range']]
+                )
             if 'center_width' in data[key].keys():
-                regions += [[c-w/2, c+w/2] for c,w in data[key]['center_width']]
+                # Allow center_width entries to be a single center+width pair or a list of pairs
+                _cw = (
+                    data[key]['center_width'] if isinstance(data[key]['center_width'][0], list)
+                    else [data[key]['center_width']]
+                )
+                regions += [[c-w/2, c+w/2] for c,w in _cw]
             if 'center' in data[key].keys():
                 if 'width' not in data[key].keys():
                     raise PypeItError('When using center keyword, must also provide width key.')
                 if isinstance(data[key]['width'], list):
                     raise PypeItError('When using center keyword, width must be a single value.')
-                regions += [
-                    [c-data[key]['width']/2, c+data[key]['width']/2] for c in data[key]['center']
-                ]
+                # Allow center to be single value or a list
+                _center = (
+                    data[key]['center'] if isinstance(data[key]['center'], list)
+                    else [data[key]['center']]
+                )
+                regions += [[c-data[key]['width']/2, c+data[key]['width']/2] for c in _center]
 
     # Convert to an array and set any None strings to None type
     regions = np.asarray(regions, dtype=object)
@@ -101,6 +157,51 @@ def read_wavelength_masks(files, tables=None):
     return regions[np.logical_not(both_none),:]
 
 
+def parse_wavelength_range(inp, tables=None):
+    r"""
+    Parse a mixed set of wavelength range strings and TOML files.
+
+    This function determines which, if any, of the elements of the input list
+    are files by checking if the string points to an existing file, and then
+    appropriately calls
+    :func:`~pypeit.core.wavemask.parse_wavelength_range_strings` or
+    :func:`~pypeit.core.wavemask.parse_wavelength_range_files`.
+
+    Parameters
+    ----------
+    inp : str, :class:`Path`, list
+        One or more items from which to parse wavelength ranges.  If a list,
+        each element of the list must be a string or :class:`Path` object.
+    tables : str, list
+        Passed directly to
+        :func:`~pypeit.core.wavemask.parse_wavelength_range_files` for file
+        objects.
+
+    Returns
+    -------
+    :class:`numpy.ndarray`
+        An array with size :math:`(N_{\rm mask},2)`, where :math:`N_{\rm mask}`
+        is the number of mask regions with a starting and ending wavelength.
+    """
+    # Convert to a list
+    _inp = np.asarray(inp if isinstance(inp, list) else [inp])
+    # Find which are files
+    is_file = np.array([
+        dataPaths.masks.get_file_path(f, return_none=True, verbose=False) is not None for f in _inp
+    ])
+    # Get the regions from the files
+    file_regions = (
+        parse_wavelength_range_files(_inp[is_file].tolist(), tables=tables) if np.any(is_file)
+        else None
+    )
+    # All of the entries are files
+    if np.all(is_file):
+        return file_regions
+    str_regions = parse_wavelength_range_strings(_inp[np.logical_not(is_file)].tolist())
+    # Return one or both lists
+    return str_regions if file_regions is None else np.append(file_regions, str_regions, axis=0)
+
+
 def build_wavelength_gpm(wave, regions):
     r"""
     Construct a good-pixel mask for a wavelength vector based on a set of
@@ -118,7 +219,7 @@ def build_wavelength_gpm(wave, regions):
         and ending regions can be ``None``, meaning that the region only has a
         upper or lower boundary; e.g., a mask range of ``[None, 3100.0]`` means
         mask all wavelengths less than 3100.  See
-        :func:`~pypeit.core.wavemask.read_wavelength_masks`.
+        :func:`~pypeit.core.wavemask.parse_wavelength_masks`.
 
     Returns
     -------
@@ -280,7 +381,7 @@ def telluric_mask_plot(threshold, wave, tspec_tran_cnv, mask_regions, ofile=None
         and ending regions can be ``None``, meaning that the region only has a
         upper or lower boundary; e.g., a mask range of ``[None, 3100.0]`` means
         mask all wavelengths less than 3100.  See
-        :func:`~pypeit.core.wavemask.read_wavelength_masks`.
+        :func:`~pypeit.core.wavemask.parse_wavelength_masks`.
     ofile : str, Path, optional
         Filename for the plot, if an output file is desired.  If None, the plot
         is shown to the screen.

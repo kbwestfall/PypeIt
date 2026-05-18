@@ -229,8 +229,10 @@ class PypeItDataPath:
         _f = f.with_suffix('') if f.suffix == '.gz' else f
         return _f.suffix.replace('.','').lower()
 
-    def get_file_path(self, data_file, force_update=False, to_pkg=None, return_format=False,
-                      return_none=False):
+    def get_file_path(
+            self, data_file, force_update=False, to_pkg=None, return_format=False,
+            return_none=False, verbose=True
+        ):
         """
         Return the path to a file.
 
@@ -250,35 +252,39 @@ class PypeItDataPath:
         path.get_file_path(file)`` instead of ``p = path / file`` to define the
         path to a data file.
 
-        Args:
-            data_file (:obj:`str`, `Path`_):
-                File name or path.  See above.
-            force_update (:obj:`bool`, optional):
-                If the file is in the cache, force
-                `astropy.utils.data.download_file`_ to update the cache by
-                downloading the latest version.
-            to_pkg (:obj:`str`, optional):
-                If the file is in the cache, this argument affects how the
-                cached file is connected to the package installation.  If
-                ``'symlink'``, a symbolic link is created in the package
-                directory tree that points to the cached file.  If ``'move'``,
-                the cached file is *moved* (not copied) from the cache into the
-                package directory tree.  If anything else (including None), no
-                operation is performed; no warning is issued if the value of
-                ``to_pkg`` is not one of these three options (None,
-                ``'symlink'``, or ``'move'``).  This argument is ignored if
-                ``data_file`` is a value path or a file within :attr:`path`.
-            return_format (:obj:`bool`, optional):
-                If True, the returned object is a :obj:`tuple` that includes the
-                file path and its format (e.g., ``'fits'``).  If False, only the
-                file path is returned.
-            return_none (:obj:`bool`, optional):
-                If True, return None if the file does not exist.  If False, an
-                error is raised if the file does not exist.
+        Parameters
+        ----------
+        data_file : :obj:`str`, `Path`_
+            File name or path.  See above.
+        force_update : :obj:`bool`, optional
+            If the file is in the cache, force
+            `astropy.utils.data.download_file`_ to update the cache by
+            downloading the latest version.
+        to_pkg : :obj:`str`, optional
+            If the file is in the cache, this argument affects how the cached
+            file is connected to the package installation.  If ``'symlink'``, a
+            symbolic link is created in the package directory tree that points
+            to the cached file.  If ``'move'``, the cached file is *moved* (not
+            copied) from the cache into the package directory tree.  If anything
+            else (including None), no operation is performed; no warning is
+            issued if the value of ``to_pkg`` is not one of these three options
+            (None, ``'symlink'``, or ``'move'``).  This argument is ignored if
+            ``data_file`` is a value path or a file within :attr:`path`.
+        return_format : :obj:`bool`, optional
+            If True, the returned object is a :obj:`tuple` that includes the
+            file path and its format (e.g., ``'fits'``).  If False, only the
+            file path is returned.
+        return_none : :obj:`bool`, optional
+            If True, return None if the file does not exist.  If False, an error
+            is raised if the file does not exist.
+        verbose : bool, optional
+            Emit messages.
 
-        Returns:
-            `Path`_, tuple: The file path and, if requested, the file format;
-            see ``return_format``.
+        Returns
+        -------
+        :class:`Path`, tuple
+            The file path and, if requested, the file format; see
+            ``return_format``.
         """
         # Make sure the file is a Path object
         _data_file = pathlib.Path(data_file).absolute()
@@ -300,10 +306,22 @@ class PypeItDataPath:
         # NOTE: fetch_remote_file will only return the name of the cached file
         # if the file exists in the cache and force_update is False.
         subdir = str(self.path.relative_to(self.data))
-        _cached_file = cache.fetch_remote_file(data_file, subdir, remote_host=self.host,
-                                               force_update=force_update, return_none=return_none)
+        if self.host is None and return_none:
+            # If the host is not defined, we know this path *must* exist in all
+            # installations.  This means, if we haven't gotten the file yet, the
+            # provided string is *not* a file.  So we let fetch_remote_file fail
+            # if return_none is False, or we set the cached file name to None so
+            # that it's caught by the next check.
+            _cached_file = None
+        else:
+            _cached_file = cache.fetch_remote_file(
+                data_file, subdir, remote_host=self.host, force_update=force_update,
+                return_none=return_none
+            )
+
         if _cached_file is None:
-            warnings.warn(f'File {data_file} not found in the cache.')
+            if verbose:
+                warnings.warn(f'File {data_file} not found in the cache.')
             return None
 
         # If we've made it this far, the file is being pulled from the cache.

@@ -1,5 +1,3 @@
 [blueward-of-lyman-alpha]
 
-range = [
-    ['None', 1215.67],
-]
+range = ['None', 1215.67]

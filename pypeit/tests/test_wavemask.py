@@ -16,51 +16,109 @@ from pypeit import dataPaths
 from pypeit import PypeItError
 
 
-def test_read():
+def test_parse_str():
+    # Parse a single string
+    inp = '4500:4550'
+    regions = wavemask.parse_wavelength_range_strings(inp)
+    assert regions.shape == (1,2), 'Bad shape'
+    assert regions[0][0] == 4500., 'Bad lower wavelength limit'
+    # Parse upper and lower limits
+    inp = ':4550'
+    regions = wavemask.parse_wavelength_range_strings(inp)
+    assert regions.shape == (1,2), 'Bad shape'
+    assert regions[0][0] is None, 'Bad lower wavelength limit'
+    inp = '4550:'
+    regions = wavemask.parse_wavelength_range_strings(inp)
+    assert regions.shape == (1,2), 'Bad shape'
+    assert regions[0][1] is None, 'Bad upper wavelength limit'
+
+    # Parse a list of strings
+    inp = [':3500', '4500:4550', '6000:']
+    regions = wavemask.parse_wavelength_range_strings(inp)
+    assert regions.shape == (3,2), 'Bad shape'
+    assert regions[0][0] is None, 'Bad lower wavelength limit'
+    assert regions[2][1] is None, 'Bad upper wavelength limit'
+
+    # Cannot parse something that isn't a string
+    inp = None
+    with pytest.raises(TypeError):
+        regions = wavemask.parse_wavelength_range_strings(inp)
+    inp = [':3500', None, '6000:']
+    with pytest.raises(TypeError):
+        regions = wavemask.parse_wavelength_range_strings(inp)
+
+    # Cannot parse with more than two numbers
+    inp = ':3500:3600'
+    with pytest.raises(ValueError):
+        regions = wavemask.parse_wavelength_range_strings(inp)
+
+
+def test_parse_files():
     files = ['hydrogen.toml', 'helium.toml', 'telluric.toml', 'atm.toml']
 
     # Test failure when file doesn't exist
     with pytest.raises(PypeItError):
-        regions = wavemask.read_wavelength_masks('does_not_exist.toml')
+        regions = wavemask.parse_wavelength_range_files('does_not_exist.toml')
 
     # Try reading all of them
-    regions = wavemask.read_wavelength_masks(files)
+    regions = wavemask.parse_wavelength_range_files(files)
     assert regions.shape[0] == 45, 'Total number of regions changed'
 
     # Limit to just the hydrogen lines, tests passing a Path object
-    regions = wavemask.read_wavelength_masks(files[0])
+    regions = wavemask.parse_wavelength_range_files(files[0])
     assert regions.shape[0] == 35, 'Total number of hydrogen regions changed'
 
     # Also test passing a string
-    regions = wavemask.read_wavelength_masks(str(files[0]))
+    regions = wavemask.parse_wavelength_range_files(str(files[0]))
     assert regions.shape[0] == 35, 'Total number of hydrogen regions changed'
 
     # Limit to the 'balmer' table
-    regions = wavemask.read_wavelength_masks(files, tables='balmer')
+    regions = wavemask.parse_wavelength_range_files(files, tables='balmer')
     assert regions.shape[0] == 7, 'Number of Balmer lines changed'
 
     # Limit to the 2 tables across multiple files
-    regions = wavemask.read_wavelength_masks(files, tables=['balmer', 'atm'])
+    regions = wavemask.parse_wavelength_range_files(files, tables=['balmer', 'atm'])
     assert regions.shape[0] == 8, 'Number of Balmer lines changed'
 
     # This will issue a warning
     files = dataPaths.tests.get_file_path('test_mask.toml')
-    regions = wavemask.read_wavelength_masks(files, tables='ignored_range')
+    regions = wavemask.parse_wavelength_range_files(files, tables='ignored_range')
     assert regions.shape[0] == 1, 'Should remove region with two Nones'
     assert regions[0,1] is None, 'Second element should be None'
 
     # Test failure when width is not provided
     with pytest.raises(PypeItError):
-        regions = wavemask.read_wavelength_masks(files, tables='no_width')
+        regions = wavemask.parse_wavelength_range_files(files, tables='no_width')
 
     # Test failure when width is a list
     with pytest.raises(PypeItError):
-        regions = wavemask.read_wavelength_masks(files, tables='width_list')
+        regions = wavemask.parse_wavelength_range_files(files, tables='width_list')
 
     # Test read using center_width keyword
-    regions = wavemask.read_wavelength_masks(files, tables='uses_center_width')
+    regions = wavemask.parse_wavelength_range_files(files, tables='uses_center_width')
     assert regions.shape[0] == 5, 'Incorrect number of regions'
     assert np.array_equal(regions[0], [4336.7, 4346.7]), 'Bad parsing of center_width entry'
+
+    # Test a read that uses all the keys
+    regions = wavemask.parse_wavelength_range_files(files, tables='uses_all_keys')
+    assert regions.shape[0] == 3, 'Incorrect number of regions'
+    assert regions[0][0] is None, 'Bad parsing of range entry'
+
+
+def test_parse():
+    # Test strings only
+    strings = [':3500', '4500:4550', '6000:']
+    regions = wavemask.parse_wavelength_range(strings)
+    assert regions.shape[0] == 3, 'Incorrect number of regions'
+    assert regions[0][0] is None, 'Bad parsing of range entry'
+    # Test files only
+    files = ['atm.toml', 'hydrogen.toml']
+    regions = wavemask.parse_wavelength_range(files)
+    assert regions.shape[0] == 36, 'Incorrect number of regions'
+    assert regions[0][0] is None, 'Bad parsing of range entry'
+    # Test both
+    regions = wavemask.parse_wavelength_range(files + strings)
+    assert regions.shape[0] == 39, 'Incorrect number of regions'
 
 
 def test_mask():
@@ -69,7 +127,7 @@ def test_mask():
         dataPaths.masks.get_file_path('hydrogen.toml'),
         dataPaths.masks.get_file_path('atm.toml'),
     ]
-    regions = wavemask.read_wavelength_masks(files)
+    regions = wavemask.parse_wavelength_range_files(files)
     wave = np.arange(2900.0, 6600.0, 2.0)
 
     gpm = wavemask.build_wavelength_gpm(wave, regions)
