@@ -190,6 +190,43 @@ The different keywords that can be used to define a wavelength range are:
   each region.  The list entries must all be floats (i.e., use of 'None' is not
   defined) with the entry providing the region center and width in that order.
 
+Even though each table in the example above exclusively uses one of the three
+ways to define the mask, a single table *can* use any or all of the approaches.
+For example, the following table is perfectly fine:
+
+.. code-block:: TOML
+
+    [my_mask]
+
+    range = [
+        ['None', 3000.0],
+    ]
+    center = 4687.2
+    width = 10.0
+    center_width = [
+        [4341.7, 10.0],
+        [4102.9, 10.0],
+        [3971.2,  5.0],
+        [3890.2,  5.0],
+        [3836.4,  5.0],
+    ]
+
+However, each table *cannot* have multiple entries with the same keyword because
+this breaks TOML syntax rules.  That is, the following is not allowed:
+
+.. code-block:: TOML
+
+    [my_mask]
+
+    center = 6564.6
+    width = 10.0
+
+    # KEYWORDS CANNOT APPEAR TWICE IN THE SAME TABLE
+
+    center = 4862.7
+    width = 20.0
+
+
 .. _pypeit_tellfit:
 
 pypeit_tellfit

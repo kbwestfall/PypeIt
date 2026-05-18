@@ -57,6 +57,11 @@ def test_read():
     with pytest.raises(PypeItError):
         regions = wavemask.read_wavelength_masks(files, tables='width_list')
 
+    # Test read using center_width keyword
+    regions = wavemask.read_wavelength_masks(files, tables='uses_center_width')
+    assert regions.shape[0] == 5, 'Incorrect number of regions'
+    assert np.array_equal(regions[0], [4336.7, 4346.7]), 'Bad parsing of center_width entry'
+
 
 def test_mask():
 

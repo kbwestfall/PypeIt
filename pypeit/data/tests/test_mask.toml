@@ -26,4 +26,13 @@ width = [
     10.0,
 ]
 
+[uses_center_width]
 
+# Test this here because none of the current masking toml files use it
+center_width = [
+    [4341.7, 10.0],
+    [4102.9, 10.0],
+    [3971.2,  5.0],
+    [3890.2,  5.0],
+    [3836.4,  5.0],
+]
