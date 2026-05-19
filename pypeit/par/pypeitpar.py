@@ -2577,18 +2577,6 @@ class TelluricPar(parset.ParSet):
                 'with ``bal_wv_min_max``, but this mask is good pixel masks.'
             ),
         ),
-        # TODO: Consolidate this with fit_wv_min_max
-        'spectral_region_mask': parset.set_parameter_definition(
-            dtype=[str, list],
-            default=['atm.toml', 'hydrogen.toml'],
-            descr=(
-                'A set of spectral regions to mask during the model (source + telluric) fit to '
-                'the observed spectrum.  This can be one or more spectral ranges defined '
-                'directly or strings pointing to TOML files defining the masked regions.  When '
-                'provided via TOML files, the files can be local or provided by the pypeit '
-                'package.  See :ref:`telluric_masks` for more information.'
-            ),
-        ),
     }
 
     def validate(self):
@@ -2728,30 +2716,42 @@ class SensFuncPar(parset.ParSet):
                 'they are wrong or absent)'
             ),
         ),
-        'mask_hydrogen_lines': parset.set_parameter_definition(
-            dtype=bool,
-            default=True,
+#        'mask_hydrogen_lines': parset.set_parameter_definition(
+#            dtype=bool,
+#            default=True,
+#            descr=(
+#                'Mask hydrogen Balmer, Paschen, Brackett, and Pfund recombination lines in the '
+#                'sensitivity function fit.  A region equal to ``hydrogen_mask_wid`` on either '
+#                'side of the line center is masked.'
+#            ),
+#        ),
+#        'hydrogen_mask_wid': parset.set_parameter_definition(
+#            dtype=float,
+#            default=10.0,
+#            descr=(
+#                'Mask width from line center for hydrogen recombination lines in Angstroms (total '
+#                'mask width is 2x this value).'
+#            ),
+#        ),
+#        'mask_helium_lines': parset.set_parameter_definition(
+#            dtype=bool,
+#            default=False,
+#            descr=(
+#                'Mask certain ``HeII`` recombination lines prominent in O-type stars in the '
+#                'sensitivity function fit.  A region equal to 0.5 * ``hydrogen_mask_wid`` on '
+#                'either side of the line center is masked.'
+#            ),
+#        ),
+        # TODO: Consolidate this with fit_wv_min_max
+        'spectral_region_mask': parset.set_parameter_definition(
+            dtype=[str, list],
+            default=['atm.toml', 'hydrogen.toml'],
             descr=(
-                'Mask hydrogen Balmer, Paschen, Brackett, and Pfund recombination lines in the '
-                'sensitivity function fit.  A region equal to ``hydrogen_mask_wid`` on either '
-                'side of the line center is masked.'
-            ),
-        ),
-        'hydrogen_mask_wid': parset.set_parameter_definition(
-            dtype=float,
-            default=10.0,
-            descr=(
-                'Mask width from line center for hydrogen recombination lines in Angstroms (total '
-                'mask width is 2x this value).'
-            ),
-        ),
-        'mask_helium_lines': parset.set_parameter_definition(
-            dtype=bool,
-            default=False,
-            descr=(
-                'Mask certain ``HeII`` recombination lines prominent in O-type stars in the '
-                'sensitivity function fit.  A region equal to 0.5 * ``hydrogen_mask_wid`` on '
-                'either side of the line center is masked.'
+                'A set of spectral regions to mask during the model (source + telluric) fit to '
+                'the observed spectrum.  This can be one or more spectral ranges defined '
+                'directly or strings pointing to TOML files defining the masked regions.  When '
+                'provided via TOML files, the files can be local or provided by the pypeit '
+                'package.  See :ref:`telluric_masks` for more information.'
             ),
         ),
     }

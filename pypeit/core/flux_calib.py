@@ -5,30 +5,26 @@
 
 """
 
-from IPython import embed
-
-import numpy as np
-
-from scipy import interpolate
-
-from matplotlib import pyplot as plt
-
 from astropy import units
 from astropy import constants
 from astropy import table
 from astropy.io import ascii
 from astropy import stats
+from IPython import embed
+from matplotlib import pyplot as plt
+import numpy as np
+from scipy import interpolate
 
+from pypeit import dataPaths
+from pypeit import bspline
+from pypeit import io
 from pypeit import log
 from pypeit import PypeItError
 from pypeit import utils
-from pypeit import bspline
-from pypeit import io
-from pypeit.wavemodel import conv2res
-from pypeit.core.wavecal import wvutils
 from pypeit.core import fitting
-from pypeit import dataPaths
-
+from pypeit.core import wavemask
+from pypeit.core.wavecal import wvutils
+#from pypeit.wavemodel import conv2res
 
 
 # TODO: Put these in the relevant functions
@@ -87,10 +83,20 @@ def find_standard(specobj_list):
     return mxix
 
 
-def sensfunc(wave, counts, counts_ivar, counts_mask, exptime, airmass, std_spec, atmext, ech_orders=None,
-             mask_hydrogen_lines=True, mask_helium_lines=False,
-             polyorder=4, hydrogen_mask_wid=10.0, nresln=20., resolution=3000.,
-             trans_thresh=0.9,polycorrect=True, polyfunc=False, debug=False):
+#    mask_hydrogen_lines=True, mask_helium_lines=False, hydrogen_mask_wid=10.0,
+#mask_hydrogen_lines (bool):
+#    If True, mask stellar hydrogen absorption lines before fitting sensitivity function. Default = True
+#mask_helium_lines (bool):
+#    If True, mask stellar helium absorption lines before fitting sensitivity function. Default = False
+#balm_mask_wid (float):
+#    Parameter describing the width of the mask for or stellar absorption lines (i.e. mask_hydrogen_lines=True). A region
+#    equal to balm_mask_wid*resln is masked where resln is the estimate for the spectral resolution in pixels
+#    per resolution element.
+
+def sensfunc(
+    wave, counts, counts_ivar, counts_mask, exptime, airmass, std_spec, atmext, ech_orders=None,
+    region_mask=None, polyorder=4, nresln=20., resolution=3000., trans_thresh=0.9,
+    polycorrect=True, polyfunc=False, debug=False):
     """
     Function to generate the sensitivity function. This function fits
     a bspline to the 2.5*log10(flux_std/flux_counts). The break
@@ -119,14 +125,8 @@ def sensfunc(wave, counts, counts_ivar, counts_mask, exptime, airmass, std_spec,
         ech_orders (int `numpy.ndarray`_):
             If passed the echelle orders will be added to the meta_table. ech_orders must be a numpy array of integers
             with the shape (norders,) giving the order numbers
-        mask_hydrogen_lines (bool):
-            If True, mask stellar hydrogen absorption lines before fitting sensitivity function. Default = True
-        mask_helium_lines (bool):
-            If True, mask stellar helium absorption lines before fitting sensitivity function. Default = False
-        balm_mask_wid (float):
-            Parameter describing the width of the mask for or stellar absorption lines (i.e. mask_hydrogen_lines=True). A region
-            equal to balm_mask_wid*resln is masked where resln is the estimate for the spectral resolution in pixels
-            per resolution element.
+        region_mask (list, optional):
+            A list of two-element lists, defining the set of wavelength ranges to mask
         polycorrect (bool):
             Whether you want to interpolate the sensfunc with polynomial in the stellar absortion line regions before
             fitting with the bspline
@@ -159,12 +159,15 @@ def sensfunc(wave, counts, counts_ivar, counts_mask, exptime, airmass, std_spec,
         Nlam_star, Nlam_star_ivar, gpm_star = counts2Nlam(wave_arr[:, iord], counts_arr[:, iord], ivar_arr[:, iord],
                                                              mask_arr[:,iord], exptime, airmass, atmext)
         # Fit the zeropoint
-        zeropoint_data[:, iord], zeropoint_data_gpm[:, iord], zeropoint_fit[:, iord], zeropoint_fit_gpm[:, iord], =\
-            fit_zeropoint(wave_arr[:,iord], Nlam_star, Nlam_star_ivar, gpm_star, std_spec,
-                          mask_hydrogen_lines=mask_hydrogen_lines, mask_helium_lines=mask_helium_lines,
-                          polyorder=polyorder,
-                          hydrogen_mask_wid=hydrogen_mask_wid, nresln=nresln, resolution=resolution, trans_thresh=trans_thresh,
-                          polycorrect=polycorrect, polyfunc=polyfunc, debug=debug)
+        (
+            zeropoint_data[:, iord], zeropoint_data_gpm[:, iord], zeropoint_fit[:, iord],
+            zeropoint_fit_gpm[:, iord]
+        ) = fit_zeropoint(
+            wave_arr[:,iord], Nlam_star, Nlam_star_ivar, gpm_star, std_spec,
+            region_mask=region_mask, polyorder=polyorder,
+            nresln=nresln, resolution=resolution, trans_thresh=trans_thresh,
+            polycorrect=polycorrect, polyfunc=polyfunc, debug=debug
+        )
         # Calculate the minimum and maximum wavelength for this order
         wave_min[iord] = wave_arr[wave_arr[:,iord] > 1.0, iord].min()
         wave_max[iord] = wave_arr[wave_arr[:,iord] > 1.0, iord].max()
@@ -338,8 +341,11 @@ def counts2Nlam(wave, counts, counts_ivar, counts_mask, exptime, airmass, atmext
 
 
 def fit_zeropoint(wave, Nlam_star, Nlam_ivar_star, gpm_star, std_spec,
-                  mask_hydrogen_lines=True, mask_helium_lines=False,
-                  polyorder=4, hydrogen_mask_wid=10.0,
+                  region_mask=None,
+#                  mask_hydrogen_lines=True, 
+#                  mask_helium_lines=False,
+#                  hydrogen_mask_wid=10.0,
+                  polyorder=4,
                   nresln=20., resolution=3000.,
                   trans_thresh=0.9, polycorrect=True, 
                   polyfunc=False, debug=False):
@@ -414,18 +420,17 @@ def fit_zeropoint(wave, Nlam_star, Nlam_ivar_star, gpm_star, std_spec,
             plt.show()
 
     # Get masks from observed star spectrum. True = Good pixels
-    mask_star, mask_recomb, mask_tell = get_mask(wave, Nlam_star, Nlam_ivar_star, gpm_star,
-                                              mask_hydrogen_lines=mask_hydrogen_lines,
-                                              mask_helium_lines=mask_helium_lines,
-                                              mask_telluric=True, hydrogen_mask_wid=hydrogen_mask_wid,
-                                              trans_thresh=trans_thresh)
+    gpm = get_mask(
+        wave, Nlam_star, Nlam_ivar_star, region_mask=region_mask, mask_telluric=True,
+        trans_thresh=trans_thresh
+    )
 
     # Get zeropoint
     zeropoint_data, zeropoint_data_gpm, zeropoint_fit, zeropoint_fit_gpm = standard_zeropoint(
-        wave, Nlam_star, Nlam_ivar_star, mask_star, flux_true, mask_recomb=mask_recomb,
-        mask_tell=mask_tell, maxiter=35, upper=3, lower=3, polyorder=polyorder,
-        balm_mask_wid=hydrogen_mask_wid, nresln=nresln, resolution=resolution,
-        polycorrect=polycorrect, polyfunc=polyfunc, debug=debug)
+        wave, Nlam_star, Nlam_ivar_star, gpm_star & gpm, flux_true, maxiter=35, upper=3, lower=3,
+        polyorder=polyorder, nresln=nresln, resolution=resolution, polycorrect=polycorrect,
+        polyfunc=polyfunc, debug=debug
+    )
 
     if debug:
         sensfactor = Nlam_to_Flam(wave, zeropoint_fit)
@@ -439,235 +444,277 @@ def fit_zeropoint(wave, Nlam_star, Nlam_ivar_star, gpm_star, std_spec,
     return zeropoint_data, zeropoint_data_gpm, zeropoint_fit, zeropoint_fit_gpm
 
 
-def get_mask(wave_star, flux_star, ivar_star, mask_star, 
-             mask_hydrogen_lines=True, mask_helium_lines=False,
-             mask_telluric=True, hydrogen_mask_wid=10., trans_thresh=0.9):
+def get_mask(wave, flux, ivar, region_mask=None, mask_telluric=True, trans_thresh=0.9):
     r"""
     Generate a set of masks from your observed standard spectrum.
     e.g. Balmer absorption
 
     Parameters
     ----------
-    wave_star: `numpy.ndarray`_
+    wave : :class:`numpy.ndarray`
         wavelength array of your spectrum
-    flux_star: `numpy.ndarray`_
+    flux : :class:`numpy.ndarray`
         flux array of your spectrum
-    ivar_star: `numpy.ndarray`_
+    ivar : :class:`numpy.ndarray`
         ivar array of your spectrum
-    mask_star: bool, optional
-        whether you need to mask Hydrogen recombination line region. 
-        If False, the returned msk_star are all good.
-    mask_hydrogen_lines: bool, optional
-        whether you need to mask hydrogen absorption lines, mask width set
-        by ``hydrogen_mask_wid``
-    mask_helium_lines: bool, optional
-        whether you need to mask hydrogen absorption lines, mask width set
-        to :math:`0.5 \times` ``hydrogen_mask_wid``
-    mask_telluric: bool, optional
-        whether you need to mask telluric region. If False, the returned
-        msk_tell are all good.
-    hydrogen_mask_wid: float, optional
-        in units of angstrom
-        Mask parameter for hydrogen recombination absorption lines. A region
-        equal to ``hydrogen_mask_wid`` on either side of the line center is
-        masked.
-    trans_thresh: float, optional
-        parameter for selecting telluric regions.
+    region_mask : :class:`numpy.ndarray`, optional
+        An array with a set of wavelength regions to mask.  Shape must be
+        :math:`(N_{\rm reg},2)`, :math:`N_{\rm reg}` is the number of spectral
+        regions to mask.  See
+        :func:`~pypeit.core.wavemask.build_wavelength_gpm`.  If None, no regions
+        are masked.
+    mask_telluric : bool, optional
+        Flag to mask telluric regions; see :func:`~pypeit.core.wavemask.telluric_mask`.
+    trans_thresh : float, optional
+        The ``threshold`` parameter passed to
+        :func:`~pypeit.core.wavemask.telluric_mask`; all other parameters use
+        the defaults.
 
     Returns
     -------
-    gpm_star: bool `numpy.ndarray`_
-        mask for good pixels (True = good pixel).
-    mask_recomb: bool `numpy.ndarray`_
-        mask for recombination lines in star spectrum.
-    mask_tell: bool `numpy.ndarray`_
-        mask for telluric regions.
+    :class:`numpy.ndarray`
+        Boolean array selecting the good pixels.
     """
+    gpm = (flux > 0) & (ivar > 0)
+    gpm[[0, -1]] = False
 
-    # Mask (True = good pixels)
-    # mask for recombination lines
-    mask_recomb = np.ones_like(flux_star).astype(bool)
-    # mask for telluric regions
-    mask_tell = np.ones_like(flux_star).astype(bool)
-
-    # masking bad entries
-    log.info(" Masking bad pixels")
-    gpm_star = mask_star.copy()
-    gpm_star[ivar_star <= 0.] = False
-    gpm_star[flux_star <= 0.] = False
-    # Mask edges
-    log.info(" Masking edges")
-    gpm_star[[0, -1]] = False
-    # Mask Atm. cutoff
-    log.info(" Masking Below the atmospheric cutoff")
-    atms_cutoff = wave_star <= 3000.0
-    gpm_star[atms_cutoff] = False
-
-    if mask_hydrogen_lines:
-        mask_recomb = mask_stellar_hydrogen(
-            wave_star, mask_width=hydrogen_mask_wid, mask_star=mask_recomb
-        )
-
-    if mask_helium_lines:
-        mask_recomb = mask_stellar_helium(
-            wave_star, mask_width=hydrogen_mask_wid / 2.0, mask_star=mask_recomb
-        )
+    if region_mask is not None:
+        gpm &= wavemask.build_wavelength_gpm(wave, region_mask)
 
     if mask_telluric:
-        ## Mask telluric region in the optical
-        tell_opt = np.any([((wave_star >= 6270.00) & (wave_star <= 6290.00)), # H2O
-                       ((wave_star >= 6850.00) & (wave_star <= 6960.00)), #O2 telluric band
-                       ((wave_star >= 7580.00) & (wave_star <= 7750.00)), #O2 telluric band
-                       ((wave_star >= 7160.00) & (wave_star <= 7340.00)), #H2O
-                       ((wave_star >= 8150.00) & (wave_star <= 8250.00))],axis=0) #H2O
-        mask_tell[tell_opt] = False
-        ## Mask near-infrared telluric region
-        if np.max(wave_star)>9100.0:
-            # ToDo: should use the specific atmosphere transmission after FBD get the grid.
-            ## Read atmosphere transmission
-            #
-            #if watervp <1.5:
-            #    skytrans_file = data.get_skisim_filepath('mktrans_zm_10_10.dat')
-            #elif (watervp>=1.5 and watervp<2.3):
-            #    skytrans_file = data.get_skisim_filepath('mktrans_zm_16_10.dat')
-            #elif (watervp>=2.3 and watervp<4.0):
-            #    skytrans_file = data.get_skisim_filepath('mktrans_zm_30_10.dat')
-            #else:
-            #    skytrans_file = data.get_skisim_filepath('mktrans_zm_50_10.dat')
-            #
-            skytrans_file = dataPaths.skisim.get_file_path('mktrans_zm_10_10.dat')
-            skytrans = ascii.read(skytrans_file)
-            wave_trans, trans = skytrans['wave'].data*10000.0, skytrans['trans'].data
-            trans_use = (wave_trans >= np.min(wave_star[gpm_star])-100.0) & (wave_trans <= np.max(wave_star[gpm_star])+100.0)
-            # Estimate the resolution of your spectra.
-            # I assumed 3 pixels per resolution. This gives an approximate right resolution at the middle point.
-            resolution = np.median(wave_star[gpm_star] / (wave_star[gpm_star] - np.roll(wave_star[gpm_star], 1))) / 3
-            trans_convolved, px_sigma, px_bin = conv2res(wave_trans[trans_use], trans[trans_use], resolution,
-                                                         central_wl='midpt', debug=False)
-            trans_final = interpolate.interp1d(wave_trans[trans_use], trans_convolved,
-                                               bounds_error=False,
-                                               fill_value='extrapolate')(wave_star)
-            tell_nir = (trans_final < trans_thresh) & (wave_star > 9100.0)
-            mask_tell[tell_nir] = False
-        else:
-            log.info('Your spectrum is bluer than 9100A, only optical telluric regions are masked.')
+        gpm &= wavemask.telluric_mask(trans_thresh, wave=wave)
 
-    return gpm_star, mask_recomb, mask_tell
+    return gpm
 
-
-def mask_stellar_hydrogen(wave_star, mask_width=10.0, mask_star=None):
-    """
-    Routine to mask stellar hydrogen recombination lines
-
-    .. note::
-        This function is pulled out separate from :func:`get_mask` because
-        it is used in the ``telluric`` module, independent of the remainder
-        of the functionality in :func:`get_mask`.
-
-    Args:
-        wave_star (`numpy.ndarray`_):
-            Wavelength of the stellar spectrum
-            shape (nspec,) or (nspec, nimgs)
-        mask_width (float, optional):
-            width to mask on either side of each line center in Angstroms
-        mask_star (`numpy.ndarray`_, optional):
-            Incoming star mask to which to add the hydrogen lines
-
-    Returns:
-        `numpy.ndarray`_:  boolean mask.  Same shape as ``wave_star``, True=Good
-        (i.e.  does not hit a stellar absorption line).
-    """
-
-    if mask_star is None:
-        mask_star = np.ones_like(wave_star, dtype=bool)
-    # Mask Balmer, Paschen, Brackett, and Pfund recombination lines
-    log.info("Masking hydrogen recombination lines")
-
-    # Mask Balmer
-    log.info(" Masking Balmer")
-    # Vacuum Wavelengths from NIST (TEB, 2023-02-10)
-    lines_balm = np.array([6564.6, 4862.7, 4341.7, 4102.9,
-                           3971.2, 3890.2, 3836.4])
-    # Extra lines previously in the list, source unknown:
-    #      [5407.0, 8224.8, 8239.2]
-    for line_balm in lines_balm:
-        ibalm = np.abs(wave_star - line_balm) <= mask_width
-        mask_star[ibalm] = False
-
-    # Mask Paschen
-    log.info(" Masking Paschen")
-    # Vacuum Wavelengths from NIST (TEB, 2023-02-10)
-    lines_pasc = np.array([18756.4, 12821.6, 10941.2, 10052.6,
-                           9548.8, 9232.2, 9017.8, 8865.3,
-                           8752.9, 8667.4, 8600.8, 8547.7,
-                           8504.8, 8469.6, 8440.3, 8203.6])
-    for line_pasc in lines_pasc:
-        ipasc = np.abs(wave_star - line_pasc) <= mask_width
-        mask_star[ipasc] = False
-
-    # Mask Brackett
-    log.info(" Masking Brackett")
-    # Vacuum Wavelengths from NIST (TEB, 2023-02-10)
-    lines_brac = np.array([40522.8, 26258.7, 21661.2, 19446.0,
-                           18179.2, 17366.9, 14584.0])
-    for line_brac in lines_brac:
-        ibrac = np.abs(wave_star - line_brac) <= mask_width
-        mask_star[ibrac] = False
-
-    # Mask Pfund
-    log.info(" Masking Pfund")
-    # Vacuum Wavelengths from NIST (TEB, 2023-02-10)
-    lines_pfund = np.array([74599.0, 46537.8, 37405.8, 32969.8, 22788.0])
-    for line_pfund in lines_pfund:
-        ipfund = np.abs(wave_star - line_pfund) <= mask_width
-        mask_star[ipfund] = False
-
-    return mask_star
-
-
-def mask_stellar_helium(wave_star, mask_width=5.0, mask_star=None):
-    """
-    Routine to mask stellar helium recombination lines
-
-    .. note::
-
-        This function is pulled out separate from :func:`get_mask` because
-        it is used in the ``telluric`` module, independent of the remainder
-        of the functionality in :func:`get_mask`.
-
-    Args:
-        wave_star (`numpy.ndarray`_):
-            Wavelength of the stellar spectrum
-            shape (nspec,) or (nspec, nimgs)
-        mask_width (float, optional):
-            width to mask on either side of each line center in Angstroms
-        mask_star (`numpy.ndarray`_, optional):
-            Incoming star mask to which to add the ionized helium lines
-
-    Returns:
-        `numpy.ndarray`_:  boolean mask.  Same shape as ``wave_star``, True=Good
-        (i.e.  does not hit a stellar absorption line).
-    """
-
-    if mask_star is None:
-        mask_star = np.ones_like(wave_star, dtype=bool)
-    # Mask Balmer, Paschen, Brackett, and Pfund recombination lines
-    log.info("Masking ionized helium recombination lines")
-
-    # Mask HeII
-    log.info(" Masking HeII lines")
-    # Prominent HeII lines not overlapped by hydrogen lines:
-    #    Vacuum wavelengths from Hubeney & Milhas (2015)
-    #    "Theory of Stellar Atmospheres", p. 191.
-    lines_heII = np.array([4687.2,   # 3 -> 4
-                            4542.9,   # 4 -> 9
-                            5413.1,   # 4 -> 7
-                            10126.6]) # 4 -> 5
-    for line_heII in lines_heII:
-        iheII = np.abs(wave_star - line_heII) < mask_width
-        mask_star[iheII] = False
-
-    return mask_star
+# def get_mask(wave_star, flux_star, ivar_star, mask_star, 
+#              mask_hydrogen_lines=True, mask_helium_lines=False,
+#              mask_telluric=True, hydrogen_mask_wid=10., trans_thresh=0.9):
+#     r"""
+#     Generate a set of masks from your observed standard spectrum.
+#     e.g. Balmer absorption
+# 
+#     Parameters
+#     ----------
+#     wave_star: `numpy.ndarray`_
+#         wavelength array of your spectrum
+#     flux_star: `numpy.ndarray`_
+#         flux array of your spectrum
+#     ivar_star: `numpy.ndarray`_
+#         ivar array of your spectrum
+#     mask_star: bool, optional
+#         whether you need to mask Hydrogen recombination line region. 
+#         If False, the returned msk_star are all good.
+#     mask_hydrogen_lines: bool, optional
+#         whether you need to mask hydrogen absorption lines, mask width set
+#         by ``hydrogen_mask_wid``
+#     mask_helium_lines: bool, optional
+#         whether you need to mask hydrogen absorption lines, mask width set
+#         to :math:`0.5 \times` ``hydrogen_mask_wid``
+#     mask_telluric: bool, optional
+#         whether you need to mask telluric region. If False, the returned
+#         msk_tell are all good.
+#     hydrogen_mask_wid: float, optional
+#         in units of angstrom
+#         Mask parameter for hydrogen recombination absorption lines. A region
+#         equal to ``hydrogen_mask_wid`` on either side of the line center is
+#         masked.
+#     trans_thresh: float, optional
+#         parameter for selecting telluric regions.
+# 
+#     Returns
+#     -------
+#     gpm_star: bool `numpy.ndarray`_
+#         mask for good pixels (True = good pixel).
+#     mask_recomb: bool `numpy.ndarray`_
+#         mask for recombination lines in star spectrum.
+#     mask_tell: bool `numpy.ndarray`_
+#         mask for telluric regions.
+#     """
+# 
+#     # Mask (True = good pixels)
+#     # mask for recombination lines
+#     mask_recomb = np.ones_like(flux_star).astype(bool)
+#     # mask for telluric regions
+#     mask_tell = np.ones_like(flux_star).astype(bool)
+# 
+#     # masking bad entries
+#     log.info(" Masking bad pixels")
+#     gpm_star = mask_star.copy()
+#     gpm_star[ivar_star <= 0.] = False
+#     gpm_star[flux_star <= 0.] = False
+#     # Mask edges
+#     log.info(" Masking edges")
+#     gpm_star[[0, -1]] = False
+#     # Mask Atm. cutoff
+#     log.info(" Masking Below the atmospheric cutoff")
+#     atms_cutoff = wave_star <= 3000.0
+#     gpm_star[atms_cutoff] = False
+# 
+#     if mask_hydrogen_lines:
+#         mask_recomb = mask_stellar_hydrogen(
+#             wave_star, mask_width=hydrogen_mask_wid, mask_star=mask_recomb
+#         )
+# 
+#     if mask_helium_lines:
+#         mask_recomb = mask_stellar_helium(
+#             wave_star, mask_width=hydrogen_mask_wid / 2.0, mask_star=mask_recomb
+#         )
+# 
+#     if mask_telluric:
+#         ## Mask telluric region in the optical
+#         tell_opt = np.any([((wave_star >= 6270.00) & (wave_star <= 6290.00)), # H2O
+#                        ((wave_star >= 6850.00) & (wave_star <= 6960.00)), #O2 telluric band
+#                        ((wave_star >= 7580.00) & (wave_star <= 7750.00)), #O2 telluric band
+#                        ((wave_star >= 7160.00) & (wave_star <= 7340.00)), #H2O
+#                        ((wave_star >= 8150.00) & (wave_star <= 8250.00))],axis=0) #H2O
+#         mask_tell[tell_opt] = False
+#         ## Mask near-infrared telluric region
+#         if np.max(wave_star)>9100.0:
+#             # ToDo: should use the specific atmosphere transmission after FBD get the grid.
+#             ## Read atmosphere transmission
+#             #
+#             #if watervp <1.5:
+#             #    skytrans_file = data.get_skisim_filepath('mktrans_zm_10_10.dat')
+#             #elif (watervp>=1.5 and watervp<2.3):
+#             #    skytrans_file = data.get_skisim_filepath('mktrans_zm_16_10.dat')
+#             #elif (watervp>=2.3 and watervp<4.0):
+#             #    skytrans_file = data.get_skisim_filepath('mktrans_zm_30_10.dat')
+#             #else:
+#             #    skytrans_file = data.get_skisim_filepath('mktrans_zm_50_10.dat')
+#             #
+#             skytrans_file = dataPaths.skisim.get_file_path('mktrans_zm_10_10.dat')
+#             skytrans = ascii.read(skytrans_file)
+#             wave_trans, trans = skytrans['wave'].data*10000.0, skytrans['trans'].data
+#             trans_use = (wave_trans >= np.min(wave_star[gpm_star])-100.0) & (wave_trans <= np.max(wave_star[gpm_star])+100.0)
+#             # Estimate the resolution of your spectra.
+#             # I assumed 3 pixels per resolution. This gives an approximate right resolution at the middle point.
+#             resolution = np.median(wave_star[gpm_star] / (wave_star[gpm_star] - np.roll(wave_star[gpm_star], 1))) / 3
+#             trans_convolved, px_sigma, px_bin = conv2res(wave_trans[trans_use], trans[trans_use], resolution,
+#                                                          central_wl='midpt', debug=False)
+#             trans_final = interpolate.interp1d(wave_trans[trans_use], trans_convolved,
+#                                                bounds_error=False,
+#                                                fill_value='extrapolate')(wave_star)
+#             tell_nir = (trans_final < trans_thresh) & (wave_star > 9100.0)
+#             mask_tell[tell_nir] = False
+#         else:
+#             log.info('Your spectrum is bluer than 9100A, only optical telluric regions are masked.')
+# 
+#     return gpm_star, mask_recomb, mask_tell
+# 
+# 
+# def mask_stellar_hydrogen(wave_star, mask_width=10.0, mask_star=None):
+#     """
+#     Routine to mask stellar hydrogen recombination lines
+# 
+#     .. note::
+#         This function is pulled out separate from :func:`get_mask` because
+#         it is used in the ``telluric`` module, independent of the remainder
+#         of the functionality in :func:`get_mask`.
+# 
+#     Args:
+#         wave_star (`numpy.ndarray`_):
+#             Wavelength of the stellar spectrum
+#             shape (nspec,) or (nspec, nimgs)
+#         mask_width (float, optional):
+#             width to mask on either side of each line center in Angstroms
+#         mask_star (`numpy.ndarray`_, optional):
+#             Incoming star mask to which to add the hydrogen lines
+# 
+#     Returns:
+#         `numpy.ndarray`_:  boolean mask.  Same shape as ``wave_star``, True=Good
+#         (i.e.  does not hit a stellar absorption line).
+#     """
+# 
+#     if mask_star is None:
+#         mask_star = np.ones_like(wave_star, dtype=bool)
+#     # Mask Balmer, Paschen, Brackett, and Pfund recombination lines
+#     log.info("Masking hydrogen recombination lines")
+# 
+#     # Mask Balmer
+#     log.info(" Masking Balmer")
+#     # Vacuum Wavelengths from NIST (TEB, 2023-02-10)
+#     lines_balm = np.array([6564.6, 4862.7, 4341.7, 4102.9,
+#                            3971.2, 3890.2, 3836.4])
+#     # Extra lines previously in the list, source unknown:
+#     #      [5407.0, 8224.8, 8239.2]
+#     for line_balm in lines_balm:
+#         ibalm = np.abs(wave_star - line_balm) <= mask_width
+#         mask_star[ibalm] = False
+# 
+#     # Mask Paschen
+#     log.info(" Masking Paschen")
+#     # Vacuum Wavelengths from NIST (TEB, 2023-02-10)
+#     lines_pasc = np.array([18756.4, 12821.6, 10941.2, 10052.6,
+#                            9548.8, 9232.2, 9017.8, 8865.3,
+#                            8752.9, 8667.4, 8600.8, 8547.7,
+#                            8504.8, 8469.6, 8440.3, 8203.6])
+#     for line_pasc in lines_pasc:
+#         ipasc = np.abs(wave_star - line_pasc) <= mask_width
+#         mask_star[ipasc] = False
+# 
+#     # Mask Brackett
+#     log.info(" Masking Brackett")
+#     # Vacuum Wavelengths from NIST (TEB, 2023-02-10)
+#     lines_brac = np.array([40522.8, 26258.7, 21661.2, 19446.0,
+#                            18179.2, 17366.9, 14584.0])
+#     for line_brac in lines_brac:
+#         ibrac = np.abs(wave_star - line_brac) <= mask_width
+#         mask_star[ibrac] = False
+# 
+#     # Mask Pfund
+#     log.info(" Masking Pfund")
+#     # Vacuum Wavelengths from NIST (TEB, 2023-02-10)
+#     lines_pfund = np.array([74599.0, 46537.8, 37405.8, 32969.8, 22788.0])
+#     for line_pfund in lines_pfund:
+#         ipfund = np.abs(wave_star - line_pfund) <= mask_width
+#         mask_star[ipfund] = False
+# 
+#     return mask_star
+# 
+# 
+# def mask_stellar_helium(wave_star, mask_width=5.0, mask_star=None):
+#     """
+#     Routine to mask stellar helium recombination lines
+# 
+#     .. note::
+# 
+#         This function is pulled out separate from :func:`get_mask` because
+#         it is used in the ``telluric`` module, independent of the remainder
+#         of the functionality in :func:`get_mask`.
+# 
+#     Args:
+#         wave_star (`numpy.ndarray`_):
+#             Wavelength of the stellar spectrum
+#             shape (nspec,) or (nspec, nimgs)
+#         mask_width (float, optional):
+#             width to mask on either side of each line center in Angstroms
+#         mask_star (`numpy.ndarray`_, optional):
+#             Incoming star mask to which to add the ionized helium lines
+# 
+#     Returns:
+#         `numpy.ndarray`_:  boolean mask.  Same shape as ``wave_star``, True=Good
+#         (i.e.  does not hit a stellar absorption line).
+#     """
+# 
+#     if mask_star is None:
+#         mask_star = np.ones_like(wave_star, dtype=bool)
+#     # Mask Balmer, Paschen, Brackett, and Pfund recombination lines
+#     log.info("Masking ionized helium recombination lines")
+# 
+#     # Mask HeII
+#     log.info(" Masking HeII lines")
+#     # Prominent HeII lines not overlapped by hydrogen lines:
+#     #    Vacuum wavelengths from Hubeney & Milhas (2015)
+#     #    "Theory of Stellar Atmospheres", p. 191.
+#     lines_heII = np.array([4687.2,   # 3 -> 4
+#                             4542.9,   # 4 -> 9
+#                             5413.1,   # 4 -> 7
+#                             10126.6]) # 4 -> 5
+#     for line_heII in lines_heII:
+#         iheII = np.abs(wave_star - line_heII) < mask_width
+#         mask_star[iheII] = False
+# 
+#     return mask_star
 
 
 # These are physical limits on the allowed values of the zeropoint in magnitudes
@@ -761,7 +808,7 @@ def Flam_to_Nlam(wave, zeropoint, zp_min=5.0, zp_max=30.0):
     return factor
 
 
-def compute_zeropoint(wave, N_lam, N_lam_gpm, flam_std_star, tellmodel=None):
+def compute_zeropoint(wave, N_lam, flam_std_star, tellmodel=None):
     """
     Routine to compute the zeropoint and zeropoint_gpm from the N_lam (counts/s/A) of a standard star
 
@@ -771,8 +818,6 @@ def compute_zeropoint(wave, N_lam, N_lam_gpm, flam_std_star, tellmodel=None):
         Wavelength array, float, shape (nspec,)
     N_lam: `numpy.ndarray`_
         N_lam spectrum of standard star, float, shape (nspec,)
-    N_lam_gpm: `numpy.ndarray`_
-        N_lam mask, good pixel mask, boolean, shape (nspec,)
     flam_std_star: `numpy.ndarray`_
         True standard star spectrum in units of PYPEIT_FLUX_SCALE erg/s/cm^2/Angstrom
     tellmodel: `numpy.ndarray`_
@@ -790,8 +835,10 @@ def compute_zeropoint(wave, N_lam, N_lam_gpm, flam_std_star, tellmodel=None):
     # Calculate the zeropoint
     S_nu_dimless = np.square(wave)*tellmodel*flam_std_star*utils.inverse(N_lam)
     zeropoint = -2.5*np.log10(S_nu_dimless + (S_nu_dimless <= 0.0)) + ZP_UNIT_CONST
-    zeropoint_gpm = N_lam_gpm & np.isfinite(zeropoint) & (N_lam > 0.0) & (S_nu_dimless > 0.0) & \
-                    np.isfinite(flam_std_star) & (wave > 1.0)
+    zeropoint_gpm = (
+        np.isfinite(zeropoint) & (N_lam > 0.0) & (S_nu_dimless > 0.0) & np.isfinite(flam_std_star)
+        & (wave > 1.0)
+    )
     return zeropoint, zeropoint_gpm
 
 #def throughput_from_sensfile(sensfile):
@@ -883,9 +930,11 @@ def zeropoint_qa_plot(wave, zeropoint_data, zeropoint_data_gpm, zeropoint_fit, z
 
 
 
-def standard_zeropoint(wave, Nlam, Nlam_ivar, Nlam_gpm, flam_true, mask_recomb=None, mask_tell=None,
-                       maxiter=35, upper=3.0, lower=3.0, func = 'polynomial', polyorder=5, balm_mask_wid=50.,
-                       nresln=20., resolution=2700., polycorrect=True, debug=False, polyfunc=False):
+def standard_zeropoint(
+    wave, Nlam, Nlam_ivar, Nlam_gpm, flam_true, maxiter=35, upper=3.0, lower=3.0,
+    func='polynomial', polyorder=5, nresln=20., resolution=2700., polycorrect=True, debug=False,
+    polyfunc=False
+):
     """
     Generate a sensitivity function based on observed flux and standard spectrum.
 
@@ -901,10 +950,6 @@ def standard_zeropoint(wave, Nlam, Nlam_ivar, Nlam_gpm, flam_true, mask_recomb=N
         mask for bad pixels. True is good.
     flam_true : `astropy.units.Quantity`_
         array with true standard star flux (erg/s/cm^2/A)
-    mask_recomb: `numpy.ndarray`_
-        mask for hydrogen (and/or helium II) recombination lines. True is good.
-    mask_tell: `numpy.ndarray`_
-        mask for telluric regions. True is good.
     maxiter : int
         maximum number of iterations for polynomial fit
     upper : int
@@ -913,9 +958,6 @@ def standard_zeropoint(wave, Nlam, Nlam_ivar, Nlam_gpm, flam_true, mask_recomb=N
         number of sigma for rejection in polynomial
     polyorder : int
         order of polynomial fit
-    balm_mask_wid: float
-        Mask parameter for Balmer absorption. A region equal to balm_mask_wid in
-        units of angstrom is masked.
     nresln: int, float
         number of resolution elements between breakpoints
     resolution: int, float
@@ -939,28 +981,24 @@ def standard_zeropoint(wave, Nlam, Nlam_ivar, Nlam_gpm, flam_true, mask_recomb=N
         log.warning("NaN are present in the inverse variance")
     ivar_bpm = np.logical_not(np.isfinite(Nlam_ivar) & (Nlam_ivar > 0))
 
-    # check masks
-    if mask_tell is None:
-        mask_tell = np.ones_like(wave,dtype=bool)
-    if mask_recomb is None:
-        mask_recomb = np.ones_like(wave, dtype=bool)
+    zeropoint_data, zeropoint_data_gpm = compute_zeropoint(wave, Nlam, flam_true)
 
-    zeropoint_data, zeropoint_data_gpm = compute_zeropoint(wave, Nlam, Nlam_gpm, flam_true)
-
-    zeropoint_fitmask = zeropoint_data_gpm & mask_tell & mask_recomb
+    zeropoint_fitmask = Nlam_gpm & zeropoint_data_gpm
     wave_min = wave[wave > 1.0].min()
     wave_max = wave[wave > 1.0].max()
 
-    pypeitFit = fitting.robust_fit(wave, zeropoint_data, polyorder, function=func,
-                                minx=wave_min, maxx=wave_max, in_gpm=zeropoint_fitmask,
-                                lower=lower, upper=upper, groupbadpix=False,
-                                grow=0, sticky=True, use_mad=True)
+    pypeitFit = fitting.robust_fit(
+        wave, zeropoint_data, polyorder, function=func, minx=wave_min, maxx=wave_max,
+        in_gpm=zeropoint_fitmask, lower=lower, upper=upper, groupbadpix=False, grow=0, sticky=True,
+        use_mad=True
+    )
 
     zeropoint_poly = pypeitFit.eval(wave)
     # Robustly characterize the standard deviation for the b-spline fitting.
-    zp_dev_mean, zp_dev_median, zp_std = stats.sigma_clipped_stats(zeropoint_data - zeropoint_poly, np.logical_not(zeropoint_fitmask),
-                                                                   cenfunc='median', stdfunc=utils.nan_mad_std,
-                                                                   maxiters=10, sigma_lower=lower, sigma_upper=upper)
+    zp_dev_mean, zp_dev_median, zp_std = stats.sigma_clipped_stats(
+        zeropoint_data - zeropoint_poly, np.logical_not(zeropoint_fitmask), cenfunc='median',
+        stdfunc=utils.nan_mad_std, maxiters=10, sigma_lower=lower, sigma_upper=upper
+    )
     zeropoint_ivar = np.ones_like(zeropoint_data)/zp_std**2
 
     ZP_MAX = 40.0
@@ -971,12 +1009,18 @@ def standard_zeropoint(wave, Nlam, Nlam_ivar, Nlam_gpm, flam_true, mask_recomb=N
     # Polynomial corrections on Hydrogen Recombination lines
     if (np.sum(zeropoint_fitmask) > 0.5 * len(zeropoint_fitmask)) & polycorrect:
         log.info("Replacing bspline fit with polyfit over Hydrogen Recombination line regions")
+        # TODO: Temporarily hard code this.  This all will be changed soon with
+        # the fluxing refactor.
+        balm_mask_wid = 10.
+
         ## Only correct Hydrogen Recombination lines with polyfit in the telluric free region
         balmer_clean = np.zeros_like(wave, dtype=bool)
         # Commented out the bluest recombination lines since they are weak for spectroscopic standard stars.
         #836.4, 3969.6, 3890.1, 4102.8, 4102.8, 4341.6, 4862.7,   \
-        lines_hydrogen = np.array([5407.0, 6564.6, 8224.8, 8239.2, 8203.6, 8440.3, 8469.6, 8504.8, 8547.7, 8600.8, \
-                                   8667.4, 8752.9, 8865.2, 9017.4, 9229.0, 10049.4, 10938.1, 12818.1, 21655.0])
+        lines_hydrogen = np.array([
+            5407.0, 6564.6, 8224.8, 8239.2, 8203.6, 8440.3, 8469.6, 8504.8, 8547.7, 8600.8, 8667.4,
+            8752.9, 8865.2, 9017.4, 9229.0, 10049.4, 10938.1, 12818.1, 21655.0
+        ])
         for line_hydrogen in lines_hydrogen:
             ihydrogen = np.abs(wave - line_hydrogen) <= balm_mask_wid
             balmer_clean[ihydrogen] = True

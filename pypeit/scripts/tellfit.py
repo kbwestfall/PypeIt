@@ -69,12 +69,13 @@ class TellFit(scriptbase.ScriptBase):
 
         from astropy.io import fits
 
+        from pypeit import inputfiles
         from pypeit import log
         from pypeit import PypeItError
         from pypeit import dataPaths
-        from pypeit.spectrographs.util import load_spectrograph
         from pypeit.core import telluric
-        from pypeit import inputfiles
+        from pypeit.core import wavemask
+        from pypeit.spectrographs.util import load_spectrograph
 
         # Initialize the log
         cls.init_log(args)
@@ -133,6 +134,8 @@ class TellFit(scriptbase.ScriptBase):
         log.info(f'Telluric-corrected spectrum will be saved to: {outfile}.')
         log.info(f'Best-fit telluric model will be saved to: {modelfile}.')
 
+        region_mask = wavemask.read_wavelength_masks(par['sensfunc']['spectral_region_mask'])
+
         # Run the telluric fitting procedure.
         if par['telluric']['objmodel']=='qso':
             # run telluric.qso_telluric to get the final results
@@ -180,9 +183,10 @@ class TellFit(scriptbase.ScriptBase):
                 only_orders=par['telluric']['only_orders'],
                 teltype=par['telluric']['teltype'],
                 tell_npca=par['telluric']['tell_npca'],
-                mask_hydrogen_lines=par['sensfunc']['mask_hydrogen_lines'],
-                mask_helium_lines=par['sensfunc']['mask_helium_lines'],
-                hydrogen_mask_wid=par['sensfunc']['hydrogen_mask_wid'],
+                region_mask=region_mask,
+#                mask_hydrogen_lines=par['sensfunc']['mask_hydrogen_lines'],
+#                mask_helium_lines=par['sensfunc']['mask_helium_lines'],
+#                hydrogen_mask_wid=par['sensfunc']['hydrogen_mask_wid'],
                 delta_coeff_bounds=par['telluric']['delta_coeff_bounds'],
                 minmax_coeff_bounds=par['telluric']['minmax_coeff_bounds'],
                 resln_frac_bounds=par['telluric']['resln_frac_bounds'],
@@ -209,6 +213,7 @@ class TellFit(scriptbase.ScriptBase):
                 teltype=par['telluric']['teltype'],
                 tell_npca=par['telluric']['tell_npca'],
                 fit_wv_min_max=par['telluric']['fit_wv_min_max'],
+                region_mask=region_mask,
                 mask_lyman_a=par['telluric']['mask_lyman_a'],
                 delta_coeff_bounds=par['telluric']['delta_coeff_bounds'],
                 minmax_coeff_bounds=par['telluric']['minmax_coeff_bounds'],
