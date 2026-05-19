@@ -30,6 +30,7 @@ from pypeit.core import telluric
 from pypeit.core import wavemask
 from pypeit.core.wavecal import wvutils
 from pypeit.onespec import OneSpec
+from pypeit.scripts import loader
 from pypeit.spectrographs.util import load_spectrograph
 
 # TODO Add the data model up here as a standard thing using DataContainer.
@@ -155,11 +156,13 @@ class SensFunc(datamodel.DataContainer):
         'throughput_splice',
         'steps',
         'splice_multi_det',
-        'meta_spec',
         'std_spec',
         'write_qa',
         'chk_version',
         'region_mask',
+        'exptime',
+        'airmass',
+        'ech_orders',
     ]
 
     _algorithm = None
@@ -276,29 +279,98 @@ class SensFunc(datamodel.DataContainer):
         self.steps = []
 
         # Are we splicing together multiple detectors?
-        self.splice_multi_det = True if self.par['multi_spec_det'] is not None else False
+        self.splice_multi_det = self.par['multi_spec_det'] is not None
 
-        # # Unpack standard star data
-        self.sobjs_std = self.unpack_std()
-        wave, counts, counts_ivar, counts_mask, log10_blaze_function, self.meta_spec, header \
-            = self.sobjs_std.unpack_object(ret_flam=False, log10blaze=True, extract_blaze=self.par['use_flat'],
-                                           extract_type=self.extr, remove_missing=True)
+        obs_std_spec, splice_multi_det = loader.load_standard(
+            spec1dfiles, extract=self.extr, fluxed=False, include_flat=self.par['use_flat'],
+            chk_version=chk_version
+        )
+        for spec in obs_std_spec:
+            blaze_function_smooth = utils.fast_running_median(spec.assoc['flat'], 5)
+            blaze_function_norm = blaze_function_smooth / np.max(blaze_function_smooth)
+            spec.add_assoc(
+                'flat', np.log10(np.clip(blaze_function_norm, 1e-3, None)), overwrite=True
+            )
+        # TODO: Need to deal with None values in spectra.  Do this in load_standard?
+        
+        obs_std_spec_twk = self.spectrograph.tweak_standard(
+            obs_std_spec, trim_std_pixs=self.par['trim_std_pixs'], mask=True
+        )
+        # Set masked value to 0.  TODO: Revisit this...
+        for spec in obs_std_spec_twk:
+            mask = spec.gpm.astype(float)
+            spec.wave *= mask
+            spec.flux *= mask
+            spec.ivar *= mask
+            if self.par['use_flat']:
+                # NOTE: This is log10 of the flat meaning this sets the flat to 1.
+                spec.assoc['flat'] *= mask
 
-        # Perform any instrument tweaks
-        wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk, log10_blaze_function_twk = \
-            self.spectrograph.tweak_standard(wave, counts, counts_ivar, counts_mask, self.meta_spec,
-                                             log10_blaze_function=log10_blaze_function,
-                                             trim_std_pixs=self.par['trim_std_pixs'],)
         # Reshape to 2d arrays
-        self.wave_cnts, self.counts, self.counts_ivar, self.counts_mask, self.log10_blaze_function, self.nspec_in, \
-            self.norderdet = utils.spec_atleast_2d(wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk,
-                                                   log10_blaze_function=log10_blaze_function_twk)
+        # TODO: Keep this the same for now.  Eventually propagate use of SpectrumList 
+        # throughout the rest of the class
+        (
+            self.wave_cnts, self.counts, self.counts_ivar, self.counts_mask,
+            self.log10_blaze_function, self.nspec_in, self.norderdet 
+        ) = utils.spec_atleast_2d(
+            [s.wave for s in obs_std_spec_twk],
+            [s.flux for s in obs_std_spec_twk],
+            [s.ivar for s in obs_std_spec_twk],
+            [s.gpm for s in obs_std_spec_twk],
+            log10_blaze_function=(
+                [s.assoc['flat'] for s in obs_std_spec_twk] if self.par['use_flat'] else None
+            )
+        )
+
+#        # # Unpack standard star data
+#        self.sobjs_std = self.unpack_std()
+#        wave, counts, counts_ivar, counts_mask, log10_blaze_function, self.meta_spec, header \
+#            = self.sobjs_std.unpack_object(ret_flam=False, log10blaze=True, extract_blaze=self.par['use_flat'],
+#                                           extract_type=self.extr, remove_missing=True)
+#
+#        # Perform any instrument tweaks
+#        wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk, log10_blaze_function_twk = \
+#            self.spectrograph.tweak_standard(wave, counts, counts_ivar, counts_mask, self.meta_spec,
+#                                             log10_blaze_function=log10_blaze_function,
+#                                             trim_std_pixs=self.par['trim_std_pixs'],)
+#
+#        # Reshape to 2d arrays
+#        self.wave_cnts, self.counts, self.counts_ivar, self.counts_mask, self.log10_blaze_function, self.nspec_in, \
+#            self.norderdet = utils.spec_atleast_2d(wave_twk, counts_twk, counts_ivar_twk, counts_mask_twk,
+#                                                   log10_blaze_function=log10_blaze_function_twk)
+
         if self.nspec_in == 0:
             raise PypeItError('1D spectra have 0 length!')
 
-        # If the user provided RA and DEC use those instead of what is in meta
-        star_ra = self.meta_spec['RA'] if self.par['star_ra'] is None else self.par['star_ra']
-        star_dec = self.meta_spec['DEC'] if self.par['star_dec'] is None else self.par['star_dec']
+        # Get some metadata
+        # - If the user provided RA and DEC use those instead of what is in meta
+        star_ra = (
+            obs_std_spec.get_global_meta('RA')
+            if self.par['star_ra'] is None else self.par['star_ra']
+        )
+        star_dec = (
+            obs_std_spec.get_global_meta('DEC')
+            if self.par['star_dec'] is None else self.par['star_dec']
+        )
+        # - exposure time
+        self.exptime = obs_std_spec.get_global_meta('EXPTIME')
+        if self.exptime is None:
+            log.warning(
+                'Exposure time for the standard star observation is not available!  This may '
+                'cause the code to fault.'
+            )
+        # - airmass
+        self.airmass = obs_std_spec.get_global_meta('AIRMASS')
+        if self.airmass is None:
+            log.warning(
+                'The airmass during the standard star observation is not available!  This may '
+                'cause the code to fault.'
+            )
+        # - Echelle orders
+        self.ech_orders = obs_std_spec.get_global_meta('ECH_ORDERS', verbose=False)
+
+#        star_ra = self.meta_spec['RA'] if self.par['star_ra'] is None else self.par['star_ra']
+#        star_dec = self.meta_spec['DEC'] if self.par['star_dec'] is None else self.par['star_dec']
         # Convert to decimal deg, as needed
         star_ra, star_dec = meta.convert_radec(star_ra, star_dec)
 
@@ -730,7 +802,8 @@ class SensFunc(datamodel.DataContainer):
 
         # Plot QA for zeropoint
         if 'Echelle' in self.spectrograph.pypeline:
-            order_or_det = self.meta_spec['ECH_ORDERS']
+#            order_or_det = self.meta_spec['ECH_ORDERS']
+            order_or_det = self.ech_orders
             order_or_det_str = 'order'
         else:
             order_or_det = np.arange(self.norderdet) + 1
@@ -1028,12 +1101,12 @@ class IRSensFunc(SensFunc):
             Best-fitting telluric model
         """
         self.telluric = telluric.sensfunc_telluric(self.wave_cnts, self.counts, self.counts_ivar,
-                                                   self.counts_mask, self.meta_spec['EXPTIME'],
-                                                   self.meta_spec['AIRMASS'], self.std_spec,
+                                                   self.counts_mask, self.exptime,
+                                                   self.airmass, self.std_spec,
                                                    self.par['IR']['telgridfile'],
                                                    log10_blaze_function=self.log10_blaze_function,
                                                    polyorder=self.par['polyorder'],
-                                                   ech_orders=self.meta_spec['ECH_ORDERS'],
+                                                   ech_orders=self.ech_orders,
                                                    only_orders=self.par['IR']['only_orders'],
                                                    resln_guess=self.par['IR']['resln_guess'],
                                                    resln_frac_bounds=self.par['IR']['resln_frac_bounds'],
@@ -1167,15 +1240,15 @@ class UVISSensFunc(SensFunc):
     _algorithm = 'UVIS'
     """Algorithm used for the sensitivity calculation."""
 
-    def __init__(self, spec1dfile, sensfile, par, par_fluxcalib=None, debug=False,
-                 write_qa=True, chk_version=True):
-        super().__init__(spec1dfile, sensfile, par, par_fluxcalib=par_fluxcalib, debug=debug,
-                         write_qa=write_qa, chk_version=chk_version)
-
-        # Add some cards to the meta spec. These should maybe just be added
-        # already in unpack object
-        self.meta_spec['LATITUDE'] = self.spectrograph.telescope['latitude']
-        self.meta_spec['LONGITUDE'] = self.spectrograph.telescope['longitude']
+#    def __init__(self, spec1dfile, sensfile, par, par_fluxcalib=None, debug=False,
+#                 write_qa=True, chk_version=True):
+#        super().__init__(spec1dfile, sensfile, par, par_fluxcalib=par_fluxcalib, debug=debug,
+#                         write_qa=write_qa, chk_version=chk_version)
+#
+#        # Add some cards to the meta spec. These should maybe just be added
+#        # already in unpack object
+#        self.meta_spec['LATITUDE'] = self.spectrograph.telescope['latitude']
+#        self.meta_spec['LONGITUDE'] = self.spectrograph.telescope['longitude']
 
     def compute_zeropoint(self):
         """
@@ -1183,10 +1256,10 @@ class UVISSensFunc(SensFunc):
         """
         atmext = self.spectrograph.get_atmospheric_extinction(self.par['UVIS']['extinct_file'])
         meta_table, out_table = flux_calib.sensfunc(self.wave_cnts, self.counts, self.counts_ivar,
-                                                    self.counts_mask, self.meta_spec['EXPTIME'],
-                                                    self.meta_spec['AIRMASS'], self.std_spec,
+                                                    self.counts_mask, self.exptime,
+                                                    self.airmass, self.std_spec,
                                                     atmext,
-                                                    self.meta_spec['ECH_ORDERS'],
+                                                    self.ech_orders,
                                                     polyorder=self.par['polyorder'],
                                                     region_mask=self.region_mask,
                                                     nresln=self.par['UVIS']['nresln'],
@@ -1217,8 +1290,8 @@ class UVISSensFunc(SensFunc):
         self.sens['SENS_ZEROPOINT_GPM'] = out_table['SENS_ZEROPOINT_GPM']
         self.sens['SENS_ZEROPOINT_FIT'] = out_table['SENS_ZEROPOINT_FIT']
         self.sens['SENS_ZEROPOINT_FIT_GPM'] = out_table['SENS_ZEROPOINT_FIT_GPM']
-        if self.meta_spec['ECH_ORDERS'] is not None:
-            self.sens['ECH_ORDERS'] = self.meta_spec['ECH_ORDERS']
+        if self.ech_orders is not None:
+            self.sens['ECH_ORDERS'] = self.ech_orders
         self.sens['POLYORDER_VEC'] = np.full(norder, self.par['polyorder'])
         self.sens['WAVE_MIN'] = out_table['WAVE_MIN']
         self.sens['WAVE_MAX'] = out_table['WAVE_MAX']

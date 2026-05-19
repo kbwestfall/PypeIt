@@ -552,7 +552,7 @@ class SpectrumList(FixedTypeList):
         """
         return self.__class__([s.copy() for s in self])
 
-    def get_global_meta(self, key):
+    def get_global_meta(self, key, verbose=True):
         """
         Return the metadata for a given keyword that is valid for all spectra in the list.
 
@@ -563,6 +563,8 @@ class SpectrumList(FixedTypeList):
         ----------
         key : str
             The metadata keyword to use.
+        verbose : bool, optional
+            Emit messages
 
         Returns
         -------
@@ -578,9 +580,10 @@ class SpectrumList(FixedTypeList):
         """
         value = np.unique([s.meta.get(key, None) for s in self])
         if None in value or len(value) > 1:
-            log.warning(
-                f'{key} not defined by spectrum metadata, or there are multiple spectra with '
-                f'different {key} values.'
-            )
+            if verbose:
+                log.warning(
+                    f'{key} not defined by spectrum metadata, or there are multiple spectra with '
+                    f'different {key} values.'
+                )
             return None
         return value[0]

@@ -280,8 +280,9 @@ def load_standard(
     for name, specfile in zip(_names, _specfiles):
 
         if specobjs.SpecObjs.is_specobjs_file(specfile):
-            sobj = specobjs.SpecObjs.from_fitsfile(specfile, chk_version=chk_version
-                ).get_std(name=name, multi_spec_det=multi_spec_det, split_mosaic=True)
+            sobj = specobjs.SpecObjs.from_fitsfile(
+                specfile, chk_version=chk_version
+            ).get_std(name=name, multi_spec_det=multi_spec_det, split_mosaic=True)
             if sobj is None:
                 raise PypeItError(f'Unable to read standard star spectrum from: {specfile}')
             dets += sobj.DET.tolist()
