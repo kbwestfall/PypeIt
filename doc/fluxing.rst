@@ -370,6 +370,158 @@ we use the Kurucz93 stellar SED.
 
 Alternatively, see `Adding a Standard Star`_.
 
+.. _sensfunc_masks:
+
+Defining spectral regions to mask
++++++++++++++++++++++++++++++++++
+
+You can define spectral regions to mask when determining the sensitivity
+function using the ``spectral_region_mask`` parameter.  The parameter can be set
+to one or more strings that directly define the spectral regions to mask, or you
+can provide one or more TOML files.
+
+.. important::
+
+    When defining the mask wavelengths, they must be provided in the *observed*
+    frame as measured in vacuum and have units of Angstroms.
+
+**To define the spectral regions directly**, you must provide the starting and
+ending wavelengths separated by a colon.  For example, setting
+
+.. code-block:: ini
+
+    [sensfunc]
+        spectral_region_mask = 3600.0:3700.5
+
+will mask the region between 3600.0 angstroms and 3700.5 angstroms.  To mask
+multiple regions, you can use
+
+.. code-block:: ini
+
+    [sensfunc]
+        spectral_region_mask = 3600.0:3700.5, 5400.0:5434.0
+
+and you can mask everything blueward of a given wavelength by omitting the first
+wavelength or everything redward of a given wavelength by omitting the second:
+
+.. code-block:: ini
+
+    [sensfunc]
+        spectral_region_mask = :3700.5, 9430.0:
+
+Note that the colon *must* be present in *every* entry.
+
+**To define the spectral regions using TOML files**, you must provide one or
+more file names.  The files can be local or be provided by PypeIt; the available
+masks are `here
+<https://github.com/pypeit/PypeIt/tree/release/pypeit/data/masks>`__.  You can
+provide multiple sets of masked regions using different TOML "tables" and define
+the regions using different sets of key combinations.  Note that if you provide
+multiple files, the table names must be unique across all files!
+
+Contents of an example file shown below (note that comments are included
+following TOML syntax) masks wavelengths blueward of the atmospheric cut-off and
+some HII and HeII lines, demonstrating all the ways that spectral regions can be
+defined:
+
+.. code-block:: TOML
+
+    # Wavelengths to be masked during a sensitivity function calculation
+
+    [atm]
+
+    range = ['None', 3000.0]
+
+    [heII]
+
+    width = 10.0
+    center = [
+        4687.2,     # 3 -> 4
+        4542.9,     # 4 -> 9
+        5413.1,     # 4 -> 7
+    ]
+
+    [balmer]
+
+    center_width = [
+        [6564.6, 10.0],
+        [4862.7, 20.0],
+        [4341.7, 10.0],
+        [4102.9, 10.0],
+        [3971.2,  5.0],
+        [3890.2,  5.0],
+        [3836.4,  5.0],
+    ]
+
+The different keywords that can be used to define a wavelength range are:
+
+- ``range``: This directly defines the wavelength range.  To mask everything
+  blueward or redward of a given wavelength, the first or last (respectively)
+  wavelength should be set to ``'None'``.  Any number of ranges can be defined;
+  in the example above, only one region is defined in the ``[atm]`` table.
+
+- ``center`` and ``width``: The combinations of these keywords allow you to
+  define multiple regions that should all have the same width but different
+  centers.  Only one width can be defined in this table; i.e., the value must be
+  a float, not a list.  You can then define any number of centers.
+
+- ``center_width``: Used when you want to define widths that are specific to
+  each region.  The list entries must all be floats (i.e., use of 'None' is not
+  allowed) with the entry providing the region center and width in that order.
+
+Even though each table in the example above exclusively uses one of the three
+ways to define the mask, a single table *can* use any or all of the approaches.
+For example, the following table is perfectly fine:
+
+.. code-block:: TOML
+
+    [my_mask]
+
+    range = [
+        ['None', 3000.0],
+    ]
+    center = 4687.2
+    width = 10.0
+    center_width = [
+        [4341.7, 10.0],
+        [4102.9, 10.0],
+        [3971.2,  5.0],
+        [3890.2,  5.0],
+        [3836.4,  5.0],
+    ]
+
+However, each table *cannot* have multiple entries with the same keyword because
+this breaks TOML syntax rules.  That is, the following is **not allowed**:
+
+.. code-block:: TOML
+
+    # THIS EXAMPLE WILL CAUSE THE CODE TO FAULT
+
+    [my_mask]
+
+    center = 6564.6
+    width = 10.0
+
+    # KEYWORDS CANNOT APPEAR TWICE IN THE SAME TABLE
+
+    center = 4862.7
+    width = 20.0
+
+By default, the calculation of the sensitivity function for most spectrographs
+masks wavelengths blueward of 3000 Angstroms as well as the wavelengths of the
+HII recombination lines.
+
+Finally, note that you can combine both methods.  That is, the following
+parameter block in your sens function will appropriately interpret the
+following:
+
+.. code-block:: ini
+
+    [sensfunc]
+        spectral_region_mask = 9430.0:, hydrogen.toml
+
+as masking all the regions in the ``hydrogen.toml`` file and wavelengths redward
+of 9430 Angstroms.
 
 .. _sensitivity_output_file:
 

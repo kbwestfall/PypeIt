@@ -170,7 +170,7 @@ class KECKHIRESSpectrograph(spectrograph.Spectrograph):
 
         # Sensitivity function parameters
         par['sensfunc']['trim_std_pixs'] = [4, 40]  # Trim each side of the standard star spectrum
-        par['sensfunc']['mask_hydrogen_lines'] = False
+        par['sensfunc']['spectral_region_mask'] = [':3000.0']
         par['sensfunc']['algorithm'] = 'IR'
         par['sensfunc']['polyorder'] = 7
         par['sensfunc']['extrap_blu'] = 0.01

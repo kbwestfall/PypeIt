@@ -3,7 +3,12 @@ Version 2.1.0dev
 ================
 
 Breaking Changes
----------------------
+----------------
+
+- The masking parameters, e.g. ``mask_hydrogen_lines``, used when calculating
+  the sensitivity function and fitting a telluric model have been replaced by a
+  more flexible masking approach.  See :ref:`here <sensfunc_masks>` and
+  :ref:`here <telluric_masks>`.
 
 Documentation Updates
 ---------------------

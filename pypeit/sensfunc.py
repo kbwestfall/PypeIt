@@ -4,36 +4,33 @@ Implements the objects used to construct sensitivity functions.
 .. include:: ../include/links.rst
 """
 import inspect
-
-from IPython import embed
 from pathlib import Path
-
-import numpy as np
-import scipy.interpolate
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 
 from astropy.io import fits
 from astropy import table
+from IPython import embed
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+import numpy as np
+import scipy.interpolate
 
 from pypeit import datamodel
-from pypeit import flatfield
+from pypeit import io
 from pypeit import log
 from pypeit import PypeItCodingError
 from pypeit import PypeItError
 from pypeit import specobjs
 from pypeit import specobj
 from pypeit import utils
-from pypeit import io
 from pypeit.core import coadd
 from pypeit.core import flux_calib
+from pypeit.core import meta
 from pypeit.core import standard
 from pypeit.core import telluric
+from pypeit.core import wavemask
 from pypeit.core.wavecal import wvutils
-from pypeit.core import meta
 from pypeit.onespec import OneSpec
 from pypeit.spectrographs.util import load_spectrograph
-
 
 # TODO Add the data model up here as a standard thing using DataContainer.
 
@@ -161,7 +158,8 @@ class SensFunc(datamodel.DataContainer):
         'meta_spec',
         'std_spec',
         'write_qa',
-        'chk_version'
+        'chk_version',
+        'region_mask',
     ]
 
     _algorithm = None
@@ -323,6 +321,9 @@ class SensFunc(datamodel.DataContainer):
                 'covered by the archival standard star. This may not be the right standard star '
                 'for your observations.'
             )
+
+        # Get the wavelength regions to mask
+        self.region_mask = wavemask.parse_wavelength_range(par['spectral_region_mask'])
 
     def unpack_std(self):
         """
@@ -1040,7 +1041,7 @@ class IRSensFunc(SensFunc):
                                                    sn_clip=self.par['IR']['sn_clip'],
                                                    teltype=self.par['IR']['teltype'],
                                                    tell_npca=self.par['IR']['tell_npca'],
-                                                   mask_hydrogen_lines=self.par['mask_hydrogen_lines'],
+                                                   region_mask=self.region_mask,
                                                    maxiter=self.par['IR']['maxiter'],
                                                    lower=self.par['IR']['lower'],
                                                    upper=self.par['IR']['upper'],
@@ -1101,7 +1102,6 @@ class IRSensFunc(SensFunc):
             N_lam = self.sens['SENS_COUNTS_PER_ANG'][i,s[i]:e[i]] / self.exptime
             self.sens['SENS_ZEROPOINT'][i,s[i]:e[i]], _ \
                     = flux_calib.compute_zeropoint(self.sens['SENS_WAVE'][i,s[i]:e[i]], N_lam,
-                                                   self.sens['SENS_ZEROPOINT_GPM'][i,s[i]:e[i]],
                                                    self.telluric.obj_dict_list[i]['flam_true'],
                                                    tellmodel=self.telluric.tellmodel_list[i])
             # TODO: func is always 'legendre' because that is what's set by
@@ -1188,9 +1188,7 @@ class UVISSensFunc(SensFunc):
                                                     atmext,
                                                     self.meta_spec['ECH_ORDERS'],
                                                     polyorder=self.par['polyorder'],
-                                                    hydrogen_mask_wid=self.par['hydrogen_mask_wid'],
-                                                    mask_hydrogen_lines=self.par['mask_hydrogen_lines'],
-                                                    mask_helium_lines=self.par['mask_helium_lines'],
+                                                    region_mask=self.region_mask,
                                                     nresln=self.par['UVIS']['nresln'],
                                                     resolution=self.par['UVIS']['resolution'],
                                                     trans_thresh=self.par['UVIS']['trans_thresh'],

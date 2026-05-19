@@ -188,7 +188,6 @@ class ParSet:
         # that the defaults in the parameters attribute adhere to their
         # definition, just as any user-defined value should.
         for key in self._data.keys():
-#            self.__setitem__(key, self.parameters[key]['default'])
             try:
                 self.__setitem__(key, self.parameters[key]['default'])
             except KeyError as e:
