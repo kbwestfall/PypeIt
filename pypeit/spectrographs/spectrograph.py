@@ -43,6 +43,7 @@ from pypeit import io
 from pypeit.core import parse
 from pypeit.core import procimg
 from pypeit.core import meta
+from pypeit.core import spectrum
 from pypeit.core import standard
 from pypeit.core.atmextinction import AtmosphericExtinction
 from pypeit.par import parset
@@ -2104,74 +2105,142 @@ class Spectrograph:
         """
         raise PypeItError(f'Method to match slits across detectors not defined for {self.name}')
 
-    def tweak_standard(self, wave_in, counts_in, counts_ivar_in, gpm_in, meta_table,
-                       trim_std_pixs=None, log10_blaze_function=None):
+    # TODO: In the old version, the wavelength range was ignored if
+    # trim_std_pixs was provided.  Revert to that same behavior?
+    def tweak_standard(self, spec, trim_std_pixs=None, wave_range=None, mask=True):
         """
-        This routine is for performing instrument/disperser specific tweaks to standard stars so that sensitivity
-        function fits will be well behaved. For example, masking second order light. For instruments that don't
-        require such tweaks it will just return the inputs, but for instruments that do this function is overloaded
-        with a method that performs the tweaks.
+        Tweak spectra of a standard star to improve flux-calibration robustness.
+
+        Relevant tweaks are instrument/disperser specific adjustments performed
+        to help ensure the sensitivity function will be well behaved, such as
+        masking second order light.
+
+        This base-class function either trims pixels at either end of the
+        provided spectrum/spectra (via ``trim_std_pixs``) or imposes a specified
+        wavelength range (via ``wave_range``).  These two options are *not*
+        mutually exclusive.  If both are provided, both are applied.  If neither
+        are provided, this returns a copy of the input spectrum/spectra.
+
+        This base function should be overloaded for each spectrograph requiring
+        more specific tweaks.
 
         Parameters
         ----------
-        wave_in: `numpy.ndarray`_
-            Input standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
-        counts_in: `numpy.ndarray`_
-            Input standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        counts_ivar_in: `numpy.ndarray`_
-            Input inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        gpm_in: `numpy.ndarray`_
-            Input good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
-        meta_table: :obj:`dict`
-            Table containing metadata that is slupred from the :class:`~pypeit.specobjs.SpecObjs`
-            object.  See :meth:`~pypeit.specobjs.SpecObjs.unpack_object` for the
-            contents of this table.
-        trim_std_pixs: :obj:`list` or :obj:`tuple`, optional
+        spec : :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
+            One or more spectra to modify.
+        trim_std_pixs: :obj:`list`, :obj:`tuple`, optional
             List or tuple of two integers specifying the number of pixels to
-            trim from the start and end of the standard star spectrum. If None,
-            no trimming is applied. Default=None.
-        log10_blaze_function: `numpy.ndarray`_ or None
-            Input blaze function to be tweaked, optional. Default=None.
+            trim from the start and end of the standard star spectra/spectrum.
+            If None, no trimming is applied.
+        wave_range : :obj:`list`, :obj:`tuple`, optional
+            List or tuple with the starting and ending wavelength for a spectral
+            range to *include* in the spectrum.  Pixels outside this wavelength
+            range are masked or removed.  If None, no trimming is applied.
+        mask : :obj:`bool`, optional
+            If True, simply mask the pixels in the relevant pixels/wavelengths.
+            If False, the pixels are removed from the relevant data arrays.
 
         Returns
         -------
-        wave_out: `numpy.ndarray`_
-            Output standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
-        counts_out: `numpy.ndarray`_
-            Output standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        counts_ivar_out: `numpy.ndarray`_
-            Output inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        gpm_out: `numpy.ndarray`_
-            Output good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
-        log10_blaze_function_out: `numpy.ndarray`_ or None
-            Output blaze function after being tweaked.
+        :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
+            Modified spectrum/spectra.  Matches the input type.
         """
-        wave_out = wave_in.copy()
-        counts_out = counts_in.copy()
-        counts_ivar_out = counts_ivar_in.copy()
-        gpm_out = gpm_in.copy()
-        log10_blaze_function_out = log10_blaze_function.copy() if log10_blaze_function is not None else None
+        # Copy the input spectra.  Convert all input to SpectrumList, just so
+        # the remainder of the function doesn't constantly have to check the
+        # type.
+        single_spec = isinstance(spec, spectrum.Spectrum)
+        if not single_spec and not isinstance(spec, spectrum.SpectrumList):
+            raise TypeError('Must provide a Spectrum or SpectrumList object.')
+        _spec = spectrum.SpectrumList([spec.copy()]) if single_spec else spec.copy()
 
+        # Trim pixels
         if trim_std_pixs is not None:
-            # make sure that the trim_pixs is a list of 2 integers
+            # Check the input
             if not isinstance(trim_std_pixs, (list, tuple)) or len(trim_std_pixs) != 2:
-                raise PypeItError("trim_std_pixs must be a list or tuple of two integers.")
-            # Mask the first and last trim_std_pixs pixels
-            s = int(trim_std_pixs[0])
-            e = int(trim_std_pixs[1])
-            trim_gpm = np.zeros_like(wave_out, dtype=bool)
-            trim_gpm[s:-e] = True
+                raise PypeItError('trim_std_pixs must be a list or tuple of two integers.')
+            # Trim each spectrum
+            for s in _spec:
+                s.trim_edges_pix(trim_std_pixs[0], trim_std_pixs[1], mask=mask)
 
-            # Set the wave, counts, gpm, inverse variance and log10 blaze to zero in the masked pixels
-            log.info('Trimming standard star spectrum by {:d} pixels at the start and {:d} pixels at the end.'.format(s, e))
-            wave_out = wave_out* trim_gpm
-            counts_out = counts_out * trim_gpm
-            counts_ivar_out = counts_ivar_out * trim_gpm
-            gpm_out = gpm_out & trim_gpm
-            if log10_blaze_function_out is not None:
-                log10_blaze_function_out = log10_blaze_function_out * trim_gpm
+        # Impose a wavelength range
+        if wave_range is not None:
+            # Check the input
+            if not isinstance(wave_range, (list, tuple)) or len(wave_range) != 2:
+                raise PypeItError('wave_range must be a list or tuple of two wavelengths.')
+            # Trim each spectrum
+            for s in _spec:
+                s.trim_edges_wave(wave_range[0], wave_range[1], mask=mask)
 
-        return wave_out, counts_out, counts_ivar_out, gpm_out, log10_blaze_function_out
+        return _spec[0] if single_spec else _spec
+
+#    def tweak_standard(self, wave_in, counts_in, counts_ivar_in, gpm_in, meta_table,
+#                       trim_std_pixs=None, log10_blaze_function=None):
+#        """
+#        This routine is for performing instrument/disperser specific tweaks to standard stars so that sensitivity
+#        function fits will be well behaved. For example, masking second order light. For instruments that don't
+#        require such tweaks it will just return the inputs, but for instruments that do this function is overloaded
+#        with a method that performs the tweaks.
+#
+#        Parameters
+#        ----------
+#        wave_in: `numpy.ndarray`_
+#            Input standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
+#        counts_in: `numpy.ndarray`_
+#            Input standard star counts (:obj:`float`, ``shape = (nspec,)``)
+#        counts_ivar_in: `numpy.ndarray`_
+#            Input inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
+#        gpm_in: `numpy.ndarray`_
+#            Input good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
+#        meta_table: :obj:`dict`
+#            Table containing metadata that is slupred from the :class:`~pypeit.specobjs.SpecObjs`
+#            object.  See :meth:`~pypeit.specobjs.SpecObjs.unpack_object` for the
+#            contents of this table.
+#        trim_std_pixs: :obj:`list` or :obj:`tuple`, optional
+#            List or tuple of two integers specifying the number of pixels to
+#            trim from the start and end of the standard star spectrum. If None,
+#            no trimming is applied. Default=None.
+#        log10_blaze_function: `numpy.ndarray`_ or None
+#            Input blaze function to be tweaked, optional. Default=None.
+#
+#        Returns
+#        -------
+#        wave_out: `numpy.ndarray`_
+#            Output standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
+#        counts_out: `numpy.ndarray`_
+#            Output standard star counts (:obj:`float`, ``shape = (nspec,)``)
+#        counts_ivar_out: `numpy.ndarray`_
+#            Output inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
+#        gpm_out: `numpy.ndarray`_
+#            Output good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
+#        log10_blaze_function_out: `numpy.ndarray`_ or None
+#            Output blaze function after being tweaked.
+#        """
+#        wave_out = wave_in.copy()
+#        counts_out = counts_in.copy()
+#        counts_ivar_out = counts_ivar_in.copy()
+#        gpm_out = gpm_in.copy()
+#        log10_blaze_function_out = log10_blaze_function.copy() if log10_blaze_function is not None else None
+#
+#        if trim_std_pixs is not None:
+#            # make sure that the trim_pixs is a list of 2 integers
+#            if not isinstance(trim_std_pixs, (list, tuple)) or len(trim_std_pixs) != 2:
+#                raise PypeItError("trim_std_pixs must be a list or tuple of two integers.")
+#            # Mask the first and last trim_std_pixs pixels
+#            s = int(trim_std_pixs[0])
+#            e = int(trim_std_pixs[1])
+#            trim_gpm = np.zeros_like(wave_out, dtype=bool)
+#            trim_gpm[s:-e] = True
+#
+#            # Set the wave, counts, gpm, inverse variance and log10 blaze to zero in the masked pixels
+#            log.info('Trimming standard star spectrum by {:d} pixels at the start and {:d} pixels at the end.'.format(s, e))
+#            wave_out = wave_out* trim_gpm
+#            counts_out = counts_out * trim_gpm
+#            counts_ivar_out = counts_ivar_out * trim_gpm
+#            gpm_out = gpm_out & trim_gpm
+#            if log10_blaze_function_out is not None:
+#                log10_blaze_function_out = log10_blaze_function_out * trim_gpm
+#
+#        return wave_out, counts_out, counts_ivar_out, gpm_out, log10_blaze_function_out
 
     def calc_pattern_freq(self, frame, rawdatasec_img, oscansec_img, hdu):
         """

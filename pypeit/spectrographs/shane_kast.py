@@ -17,6 +17,7 @@ from pypeit import log
 from pypeit import PypeItError
 from pypeit import telescopes
 from pypeit.core import framematch
+from pypeit.core import spectrum
 from pypeit.spectrographs import spectrograph
 from pypeit.images import detector_container
 from pypeit.par import parset
@@ -579,75 +580,51 @@ class ShaneKastRedSpectrograph(ShaneKastSpectrograph):
         # Return
         return par
 
-    def tweak_standard(self, wave_in, counts_in, counts_ivar_in, gpm_in, meta_table,
-                        trim_std_pixs=None,log10_blaze_function=None):
+    def tweak_standard(self, spec, trim_std_pixs=None, wave_range=None, mask=True):
         """
+        Tweak spectra of a standard star to improve flux-calibration robustness.
 
-        This routine is for performing instrument/disperser specific tweaks to standard stars so that sensitivity
-        function fits will be well behaved. For example, masking second order light. For instruments that don't
-        require such tweaks it will just return the inputs, but for isntruments that do this function is overloaded
-        with a method that performs the tweaks.
+        .. warning::
 
-        NOTE: if the `trim_std_pixs` parameter is not None, then the standard star spectrum will be only trimmed
-        by the specified number of pixels at the start and end of the spectrum, and no other tweaks will be
-        performed.
+            The base class implementation of this function
+            (:func:`~pypeit.spectrographs.spectrograph.Spectrograph.tweak_standard`)
+            will apply *both* ``trim_std_pixs`` and ``wave_range``.  However, in
+            this subclass function, ``wave_range`` (and automatic determination
+            thereof) is ignored if ``trim_std_pixs`` is provided.
 
         Parameters
         ----------
-        wave_in: `numpy.ndarray`_
-            Input standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
-        counts_in: `numpy.ndarray`_
-            Input standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        counts_ivar_in: `numpy.ndarray`_
-            Input inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        gpm_in: `numpy.ndarray`_
-            Input good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
-        meta_table: :obj:`dict`
-            Table containing meta data that is slupred from the :class:`~pypeit.specobjs.SpecObjs`
-            object.  See :meth:`~pypeit.specobjs.SpecObjs.unpack_object` for the
-            contents of this table.
-        trim_std_pixs: :obj:`list` or :obj:`tuple`, optional
+        spec : :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
+            One or more spectra to modify.
+        trim_std_pixs: :obj:`list`, :obj:`tuple`, optional
             List or tuple of two integers specifying the number of pixels to
-            trim from the start and end of the standard star spectrum. If None,
-            no trimming is applied. Default=None.
-        log10_blaze_function: `numpy.ndarray`_ or None
-            Input blaze function to be tweaked, optional. Default=None.
+            trim from the start and end of the standard star spectra/spectrum.
+            If None, no trimming is applied.
+        wave_range : :obj:`list`, :obj:`tuple`, optional
+            List or tuple with the starting and ending wavelength for a spectral
+            range to *include* in the spectrum.  Pixels outside this wavelength
+            range are masked or removed.  If None, no trimming is applied.
+        mask : :obj:`bool`, optional
+            If True, simply mask the pixels in the relevant pixels/wavelengths.
+            If False, the pixels are removed from the relevant data arrays.
 
         Returns
         -------
-        wave_out: `numpy.ndarray`_
-            Output standard star wavelengths (:obj:`float`, ``shape = (nspec,)``)
-        counts_out: `numpy.ndarray`_
-            Output standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        counts_ivar_out: `numpy.ndarray`_
-            Output inverse variance of standard star counts (:obj:`float`, ``shape = (nspec,)``)
-        gpm_out: `numpy.ndarray`_
-            Output good pixel mask for standard (:obj:`bool`, ``shape = (nspec,)``)
-        log10_blaze_function_out: `numpy.ndarray`_ or None
-            Output blaze function after being tweaked.
+        :class:`~pypeit.core.spectrum.Spectrum`, :class:`~pypeit.core.spectrum.SpectrumList`
+            Modified spectrum/spectra.  Matches the input type.
         """
-
         if trim_std_pixs is not None:
-            return super().tweak_standard(wave_in, counts_in, counts_ivar_in, gpm_in, meta_table,
-                                          trim_std_pixs=trim_std_pixs, log10_blaze_function=log10_blaze_function)
+            return super().tweak_standard(spec, trim_std_pixs=trim_std_pixs, mask=mask)
 
-        # Could check the wavelenghts here to do something more robust to header/meta data issues
-        if '600/7500' in meta_table['DISPNAME']:
-            # The blue edge and red edge of the detector have no throughput so mask by hand.
-            edge_region= (wave_in < 5400.0) | (wave_in > 8785.0)
-            gpm_out = gpm_in & np.logical_not(edge_region)
-            # TODO Is this correct?
-        else:
-            gpm_out = gpm_in
+        if wave_range is None:
+            # Try to use the disperser name to set the relevant wavelength range
+            dispname = spec.get_global_meta('DISPNAME')
+            if dispname == '600/7500':
+                wave_range = (5400.0, 8785.0)
+            # TODO: Emit a warning if the dispname is None?
 
-        if log10_blaze_function is not None:
-            log10_blaze_function_out = log10_blaze_function * gpm_out
-        else:
-            log10_blaze_function_out = None
-        return wave_in, counts_in, counts_ivar_in, gpm_out, log10_blaze_function_out
-
-
-
+        # Use the base class method
+        return super().tweak_standard(spec, wave_range=wave_range, mask=mask)
 
 
 class ShaneKastRedRetSpectrograph(ShaneKastSpectrograph):
