@@ -2751,7 +2751,7 @@ class SensFuncPar(parset.ParSet):
                 'the observed spectrum.  This can be one or more spectral ranges defined '
                 'directly or strings pointing to TOML files defining the masked regions.  When '
                 'provided via TOML files, the files can be local or provided by the pypeit '
-                'package.  See :ref:`telluric_masks` for more information.'
+                'package.  See :ref:`sensfunc_masks` for more information.'
             ),
         ),
     }
