@@ -35,7 +35,8 @@ width = [
 
 
 #######################################
-# Test this here because none of the current masking toml files use it
+# Test use of center_width here because none of the current masking toml files
+# use it
 
 [uses_center_width]
 

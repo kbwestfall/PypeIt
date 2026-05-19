@@ -54,7 +54,7 @@ def test_parse_str():
 
 
 def test_parse_files():
-    files = ['hydrogen.toml', 'helium.toml', 'telluric.toml', 'atm.toml']
+    files = ['hydrogen.toml', 'helium.toml', 'telluric.toml']
 
     # Test failure when file doesn't exist
     with pytest.raises(PypeItError):
@@ -62,7 +62,7 @@ def test_parse_files():
 
     # Try reading all of them
     regions = wavemask.parse_wavelength_range_files(files)
-    assert regions.shape[0] == 45, 'Total number of regions changed'
+    assert regions.shape[0] == 44, 'Total number of regions changed'
 
     # Limit to just the hydrogen lines, tests passing a Path object
     regions = wavemask.parse_wavelength_range_files(files[0])
@@ -77,8 +77,8 @@ def test_parse_files():
     assert regions.shape[0] == 7, 'Number of Balmer lines changed'
 
     # Limit to the 2 tables across multiple files
-    regions = wavemask.parse_wavelength_range_files(files, tables=['balmer', 'atm'])
-    assert regions.shape[0] == 8, 'Number of Balmer lines changed'
+    regions = wavemask.parse_wavelength_range_files(files, tables=['balmer', 'heII'])
+    assert regions.shape[0] == 11, 'Number of Balmer lines changed'
 
     # This will issue a warning
     files = dataPaths.tests.get_file_path('test_mask.toml')
@@ -112,22 +112,18 @@ def test_parse():
     assert regions.shape[0] == 3, 'Incorrect number of regions'
     assert regions[0][0] is None, 'Bad parsing of range entry'
     # Test files only
-    files = ['atm.toml', 'hydrogen.toml']
+    files = ['helium.toml', 'hydrogen.toml']
     regions = wavemask.parse_wavelength_range(files)
-    assert regions.shape[0] == 36, 'Incorrect number of regions'
-    assert regions[0][0] is None, 'Bad parsing of range entry'
+    assert regions.shape[0] == 39, 'Incorrect number of regions'
     # Test both
     regions = wavemask.parse_wavelength_range(files + strings)
-    assert regions.shape[0] == 39, 'Incorrect number of regions'
+    assert regions.shape[0] == 42, 'Incorrect number of regions'
+    assert regions[-1][1] is None, 'Bad parsing of range entry'
 
 
 def test_mask():
 
-    files = [
-        dataPaths.masks.get_file_path('hydrogen.toml'),
-        dataPaths.masks.get_file_path('atm.toml'),
-    ]
-    regions = wavemask.parse_wavelength_range_files(files)
+    regions = wavemask.parse_wavelength_range([':3000.0', 'hydrogen.toml', 'helium.toml'])
     wave = np.arange(2900.0, 6600.0, 2.0)
 
     gpm = wavemask.build_wavelength_gpm(wave, regions)

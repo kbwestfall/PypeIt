@@ -300,7 +300,7 @@ class SensFunc(datamodel.DataContainer):
             )
 
         # Get the wavelength regions to mask
-        self.region_mask = wavemask.read_wavelength_masks(par['spectral_region_mask'])
+        self.region_mask = wavemask.parse_wavelength_range(par['spectral_region_mask'])
 
     def unpack_std(self):
         """

@@ -134,7 +134,7 @@ class TellFit(scriptbase.ScriptBase):
         log.info(f'Telluric-corrected spectrum will be saved to: {outfile}.')
         log.info(f'Best-fit telluric model will be saved to: {modelfile}.')
 
-        region_mask = wavemask.read_wavelength_masks(par['sensfunc']['spectral_region_mask'])
+        region_mask = wavemask.parse_wavelength_range(par['sensfunc']['spectral_region_mask'])
 
         # Run the telluric fitting procedure.
         if par['telluric']['objmodel']=='qso':
