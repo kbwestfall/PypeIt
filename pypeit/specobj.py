@@ -17,6 +17,7 @@ from pypeit import onespec
 from pypeit import PypeItError
 from pypeit.core import extract
 from pypeit.core import flexure
+from pypeit.core import flux_calib
 from pypeit.core import parse
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.mosaic import Mosaic
