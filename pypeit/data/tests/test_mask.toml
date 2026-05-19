@@ -1,0 +1,62 @@
+########################################
+[ignored_range]
+
+range = [
+    ['None', 'None'],
+    [24000.0, 'None'],
+]
+########################################
+
+
+########################################
+[no_width]
+
+center = [
+    22000.0,
+    23000.0,
+    24000.0,
+]
+########################################
+
+
+########################################
+[width_list]
+
+center = [
+    22000.0,
+    23000.0,
+    24000.0,
+]
+
+width = [
+    10.0,
+]
+########################################
+
+
+#######################################
+# Test use of center_width here because none of the current masking toml files
+# use it
+
+[uses_center_width]
+
+center_width = [
+    [4341.7, 10.0],
+    [4102.9, 10.0],
+    [3971.2,  5.0],
+    [3890.2,  5.0],
+    [3836.4,  5.0],
+]
+########################################
+
+########################################
+# Make sure table with all keys is okay.  This also tests that range, center,
+# and center_width can all be single entries instead of lists.
+
+[uses_all_keys]
+
+range = ['None', 3000.0]
+center = 4687.2
+width = 10.0
+center_width = [4341.7, 10.0]
+########################################

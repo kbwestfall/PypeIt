@@ -915,9 +915,10 @@ def init_sensfunc_model(obj_params, iord, wave, counts_per_ang, ivar, gpm, tellm
             'Proceeding by masking these regions, but consider using another standard star'
         )
     N_lam = counts_per_ang/obj_params['exptime']
-    zeropoint_data, zeropoint_data_gpm \
-            = flux_calib.compute_zeropoint(wave, N_lam, (gpm & flam_true_gpm), flam_true,
-                                           tellmodel=tellmodel)
+    zeropoint_data, zeropoint_data_gpm = flux_calib.compute_zeropoint(
+        wave, N_lam, flam_true, tellmodel=tellmodel
+    )
+    zeropoint_data_gpm &= (gpm & flam_true_gpm)
 
     zeropoint_poly = zeropoint_data + 5.0*np.log10(wave) - ZP_UNIT_CONST
     if obj_params['log10_blaze_func_per_ang'] is not None:
@@ -1337,15 +1338,14 @@ def eval_poly_model(theta, obj_dict):
     return polymodel, (polymodel > 0.0)
 
 
-def sensfunc_telluric(wave, counts, counts_ivar, counts_mask, exptime, airmass, std_spec,
-                      telgridfile, log10_blaze_function=None, ech_orders=None, polyorder=8,
-                      tell_npca=5, teltype='pca',
-                      mask_hydrogen_lines=True, mask_helium_lines=False, hydrogen_mask_wid=10.,
-                      resln_guess=None, resln_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0, 5.0),
-                      delta_coeff_bounds=(-20.0, 20.0), minmax_coeff_bounds=(-5.0, 5.0),
-                      sn_clip=30.0, ballsize=5e-4, only_orders=None, maxiter=3, lower=3.0,
-                      upper=3.0, tol=1e-3, popsize=30, recombination=0.7, polish=True, disp=False,
-                      debug_init=False, debug=False):
+def sensfunc_telluric(
+    wave, counts, counts_ivar, counts_mask, exptime, airmass, std_spec, telgridfile,
+    log10_blaze_function=None, ech_orders=None, polyorder=8, tell_npca=5, teltype='pca',
+    region_mask=None, resln_guess=None, resln_frac_bounds=(0.3, 1.5), pix_shift_bounds=(-5.0, 5.0),
+    delta_coeff_bounds=(-20.0, 20.0), minmax_coeff_bounds=(-5.0, 5.0), sn_clip=30.0, ballsize=5e-4,
+    only_orders=None, maxiter=3, lower=3.0, upper=3.0, tol=1e-3, popsize=30, recombination=0.7,
+    polish=True, disp=False, debug_init=False, debug=False
+):
     r"""
     Compute a sensitivity function from a standard star spectrum by
     simultaneously fitting a polynomial sensitivity function and a telluric
@@ -1393,14 +1393,12 @@ def sensfunc_telluric(wave, counts, counts_ivar, counts_mask, exptime, airmass, 
         Method for evaluating telluric models, either `pca` or `grid`.
     tell_npca : :obj:`int`, optional, default = 4
         Number of telluric PCA components used, must be <= 10
-    mask_hydrogen_lines : :obj:`bool`, optional
-        If True, mask stellar hydrogen absorption lines before fitting sensitivity function. Default = True
-    mask_helium_lines : :obj:`bool`, optional
-        If True, mask stellar helium absorption lines before fitting sensitivity function. Default = False
-    hydrogen_mask_wid : :obj:`float`, optional
-        Parameter describing the width of the mask for or stellar absorption lines (`i.e.`, ``mask_hydrogen_lines=True``)
-        in Angstroms.  A region equal to ``hydrogen_mask_wid`` on either side of the line center is masked.
-        Default = 10A
+    region_mask : :class:`numpy.ndarray`, optional
+        An array with a set of wavelength regions to mask.  Shape must be
+        :math:`(N_{\rm reg},2)`, :math:`N_{\rm reg}` is the number of spectral
+        regions to mask.  See
+        :func:`~pypeit.core.wavemask.build_wavelength_gpm`.  If None, no regions
+        are masked.
     resln_guess : :obj:`float`, optional
         A guess for the resolution of your spectrum expressed as
         lambda/dlambda. The resolution is fit explicitly as part of the
@@ -1498,11 +1496,10 @@ def sensfunc_telluric(wave, counts, counts_ivar, counts_mask, exptime, airmass, 
                       debug=debug_init)
 
     # Optionally, mask prominent stellar absorption features
-    mask_bad, mask_recomb, mask_tell = flux_calib.get_mask(wave, counts, counts_ivar, counts_mask,
-                                              mask_hydrogen_lines=mask_hydrogen_lines,
-                                              mask_helium_lines=mask_helium_lines,
-                                              mask_telluric=False, hydrogen_mask_wid=hydrogen_mask_wid)
-    mask_tot = mask_bad & mask_recomb & mask_tell
+    mask_tot = flux_calib.get_mask(
+        wave, counts, counts_ivar, region_mask=region_mask, mask_telluric=False
+    )
+    mask_tot &= counts_mask
 
     # Since we are fitting a sensitivity function, first compute counts per second per angstrom.
     TelObj = Telluric(wave, counts, counts_ivar, mask_tot, telgridfile, obj_params,
@@ -1730,8 +1727,8 @@ def qso_telluric(spec1dfile, telgridfile,  pca_file, z_qso, telloutfile, outfile
 
 def star_telluric(spec1dfile, telgridfile, telloutfile, outfile, star_type=None,
                   star_mag=None, star_ra=None, star_dec=None, func='legendre', model='exp',
-                  polyorder=5, teltype='pca', tell_npca=5, mask_hydrogen_lines=True,
-                  mask_helium_lines=False, hydrogen_mask_wid=10., delta_coeff_bounds=(-20.0, 20.0),
+                  polyorder=5, teltype='pca', tell_npca=5, region_mask=None,
+                  delta_coeff_bounds=(-20.0, 20.0),
                   minmax_coeff_bounds=(-5.0, 5.0), only_orders=None, sn_clip=30.0, maxiter=3,
                   tol=1e-3, popsize=30, recombination=0.7, polish=True, disp=False,
                   resln_frac_bounds=(0.3,1.5), pix_shift_bounds=(-5.0,5.0),
@@ -1787,11 +1784,10 @@ def star_telluric(spec1dfile, telgridfile, telloutfile, outfile, star_type=None,
                       debug=debug_init)
 
     # Optionally, mask prominent stellar absorption features
-    mask_bad, mask_recomb, mask_tell = flux_calib.get_mask(wave, flux, ivar, mask,
-                                              mask_hydrogen_lines=mask_hydrogen_lines,
-                                              mask_helium_lines=mask_helium_lines,
-                                              mask_telluric=False, hydrogen_mask_wid=hydrogen_mask_wid)
-    mask_tot = mask_bad & mask_recomb & mask_tell
+    mask_tot = flux_calib.get_mask(
+        wave, flux, ivar, region_mask=region_mask, mask_telluric=False
+    )
+    mask_tot &= mask
 
     # parameters lowered for testing
     TelObj = Telluric(wave, flux, ivar, mask_tot, telgridfile, obj_params, init_star_model,
@@ -1842,7 +1838,8 @@ def star_telluric(spec1dfile, telgridfile, telloutfile, outfile, star_type=None,
     return TelObj
 
 def poly_telluric(spec1dfile, telgridfile, telloutfile, outfile, z_obj=0.0, func='legendre',
-                  model='exp', polyorder=3, fit_wv_min_max=None, mask_lyman_a=True, teltype='pca',
+                  model='exp', polyorder=3, fit_wv_min_max=None, region_mask=None,
+                  mask_lyman_a=True, teltype='pca',
                   tell_npca=5, delta_coeff_bounds=(-20.0, 20.0), minmax_coeff_bounds=(-5.0, 5.0),
                   only_orders=None, sn_clip=30.0, maxiter=3, tol=1e-3, popsize=30,
                   recombination=0.7, polish=True, disp=False,
@@ -1878,19 +1875,22 @@ def poly_telluric(spec1dfile, telgridfile, telloutfile, outfile, z_obj=0.0, func
         polyorder_vec = np.full(norders, polyorder)
 
     # Initalize the object parameters
-    obj_params = dict(z_obj=z_obj, mask_lyman_a=mask_lyman_a, airmass=meta_spec['core']['AIRMASS'],
+    obj_params = dict(z_obj=z_obj, mask_lyman_a=mask_lyman_a,
+                      airmass=meta_spec['core']['AIRMASS'],
                       delta_coeff_bounds=delta_coeff_bounds,
                       minmax_coeff_bounds=minmax_coeff_bounds, polyorder_vec=polyorder_vec,
                       exptime=meta_spec['core']['EXPTIME'], func=func, model=model, sigrej=3.0,
                       output_meta_keys=('airmass', 'polyorder_vec', 'exptime', 'func'),
                       debug=debug_init)
 
-    # Optionally, only using the redward of Lyman-alpha line to do the fitting
+    mask_tot = flux_calib.get_mask(
+        wave, flux, ivar, region_mask=region_mask, mask_telluric=False
+    )
+    # Optionally, mask blueward of Lyman-alpha line
     if mask_lyman_a:
-        inmask = wave > 1216.15 * (1+z_obj)
-        mask_tot = inmask & mask
-    else:
-        mask_tot = mask
+        # TODO: Temporary before incorporating redshift into the definition of the region mask
+        mask_tot &= (wave > 1216.15 * (1+z_obj))
+    mask_tot &= mask
 
     if fit_wv_min_max is not None:
         mask_tot &= np.logical_not(create_bal_mask(wave, fit_wv_min_max))
