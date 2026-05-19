@@ -4,6 +4,7 @@ Module for the SpecObjs and SpecObj classes
 .. include common links, assuming primary doc root is up one directory
 .. include:: ../include/links.rst
 """
+from copy import deepcopy
 import os
 from pathlib import Path
 
@@ -23,6 +24,7 @@ from pypeit import specobj
 from pypeit import io
 from pypeit.spectrographs.util import load_spectrograph
 from pypeit.core import parse
+from pypeit.core import spectrum
 from pypeit.images.detector_container import DetectorContainer
 from pypeit.images.mosaic import Mosaic
 from pypeit import utils
@@ -179,6 +181,14 @@ class SpecObjs:
             for specobj in self.specobjs:
                 setattr(specobj, item, value)
 
+    @staticmethod
+    def is_specobjs_file(ifile):
+        """
+        Check if the file was written by this class
+        """
+        with io.fits_open(ifile) as hdu:
+            return 'DMODCLS' in hdu[0].header and hdu[0].header['DMODCLS'] == 'SpecObjs' 
+
     @property
     def nobj(self):
         """
@@ -318,32 +328,99 @@ class SpecObjs:
             meta_spec['ECH_ORDERS'] = ech_orders
             return wave, flux, flux_ivar, flux_gpm, blaze_function, meta_spec, self.header
 
-    def get_std(self, multi_spec_det=None, split_mosaic=False):
+    # TODO: Can this replace unpack_object?
+    def to_spectrum(self, extract=None, fluxed=False, include_flat=False):
         """
-        Return the standard star from this :class:`SpecObjs`. For MultiSlit this
-        will be a single specobj in SpecObjs container, for Echelle it
-        will be the standard for all the orders.
+        Utility function to construct a 
+        :class:`~pypeit.core.spectrum.SpectrumList` object from data in this 
+        :class:`~pypeit.specobjs.SpecObjs` object.
 
-        Args:
-            multi_spec_det (list):
-                If there are multiple detectors arranged in the spectral
-                direction, return the sobjs for the standard on each detector.
-            split_mosaic (:obj:`bool`, optional):
-                If True and the data were reduced as a mosaic, break up the
-                standard star specobj into the different detectors. This is
-                helpful for fluxing when the detectors have different QE.
-                Only applies to MultiSlit data. Default is False.
+        Parameters
+        ----------
+        extract : :obj:`str`, optional
+            The type of extraction to use.  Options are 'OPT' for optimal extraction or
+            'BOX' for boxcar extraction.
+        fluxed : :obj:`bool`, optional
+            If True, return the flux-calibrated spectrum.  If False, return the
+            uncalibrated counts.
+        include_flat : :obj:`bool`, optional
+            If True, include the extracted flat spectrum as an associated array.
 
-        Returns:
-            SpecObj or SpecObjs or None
+        Returns
+        -------
+        :class:`~pypeit.core.spectrum.SpectrumList`
+            Object with all of the extracted spectra.
+        """
 
+        # Get the metadata
+        base_meta_spec = load_spectrograph(self.header['PYP_SPEC']).parse_spec_header(self.header)
+        base_meta_spec['PYP_SPEC'] = self.header['PYP_SPEC']
+        # TODO: Add other items included in meta_spec from unpack_object()
+
+        # Build up the list of spectra
+        spectra = spectrum.SpectrumList()
+        for sobj in self.specobjs:
+            ext, cal = sobj.best_ext_match(extract=extract, fluxed=fluxed)
+            func = sobj.get_box_ext if ext == 'BOX' else sobj.get_opt_ext
+            wave, flux, ivar, gpm, flat = func(fluxed=cal)
+            assoc = {'flat': flat} if include_flat else None
+            # Add the extraction and calibration types to the metadata
+            meta_spec = deepcopy(base_meta_spec)
+            meta_spec['ext_mode'] = ext
+            meta_spec['fluxed'] = cal
+            meta_spec['NAME'] = sobj.NAME   # TODO: Should this be ECH_NAME for echelles?
+            try:
+                # TODO: Deal with wave=0 data?
+                _spec = spectrum.Spectrum(
+                    wave, flux, ivar=ivar, gpm=gpm, meta=meta_spec, assoc=assoc
+                )
+            except PypeItError as e:
+                log.warning(f'Unable to create Spectrum for {sobj.NAME}')
+                _spec = None
+            spectra += [_spec]
+        return spectra
+    
+    def get_pypeline(self):
+        """
+        Return the pypeline name.
+        """
+        # Get the unique set of pypeline names
+        pypeline = np.unique(self.PYPELINE)
+        if len(pypeline) > 1:
+            # There can be only one!
+            raise PypeItError(
+                'This object is composed of spectra from multiple different pipelines.'
+            )
+        # Make sure the pypeline is valid
+        if pypeline[0] not in ['MultiSlit', 'Echelle', 'SlicerIFU']:
+            raise PypeItError(f'{pypeline[0]} is not a pipeline path known to PypeIt.')
+        return pypeline[0]
+
+    # TODO: Rename this find_standard, once I get it working
+    def identify_standard(self, multi_spec_det=None):
+        """
+        Identify the source names that are expected to be from a standard-star
+        observation.
+
+        Parameters
+        ----------
+        multi_spec_det : list, optional
+            If there are multiple detectors arranged in the spectral direction,
+            return names for the standard spectrum on each detector in the list.
+            The list can contain integer detector numbers or detector names
+            (e.g., DET01).  Ignored for echelle spectrographs.
+
+        Returns
+        -------
+        list
+            One or more source names (:obj:`str`) expected to be from a
+            standard-star observation.  For echelle spectrographs, this is one
+            name per order.  For multi-slit spectrographs, there can be one or
+            more names, depending on ``multi_spec_det``.  Will be None if the
+            function fails to identify a standard spectrum.
         """
         # Get the pypeline
-        pypeline = self[0].PYPELINE
-        # TODO: Add a check that all of the spectra use the same pypeline?  Why
-        # are we letting the pypeline be SpecObj specific?
-        if pypeline not in ['MultiSlit', 'Echelle', 'SlicerIFU']:
-            raise PypeItError(f'{pypeline} is not a pipeline path known to PypeIt.')
+        pypeline = self.get_pypeline()
 
         # Collect the S/N ratios for all spectra.  Try the optimal extractions
         # first.
@@ -377,72 +454,165 @@ class SpecObjs:
         # than the smallest value in the list.
         SNR = np.array([0. if _snr is None else _snr for _snr in SNR])
 
-        # Is this MultiSlit or Echelle
         if pypeline in ['MultiSlit', 'SlicerIFU']:
-            # initialize sobjs_std
-            sobjs_std = SpecObjs(header=self.header)
+            if multi_spec_det is None:
+                # For normal multislit take the brightest object
+                return [self[SNR.argmax()].NAME]
+
             # For multiple detectors grab the requested detectors
-            if multi_spec_det is not None:
-                # TODO: This is a hack assuming the integers in multi_spec_det
-                # are for *detectors*, not mosaics.
-                if any([isinstance(d, int) for d in multi_spec_det]):
-                    _multi_spec_det = [DetectorContainer.get_name(d) if isinstance(d, int) else d
-                                            for d in multi_spec_det]
-                else:
-                    _multi_spec_det = multi_spec_det
-                # Now append the maximum S/N object on each detector
-                for idet in _multi_spec_det:
-                    this_det = self.DET == idet
-                    if not np.any(this_det):
-                        unique_det = np.unique(self.DET)
-                        raise PypeItError(f'No matches for {idet} in spec1d file.  Unique options found'
-                                   f"are {', '.join(unique_det)}.  Check usage of multi_spec_det.")
-                    istd = SNR[this_det].argmax()
-                    sobjs_std.add_sobj(self[this_det][istd])
-            else: # For normal multislit take the brightest object
-                istd = SNR.argmax()
-                # if not a mosaic reduction, just return the single object
-                if not split_mosaic or (split_mosaic and self[istd].SPEC_DET is None):
-                    sobjs_std.add_sobj(self[istd])
-                # if a mosaic reduction, break up the std spectrum into the different detectors.
-                # This takes into account different QE in different detectors
-                elif self[istd].SPEC_DET is not None:
-                    dets = np.unique(self[istd].SPEC_DET[self[istd].SPEC_DET > 0])
-                    for idet in dets:
-                        not_idet = self[istd].SPEC_DET != idet
-                        this_sobj = self[istd].copy()
-                        this_sobj.DET = DetectorContainer.get_name(idet)
-                        this_sobj.set_name()
-                        for att in this_sobj.keys():
-                            if isinstance(this_sobj[att], np.ndarray) and this_sobj[att].shape == this_sobj['TRACE_SPAT'].shape:
-                                this_sobj[att][not_idet] = 0
-                        sobjs_std.add_sobj(this_sobj)
-            # Return
-            return sobjs_std
-        elif pypeline == 'Echelle':
-            uni_objid = np.unique(self.ECH_FRACPOS)  # A little risky using floats
-            uni_order = np.unique(self.ECH_ORDER)
-            nobj = len(uni_objid)
-            norders = len(uni_order)
-            # Build up S/N matrix
-            _snr = np.zeros((norders, nobj))
-            for iobj in range(nobj):
-                for iord in range(norders):
-                    ind = (self.ECH_FRACPOS == uni_objid[iobj]) & (self.ECH_ORDER == uni_order[iord])
-                    _snr[iord,iobj] = SNR[ind][0]
-            # Maximize S/N
-            SNR_all = np.sqrt(np.sum(_snr**2,axis=0))
-            objid_std = uni_objid[SNR_all.argmax()]
-            # Finish
-            indx = self.ECH_FRACPOS == objid_std
-            # Return
-            sobjs_std = SpecObjs(specobjs=self[indx], header=self.header)
-            sobjs_std.header = self.header
-            return sobjs_std
-        else:
-            # SHOULD NOT GET HERE!!  The check at the beginning of the function
-            # should catch this.
-            raise PypeItError('Unknown pypeline')
+            # TODO: The following is a hack assuming the integers in
+            # multi_spec_det are for *detectors*, not mosaics.
+            if any([isinstance(d, int) for d in multi_spec_det]):
+                _multi_spec_det = [DetectorContainer.get_name(d) if isinstance(d, int) else d
+                                        for d in multi_spec_det]
+            else:
+                _multi_spec_det = multi_spec_det
+
+            # Now append the maximum S/N object on each detector
+            names = []
+            for idet in _multi_spec_det:
+                this_det = self.DET == idet
+                if not np.any(this_det):
+                    unique_det = np.unique(self.DET)
+                    raise PypeItError(
+                        f'No matches for {idet} in spec1d file.  Unique options found are '
+                        f'{", ".join(unique_det)}.  Check usage of multi_spec_det.'
+                    )
+                istd = SNR[this_det].argmax()
+                names += [self[this_det][istd].NAME]
+            return names
+
+        # NOTE: The remainder of the function assumes you're working with
+        # echelle data
+
+        # Build up S/N matrix
+        uni_objid = np.unique(self.ECH_FRACPOS)  # A little risky using floats
+        uni_order = np.unique(self.ECH_ORDER)
+        nobj = len(uni_objid)
+        norders = len(uni_order)
+        _snr = np.zeros((norders, nobj))
+        for iobj in range(nobj):
+            for iord in range(norders):
+                ind = (self.ECH_FRACPOS == uni_objid[iobj]) & (self.ECH_ORDER == uni_order[iord])
+                _snr[iord,iobj] = SNR[ind][0]
+
+        # Find the maximize S/N
+        SNR_all = np.sqrt(np.sum(_snr**2,axis=0))
+        # Return the names of all orders associated with this spectrum
+        objid_std = uni_objid[SNR_all.argmax()]
+        # TODO: Check that the number returned is correct?
+        return self.ECH_NAME[self.ECH_FRACPOS == objid_std].tolist()
+
+    def get_std(self, name=None, multi_spec_det=None, split_mosaic=False):
+        """
+        Return the standard star from this :class:`SpecObjs`.
+
+        The parameters ``multi_spec_det`` and ``split_mosaic`` are ignored
+        for echelle spectrographs.
+
+        Parameters
+        ----------
+        name : str, list, optional
+            One or more source names that have been pre-identified as being the
+            standard star.  If multiple names are provided, they must be
+            identifying the spectrum of the same source spread across multiple
+            detectors or echelle orders.  If None, the standard is assumed to be
+            the source with the largest median S/N; see
+            :func:`~pypeit.specobjs.SpecObjs.identify_standard`.  If provided
+            and the data are from an echelle spectrograph, there must be one
+            name per echelle order.  If provided and the data are from a
+            multi-slit spectrograph, there can be a single source name or one
+            name per spectrally separated detector.  When provided,
+            ``multi_spec_det`` is ignored!
+        multi_spec_det : list, optional
+            If there are multiple detectors arranged in the spectral direction,
+            return an :class:`~pypeit.specobjs.SpecObjs` that provides the
+            standard spectrum on each detector in the list.  The list can
+            contain integer detector numbers or detector names (e.g., DET01).
+        split_mosaic : bool, optional
+            If True and the data were reduced as a mosaic, break up the standard
+            star spectra into one spectrum per detector in the mosaic.
+            Currently, this *cannot* be True if more than one ``name`` is
+            provided or if ``multi_spec_det`` is provided.
+
+        Returns
+        -------
+        :class:`~pypeit.specobjs.SpecObjs`
+            One or more spectra for the standard-star observations.  For echelle
+            spectrographs, one spectrum is provided per order.  For multi-slit
+            spectrographs, there can be one spectrum or multiple spectra,
+            depending on ``name``, ``multi_spec_det``, and ``split_mosaic``; see
+            the descriptions of the function arguments.
+        """
+        if name is None:
+            # Find the source names of the standard spectra
+            name = self.identify_standard(multi_spec_det=multi_spec_det)
+        if name is None:
+            # Unable to idenfity the names, so return
+            return None
+
+        # Convert name to a list
+        _name = name if isinstance(name, list) else [name]
+
+        # Check the number of names makes sense
+        if split_mosaic and len(_name) > 1:
+            raise PypeItError('Cannot split multiple spectra between mosaicked detectors.')
+
+        # Get the pypeline
+        pypeline = self.get_pypeline()
+
+        # Check that the names are valid.  Use ECH_NAME for echelle spectra and
+        # NAME for everything else.
+        all_names = self.ECH_NAME if pypeline == 'Echelle' else self.NAME
+        indx = np.logical_not(np.isin(_name, all_names))
+        if np.any(indx):
+            raise PypeItError(
+                f'The following are not valid source names: {np.asarray(_name)[indx]}'
+            )
+
+        # Convert from the source names to their index number in this object.
+        # These should all be valid given the check above
+        indx = [np.where(all_names == n)[0][0] for n in _name]
+
+        if (
+            len(indx) > 1
+            or not split_mosaic
+            or (len(indx) == 1 and split_mosaic and self[indx[0]].SPEC_DET is None)
+        ):
+            # We simply return the subset of spectra identified by indx if:
+            #   - there is more than ` name`, because this should only happen if
+            #     we're either selecting spectra from multiple orders of an
+            #     echelle dataset or selecting spectra that cross multiple
+            #     detectors in a multi-slit dataset that was reduced without any
+            #     mosaic.
+            #   - there is only one name and we're not splitting a mosaicked
+            #     spectrum up between the original detectors either because
+            #     `split_mosaic` is False or we don't have the information
+            #     needed to perform the split.
+            return SpecObjs(specobjs=self[indx], header=self.header)
+
+        # If we get here, there should be a single spectrum split across
+        # multiple detectors in a mosaic and the remainder creates a SpecObjs
+        # object that splits the spectrum between the detectors in the mosaic.
+
+        # Initialize the output
+        sobjs_std = SpecObjs(header=self.header)
+        istd = indx[0]  # There should be only one spectrum
+        dets = np.unique(self[istd].SPEC_DET[self[istd].SPEC_DET > 0])
+        for idet in dets:
+            not_idet = self[istd].SPEC_DET != idet
+            this_sobj = self[istd].copy()
+            this_sobj.DET = DetectorContainer.get_name(idet)
+            this_sobj.set_name()
+            for att in this_sobj.keys():
+                if (
+                    isinstance(this_sobj[att], np.ndarray)
+                    and this_sobj[att].shape == this_sobj['TRACE_SPAT'].shape
+                ):
+                    this_sobj[att][not_idet] = 0
+            sobjs_std.add_sobj(this_sobj)
+        # Return
+        return sobjs_std
 
     def append_neg(self, sobjs_neg):
         """
@@ -489,7 +659,6 @@ class SpecObjs:
                 raise PypeItError("The '{0:s}' PYPELINE is not defined".format(self[0].PYPELINE))
             self.remove_sobj(index)
 
-
     def make_neg_pos(self):
         """
         Purge negative objects from specobjs for IR reductions
@@ -533,8 +702,6 @@ class SpecObjs:
             raise PypeItError("The '{0:s}' PYPELINE is not defined".format(self[0].PYPELINE))
 
         return indx
-
-        
 
     def name_indices(self, name):
         """
@@ -654,6 +821,21 @@ class SpecObjs:
                 # chk
                 chk &= (sub_box or sub_opt)
         return chk
+    
+    def find_standard(self):
+        """
+        Determine which spectrum is of the standard star, assuming it is the
+        brightest one.
+
+        Returns
+        -------
+        int
+            Index of the spectrum that has the highest median flux.
+        """
+        # Repackage as necessary (some backwards compatability)
+        # Do it
+        mflux = [0. if spobj is None else np.median(spobj.BOX_COUNTS) for spobj in self.specobjs]
+        return np.argmax(mflux)
 
     def apply_flux_calib(self, par, spectrograph, sens, tell=False):
         """
@@ -678,7 +860,8 @@ class SpecObjs:
 
         # TODO enbaling this for now in case someone wants to treat the IFU as a slit spectrograph
         #  (not recommnneded but useful for quick reductions where you don't want to construct cubes and don't care about DAR).
-        if spectrograph.pypeline in ['MultiSlit','SlicerIFU']:
+        pypeline = self.get_pypeline()
+        if pypeline in ['MultiSlit','SlicerIFU']:
             for ii, sci_obj in enumerate(self.specobjs):
                 # PYP_SPEC is needed for each specobj
                 if sci_obj.PYP_SPEC is None:
@@ -708,7 +891,7 @@ class SpecObjs:
                     raise PypeItError('This should not happen, there is a problem with your sensitivity function.')
 
 
-        elif spectrograph.pypeline == 'Echelle':
+        elif pypeline == 'Echelle':
             # Flux calibrate the orders that are mutually in the meta_table and in
             # the sobjs. This allows flexibility for applying to data for cases
             # where not all orders are present in the data as in the sensfunc, etc.,
@@ -736,7 +919,8 @@ class SpecObjs:
                     raise PypeItError('This should not happen')
 
         else:
-            raise PypeItError('Unrecognized pypeline: {0}'.format(spectrograph.pypeline))
+            # Should never get here because of check done in get_pypeline()
+            raise PypeItError(f'Unrecognized pypeline: {pypeline}')
 
 
     def copy(self):
@@ -964,14 +1148,16 @@ class SpecObjs:
         hdulist.writeto(outfile, overwrite=overwrite)
         log.info(f'Wrote 1D spectra to {outfile}')
 
-    def write_info(self, outfile, pypeline):
+    def write_info(self, outfile):
         """
         Write a summary of items to an ASCII file
 
-        Args:
-            outfile (:obj:`str`):  Output filename
-            pypeline (:obj:`str`): PypeIt pipeline mode
+        Parameters
+        ----------
+        outfile : :obj:`str`
+            Output filename
         """
+        pypeline = self.get_pypeline()
         # TODO -- Deal with update_det
         # Lists for a Table
         slits, names, obj_ids, maskdef_id, objname, objra, objdec, spat_pixpos, spat_fracpos, boxsize, opt_fwhm, s2n = \
@@ -1161,7 +1347,7 @@ def get_std_trace(detname, std_outfile, chk_version=True):
      """
 
     sobjs = SpecObjs.from_fitsfile(std_outfile, chk_version=chk_version)
-    pypeline = sobjs.PYPELINE
+    pypeline = sobjs.get_pypeline()
     # Does the detector match?
     # TODO: Instrument specific logic here could be implemented with the
     # parset. For example LRIS-B or LRIS-R we we would use the standard
@@ -1170,6 +1356,7 @@ def get_std_trace(detname, std_outfile, chk_version=True):
     this_det = sobjs.DET == detname
     if np.any(this_det):
         sobjs_det = sobjs[this_det]
+        # TODO: This needs to get multi_spec_det, right?
         sobjs_std = sobjs_det.get_std()
         # No standard extracted on this detector??
         if sobjs_std is None:
@@ -1178,15 +1365,16 @@ def get_std_trace(detname, std_outfile, chk_version=True):
         # create table that contains the trace of the standard
         std_tab = Table()
         # flatten the array if this multislit
-        if 'MultiSlit' in pypeline:
+        if pypeline == 'MultiSlit':
             std_tab['TRACE_SPAT'] = sobjs_std.TRACE_SPAT
-        elif 'Echelle' in pypeline:
+        elif pypeline == 'Echelle':
             std_tab['ECH_ORDER'] = sobjs_std.ECH_ORDER
             std_tab['TRACE_SPAT'] = sobjs_std.TRACE_SPAT
-        elif 'SlicerIFU' in pypeline:
+        elif pypeline == 'SlicerIFU':
             std_tab = None
         else:
-            raise PypeItError('Unrecognized pypeline')
+            # Should not get here because of the check in get_pypeline()
+            raise PypeItError(f'Unrecognized pypeline: {pypeline}')
     else:
         std_tab = None
 

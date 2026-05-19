@@ -201,7 +201,7 @@ def pypeit_spec1d_loader(filename, extract=None, fluxed=True, strict=True, chk_v
     for sobj in sobjs:
         # Check that the file has the requested data
         _ext, _cal = sobj.best_ext_match(extract=extract, fluxed=fluxed)
-        _wave, _flux, _ivar, _gpm = sobj.get_box_ext(fluxed=_cal) if _ext == 'BOX' \
+        _wave, _flux, _ivar, _gpm, _ = sobj.get_box_ext(fluxed=_cal) if _ext == 'BOX' \
                                         else sobj.get_opt_ext(fluxed=_cal)
         if not np.all(_gpm):
             log.warning(f'Ignoring {np.sum(np.logical_not(_gpm))} masked pixels.')
