@@ -11,12 +11,13 @@ import pytest
 
 from pypeit import dataPaths
 from pypeit import fluxcalibrate
-from pypeit import sensfunc
-from pypeit.par import pypeitpar
-from pypeit.tests.tstutils import data_output_path
-from pypeit import specobjs, specobj
 from pypeit import PypeItError
-from pypeit import scripts
+from pypeit import sensfunc
+from pypeit import specobj
+from pypeit import specobjs
+from pypeit.par import pypeitpar
+from pypeit.scripts.flux_calib import FluxCalib
+from pypeit.tests.tstutils import data_output_path
 
 
 def test_flux_calib(tmp_path, monkeypatch):
@@ -55,8 +56,8 @@ def test_flux_calib(tmp_path, monkeypatch):
 
 
         with pytest.raises(PypeItError, match="Missing 'flux end'"):
-            parsed_args = scripts.flux_calib.FluxCalib.parse_args([config_file_missing_end])
-            scripts.flux_calib.FluxCalib.main(parsed_args)
+            parsed_args = FluxCalib.parse_args([config_file_missing_end])
+            FluxCalib.main(parsed_args)
 
         # Test with a flux file missing the flux block entirely
         config_file_missing_flux = str(tmp_path / "test_flux_calib_missing_flux.flux")
@@ -66,8 +67,8 @@ def test_flux_calib(tmp_path, monkeypatch):
             print("spec1d_file2.fits | sens_file2.fits", file=f)
         
         with pytest.raises(PypeItError, match="You have not specified the data block!"):
-            parsed_args = scripts.flux_calib.FluxCalib.parse_args([config_file_missing_flux])
-            scripts.flux_calib.FluxCalib.main(parsed_args)
+            parsed_args = FluxCalib.parse_args([config_file_missing_flux])
+            FluxCalib.main(parsed_args)
 
         # Test with no sensfunc, but it's an error because an archive sensfunc
         # was not requested
@@ -82,8 +83,8 @@ def test_flux_calib(tmp_path, monkeypatch):
             print("flux end", file=f)
 
         with pytest.raises(PypeItError, match = 'Invalid format for .flux'):
-            parsed_args = scripts.flux_calib.FluxCalib.parse_args([config_file_no_sens])
-            scripts.flux_calib.FluxCalib.main(parsed_args)
+            parsed_args = FluxCalib.parse_args([config_file_no_sens])
+            FluxCalib.main(parsed_args)
         
 
 # TODO: Include tests for coadd2d, sensfunc

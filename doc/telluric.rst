@@ -39,6 +39,17 @@ as correct for the heliocentric velocity offset).
 Model Telluric Spectra
 ======================
 
+.. TODO: This is too confusing.  I.e., we shouldn't need to set (or fall back
+   to) parameters defined by the `sensfunc` parameter set.  We need to fix this.
+
+Below we demonstrate how to set the telluric model spectra used when modeling
+your observed spectra.  These examples use the ``tellgridfile`` and ``teltype``
+parameters in the ``telluric`` parameter set.  If the ``telgridfile`` is *not*
+defined in the ``telluric`` parameter set, ``pypeit_tellfit`` will fall back to
+its value set in the ``sensfunc:IR`` parameter set, which has a default for most
+spectrographs; see the default used for your spectrograph among the
+:ref:`instr_par`.
+
 PCA spectra
 -----------
 
@@ -88,6 +99,25 @@ this and other general improvements to the associated modeling procedures, we
 *do not recommend* you use these atmospheric grids, and use the PCA-based models
 instead.  These files, and the associated modeling code, are primarily made
 available to allow users to compare to previous results.
+
+.. _telluric_masks:
+
+Masking
+=======
+
+To define spectral regions to mask when fitting the source + telluric model
+spectrum to your observed spectrum, you must use the ``spectral_region_mask``
+parameter in the ``sensfunc`` parameter set (see :ref:`sensfunc_masks`).  That
+is, to mask everything blueward of 3650 Angstroms and the regions by the
+``hydrogen.toml`` file, your ``sens`` file might look like the following:
+
+.. code-block:: ini
+
+    [telluric]
+        tellgridfile = TellPCA_3000_10500_R120000.fits
+        teltype = pca
+    [sensfunc]
+        spectral_region_mask = :3650.0:, hydrogen.toml 
 
 .. _pypeit_tellfit:
 
