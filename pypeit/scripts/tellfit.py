@@ -64,10 +64,7 @@ class TellFit(scriptbase.ScriptBase):
         """
         Executes telluric correction.
         """
-
-        import os
-
-        from astropy.io import fits
+        from pathlib import Path
 
         from pypeit import inputfiles
         from pypeit import log
@@ -75,28 +72,18 @@ class TellFit(scriptbase.ScriptBase):
         from pypeit import dataPaths
         from pypeit.core import telluric
         from pypeit.core import wavemask
+        from pypeit.scripts import loader
         from pypeit.spectrographs.util import load_spectrograph
 
         # Initialize the log
         cls.init_log(args)
 
-        # Determine the spectrograph
-        header = fits.getheader(args.spec1dfile)
-        spectrograph = load_spectrograph(header['PYP_SPEC'], pypeit_fits=True)
-        spectrograph_def_par = spectrograph.default_pypeit_par()
-
-        # Load tell file if provided
-        if args.tell_file is not None:
-            tellFile = inputfiles.TelluricFile.from_file(args.tell_file)
-            tcfg_lines = tellFile.cfg_lines
-        else:
-            tcfg_lines = []
-
-        # If the .tell file was passed in read it and overwrite default parameters
-        par = spectrograph_def_par if args.tell_file is None else \
-                pypeitpar.PypeItPar.from_cfg_lines(
-                    cfg_lines=spectrograph_def_par.to_config(),
-                    merge_with=(tcfg_lines,))
+        # Get the parameters and the spectrograph.  NOTE: args.tell_file can be
+        # None, and this function checks that _spec1dfile exists.
+        _spec1dfile = Path(args.spec1dfile).absolute()
+        par, spec = loader.get_pypeitpar(
+            _spec1dfile, ifile=args.tell_file, secondary_ifile_class=inputfiles.TelluricFile
+        )
 
         # If args was provided override defaults. Note this does undo .tell file
         if args.objmodel is not None:
@@ -118,9 +105,11 @@ class TellFit(scriptbase.ScriptBase):
         # Checks
         if par['telluric']['telgridfile'] is None:
             raise PypeItError('A file with the telluric grid must be provided.')
-        elif not os.path.isfile(dataPaths.telgrid.get_file_path(par['telluric']['telgridfile'])):
-            raise PypeItError(f"{par['telluric']['telgridfile']} does not exist.  Either the file was not"
-                       "downloaded successfully or the file name is incorrect.")
+        elif not dataPaths.telgrid.get_file_path(par['telluric']['telgridfile']).is_file():
+            raise PypeItError(
+                f"{par['telluric']['telgridfile']} does not exist.  Either the file was not"
+                "downloaded successfully or the file name is incorrect."
+            )
 
         # Write the par to disk
         # TODO: Make it optional to write this file?  Is the relevant metadata
@@ -129,8 +118,8 @@ class TellFit(scriptbase.ScriptBase):
         par['telluric'].to_config(args.par_outfile, section_name='telluric', include_descr=False)
 
         # Parse the output filename
-        outfile = (os.path.basename(args.spec1dfile)).replace('.fits','_tellcorr.fits')
-        modelfile = (os.path.basename(args.spec1dfile)).replace('.fits','_tellmodel.fits')
+        outfile = _spec1dfile.name.replace('.fits','_tellcorr.fits')
+        modelfile = _spec1dfile.name.replace('.fits','_tellmodel.fits')
         log.info(f'Telluric-corrected spectrum will be saved to: {outfile}.')
         log.info(f'Best-fit telluric model will be saved to: {modelfile}.')
 

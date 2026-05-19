@@ -7,7 +7,6 @@ Script to determine the sensitivity function for a PypeIt 1D spectrum.
 from IPython import embed
 
 from pypeit.scripts import scriptbase
-from pathlib import Path
 
 
 class SensFunc(scriptbase.ScriptBase):
@@ -90,18 +89,23 @@ class SensFunc(scriptbase.ScriptBase):
     def main(cls, args):
         """Executes sensitivity function computation."""
 
-        import os
+        from pathlib import Path
 
-        from pypeit import log
-        from pypeit import PypeItError
+        import numpy as np
+
         from pypeit import inputfiles
         from pypeit import io
-        from pypeit.par import pypeitpar
+        from pypeit import log
+        from pypeit import PypeItError
         from pypeit import sensfunc
+        from pypeit.par import pypeitpar
+        from pypeit.scripts import loader
         from pypeit.spectrographs.util import load_spectrograph
 
         # Initialize the log
         cls.init_log(args)
+
+        # TODO: Force a sens_file to be provided and clean all this up.
 
         # Check parameter inputs
         if args.algorithm is not None and args.sens_file is not None:
@@ -140,6 +144,11 @@ class SensFunc(scriptbase.ScriptBase):
                        "              extr = BOX\n"
                        "\n")
 
+        # Check the input files exist
+        _spec1dfiles = [Path(sf).absolute() for sf in np.atleast_1d(args.spec1dfiles)]
+        badfiles = [sf for sf in _spec1dfiles if not sf.is_file()]
+        if len(badfiles) > 0:
+            raise FileNotFoundError(f'The following spec1d files were not found: {badfiles}')
 
         # Determine the spectrograph and generate the primary FITS header
         with io.fits_open(args.spec1dfiles[0]) as hdul:
@@ -157,17 +166,11 @@ class SensFunc(scriptbase.ScriptBase):
                 if key.upper() in hdul[0].header.keys():
                     primary_hdr[key.upper()] = hdul[0].header[key.upper()]
 
-
-
-        # If the .sens file was passed in read it and overwrite default parameters
-        if args.sens_file is not None:
-            sensFile = inputfiles.SensFile.from_file(args.sens_file)
-            # Read sens file
-            par = pypeitpar.PypeItPar.from_cfg_lines(
-                        cfg_lines=spectrograph_config_par.to_config(),
-                        merge_with=(sensFile.cfg_lines,))
-        else:
-            par = pypeitpar.PypeItPar.from_cfg_lines(cfg_lines=spectrograph_config_par.to_config())
+        # Get the parameters and spectrograph
+        # TODO: Consolidate this with the above
+        par, spectrograph = loader.get_pypeitpar(
+            _spec1dfiles[0], ifile=args.sens_file, secondary_ifile_class=inputfiles.SensFile
+        )
 
         # If algorithm was provided override defaults. Note this does undo .sens
         # file since they cannot both be passed
